@@ -1,22 +1,45 @@
 extern crate glfw;
-use self::glfw::{Action, Context, Key};
+use glfw::{Action, Context, Key};
 
 extern crate gl;
-use self::gl::types::*;
+
+extern crate c_str_macro;
+use c_str_macro::c_str;
+
+use glam::{vec3, Mat4};
 
 mod shader;
 use shader::Shader;
 
-use std::mem;
-use std::os::raw::c_void;
-use std::ptr;
+mod camera;
+use camera::{Camera, Camera_Movement};
+
+mod mesh;
+
+mod model;
+use model::Model;
+
 use std::sync::mpsc::Receiver;
 
 // Settings
-const SOURCE_WIDTH: u32 = 800;
-const SOURCE_HEIGHT: u32 = 600;
+const SOURCE_WIDTH: u32 = 1200;
+const SOURCE_HEIGHT: u32 = 800;
 
 fn main() {
+    // Camera setup
+    let mut camera = Camera {
+        Position: vec3(0.0, 0.0, 3.0),
+        ..Camera::default()
+    };
+
+    let mut first_mouse = true;
+    let mut last_x: f32 = SOURCE_WIDTH as f32 / 2.0;
+    let mut last_y: f32 = SOURCE_HEIGHT as f32 / 2.0;
+
+    // Timing
+    let mut delta_time: f32;
+    let mut last_frame: f32 = 0.0;
+
     // GLFW: Setup
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
     glfw.window_hint(glfw::WindowHint::ContextVersion(3, 3));
@@ -37,71 +60,65 @@ fn main() {
     window.make_current();
     window.set_key_polling(true);
     window.set_framebuffer_size_polling(true);
+    window.set_cursor_pos_polling(true);
+    window.set_scroll_polling(true);
+    window.set_cursor_mode(glfw::CursorMode::Disabled);
 
     // GL: Load all OpenGL function pointers
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
     // Set shader program
-    let (our_shader, vao) = unsafe {
-        let our_shader = Shader::new("src/shaders/simple.vs", "src/shaders/simple.fs");
+    let (our_shader, our_model) = unsafe {
+        gl::Enable(gl::DEPTH_TEST);
 
-        // HINT: type annotation is crucial since default for float literals is f64
-        let vertices: [f32; 18] = [
-            // positions         // colors
-            0.5, -0.5, 0.0, 1.0, 0.0, 0.0, // bottom right
-            -0.5, -0.5, 0.0, 0.0, 1.0, 0.0, // bottom left
-            0.0, 0.5, 0.0, 0.0, 0.0, 1.0, // top
-        ];
-        let (mut vbo, mut vao) = (0, 0);
-        gl::GenVertexArrays(1, &mut vao);
-        gl::GenBuffers(1, &mut vbo);
-        // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-        gl::BindVertexArray(vao);
-
-        gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-        gl::BufferData(
-            gl::ARRAY_BUFFER,
-            (vertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-            &vertices[0] as *const f32 as *const c_void,
-            gl::STATIC_DRAW,
+        let our_shader = Shader::new(
+            "src/shaders/model_loading.vs",
+            "src/shaders/model_loading.fs",
         );
 
-        let stride = 6 * mem::size_of::<GLfloat>() as GLsizei;
-        // position attribute
-        gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
-        gl::EnableVertexAttribArray(0);
-        // color attribute
-        gl::VertexAttribPointer(
-            1,
-            3,
-            gl::FLOAT,
-            gl::FALSE,
-            stride,
-            (3 * mem::size_of::<GLfloat>()) as *const c_void,
-        );
-        gl::EnableVertexAttribArray(1);
+        let our_model = Model::new("assets/cube.obj");
 
-        // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-        // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-        // gl::BindVertexArray(0);
-
-        (our_shader, vao)
+        (our_shader, our_model)
     };
 
     // Render loop
     while !window.should_close() {
+        let current_frame = glfw.get_time() as f32;
+        delta_time = current_frame - last_frame;
+        last_frame = current_frame;
+
         // Events
-        process_events(&mut window, &events);
+        process_events(
+            &events,
+            &mut first_mouse,
+            &mut last_x,
+            &mut last_y,
+            &mut camera,
+        );
+
+        // Input
+        process_input(&mut window, delta_time, &mut camera);
 
         // Render
         unsafe {
-            gl::ClearColor(0.2, 0.3, 0.3, 1.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT);
+            gl::ClearColor(0.1, 0.1, 0.1, 1.0);
+            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-            // Render triangle
             our_shader.useProgram();
-            gl::BindVertexArray(vao);
-            gl::DrawArrays(gl::TRIANGLES, 0, 3);
+
+            let projection = Mat4::perspective_infinite_reverse_rh(
+                std::f32::consts::PI / 4.0,
+                SOURCE_WIDTH as f32 / SOURCE_HEIGHT as f32,
+                0.1,
+            );
+            let view = camera.GetViewMatrix();
+            our_shader.setMat4(c_str!("projection"), &projection);
+            our_shader.setMat4(c_str!("view"), &view);
+
+            let mut model = Mat4::from_translation(vec3(0.0, -1.75, 0.0));
+            model *= Mat4::from_scale(vec3(1., 1., 1.));
+            our_shader.setMat4(c_str!("model"), &model);
+            our_model.Draw(&our_shader);
         }
 
         // GLFW: Swap buffers and poll I/O events
@@ -110,16 +127,59 @@ fn main() {
     }
 }
 
-fn process_events(window: &mut glfw::Window, events: &Receiver<(f64, glfw::WindowEvent)>) {
+pub fn process_events(
+    events: &Receiver<(f64, glfw::WindowEvent)>,
+    first_mouse: &mut bool,
+    last_x: &mut f32,
+    last_y: &mut f32,
+    camera: &mut Camera,
+) {
     for (_, event) in glfw::flush_messages(events) {
         match event {
-            glfw::WindowEvent::FramebufferSize(width, height) => unsafe {
-                gl::Viewport(0, 0, width, height)
-            },
-            glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
-                window.set_should_close(true)
+            glfw::WindowEvent::FramebufferSize(width, height) => {
+                // make sure the viewport matches the new window dimensions; note that width and
+                // height will be significantly larger than specified on retina displays.
+                unsafe { gl::Viewport(0, 0, width, height) }
+            }
+            glfw::WindowEvent::CursorPos(x_position, y_position) => {
+                let (x_position, y_position) = (x_position as f32, y_position as f32);
+                if *first_mouse {
+                    *last_x = x_position;
+                    *last_y = y_position;
+                    *first_mouse = false;
+                }
+
+                let x_offset = x_position - *last_x;
+                let y_offset = *last_y - y_position; // reversed since y-coordinates go from bottom to top
+
+                *last_x = x_position;
+                *last_y = y_position;
+
+                camera.ProcessMouseMovement(x_offset, y_offset, true);
+            }
+            glfw::WindowEvent::Scroll(_x_offset, y_offset) => {
+                camera.ProcessMouseScroll(y_offset as f32);
             }
             _ => {}
         }
+    }
+}
+
+pub fn process_input(window: &mut glfw::Window, delta_time: f32, camera: &mut Camera) {
+    if window.get_key(Key::Escape) == Action::Press {
+        window.set_should_close(true)
+    }
+
+    if window.get_key(Key::W) == Action::Press {
+        camera.ProcessKeyboard(Camera_Movement::Forward, delta_time);
+    }
+    if window.get_key(Key::S) == Action::Press {
+        camera.ProcessKeyboard(Camera_Movement::Backward, delta_time);
+    }
+    if window.get_key(Key::A) == Action::Press {
+        camera.ProcessKeyboard(Camera_Movement::Left, delta_time);
+    }
+    if window.get_key(Key::D) == Action::Press {
+        camera.ProcessKeyboard(Camera_Movement::Right, delta_time);
     }
 }
