@@ -48,7 +48,7 @@ impl Default for Camera {
             Front: vec3(0.0, 0.0, -1.0),
             Up: Vector3::ZERO,    // initialized later
             Right: Vector3::ZERO, // initialized later
-            WorldUp: Vector3::ZERO,
+            WorldUp: Vector3::Y,
             Yaw: YAW,
             Pitch: PITCH,
             MovementSpeed: SPEED,
