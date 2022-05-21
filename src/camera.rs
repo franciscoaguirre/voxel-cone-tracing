@@ -2,11 +2,13 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 
-use glam::{vec3, Mat4, Vec3};
+use cgmath;
+use cgmath::vec3;
+use cgmath::prelude::*;
 
-type Point3 = Vec3;
-type Vector3 = Vec3;
-type Matrix4 = Mat4;
+type Point3 = cgmath::Point3<f32>;
+type Vector3 = cgmath::Vector3<f32>;
+type Matrix4 = cgmath::Matrix4<f32>;
 
 // Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
 #[derive(PartialEq, Clone, Copy)]
@@ -46,9 +48,9 @@ impl Default for Camera {
         let mut camera = Camera {
             Position: Point3::new(0.0, 0.0, 0.0),
             Front: vec3(0.0, 0.0, -1.0),
-            Up: Vector3::ZERO,    // initialized later
-            Right: Vector3::ZERO, // initialized later
-            WorldUp: Vector3::Y,
+            Up: Vector3::zero(),    // initialized later
+            Right: Vector3::zero(), // initialized later
+            WorldUp: Vector3::unit_y(),
             Yaw: YAW,
             Pitch: PITCH,
             MovementSpeed: SPEED,
@@ -63,7 +65,7 @@ impl Default for Camera {
 impl Camera {
     /// Returns the view matrix calculated using Euler Angles and the LookAt Matrix
     pub fn GetViewMatrix(&self) -> Matrix4 {
-        Matrix4::look_at_rh(self.Position, self.Position + self.Front, self.Up)
+        Matrix4::look_at(self.Position, self.Position + self.Front, self.Up)
     }
 
     /// Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
@@ -126,11 +128,11 @@ impl Camera {
     /// Calculates the front vector from the Camera's (updated) Euler Angles
     fn updateCameraVectors(&mut self) {
         // Calculate the new Front vector
-        let front = vec3(
-            self.Yaw.to_radians().cos() * self.Pitch.to_radians().cos(),
-            self.Pitch.to_radians().sin(),
-            self.Yaw.to_radians().sin() * self.Pitch.to_radians().cos(),
-        );
+        let front = Vector3{
+            x: self.Yaw.to_radians().cos() * self.Pitch.to_radians().cos(),
+            y: self.Pitch.to_radians().sin(),
+            z: self.Yaw.to_radians().sin() * self.Pitch.to_radians().cos(),
+        };
         self.Front = front.normalize();
         // Also re-calculate the Right and Up vector
         self.Right = self.Front.cross(self.WorldUp).normalize(); // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.

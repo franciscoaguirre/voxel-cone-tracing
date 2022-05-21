@@ -6,7 +6,8 @@ use std::mem::size_of;
 use std::os::raw::c_void;
 use std::ptr;
 
-use glam::{Vec2, Vec3};
+use cgmath::{Vector2, Vector3};
+use cgmath::prelude::*;
 use memoffset::offset_of;
 
 use crate::shader::Shader;
@@ -17,19 +18,19 @@ use crate::shader::Shader;
 #[repr(C, packed)]
 pub struct Vertex {
     // position
-    pub Position: Vec3,
+    pub Position: Vector3<f32>,
     // normal
-    pub Normal: Vec3,
+    pub Normal: Vector3<f32>,
     // texCoords
-    pub TexCoords: Vec2,
+    pub TexCoords: Vector2<f32>,
 }
 
 impl Default for Vertex {
     fn default() -> Self {
         Vertex {
-            Position: Vec3::ZERO,
-            Normal: Vec3::ZERO,
-            TexCoords: Vec2::ZERO,
+            Position: Vector3::zero(),
+            Normal: Vector3::zero(),
+            TexCoords: Vector2::zero(),
         }
     }
 }

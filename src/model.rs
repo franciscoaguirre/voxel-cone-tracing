@@ -4,7 +4,7 @@
 use std::os::raw::c_void;
 use std::path::Path;
 
-use glam::{vec2, vec3};
+use cgmath::{vec2, vec3};
 use image::DynamicImage::*;
 
 use crate::mesh::{Mesh, Texture, Vertex};
