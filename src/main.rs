@@ -6,7 +6,7 @@ extern crate gl;
 extern crate c_str_macro;
 use c_str_macro::c_str;
 
-use cgmath::{Matrix4, vec3, Point3, Deg, perspective};
+use cgmath::{perspective, vec3, Deg, Matrix4, Point3};
 
 mod shader;
 use shader::Shader;
@@ -18,6 +18,8 @@ mod mesh;
 
 mod model;
 use model::Model;
+
+mod voxelization;
 
 use std::sync::mpsc::Receiver;
 
@@ -76,7 +78,7 @@ fn main() {
             "src/shaders/model_loading.fs",
         );
 
-        let our_model = Model::new("assets/sponza.obj");
+        let our_model = Model::new("assets/cow.obj");
 
         (our_shader, our_model)
     };
@@ -106,13 +108,18 @@ fn main() {
 
             our_shader.useProgram();
 
-            let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), SOURCE_WIDTH as f32 / SOURCE_HEIGHT as f32, 0.1, 10000.0);
+            let projection: Matrix4<f32> = perspective(
+                Deg(camera.Zoom),
+                SOURCE_WIDTH as f32 / SOURCE_HEIGHT as f32,
+                0.1,
+                10000.0,
+            );
             let view = camera.GetViewMatrix();
             our_shader.setMat4(c_str!("projection"), &projection);
             our_shader.setMat4(c_str!("view"), &view);
 
             let mut model = Matrix4::<f32>::from_translation(vec3(0.0, -1.75, 0.0));
-            model = model * Matrix4::from_scale(0.2);  // i
+            model = model * Matrix4::from_scale(0.2); // i
             our_shader.setMat4(c_str!("model"), &model);
             our_model.Draw(&our_shader);
         }

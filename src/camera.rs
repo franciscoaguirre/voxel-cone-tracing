@@ -3,8 +3,8 @@
 #![allow(dead_code)]
 
 use cgmath;
-use cgmath::vec3;
 use cgmath::prelude::*;
+use cgmath::vec3;
 
 type Point3 = cgmath::Point3<f32>;
 type Vector3 = cgmath::Vector3<f32>;
@@ -128,7 +128,7 @@ impl Camera {
     /// Calculates the front vector from the Camera's (updated) Euler Angles
     fn updateCameraVectors(&mut self) {
         // Calculate the new Front vector
-        let front = Vector3{
+        let front = Vector3 {
             x: self.Yaw.to_radians().cos() * self.Pitch.to_radians().cos(),
             y: self.Pitch.to_radians().sin(),
             z: self.Yaw.to_radians().sin() * self.Pitch.to_radians().cos(),
