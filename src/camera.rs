@@ -65,7 +65,7 @@ impl Default for Camera {
 impl Camera {
     /// Returns the view matrix calculated using Euler Angles and the LookAt Matrix
     pub fn GetViewMatrix(&self) -> Matrix4 {
-        Matrix4::look_at(self.Position, self.Position + self.Front, self.Up)
+        Matrix4::look_at_rh(self.Position, self.Position + self.Front, self.Up)
     }
 
     /// Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
