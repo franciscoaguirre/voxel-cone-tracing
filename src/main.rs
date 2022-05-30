@@ -1,9 +1,10 @@
 extern crate c_str_macro;
+use c_str_macro::c_str;
 extern crate gl;
 extern crate glfw;
 use glfw::Context;
 
-use cgmath::Point3;
+use cgmath::{perspective, vec3, Deg, Matrix4, Point3};
 
 mod shader;
 use shader::Shader;
@@ -103,7 +104,7 @@ fn main() {
             //
             // let projection: Matrix4<f32> = perspective(
             //     Deg(camera.Zoom),
-            //     SOURCE_WIDTH as f32 / SOURCE_HEIGHT as f32,
+            //     constants::SOURCE_WIDTH as f32 / constants::SOURCE_HEIGHT as f32,
             //     0.1,
             //     10000.0,
             // );
