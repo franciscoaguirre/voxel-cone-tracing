@@ -15,11 +15,11 @@ uniform layout(binding = 0, rgb10_a2ui) uimageBuffer u_voxelPos;
 uniform layout(binding = 1, rgba8 ) imageBuffer u_voxelKd;
 uniform layout(binding = 2, rgba16f) imageBuffer u_voxelNrml;
 
-uniform vec3 u_Color;
+uniform vec3 fallback_color;
 uniform float u_shininess;
-uniform sampler2D u_colorTex;
+uniform sampler2D texture_diffuse1;
 uniform sampler2D u_bumpTex;
-uniform int u_bTextured;
+uniform bool has_texture;
 uniform int u_bBump;
 uniform int voxel_dimension;
 uniform bool should_store;
@@ -37,11 +37,11 @@ uvec4 calculate_texture_coordinates() {
         0
     );
     uvec4 texture_coordinates;
-    if (fragment_dominant_axis == 1) {
+    if (fragment_dominant_axis == 0) {
         texture_coordinates.x = voxel_dimension - temp.z;
         texture_coordinates.z = temp.x;
         texture_coordinates.y = temp.y;
-    } else if(fragment_dominant_axis == 2) {
+    } else if(fragment_dominant_axis == 1) {
         texture_coordinates.z = temp.y;
         texture_coordinates.y = voxel_dimension - temp.z;
         texture_coordinates.x = temp.x;
@@ -58,10 +58,10 @@ void store_voxel_fragment(uvec4 texture_coordinates, uint fragment_list_index) {
     else
        voxel_normal = fragment_normal;
 
-    if(u_bTextured == 1)
-      voxel_color = texture(u_colorTex, fragment_texture_coordinates).rgb;
+    if (has_texture)
+      voxel_color = texture(texture_diffuse1, fragment_texture_coordinates).rgb;
     else
-      voxel_color = u_Color;
+      voxel_color = fallback_color;
 
     imageStore(u_voxelPos, int(fragment_list_index), texture_coordinates);
     imageStore(u_voxelNrml, int(fragment_list_index), vec4(voxel_normal, 0));
@@ -69,7 +69,7 @@ void store_voxel_fragment(uvec4 texture_coordinates, uint fragment_list_index) {
 }
 
 void main() {
-    discard_if_outside_aabb();
+    // discard_if_outside_aabb();
 
     uvec4 texture_coordinates = calculate_texture_coordinates();
 

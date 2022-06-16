@@ -8,10 +8,12 @@ out vec3 vertex_position;
 out vec3 normal;
 out vec2 tex_coordinates;
 
+uniform mat4 model;
+
 void main()
 {
-    vertex_position = in_vertex_position;
     normal = in_normal;
     tex_coordinates = in_tex_coordinates;
     gl_Position = vec4(in_vertex_position, 1.0);
+    vertex_position = vec3(gl_Position);
 }
