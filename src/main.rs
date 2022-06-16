@@ -1,10 +1,11 @@
-extern crate glfw;
-use glfw::{Action, Context, Key};
-
-extern crate gl;
-
 extern crate c_str_macro;
+use std::{ffi::c_void, mem::size_of};
+
 use c_str_macro::c_str;
+extern crate gl;
+extern crate glfw;
+use gl::types::GLfloat;
+use glfw::Context;
 
 use cgmath::{perspective, vec3, Deg, Matrix4, Point3};
 
@@ -12,20 +13,16 @@ mod shader;
 use shader::Shader;
 
 mod camera;
-use camera::{Camera, Camera_Movement};
+use camera::Camera;
 
 mod mesh;
 
 mod model;
 use model::Model;
 
+mod common;
+mod constants;
 mod voxelization;
-
-use std::sync::mpsc::Receiver;
-
-// Settings
-const SOURCE_WIDTH: u32 = 1200;
-const SOURCE_HEIGHT: u32 = 800;
 
 fn main() {
     // Camera setup
@@ -35,8 +32,8 @@ fn main() {
     };
 
     let mut first_mouse = true;
-    let mut last_x: f32 = SOURCE_WIDTH as f32 / 2.0;
-    let mut last_y: f32 = SOURCE_HEIGHT as f32 / 2.0;
+    let mut last_x: f32 = constants::SOURCE_WIDTH as f32 / 2.0;
+    let mut last_y: f32 = constants::SOURCE_HEIGHT as f32 / 2.0;
 
     // Timing
     let mut delta_time: f32;
@@ -52,8 +49,8 @@ fn main() {
     // GLFW: Window creation
     let (mut window, events) = glfw
         .create_window(
-            SOURCE_WIDTH,
-            SOURCE_HEIGHT,
+            constants::SOURCE_WIDTH as u32,
+            constants::SOURCE_HEIGHT as u32,
             "LearnOpenGL",
             glfw::WindowMode::Windowed,
         )
@@ -73,14 +70,109 @@ fn main() {
     let (our_shader, our_model) = unsafe {
         gl::Enable(gl::DEPTH_TEST);
 
-        let our_shader = Shader::new(
-            "src/shaders/model_loading.vs",
-            "src/shaders/model_loading.fs",
+        let our_shader = Shader::with_geometry_shader(
+            "src/shaders/render_voxel.vert.glsl",
+            "src/shaders/render_voxel.frag.glsl",
+            "src/shaders/render_voxel.geom.glsl",
         );
+        // let our_shader = Shader::new(
+        //     "src/shaders/render_voxel.vert.glsl",
+        //     "src/shaders/render_voxel.frag.glsl",
+        // );
 
-        let our_model = Model::new("assets/cow.obj");
+        let our_model = Model::new("assets/modified_cow.obj");
 
         (our_shader, our_model)
+    };
+
+    // let mut point_cube = 0;
+    // unsafe {
+    //     let mut data: Vec<f32> = vec![
+    //         0.0;
+    //         3usize
+    //             * constants::VOXEL_DIMENSION as usize
+    //             * constants::VOXEL_DIMENSION as usize
+    //             * constants::VOXEL_DIMENSION as usize
+    //     ];
+    //
+    //     let mut y_offset: usize;
+    //     let mut offset: usize;
+    //     for y in 0..constants::VOXEL_DIMENSION {
+    //         y_offset = (y as usize)
+    //             * (constants::VOXEL_DIMENSION as usize)
+    //             * (constants::VOXEL_DIMENSION as usize);
+    //
+    //         for z in 0..constants::VOXEL_DIMENSION {
+    //             offset = y_offset + z as usize * constants::VOXEL_DIMENSION as usize;
+    //
+    //             for x in 0..constants::VOXEL_DIMENSION {
+    //                 data[3 * (offset + x as usize)] = x as f32 / constants::VOXEL_DIMENSION as f32;
+    //                 data[3 * (offset + x as usize) + 1] =
+    //                     y as f32 / constants::VOXEL_DIMENSION as f32;
+    //                 data[3 * (offset + x as usize) + 2] =
+    //                     z as f32 / constants::VOXEL_DIMENSION as f32;
+    //             }
+    //         }
+    //     }
+    //
+    //     gl::GenBuffers(1, &mut point_cube);
+    //     gl::BindBuffer(gl::ARRAY_BUFFER, point_cube);
+    //     gl::BufferData(
+    //         gl::ARRAY_BUFFER,
+    //         size_of::<f32>() as isize
+    //             * 3isize
+    //             * constants::VOXEL_DIMENSION as isize
+    //             * constants::VOXEL_DIMENSION as isize
+    //             * constants::VOXEL_DIMENSION as isize,
+    //         data.as_ptr() as *const c_void,
+    //         gl::STATIC_DRAW,
+    //     );
+    //     gl::BindBuffer(gl::ARRAY_BUFFER, 0);
+    // };
+
+    let number_of_voxel_fragments;
+    let voxel_position_texture;
+
+    unsafe {
+        let return_value = voxelization::build_voxel_fragment_list();
+        number_of_voxel_fragments = return_value.0;
+        voxel_position_texture = return_value.1;
+
+        gl::Enable(gl::PROGRAM_POINT_SIZE);
+    }
+
+    const NUMBER_OF_VERTICES: usize = 6568;
+    // const NUMBER_OF_VERTICES: usize = 105077;
+    // const NUMBER_OF_VERTICES: usize = 26302;
+
+    let vao = unsafe {
+        let vertices: [f32; NUMBER_OF_VERTICES] = [0.0; NUMBER_OF_VERTICES];
+
+        let (mut vao, mut vbo) = (0, 0);
+        gl::GenVertexArrays(1, &mut vao);
+        gl::GenBuffers(1, &mut vbo);
+        gl::BindVertexArray(vao);
+        gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
+        gl::BufferData(
+            gl::ARRAY_BUFFER,
+            size_of::<[f32; NUMBER_OF_VERTICES]>() as isize,
+            &vertices[0] as *const f32 as *const c_void,
+            gl::STATIC_DRAW,
+        );
+        gl::VertexAttribPointer(
+            0,
+            3,
+            gl::FLOAT,
+            gl::FALSE,
+            3 * size_of::<GLfloat>() as i32,
+            std::ptr::null(),
+        );
+        gl::EnableVertexAttribArray(0);
+
+        gl::BindBuffer(gl::ARRAY_BUFFER, 0);
+        gl::BindVertexArray(0);
+
+        vao
     };
 
     // Render loop
@@ -90,7 +182,7 @@ fn main() {
         last_frame = current_frame;
 
         // Events
-        process_events(
+        common::process_events(
             &events,
             &mut first_mouse,
             &mut last_x,
@@ -99,7 +191,7 @@ fn main() {
         );
 
         // Input
-        process_input(&mut window, delta_time, &mut camera);
+        common::process_input(&mut window, delta_time, &mut camera);
 
         // Render
         unsafe {
@@ -110,7 +202,7 @@ fn main() {
 
             let projection: Matrix4<f32> = perspective(
                 Deg(camera.Zoom),
-                SOURCE_WIDTH as f32 / SOURCE_HEIGHT as f32,
+                constants::SOURCE_WIDTH as f32 / constants::SOURCE_HEIGHT as f32,
                 0.1,
                 10000.0,
             );
@@ -118,71 +210,61 @@ fn main() {
             our_shader.setMat4(c_str!("projection"), &projection);
             our_shader.setMat4(c_str!("view"), &view);
 
-            let mut model = Matrix4::<f32>::from_translation(vec3(0.0, -1.75, 0.0));
-            model = model * Matrix4::from_scale(0.2); // i
+            let mut model = Matrix4::<f32>::from_translation(vec3(0.0, 0.0, 0.0));
+            model = model * Matrix4::from_scale(1.); // i
             our_shader.setMat4(c_str!("model"), &model);
-            our_model.Draw(&our_shader);
+
+            our_shader.setInt(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
+            our_shader.setFloat(
+                c_str!("half_dimension"),
+                100.0 / constants::VOXEL_DIMENSION as f32,
+            );
+
+            // Not using cow model, using voxel fragment list
+            // our_model.Draw(&our_shader);
+
+            // TODO: Not rendering anything
+            // gl::BindBuffer(gl::ARRAY_BUFFER, point_cube);
+            // gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 0, std::ptr::null::<c_void>());
+            // gl::EnableVertexAttribArray(0);
+            // gl::DrawArrays(
+            //     gl::POINTS,
+            //     0,
+            //     constants::VOXEL_DIMENSION
+            //         * constants::VOXEL_DIMENSION
+            //         * constants::VOXEL_DIMENSION,
+            // );
+
+            gl::BindImageTexture(
+                0,
+                voxel_position_texture,
+                0,
+                gl::TRUE,
+                0,
+                gl::READ_ONLY,
+                gl::RGB10_A2UI,
+            );
+            our_shader.setInt(c_str!("voxel_position_texture"), 0);
+
+            our_shader.setInt(
+                c_str!("voxel_fragment_count"),
+                number_of_voxel_fragments as i32,
+            );
+
+            // let mut empty_vao = 0;
+            // gl::GenVertexArrays(1, &mut empty_vao);
+            // gl::BindVertexArray(empty_vao);
+
+            gl::BindVertexArray(vao);
+            gl::DrawArrays(gl::POINTS, 0, NUMBER_OF_VERTICES as i32);
+            // gl::DrawArrays(gl::POINTS, 0, 3);
+
+            // let error = gl::GetError();
+            // dbg!(error);
         }
 
         // GLFW: Swap buffers and poll I/O events
         window.swap_buffers();
         glfw.poll_events();
-    }
-}
-
-pub fn process_events(
-    events: &Receiver<(f64, glfw::WindowEvent)>,
-    first_mouse: &mut bool,
-    last_x: &mut f32,
-    last_y: &mut f32,
-    camera: &mut Camera,
-) {
-    for (_, event) in glfw::flush_messages(events) {
-        match event {
-            glfw::WindowEvent::FramebufferSize(width, height) => {
-                // make sure the viewport matches the new window dimensions; note that width and
-                // height will be significantly larger than specified on retina displays.
-                unsafe { gl::Viewport(0, 0, width, height) }
-            }
-            glfw::WindowEvent::CursorPos(x_position, y_position) => {
-                let (x_position, y_position) = (x_position as f32, y_position as f32);
-                if *first_mouse {
-                    *last_x = x_position;
-                    *last_y = y_position;
-                    *first_mouse = false;
-                }
-
-                let x_offset = x_position - *last_x;
-                let y_offset = *last_y - y_position; // reversed since y-coordinates go from bottom to top
-
-                *last_x = x_position;
-                *last_y = y_position;
-
-                camera.ProcessMouseMovement(x_offset, y_offset, true);
-            }
-            glfw::WindowEvent::Scroll(_x_offset, y_offset) => {
-                camera.ProcessMouseScroll(y_offset as f32);
-            }
-            _ => {}
-        }
-    }
-}
-
-pub fn process_input(window: &mut glfw::Window, delta_time: f32, camera: &mut Camera) {
-    if window.get_key(Key::Escape) == Action::Press {
-        window.set_should_close(true)
-    }
-
-    if window.get_key(Key::W) == Action::Press {
-        camera.ProcessKeyboard(Camera_Movement::Forward, delta_time);
-    }
-    if window.get_key(Key::S) == Action::Press {
-        camera.ProcessKeyboard(Camera_Movement::Backward, delta_time);
-    }
-    if window.get_key(Key::A) == Action::Press {
-        camera.ProcessKeyboard(Camera_Movement::Left, delta_time);
-    }
-    if window.get_key(Key::D) == Action::Press {
-        camera.ProcessKeyboard(Camera_Movement::Right, delta_time);
     }
 }

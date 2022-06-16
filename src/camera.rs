@@ -23,7 +23,7 @@ use self::Camera_Movement::*;
 // Default camera values
 const YAW: f32 = -90.0;
 const PITCH: f32 = 0.0;
-const SPEED: f32 = 2.5;
+const SPEED: f32 = 200.5;
 const SENSITIVITY: f32 = 0.1;
 const ZOOM: f32 = 45.0;
 
@@ -65,7 +65,7 @@ impl Default for Camera {
 impl Camera {
     /// Returns the view matrix calculated using Euler Angles and the LookAt Matrix
     pub fn GetViewMatrix(&self) -> Matrix4 {
-        Matrix4::look_at(self.Position, self.Position + self.Front, self.Up)
+        Matrix4::look_at_rh(self.Position, self.Position + self.Front, self.Up)
     }
 
     /// Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)

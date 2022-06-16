@@ -8,8 +8,8 @@ use std::str;
 use gl;
 use gl::types::*;
 
-use cgmath::{Matrix, Matrix4, Vector3};
 use cgmath::prelude::*;
+use cgmath::{Matrix, Matrix4, Vector3};
 
 pub struct Shader {
     pub ID: u32,
@@ -86,7 +86,11 @@ impl Shader {
     }
     /// ------------------------------------------------------------------------
     pub unsafe fn setVector3(&self, name: &CStr, value: &Vector3<f32>) {
-        gl::Uniform3fv(gl::GetUniformLocation(self.ID, name.as_ptr()), 1, value.as_ptr());
+        gl::Uniform3fv(
+            gl::GetUniformLocation(self.ID, name.as_ptr()),
+            1,
+            value.as_ptr(),
+        );
     }
     /// ------------------------------------------------------------------------
     pub unsafe fn setVec3(&self, name: &CStr, x: f32, y: f32, z: f32) {
@@ -94,15 +98,19 @@ impl Shader {
     }
     /// ------------------------------------------------------------------------
     pub unsafe fn setMat4(&self, name: &CStr, mat: &Matrix4<f32>) {
-        gl::UniformMatrix4fv(gl::GetUniformLocation(self.ID, name.as_ptr()), 1, gl::FALSE, mat.as_ptr());
+        gl::UniformMatrix4fv(
+            gl::GetUniformLocation(self.ID, name.as_ptr()),
+            1,
+            gl::FALSE,
+            mat.as_ptr(),
+        );
     }
 
     /// utility function for checking shader compilation/linking errors.
     /// ------------------------------------------------------------------------
     unsafe fn checkCompileErrors(&self, shader: u32, type_: &str) {
         let mut success = gl::FALSE as GLint;
-        let mut infoLog = Vec::with_capacity(1024);
-        infoLog.set_len(1024 - 1); // subtract 1 to skip the trailing null character
+        let mut infoLog = vec![0u8; 1024];
         if type_ != "PROGRAM" {
             gl::GetShaderiv(shader, gl::COMPILE_STATUS, &mut success);
             if success != gl::TRUE as GLint {
