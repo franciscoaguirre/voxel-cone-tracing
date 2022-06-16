@@ -6,8 +6,9 @@ use std::mem::size_of;
 use std::os::raw::c_void;
 use std::ptr;
 
-use cgmath::{Vector2, Vector3};
+use c_str_macro::c_str;
 use cgmath::prelude::*;
+use cgmath::{Vector2, Vector3};
 use memoffset::offset_of;
 
 use crate::shader::Shader;
@@ -77,6 +78,9 @@ impl Mesh {
         let mut specularNr = 0;
         let mut normalNr = 0;
         let mut heightNr = 0;
+        if !self.textures.is_empty() {
+            shader.setBool(c_str!("has_texture"), true);
+        }
         for (i, texture) in self.textures.iter().enumerate() {
             gl::ActiveTexture(gl::TEXTURE0 + i as u32); // active proper texture unit before binding
                                                         // retrieve texture number (the N in diffuse_textureN)
@@ -101,6 +105,7 @@ impl Mesh {
                 _ => panic!("unknown texture type"),
             };
             // now set the sampler to the correct texture unit
+            // TODO: Use shader struct
             let sampler = CString::new(format!("{}{}", name, number)).unwrap();
             gl::Uniform1i(
                 gl::GetUniformLocation(shader.ID, sampler.as_ptr()),

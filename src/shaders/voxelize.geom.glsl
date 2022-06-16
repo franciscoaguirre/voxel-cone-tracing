@@ -50,8 +50,12 @@ vec4 define_aabb(vec4 points[3]) {
 }
 
 void main() {
-    vec3 triangle_normal = normalize(cross(vertex_position[1]-vertex_position[0],
-                                           vertex_position[2]-vertex_position[0]));
+    vec3 triangle_normal = normalize(
+        cross(
+            vertex_position[1] - vertex_position[0],
+            vertex_position[2] - vertex_position[0]
+        )
+    );
 
     int dominant_axis = biggest_component(triangle_normal);
     fragment_dominant_axis = dominant_axis;
@@ -76,23 +80,23 @@ void main() {
     vec4 aabb = define_aabb(projected_vertices);
     fragment_aabb = aabb;
 
-    vec3 edge_first_second = vec3( projected_vertices[1].xy - projected_vertices[0].xy, 0 );
-    vec3 edge_second_third = vec3( projected_vertices[2].xy - projected_vertices[1].xy, 0 );
-    vec3 edge_third_first = vec3( projected_vertices[0].xy - projected_vertices[2].xy, 0 );
-    vec3 n0 = cross( edge_first_second, vec3(0,0,1) ); // TODO: Why is this vec3(0,0,1) if we could project to another axis?
-    vec3 n1 = cross( edge_second_third, vec3(0,0,1) );
-    vec3 n2 = cross( edge_third_first, vec3(0,0,1) );
-
-    //dilate the triangle
-    projected_vertices[0].xy += pl * (
-        (edge_third_first.xy / dot(edge_third_first.xy, n0.xy)) + (edge_first_second.xy/dot(edge_first_second.xy,n2.xy))
-    );
-    projected_vertices[1].xy += pl * (
-        (edge_first_second.xy/dot(edge_first_second.xy,n1.xy)) + (edge_second_third.xy/dot(edge_second_third.xy,n0.xy))
-    );
-    projected_vertices[2].xy += pl * (
-        (edge_second_third.xy / dot(edge_second_third.xy,n2.xy)) + (edge_third_first.xy/dot(edge_third_first.xy,n1.xy))
-    );
+    // vec3 edge_first_second = vec3( projected_vertices[1].xy - projected_vertices[0].xy, 0 );
+    // vec3 edge_second_third = vec3( projected_vertices[2].xy - projected_vertices[1].xy, 0 );
+    // vec3 edge_third_first = vec3( projected_vertices[0].xy - projected_vertices[2].xy, 0 );
+    // vec3 n0 = cross( edge_first_second, vec3(0,0,1) ); // TODO: Why is this vec3(0,0,1) if we could project to another axis?
+    // vec3 n1 = cross( edge_second_third, vec3(0,0,1) );
+    // vec3 n2 = cross( edge_third_first, vec3(0,0,1) );
+    //
+    // //dilate the triangle
+    // projected_vertices[0].xy += pl * (
+    //     (edge_third_first.xy / dot(edge_third_first.xy, n0.xy)) + (edge_first_second.xy/dot(edge_first_second.xy,n2.xy))
+    // );
+    // projected_vertices[1].xy += pl * (
+    //     (edge_first_second.xy/dot(edge_first_second.xy,n1.xy)) + (edge_second_third.xy/dot(edge_second_third.xy,n0.xy))
+    // );
+    // projected_vertices[2].xy += pl * (
+    //     (edge_second_third.xy / dot(edge_second_third.xy,n2.xy)) + (edge_third_first.xy/dot(edge_third_first.xy,n1.xy))
+    // );
 
       //gl_Position = proj * gl_in[0].gl_Position;
     gl_Position = projected_vertices[0];

@@ -88,6 +88,18 @@ unsafe fn populate_voxel_fragment_list(
 ) {
     voxelization_shader.useProgram();
     voxelization_shader.setBool(c_str!("should_store"), true);
+
+    gl::BindImageTexture(
+        0,
+        VOXEL_POSITION_TEXTURE,
+        0,
+        gl::FALSE,
+        0,
+        gl::READ_WRITE,
+        gl::RGB10_A2UI,
+    );
+    voxelization_shader.setInt(c_str!("u_voxelPos"), 0);
+
     voxelize_scene(voxelization_shader, models, atomic_counter);
 }
 
@@ -116,6 +128,7 @@ unsafe fn voxelize_scene(
 
     gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, *atomic_counter);
 
+    voxelization_shader.setVec3(c_str!("fallback_color"), 1.0, 1.0, 1.0);
     for model in models {
         // TODO: Do we need to set more things in the shader?
         model.Draw(voxelization_shader);
@@ -127,10 +140,10 @@ unsafe fn voxelize_scene(
     gl::Viewport(0, 0, constants::SOURCE_WIDTH, constants::SOURCE_HEIGHT);
 }
 
-pub unsafe fn build_voxel_fragment_list() {
-    let mut atomic_buffer: u32 = 0;
+pub unsafe fn build_voxel_fragment_list() -> (u32, u32) {
+    let mut atomic_counter: u32 = 0;
     let error: GLenum = gl::GetError();
-    generate_atomic_counter_buffer(&mut atomic_buffer);
+    generate_atomic_counter_buffer(&mut atomic_counter);
 
     let (voxelization_shader, cow_model) = {
         gl::Enable(gl::DEPTH_TEST);
@@ -141,17 +154,17 @@ pub unsafe fn build_voxel_fragment_list() {
             "src/shaders/voxelize.geom.glsl",
         );
 
-        let our_model = Model::new("assets/cow.obj");
+        let our_model = Model::new("assets/modified_cow.obj");
 
         (our_shader, our_model)
     };
     let models = [cow_model];
 
-    calculate_voxel_fragment_list_length(&voxelization_shader, &models, &mut atomic_buffer);
+    calculate_voxel_fragment_list_length(&voxelization_shader, &models, &mut atomic_counter);
     gl::MemoryBarrier(gl::ATOMIC_COUNTER_BUFFER);
     let error: GLenum = gl::GetError();
 
-    gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, atomic_buffer);
+    gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, atomic_counter);
     let count = gl::MapBufferRange(
         gl::ATOMIC_COUNTER_BUFFER,
         0,
@@ -184,6 +197,8 @@ pub unsafe fn build_voxel_fragment_list() {
     gl::UnmapBuffer(gl::ATOMIC_COUNTER_BUFFER);
     gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, 0);
 
-    populate_voxel_fragment_list(&voxelization_shader, &models, &mut atomic_buffer);
+    populate_voxel_fragment_list(&voxelization_shader, &models, &mut atomic_counter);
     gl::MemoryBarrier(gl::SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+    (*number_of_voxel_fragments, VOXEL_POSITION_TEXTURE)
 }
