@@ -8,15 +8,27 @@ use cgmath::{vec2, vec3};
 use image::DynamicImage::*;
 
 use crate::mesh::{Mesh, Texture, Vertex};
+use crate::AABB::AABB;
 use crate::shader::Shader;
 
-#[derive(Default)]
 pub struct Model {
     /*  Model Data */
     pub meshes: Vec<Mesh>,
     pub textures_loaded: Vec<Texture>, // stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
+    pub aabb: AABB,
     directory: String,
 }
+
+impl Default for Model {
+    fn default() -> Model {
+        Model {
+            meshes: Vec::new(),
+            textures_loaded: Vec::new(),
+            aabb: AABB::default(),
+            directory: String::new(),
+        }
+    }
+} 
 
 impl Model {
     /// constructor, expects a filepath to a 3D model.
@@ -49,6 +61,7 @@ impl Model {
 
         let (models, materials) = obj.expect("Failed to load OBJ file");
         let materials = materials.expect("Failed to load MTL file");
+        let mut aabb = AABB::default();
 
         for model in models {
             let mesh = &model.mesh;
@@ -57,13 +70,20 @@ impl Model {
             // data to fill
             let mut vertices: Vec<Vertex> = Vec::with_capacity(num_vertices);
             let indices: Vec<u32> = mesh.indices.clone();
-
             let (p, n, t) = (&mesh.positions, &mesh.normals, &mesh.texcoords);
             for i in 0..num_vertices {
+                let pos_x = p[i * 3];
+                let pos_y = p[i * 3 + 1];
+                let pos_z = p[i * 3 + 2];
+
+                aabb.refresh_aabb(pos_x, pos_y, pos_z);
+
                 vertices.push(Vertex {
-                    Position: vec3(p[i * 3], p[i * 3 + 1], p[i * 3 + 2]),
+                    Position: vec3(pos_x, pos_y, pos_z),
                     Normal: vec3(n[i * 3], n[i * 3 + 1], n[i * 3 + 2]),
-                    TexCoords: vec2(t[i * 2], t[i * 2 + 1]),
+                    // TODO: Change back, but make it work for no texture models
+                    // TexCoords: vec2(t[i * 2], t[i * 2 + 1])
+                    TexCoords: vec2(0f32, 0f32),
                 })
             }
 
@@ -95,6 +115,7 @@ impl Model {
 
             self.meshes.push(Mesh::new(vertices, indices, textures));
         }
+        self.aabb = aabb;
     }
 
     fn loadMaterialTexture(&mut self, path: &str, typeName: &str) -> Texture {
