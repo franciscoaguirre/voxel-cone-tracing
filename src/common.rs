@@ -57,4 +57,10 @@ pub fn process_input(window: &mut glfw::Window, delta_time: f32, camera: &mut Ca
     if window.get_key(Key::D) == Action::Press {
         camera.ProcessKeyboard(Camera_Movement::Right, delta_time);
     }
+    if window.get_key(Key::Space) == Action::Press {
+        camera.ProcessKeyboard(Camera_Movement::Up, delta_time);
+    }
+    if window.get_key(Key::LeftShift) == Action::Press {
+        camera.ProcessKeyboard(Camera_Movement::Down, delta_time);
+    }
 }

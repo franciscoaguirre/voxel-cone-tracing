@@ -121,9 +121,22 @@ unsafe fn voxelize_scene(
     let z_ortho_projection = ortho
         * cgmath::Matrix4::look_at_rh(Point3::new(0.0, 0.0, 2.0), origin_point, Vector3::unit_y());
 
+    // TODO: This should be the aabb of the entire scene
+    let scene_aabb = &models[0].aabb;
+    let aabb_middle_point = scene_aabb.middle_point();
+    let aabb_longer_side = scene_aabb.longer_axis_length();
+
+    let center_scene_matrix = cgmath::Matrix4::from_translation(-aabb_middle_point);
+    // aabb_longer_side is divided by two and we then use the inverse because 
+    // NDC coordinates goes from -1 to 1
+    let normalize_size_matrix = cgmath::Matrix4::from_scale(2f32 / aabb_longer_side);
+
+    let model_normalization_matrix = normalize_size_matrix * center_scene_matrix; 
+
     voxelization_shader.setMat4(c_str!("x_ortho_projection"), &x_ortho_projection);
     voxelization_shader.setMat4(c_str!("y_ortho_projection"), &y_ortho_projection);
     voxelization_shader.setMat4(c_str!("z_ortho_projection"), &z_ortho_projection);
+    voxelization_shader.setMat4(c_str!("model_normalization_matrix"), &model_normalization_matrix);
     voxelization_shader.setInt(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
 
     gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, *atomic_counter);
@@ -154,7 +167,7 @@ pub unsafe fn build_voxel_fragment_list() -> (u32, u32) {
             "src/shaders/voxelize.geom.glsl",
         );
 
-        let our_model = Model::new("assets/modified_cow.obj");
+        let our_model = Model::new("assets/bunny.obj");
 
         (our_shader, our_model)
     };
@@ -162,7 +175,6 @@ pub unsafe fn build_voxel_fragment_list() -> (u32, u32) {
 
     calculate_voxel_fragment_list_length(&voxelization_shader, &models, &mut atomic_counter);
     gl::MemoryBarrier(gl::ATOMIC_COUNTER_BUFFER);
-    let error: GLenum = gl::GetError();
 
     gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, atomic_counter);
     let count = gl::MapBufferRange(
@@ -172,7 +184,7 @@ pub unsafe fn build_voxel_fragment_list() -> (u32, u32) {
         gl::MAP_READ_BIT | gl::MAP_WRITE_BIT,
     ) as *mut GLuint;
 
-    let error = gl::GetError();
+    let _error = gl::GetError();
     // TODO: How to show these errors?
 
     let number_of_voxel_fragments = &*count;
