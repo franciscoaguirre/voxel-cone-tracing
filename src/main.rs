@@ -17,6 +17,8 @@ use camera::Camera;
 
 mod mesh;
 
+mod AABB;
+
 mod model;
 use model::Model;
 
@@ -67,7 +69,7 @@ fn main() {
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
     // Set shader program
-    let (our_shader, our_model) = unsafe {
+    let (our_shader, _our_model) = unsafe {
         gl::Enable(gl::DEPTH_TEST);
 
         let our_shader = Shader::with_geometry_shader(
@@ -75,12 +77,12 @@ fn main() {
             "src/shaders/render_voxel.frag.glsl",
             "src/shaders/render_voxel.geom.glsl",
         );
-        // let our_shader = Shader::new(
-        //     "src/shaders/render_voxel.vert.glsl",
-        //     "src/shaders/render_voxel.frag.glsl",
-        // );
+         //let our_shader = Shader::new(
+             //"src/shaders/model_loading.vert.glsl",
+             //"src/shaders/model_loading.frag.glsl",
+         //);
 
-        let our_model = Model::new("assets/modified_cow.obj");
+        let our_model = Model::new("assets/sponza.obj");
 
         (our_shader, our_model)
     };
@@ -141,10 +143,11 @@ fn main() {
         gl::Enable(gl::PROGRAM_POINT_SIZE);
     }
 
-    const NUMBER_OF_VERTICES: usize = 6568;
+    const NUMBER_OF_VERTICES: usize = 32946;
     // const NUMBER_OF_VERTICES: usize = 105077;
     // const NUMBER_OF_VERTICES: usize = 26302;
 
+    // vao to render voxel fragment list
     let vao = unsafe {
         let vertices: [f32; NUMBER_OF_VERTICES] = [0.0; NUMBER_OF_VERTICES];
 
@@ -197,6 +200,7 @@ fn main() {
         unsafe {
             gl::ClearColor(0.1, 0.1, 0.1, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+            gl::Enable(gl::DEPTH_TEST);
 
             our_shader.useProgram();
 
