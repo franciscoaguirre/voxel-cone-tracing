@@ -187,18 +187,18 @@ pub unsafe fn build_voxel_fragment_list() -> (u32, u32) {
     let _error = gl::GetError();
     // TODO: How to show these errors?
 
-    let number_of_voxel_fragments = &*count;
+    let number_of_voxel_fragments = *count;
 
     dbg!(number_of_voxel_fragments);
 
     generate_linear_buffer(
-        size_of::<GLuint>() * *number_of_voxel_fragments as usize,
+        size_of::<GLuint>() * number_of_voxel_fragments as usize,
         gl::R32UI,
         &mut VOXEL_POSITION_TEXTURE,
         &mut VOXEL_POSITION_TEXTURE_BUFFER,
     );
     generate_linear_buffer(
-        size_of::<GLuint>() * *number_of_voxel_fragments as usize,
+        size_of::<GLuint>() * number_of_voxel_fragments as usize,
         gl::RGBA8,
         &mut VOXEL_DIFFUSE_TEXTURE,
         &mut VOXEL_DIFFUSE_TEXTURE_BUFFER,
@@ -212,5 +212,5 @@ pub unsafe fn build_voxel_fragment_list() -> (u32, u32) {
     populate_voxel_fragment_list(&voxelization_shader, &models, &mut atomic_counter);
     gl::MemoryBarrier(gl::SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
-    (*number_of_voxel_fragments, VOXEL_POSITION_TEXTURE)
+    (number_of_voxel_fragments, VOXEL_POSITION_TEXTURE)
 }
