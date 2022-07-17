@@ -143,13 +143,9 @@ fn main() {
         gl::Enable(gl::PROGRAM_POINT_SIZE);
     }
 
-    const NUMBER_OF_VERTICES: usize = 32946;
-    // const NUMBER_OF_VERTICES: usize = 105077;
-    // const NUMBER_OF_VERTICES: usize = 26302;
-
     // vao to render voxel fragment list
     let vao = unsafe {
-        let vertices: [f32; NUMBER_OF_VERTICES] = [0.0; NUMBER_OF_VERTICES];
+        let vertices: Vec<f32> = vec![0.0; number_of_voxel_fragments as usize];
 
         let (mut vao, mut vbo) = (0, 0);
         gl::GenVertexArrays(1, &mut vao);
@@ -158,7 +154,7 @@ fn main() {
         gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
         gl::BufferData(
             gl::ARRAY_BUFFER,
-            size_of::<[f32; NUMBER_OF_VERTICES]>() as isize,
+            (size_of::<f32>() * vertices.len()) as isize,
             &vertices[0] as *const f32 as *const c_void,
             gl::STATIC_DRAW,
         );
@@ -260,11 +256,10 @@ fn main() {
             // gl::BindVertexArray(empty_vao);
 
             gl::BindVertexArray(vao);
-            gl::DrawArrays(gl::POINTS, 0, NUMBER_OF_VERTICES as i32);
+            gl::DrawArrays(gl::POINTS, 0, number_of_voxel_fragments as i32);
             // gl::DrawArrays(gl::POINTS, 0, 3);
 
             // let error = gl::GetError();
-            // dbg!(error);
         }
 
         // GLFW: Swap buffers and poll I/O events
