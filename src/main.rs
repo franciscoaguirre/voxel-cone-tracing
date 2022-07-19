@@ -69,7 +69,7 @@ fn main() {
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
     // Set shader program
-    let (our_shader, _our_model) = unsafe {
+    let render_voxel_shader = unsafe {
         gl::Enable(gl::DEPTH_TEST);
 
         let our_shader = Shader::with_geometry_shader(
@@ -77,12 +77,19 @@ fn main() {
             "src/shaders/render_voxel.frag.glsl",
             "src/shaders/render_voxel.geom.glsl",
         );
-         //let our_shader = Shader::new(
-             //"src/shaders/model_loading.vert.glsl",
-             //"src/shaders/model_loading.frag.glsl",
-         //);
 
-        let our_model = Model::new("assets/sponza.obj");
+        our_shader
+    };
+
+    let (render_model_shader, our_model) = unsafe {
+        gl::Enable(gl::DEPTH_TEST);
+
+         let our_shader = Shader::new(
+             "src/shaders/model_loading.vert.glsl",
+             "src/shaders/model_loading.frag.glsl",
+         );
+
+        let our_model = Model::new("assets/bunny.obj");
 
         (our_shader, our_model)
     };
@@ -198,7 +205,6 @@ fn main() {
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
             gl::Enable(gl::DEPTH_TEST);
 
-            our_shader.useProgram();
 
             let projection: Matrix4<f32> = perspective(
                 Deg(camera.Zoom),
@@ -207,21 +213,11 @@ fn main() {
                 10000.0,
             );
             let view = camera.GetViewMatrix();
-            our_shader.setMat4(c_str!("projection"), &projection);
-            our_shader.setMat4(c_str!("view"), &view);
-
             let mut model = Matrix4::<f32>::from_translation(vec3(0.0, 0.0, 0.0));
             model = model * Matrix4::from_scale(1.); // i
-            our_shader.setMat4(c_str!("model"), &model);
-
-            our_shader.setInt(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
-            our_shader.setFloat(
-                c_str!("half_dimension"),
-                100.0 / constants::VOXEL_DIMENSION as f32,
-            );
 
             // Not using cow model, using voxel fragment list
-            // our_model.Draw(&our_shader);
+            // our_model.Draw(&render_model_shader);
 
             // TODO: Not rendering anything
             // gl::BindBuffer(gl::ARRAY_BUFFER, point_cube);
@@ -244,9 +240,21 @@ fn main() {
                 gl::READ_ONLY,
                 gl::RGB10_A2UI,
             );
-            our_shader.setInt(c_str!("voxel_position_texture"), 0);
 
-            our_shader.setInt(
+            render_voxel_shader.useProgram();
+            render_voxel_shader.setMat4(c_str!("projection"), &projection);
+            render_voxel_shader.setMat4(c_str!("view"), &view);
+            render_voxel_shader.setMat4(c_str!("model"), &model);
+
+            render_voxel_shader.setInt(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
+            render_voxel_shader.setFloat(
+                c_str!("half_dimension"),
+                100.0 / constants::VOXEL_DIMENSION as f32,
+            );
+
+            render_voxel_shader.setInt(c_str!("voxel_position_texture"), 0);
+
+            render_voxel_shader.setInt(
                 c_str!("voxel_fragment_count"),
                 number_of_voxel_fragments as i32,
             );
