@@ -13,9 +13,6 @@ out vec2 fragment_texture_coordinates;
 flat out int fragment_dominant_axis;
 flat out vec4 fragment_aabb; 
 
-uniform mat4 x_ortho_projection;
-uniform mat4 y_ortho_projection;
-uniform mat4 z_ortho_projection;
 uniform int voxel_dimension;
 
 int biggest_component(vec3 triangle_normal) {
@@ -34,7 +31,7 @@ int biggest_component(vec3 triangle_normal) {
     }
 }
 
-vec4 define_aabb(vec4 points[3]) {
+vec4 define_aabb(vec4 points[3], vec2 half_pixel) {
     vec4 aabb;
 
     aabb.xy = points[0].xy;
@@ -46,7 +43,7 @@ vec4 define_aabb(vec4 points[3]) {
     aabb.xy = min(points[2].xy, aabb.xy);
     aabb.zw = max(points[2].xy, aabb.zw);
 
-    return aabb;
+    return aabb + vec4(-half_pixel, half_pixel);
 }
 
 void main() {
@@ -61,63 +58,93 @@ void main() {
     fragment_dominant_axis = dominant_axis;
     mat4 projection;
 
-    if(dominant_axis == 0) {
-      projection = x_ortho_projection;
-    } else if(dominant_axis == 1) {
-      projection = y_ortho_projection;
+    vec4 vertex[3];
+    vertex[0] = gl_in[0].gl_Position;
+    vertex[1] = gl_in[1].gl_Position;
+    vertex[2] = gl_in[2].gl_Position;
+    vec3 temp;
+
+    // Project triangle to dominant plane
+    if (dominant_axis == 0) {
+        // x-axis is depth
+        for (int i = 0; i < gl_in.length(); i++)
+        {
+            temp.x = vertex[i].z;
+            temp.z = -vertex[i].x; 
+            
+            vertex[i].xz = temp.xz; 
+        }
+    
+    } else if (dominant_axis == 1) {
+        // y-axis is depth
+    
+        for (int i = 0; i < gl_in.length(); i++)
+        {
+            temp.y = vertex[i].z;
+            temp.z = -vertex[i].y;
+            
+            vertex[i].yz = temp.yz; 
+        }
     } else {
-      projection = z_ortho_projection;
+        // z-axis is depth, which is usual case so do nothing
     }
 
-    vec4 projected_vertices[3];
-    projected_vertices[0] = projection * gl_in[0].gl_Position;
-    projected_vertices[1] = projection * gl_in[1].gl_Position;
-    projected_vertices[2] = projection * gl_in[2].gl_Position;
+    vec3 triangleNormal = normalize(cross(vertex[1].xyz - vertex[0].xyz, vertex[2].xyz - vertex[0].xyz));
+    
+    // Change triangle winding, so normal points to "camera"
+    if (dot(triangleNormal, vec3(0.0, 0.0, 1.0)) < 0.0)
+    {
+        vec4 vertexTemp = vertex[2];
+        
+        vertex[2] = vertex[1];
+    
+        vertex[1] = vertexTemp;
+    }
+    vec2 half_pixel = vec2(1.0 / voxel_dimension, 1.0 / voxel_dimension);
 
-    vec2 half_pixel = vec2(1.0 / voxel_dimension, 1.0 / voxel_dimension) / 2.0;
-    float pl = sqrt(2) / voxel_dimension;
-
-    vec4 aabb = define_aabb(projected_vertices);
+    vec4 aabb = define_aabb(vertex, half_pixel);
     fragment_aabb = aabb;
 
-    // vec3 edge_first_second = vec3( projected_vertices[1].xy - projected_vertices[0].xy, 0 );
-    // vec3 edge_second_third = vec3( projected_vertices[2].xy - projected_vertices[1].xy, 0 );
-    // vec3 edge_third_first = vec3( projected_vertices[0].xy - projected_vertices[2].xy, 0 );
-    // vec3 n0 = cross( edge_first_second, vec3(0,0,1) ); // TODO: Why is this vec3(0,0,1) if we could project to another axis?
-    // vec3 n1 = cross( edge_second_third, vec3(0,0,1) );
-    // vec3 n2 = cross( edge_third_first, vec3(0,0,1) );
-    //
-    // //dilate the triangle
-    // projected_vertices[0].xy += pl * (
-    //     (edge_third_first.xy / dot(edge_third_first.xy, n0.xy)) + (edge_first_second.xy/dot(edge_first_second.xy,n2.xy))
-    // );
-    // projected_vertices[1].xy += pl * (
-    //     (edge_first_second.xy/dot(edge_first_second.xy,n1.xy)) + (edge_second_third.xy/dot(edge_second_third.xy,n0.xy))
-    // );
-    // projected_vertices[2].xy += pl * (
-    //     (edge_second_third.xy / dot(edge_second_third.xy,n2.xy)) + (edge_third_first.xy/dot(edge_third_first.xy,n1.xy))
-    // );
+    vec4 trianglePlane;
+        
+    trianglePlane.xyz = normalize(cross(vertex[1].xyz - vertex[0].xyz, vertex[2].xyz - vertex[0].xyz));
+        
+    trianglePlane.w = -dot(vertex[0].xyz, trianglePlane.xyz);
+    
+    if (trianglePlane.z == 0.0) {
+        return;
+    }
 
-      //gl_Position = proj * gl_in[0].gl_Position;
-    gl_Position = projected_vertices[0];
-    fragment_position = projected_vertices[0].xyz;
-    fragment_normal = normal[0];
-    fragment_texture_coordinates = tex_coordinates[0];
-    EmitVertex();
+    vec3 plane[3];
+	       
+    for (int i = 0; i < gl_in.length(); i++) {
+      plane[i] = cross(vertex[i].xyw, vertex[(i + 2) % 3].xyw);
+		
+      plane[i].z -= dot(half_pixel, abs(plane[i].xy));
+    }
+        
+    vec3 intersect[3];
 
-    //gl_Position = proj * gl_in[1].gl_Position;
-    gl_Position = projected_vertices[1];
-    fragment_position = projected_vertices[1].xyz;
-    fragment_normal = normal[1];
-    fragment_texture_coordinates = tex_coordinates[1];
-    EmitVertex();
+    for (int i = 0; i < gl_in.length(); i++) {
+        intersect[i] = cross(plane[i], plane[(i+1) % 3]);
+        
+        if (intersect[i].z == 0.0) {
+            return;
+        }
+        
+        intersect[i] /= intersect[i].z; 
+    }
 
-    //gl_Position = proj * gl_in[2].gl_Position;
-    gl_Position = projected_vertices[2];
-    fragment_position = projected_vertices[2].xyz;
-    fragment_normal = normal[2];
-    fragment_texture_coordinates = tex_coordinates[2];
-    EmitVertex();
+    for (int i = 0; i < 3; i++) {
+      gl_Position.xyw = intersect[i];
+        
+      // Calculate the new z-Coordinate derived from a point on a plane
+      gl_Position.z = -(trianglePlane.x * intersect[i].x + trianglePlane.y * intersect[i].y + trianglePlane.w) / trianglePlane.z; 
+      fragment_position = intersect[i].xyz;
+      fragment_normal = normal[i];
+      fragment_texture_coordinates = tex_coordinates[i];
+      EmitVertex();
+    }
 
     EndPrimitive();
 }
