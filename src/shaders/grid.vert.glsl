@@ -16,7 +16,7 @@ void main() {
     /* gl_Position = projection * view * model * voxel_position; */
 
     voxel_position = vec4(imageLoad(voxel_position_texture, gl_VertexID).xyz, 1.0);
-    gl_Position = voxel_position;
+    gl_Position = projection * view * model * voxel_position;
     gl_PointSize = 25.0;
     vertex_id = gl_VertexID;
 

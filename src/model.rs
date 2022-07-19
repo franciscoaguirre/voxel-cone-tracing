@@ -80,9 +80,10 @@ impl Model {
 
                 vertices.push(Vertex {
                     Position: vec3(pos_x, pos_y, pos_z),
-                    Normal: vec3(n[i * 3], n[i * 3 + 1], n[i * 3 + 2]),
+                    Normal: vec3(0f32,0f32,0f32),
                     // TODO: Change back, but make it work for no texture models
                     // TexCoords: vec2(t[i * 2], t[i * 2 + 1])
+                    // Normal: vec3(n[i * 3], n[i * 3 + 1], n[i * 3 + 2]),
                     TexCoords: vec2(0f32, 0f32),
                 })
             }
