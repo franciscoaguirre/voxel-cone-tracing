@@ -29,7 +29,7 @@ mod voxelization;
 fn main() {
     // Camera setup
     let mut camera = Camera {
-        Position: Point3::new(0.0, 0.0, 3.0),
+        Position: Point3::new(0.0, 0.0, -3.0),
         ..Camera::default()
     };
 
@@ -89,7 +89,7 @@ fn main() {
              "src/shaders/model_loading.frag.glsl",
          );
 
-        let our_model = Model::new("assets/bunny.obj");
+        let our_model = Model::new("assets/cow.obj");
 
         (our_shader, our_model)
     };
@@ -216,8 +216,9 @@ fn main() {
             let mut model = Matrix4::<f32>::from_translation(vec3(0.0, 0.0, 0.0));
             model = model * Matrix4::from_scale(1.); // i
 
+            //render_model_shader.useProgram();
             // Not using cow model, using voxel fragment list
-            // our_model.Draw(&render_model_shader);
+            //our_model.Draw(&render_model_shader);
 
             // TODO: Not rendering anything
             // gl::BindBuffer(gl::ARRAY_BUFFER, point_cube);
@@ -249,7 +250,7 @@ fn main() {
             render_voxel_shader.setInt(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
             render_voxel_shader.setFloat(
                 c_str!("half_dimension"),
-                100.0 / constants::VOXEL_DIMENSION as f32,
+                1.0 / constants::VOXEL_DIMENSION as f32,
             );
 
             render_voxel_shader.setInt(c_str!("voxel_position_texture"), 0);

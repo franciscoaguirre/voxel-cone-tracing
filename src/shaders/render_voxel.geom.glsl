@@ -31,8 +31,8 @@ void create_z_positive_face() {
     EmitVertex();
 
     position = vec4(
-        voxel_position[0].x + half_dimension,
-        voxel_position[0].y - half_dimension,
+        voxel_position[0].x - half_dimension,
+        voxel_position[0].y + half_dimension,
         voxel_position[0].z + half_dimension,
         voxel_position[0].w
     );
@@ -40,8 +40,8 @@ void create_z_positive_face() {
     EmitVertex();
 
     position = vec4(
-        voxel_position[0].x - half_dimension,
-        voxel_position[0].y + half_dimension,
+        voxel_position[0].x + half_dimension,
+        voxel_position[0].y - half_dimension,
         voxel_position[0].z + half_dimension,
         voxel_position[0].w
     );
@@ -217,8 +217,6 @@ void main() {
     create_x_positive_face();
     create_z_negative_face();
     create_x_negative_face();
-
-    EmitVertex(); // To start from scratch
 
     create_y_positive_face();
 
