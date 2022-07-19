@@ -48,6 +48,8 @@ uvec4 calculate_texture_coordinates() {
     } else {
         texture_coordinates = temp;
     }
+
+    texture_coordinates.z = voxel_dimension - texture_coordinates.z;
     return texture_coordinates;
 }
 
