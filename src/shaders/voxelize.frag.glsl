@@ -48,6 +48,8 @@ uvec4 calculate_texture_coordinates() {
     } else {
         texture_coordinates = temp;
     }
+
+    texture_coordinates.z = voxel_dimension - texture_coordinates.z;
     return texture_coordinates;
 }
 
@@ -69,7 +71,7 @@ void store_voxel_fragment(uvec4 texture_coordinates, uint fragment_list_index) {
 }
 
 void main() {
-    // discard_if_outside_aabb();
+    discard_if_outside_aabb();
 
     uvec4 texture_coordinates = calculate_texture_coordinates();
 
