@@ -112,15 +112,6 @@ unsafe fn voxelize_scene(
 
     gl::Viewport(0, 0, constants::VOXEL_DIMENSION, constants::VOXEL_DIMENSION);
 
-    let origin_point = Point3::new(0.0, 0.0, 0.0);
-    let ortho = cgmath::ortho(-1.0, 1.0, -1.0, 1.0, 2.0 - 1.0, 3.0);
-    let x_ortho_projection = ortho
-        * cgmath::Matrix4::look_at_rh(Point3::new(2.0, 0.0, 0.0), origin_point, Vector3::unit_y());
-    let y_ortho_projection = ortho
-        * cgmath::Matrix4::look_at_rh(Point3::new(0.0, 2.0, 0.0), origin_point, -Vector3::unit_z());
-    let z_ortho_projection = ortho
-        * cgmath::Matrix4::look_at_rh(Point3::new(0.0, 0.0, 2.0), origin_point, Vector3::unit_y());
-
     // TODO: This should be the aabb of the entire scene
     let scene_aabb = &models[0].aabb;
     let aabb_middle_point = scene_aabb.middle_point();
@@ -133,9 +124,6 @@ unsafe fn voxelize_scene(
 
     let model_normalization_matrix = normalize_size_matrix * center_scene_matrix; 
 
-    voxelization_shader.setMat4(c_str!("x_ortho_projection"), &x_ortho_projection);
-    voxelization_shader.setMat4(c_str!("y_ortho_projection"), &y_ortho_projection);
-    voxelization_shader.setMat4(c_str!("z_ortho_projection"), &z_ortho_projection);
     voxelization_shader.setMat4(c_str!("model_normalization_matrix"), &model_normalization_matrix);
     voxelization_shader.setInt(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
 
@@ -167,7 +155,7 @@ pub unsafe fn build_voxel_fragment_list() -> (u32, u32) {
             "src/shaders/voxelize.geom.glsl",
         );
 
-        let our_model = Model::new("assets/bunny.obj");
+        let our_model = Model::new("assets/cow.obj");
 
         (our_shader, our_model)
     };
