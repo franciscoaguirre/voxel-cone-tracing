@@ -17,13 +17,15 @@ pub enum Camera_Movement {
     Backward,
     Left,
     Right,
+    Up,
+    Down
 }
 use self::Camera_Movement::*;
 
 // Default camera values
-const YAW: f32 = -90.0;
+const YAW: f32 = 90.0;
 const PITCH: f32 = 0.0;
-const SPEED: f32 = 200.5;
+const SPEED: f32 = 1.0;
 const SENSITIVITY: f32 = 0.1;
 const ZOOM: f32 = 45.0;
 
@@ -47,7 +49,7 @@ impl Default for Camera {
     fn default() -> Camera {
         let mut camera = Camera {
             Position: Point3::new(0.0, 0.0, 0.0),
-            Front: vec3(0.0, 0.0, -1.0),
+            Front: vec3(0.0, 0.0, 1.0),
             Up: Vector3::zero(),    // initialized later
             Right: Vector3::zero(), // initialized later
             WorldUp: Vector3::unit_y(),
@@ -82,6 +84,12 @@ impl Camera {
         }
         if direction == Right {
             self.Position += self.Right * velocity;
+        }
+        if direction == Up {
+            self.Position += self.Up * velocity;
+        }
+        if direction == Down {
+            self.Position += -(self.Up * velocity);
         }
     }
 

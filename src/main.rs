@@ -17,6 +17,8 @@ use camera::Camera;
 
 mod mesh;
 
+mod AABB;
+
 mod model;
 use model::Model;
 
@@ -27,7 +29,7 @@ mod voxelization;
 fn main() {
     // Camera setup
     let mut camera = Camera {
-        Position: Point3::new(0.0, 0.0, 3.0),
+        Position: Point3::new(0.0, 0.0, -3.0),
         ..Camera::default()
     };
 
@@ -67,7 +69,7 @@ fn main() {
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
     // Set shader program
-    let (our_shader, our_model) = unsafe {
+    let render_voxel_shader = unsafe {
         gl::Enable(gl::DEPTH_TEST);
 
         let our_shader = Shader::with_geometry_shader(
@@ -75,12 +77,19 @@ fn main() {
             "src/shaders/render_voxel.frag.glsl",
             "src/shaders/render_voxel.geom.glsl",
         );
-        // let our_shader = Shader::new(
-        //     "src/shaders/render_voxel.vert.glsl",
-        //     "src/shaders/render_voxel.frag.glsl",
-        // );
 
-        let our_model = Model::new("assets/modified_cow.obj");
+        our_shader
+    };
+
+    let (render_model_shader, our_model) = unsafe {
+        gl::Enable(gl::DEPTH_TEST);
+
+         let our_shader = Shader::new(
+             "src/shaders/model_loading.vert.glsl",
+             "src/shaders/model_loading.frag.glsl",
+         );
+
+        let our_model = Model::new("assets/cow.obj");
 
         (our_shader, our_model)
     };
@@ -141,12 +150,9 @@ fn main() {
         gl::Enable(gl::PROGRAM_POINT_SIZE);
     }
 
-    const NUMBER_OF_VERTICES: usize = 6568;
-    // const NUMBER_OF_VERTICES: usize = 105077;
-    // const NUMBER_OF_VERTICES: usize = 26302;
-
+    // vao to render voxel fragment list
     let vao = unsafe {
-        let vertices: [f32; NUMBER_OF_VERTICES] = [0.0; NUMBER_OF_VERTICES];
+        let vertices: Vec<f32> = vec![0.0; number_of_voxel_fragments as usize];
 
         let (mut vao, mut vbo) = (0, 0);
         gl::GenVertexArrays(1, &mut vao);
@@ -155,7 +161,7 @@ fn main() {
         gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
         gl::BufferData(
             gl::ARRAY_BUFFER,
-            size_of::<[f32; NUMBER_OF_VERTICES]>() as isize,
+            (size_of::<f32>() * vertices.len()) as isize,
             &vertices[0] as *const f32 as *const c_void,
             gl::STATIC_DRAW,
         );
@@ -197,8 +203,8 @@ fn main() {
         unsafe {
             gl::ClearColor(0.1, 0.1, 0.1, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+            gl::Enable(gl::DEPTH_TEST);
 
-            our_shader.useProgram();
 
             let projection: Matrix4<f32> = perspective(
                 Deg(camera.Zoom),
@@ -207,21 +213,12 @@ fn main() {
                 10000.0,
             );
             let view = camera.GetViewMatrix();
-            our_shader.setMat4(c_str!("projection"), &projection);
-            our_shader.setMat4(c_str!("view"), &view);
-
             let mut model = Matrix4::<f32>::from_translation(vec3(0.0, 0.0, 0.0));
             model = model * Matrix4::from_scale(1.); // i
-            our_shader.setMat4(c_str!("model"), &model);
 
-            our_shader.setInt(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
-            our_shader.setFloat(
-                c_str!("half_dimension"),
-                100.0 / constants::VOXEL_DIMENSION as f32,
-            );
-
+            //render_model_shader.useProgram();
             // Not using cow model, using voxel fragment list
-            // our_model.Draw(&our_shader);
+            //our_model.Draw(&render_model_shader);
 
             // TODO: Not rendering anything
             // gl::BindBuffer(gl::ARRAY_BUFFER, point_cube);
@@ -244,9 +241,21 @@ fn main() {
                 gl::READ_ONLY,
                 gl::RGB10_A2UI,
             );
-            our_shader.setInt(c_str!("voxel_position_texture"), 0);
 
-            our_shader.setInt(
+            render_voxel_shader.useProgram();
+            render_voxel_shader.setMat4(c_str!("projection"), &projection);
+            render_voxel_shader.setMat4(c_str!("view"), &view);
+            render_voxel_shader.setMat4(c_str!("model"), &model);
+
+            render_voxel_shader.setInt(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
+            render_voxel_shader.setFloat(
+                c_str!("half_dimension"),
+                1.0 / constants::VOXEL_DIMENSION as f32,
+            );
+
+            render_voxel_shader.setInt(c_str!("voxel_position_texture"), 0);
+
+            render_voxel_shader.setInt(
                 c_str!("voxel_fragment_count"),
                 number_of_voxel_fragments as i32,
             );
@@ -256,11 +265,10 @@ fn main() {
             // gl::BindVertexArray(empty_vao);
 
             gl::BindVertexArray(vao);
-            gl::DrawArrays(gl::POINTS, 0, NUMBER_OF_VERTICES as i32);
+            gl::DrawArrays(gl::POINTS, 0, number_of_voxel_fragments as i32);
             // gl::DrawArrays(gl::POINTS, 0, 3);
 
             // let error = gl::GetError();
-            // dbg!(error);
         }
 
         // GLFW: Swap buffers and poll I/O events
