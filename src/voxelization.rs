@@ -155,7 +155,7 @@ pub unsafe fn build_voxel_fragment_list() -> (u32, u32) {
             "src/shaders/voxelize.geom.glsl",
         );
 
-        let our_model = Model::new("assets/cow.obj");
+        let our_model = Model::new("assets/sponza.obj");
 
         (our_shader, our_model)
     };

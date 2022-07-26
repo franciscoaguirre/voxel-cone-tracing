@@ -76,15 +76,24 @@ impl Model {
                 let pos_y = p[i * 3 + 1];
                 let pos_z = p[i * 3 + 2];
 
+                let normal = if i * 3 + 2 < t.len() {
+                 vec3(t[i * 3], t[i * 3 + 1], t[i * 3 + 2])
+                } else {
+                 vec3(0.0, 0.0, 0.0)
+                };
+
+                let tex_coords = if i * 2 + 1 < t.len() {
+                 vec2(t[i * 2], t[i * 2 + 1])
+                } else {
+                 vec2(0.0, 0.0)
+                };
+
                 aabb.refresh_aabb(pos_x, pos_y, pos_z);
 
                 vertices.push(Vertex {
                     Position: vec3(pos_x, pos_y, pos_z),
-                    Normal: vec3(0f32,0f32,0f32),
-                    // TODO: Change back, but make it work for no texture models
-                    // TexCoords: vec2(t[i * 2], t[i * 2 + 1])
-                    // Normal: vec3(n[i * 3], n[i * 3 + 1], n[i * 3 + 2]),
-                    TexCoords: vec2(0f32, 0f32),
+                    Normal: normal,
+                    TexCoords: tex_coords
                 })
             }
 
