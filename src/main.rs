@@ -89,7 +89,7 @@ fn main() {
              "src/shaders/model_loading.frag.glsl",
          );
 
-        let our_model = Model::new("assets/cow.obj");
+        let our_model = Model::new("assets/bunny.obj");
 
         (our_shader, our_model)
     };
@@ -139,47 +139,47 @@ fn main() {
     //     gl::BindBuffer(gl::ARRAY_BUFFER, 0);
     // };
 
-    let number_of_voxel_fragments;
-    let voxel_position_texture;
+    //let number_of_voxel_fragments;
+    //let voxel_position_texture;
 
-    unsafe {
-        let return_value = voxelization::build_voxel_fragment_list();
-        number_of_voxel_fragments = return_value.0;
-        voxel_position_texture = return_value.1;
+    //unsafe {
+        //let return_value = voxelization::build_voxel_fragment_list();
+        //number_of_voxel_fragments = return_value.0;
+        //voxel_position_texture = return_value.1;
 
-        gl::Enable(gl::PROGRAM_POINT_SIZE);
-    }
+        //gl::Enable(gl::PROGRAM_POINT_SIZE);
+    //}
 
-    // vao to render voxel fragment list
-    let vao = unsafe {
-        let vertices: Vec<f32> = vec![0.0; number_of_voxel_fragments as usize];
+    //// vao to render voxel fragment list
+    //let vao = unsafe {
+        //let vertices: Vec<f32> = vec![0.0; number_of_voxel_fragments as usize];
 
-        let (mut vao, mut vbo) = (0, 0);
-        gl::GenVertexArrays(1, &mut vao);
-        gl::GenBuffers(1, &mut vbo);
-        gl::BindVertexArray(vao);
-        gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-        gl::BufferData(
-            gl::ARRAY_BUFFER,
-            (size_of::<f32>() * vertices.len()) as isize,
-            &vertices[0] as *const f32 as *const c_void,
-            gl::STATIC_DRAW,
-        );
-        gl::VertexAttribPointer(
-            0,
-            3,
-            gl::FLOAT,
-            gl::FALSE,
-            3 * size_of::<GLfloat>() as i32,
-            std::ptr::null(),
-        );
-        gl::EnableVertexAttribArray(0);
+        //let (mut vao, mut vbo) = (0, 0);
+        //gl::GenVertexArrays(1, &mut vao);
+        //gl::GenBuffers(1, &mut vbo);
+        //gl::BindVertexArray(vao);
+        //gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
+        //gl::BufferData(
+            //gl::ARRAY_BUFFER,
+            //(size_of::<f32>() * vertices.len()) as isize,
+            //&vertices[0] as *const f32 as *const c_void,
+            //gl::STATIC_DRAW,
+        //);
+        //gl::VertexAttribPointer(
+            //0,
+            //3,
+            //gl::FLOAT,
+            //gl::FALSE,
+            //3 * size_of::<GLfloat>() as i32,
+            //std::ptr::null(),
+        //);
+        //gl::EnableVertexAttribArray(0);
 
-        gl::BindBuffer(gl::ARRAY_BUFFER, 0);
-        gl::BindVertexArray(0);
+        //gl::BindBuffer(gl::ARRAY_BUFFER, 0);
+        //gl::BindVertexArray(0);
 
-        vao
-    };
+        //vao
+    //};
 
     // Render loop
     while !window.should_close() {
@@ -218,7 +218,12 @@ fn main() {
 
             //render_model_shader.useProgram();
             // Not using cow model, using voxel fragment list
-            //our_model.Draw(&render_model_shader);
+            render_model_shader.useProgram();
+            render_model_shader.setMat4(c_str!("projection"), &projection);
+            render_model_shader.setMat4(c_str!("view"), &view);
+            render_model_shader.setMat4(c_str!("model"), &model);
+
+            our_model.Draw(&render_model_shader);
 
             // TODO: Not rendering anything
             // gl::BindBuffer(gl::ARRAY_BUFFER, point_cube);
@@ -232,40 +237,40 @@ fn main() {
             //         * constants::VOXEL_DIMENSION,
             // );
 
-            gl::BindImageTexture(
-                0,
-                voxel_position_texture,
-                0,
-                gl::TRUE,
-                0,
-                gl::READ_ONLY,
-                gl::RGB10_A2UI,
-            );
+            //gl::BindImageTexture(
+                //0,
+                //voxel_position_texture,
+                //0,
+                //gl::TRUE,
+                //0,
+                //gl::READ_ONLY,
+                //gl::RGB10_A2UI,
+            //);
 
-            render_voxel_shader.useProgram();
-            render_voxel_shader.setMat4(c_str!("projection"), &projection);
-            render_voxel_shader.setMat4(c_str!("view"), &view);
-            render_voxel_shader.setMat4(c_str!("model"), &model);
+            //render_voxel_shader.useProgram();
+            //render_voxel_shader.setMat4(c_str!("projection"), &projection);
+            //render_voxel_shader.setMat4(c_str!("view"), &view);
+            //render_voxel_shader.setMat4(c_str!("model"), &model);
 
-            render_voxel_shader.setInt(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
-            render_voxel_shader.setFloat(
-                c_str!("half_dimension"),
-                1.0 / constants::VOXEL_DIMENSION as f32,
-            );
+            //render_voxel_shader.setInt(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
+            //render_voxel_shader.setFloat(
+                //c_str!("half_dimension"),
+                //1.0 / constants::VOXEL_DIMENSION as f32,
+            //);
 
-            render_voxel_shader.setInt(c_str!("voxel_position_texture"), 0);
+            //render_voxel_shader.setInt(c_str!("voxel_position_texture"), 0);
 
-            render_voxel_shader.setInt(
-                c_str!("voxel_fragment_count"),
-                number_of_voxel_fragments as i32,
-            );
+            //render_voxel_shader.setInt(
+                //c_str!("voxel_fragment_count"),
+                //number_of_voxel_fragments as i32,
+            //);
 
             // let mut empty_vao = 0;
             // gl::GenVertexArrays(1, &mut empty_vao);
             // gl::BindVertexArray(empty_vao);
 
-            gl::BindVertexArray(vao);
-            gl::DrawArrays(gl::POINTS, 0, number_of_voxel_fragments as i32);
+            //gl::BindVertexArray(vao);
+            //gl::DrawArrays(gl::POINTS, 0, number_of_voxel_fragments as i32);
             // gl::DrawArrays(gl::POINTS, 0, 3);
 
             // let error = gl::GetError();
