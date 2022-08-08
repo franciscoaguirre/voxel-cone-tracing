@@ -3,6 +3,7 @@
 // layout (location = 0) in vec3 a_position;
 
 out vec4 voxel_position;
+out vec4 voxel_color;
 out int vertex_id;
 
 uniform mat4 model;
@@ -10,6 +11,7 @@ uniform mat4 view;
 uniform mat4 projection;
 uniform int voxel_dimension;
 uniform layout(binding = 0, rgb10_a2ui) uimageBuffer voxel_position_texture;
+uniform layout(binding = 1, rgba8) imageBuffer voxel_diffuse_texture;
 uniform int voxel_fragment_count;
 
 void main() {
@@ -26,6 +28,7 @@ void main() {
     gl_Position = voxel_position;
     gl_PointSize = 25.0;
     vertex_id = gl_VertexID;
+    voxel_color = imageLoad(voxel_diffuse_texture, gl_VertexID);
 
     // TODO: Later
     /* texture_coordinates.x = gl_VertexID % voxel_dimension; */
