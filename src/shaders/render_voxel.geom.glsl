@@ -5,8 +5,10 @@ layout (triangle_strip, max_vertices = 22) out;
 
 out flat int geom_vertex_id;
 out flat vec3 fragment_normal;
+out flat vec4 fragment_color;
 
 in vec4 voxel_position[];
+in vec4 voxel_color[];
 in int vertex_id[];
 
 uniform mat4 model;
@@ -213,6 +215,7 @@ void create_y_negative_face() {
 }
 
 void main() {
+    fragment_color = voxel_color[0];
     create_z_positive_face();
     create_x_positive_face();
     create_z_negative_face();

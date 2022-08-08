@@ -98,6 +98,15 @@ unsafe fn populate_voxel_fragment_list(
         gl::READ_WRITE,
         gl::RGB10_A2UI,
     );
+    gl::BindImageTexture(
+        1,
+        VOXEL_DIFFUSE_TEXTURE,
+        0,
+        gl::FALSE,
+        0,
+        gl::READ_WRITE,
+        gl::RGBA8,
+    );
     voxelization_shader.setInt(c_str!("u_voxelPos"), 0);
 
     voxelize_scene(voxelization_shader, models, atomic_counter);
@@ -141,7 +150,7 @@ unsafe fn voxelize_scene(
     gl::Viewport(0, 0, constants::SOURCE_WIDTH, constants::SOURCE_HEIGHT);
 }
 
-pub unsafe fn build_voxel_fragment_list() -> (u32, u32) {
+pub unsafe fn build_voxel_fragment_list() -> (u32, u32, u32) {
     let mut atomic_counter: u32 = 0;
     let error: GLenum = gl::GetError();
     generate_atomic_counter_buffer(&mut atomic_counter);
@@ -155,7 +164,7 @@ pub unsafe fn build_voxel_fragment_list() -> (u32, u32) {
             "src/shaders/voxelize.geom.glsl",
         );
 
-        let our_model = Model::new("assets/sponza.obj");
+        let our_model = Model::new("assets/colored_cow.obj");
 
         (our_shader, our_model)
     };
@@ -200,5 +209,5 @@ pub unsafe fn build_voxel_fragment_list() -> (u32, u32) {
     populate_voxel_fragment_list(&voxelization_shader, &models, &mut atomic_counter);
     gl::MemoryBarrier(gl::SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
-    (number_of_voxel_fragments, VOXEL_POSITION_TEXTURE)
+    (number_of_voxel_fragments, VOXEL_POSITION_TEXTURE, VOXEL_DIFFUSE_TEXTURE)
 }
