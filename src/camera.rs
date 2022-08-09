@@ -2,7 +2,7 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 
-use cgmath;
+
 use cgmath::prelude::*;
 use cgmath::vec3;
 
@@ -11,14 +11,14 @@ type Vector3 = cgmath::Vector3<f32>;
 type Matrix4 = cgmath::Matrix4<f32>;
 
 // Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub enum Camera_Movement {
     Forward,
     Backward,
     Left,
     Right,
     Up,
-    Down
+    Down,
 }
 use self::Camera_Movement::*;
 

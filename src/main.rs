@@ -17,7 +17,7 @@ use camera::Camera;
 
 mod mesh;
 
-mod AABB;
+mod aabb;
 
 mod model;
 use model::Model;
@@ -72,72 +72,70 @@ fn main() {
     let render_voxel_shader = unsafe {
         gl::Enable(gl::DEPTH_TEST);
 
-        let our_shader = Shader::with_geometry_shader(
+        Shader::with_geometry_shader(
             "src/shaders/render_voxel.vert.glsl",
             "src/shaders/render_voxel.frag.glsl",
             "src/shaders/render_voxel.geom.glsl",
-        );
-
-        our_shader
+        )
     };
 
-    let (render_model_shader, our_model) = unsafe {
+    let (render_model_shader, _our_model) = unsafe {
         gl::Enable(gl::DEPTH_TEST);
 
-         let our_shader = Shader::new(
-             "src/shaders/model_loading.vert.glsl",
-             "src/shaders/model_loading.frag.glsl",
-         );
+        let our_shader = Shader::new(
+            "src/shaders/model_loading.vert.glsl",
+            "src/shaders/model_loading.frag.glsl",
+        );
 
         let our_model = Model::new("assets/colored_cow.obj");
 
         (our_shader, our_model)
     };
 
-     let mut point_cube = 0;
-     unsafe {
-         let mut data: Vec<f32> = vec![
-             0.0;
-             3usize
-                 * constants::VOXEL_DIMENSION as usize
-                 * constants::VOXEL_DIMENSION as usize
-                 * constants::VOXEL_DIMENSION as usize
-         ];
-    
-         let mut y_offset: usize;
-         let mut offset: usize;
-         for y in 0..constants::VOXEL_DIMENSION {
-             y_offset = (y as usize)
-                 * (constants::VOXEL_DIMENSION as usize)
-                 * (constants::VOXEL_DIMENSION as usize);
-    
-             for z in 0..constants::VOXEL_DIMENSION {
-                 offset = y_offset + z as usize * constants::VOXEL_DIMENSION as usize;
-    
-                 for x in 0..constants::VOXEL_DIMENSION {
-                     data[3 * (offset + x as usize)] = x as f32 / constants::VOXEL_DIMENSION as f32;
-                     data[3 * (offset + x as usize) + 1] =
-                         y as f32 / constants::VOXEL_DIMENSION as f32;
-                     data[3 * (offset + x as usize) + 2] =
-                         z as f32 / constants::VOXEL_DIMENSION as f32;
-                 }
-             }
-         }
-    
-         gl::GenBuffers(1, &mut point_cube);
-         gl::BindBuffer(gl::ARRAY_BUFFER, point_cube);
-         gl::BufferData(
-             gl::ARRAY_BUFFER,
-             size_of::<f32>() as isize
-                 * 3isize
-                 * constants::VOXEL_DIMENSION as isize
-                 * constants::VOXEL_DIMENSION as isize
-                 * constants::VOXEL_DIMENSION as isize,
-             data.as_ptr() as *const c_void,
-             gl::STATIC_DRAW,
-         );
-         gl::BindBuffer(gl::ARRAY_BUFFER, 0);
-     };
+    let mut point_cube = 0;
+    unsafe {
+        let mut data: Vec<f32> = vec![
+            0.0;
+            3usize
+                * constants::VOXEL_DIMENSION as usize
+                * constants::VOXEL_DIMENSION as usize
+                * constants::VOXEL_DIMENSION as usize
+        ];
+
+        let mut y_offset: usize;
+        let mut offset: usize;
+        for y in 0..constants::VOXEL_DIMENSION {
+            y_offset = (y as usize)
+                * (constants::VOXEL_DIMENSION as usize)
+                * (constants::VOXEL_DIMENSION as usize);
+
+            for z in 0..constants::VOXEL_DIMENSION {
+                offset = y_offset + z as usize * constants::VOXEL_DIMENSION as usize;
+
+                for x in 0..constants::VOXEL_DIMENSION {
+                    data[3 * (offset + x as usize)] = x as f32 / constants::VOXEL_DIMENSION as f32;
+                    data[3 * (offset + x as usize) + 1] =
+                        y as f32 / constants::VOXEL_DIMENSION as f32;
+                    data[3 * (offset + x as usize) + 2] =
+                        z as f32 / constants::VOXEL_DIMENSION as f32;
+                }
+            }
+        }
+
+        gl::GenBuffers(1, &mut point_cube);
+        gl::BindBuffer(gl::ARRAY_BUFFER, point_cube);
+        gl::BufferData(
+            gl::ARRAY_BUFFER,
+            size_of::<f32>() as isize
+                * 3isize
+                * constants::VOXEL_DIMENSION as isize
+                * constants::VOXEL_DIMENSION as isize
+                * constants::VOXEL_DIMENSION as isize,
+            data.as_ptr() as *const c_void,
+            gl::STATIC_DRAW,
+        );
+        gl::BindBuffer(gl::ARRAY_BUFFER, 0);
+    };
 
     let (voxel_position_texture, number_of_voxel_fragments, voxel_diffuse_texture) = unsafe {
         let return_value = voxelization::build_voxel_fragment_list();
@@ -146,7 +144,11 @@ fn main() {
         let voxel_diffuse_texture = return_value.2;
 
         gl::Enable(gl::PROGRAM_POINT_SIZE);
-        (voxel_position_texture, number_of_voxel_fragments, voxel_diffuse_texture)
+        (
+            voxel_position_texture,
+            number_of_voxel_fragments,
+            voxel_diffuse_texture,
+        )
     };
 
     // vao to render voxel fragment list
@@ -203,7 +205,6 @@ fn main() {
             gl::ClearColor(0.1, 0.1, 0.1, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
             gl::Enable(gl::DEPTH_TEST);
-
 
             let projection: Matrix4<f32> = perspective(
                 Deg(camera.Zoom),
@@ -262,7 +263,7 @@ fn main() {
             gl::BindVertexArray(vao);
             gl::DrawArrays(gl::POINTS, 0, number_of_voxel_fragments as i32);
 
-             let error = gl::GetError();
+            let _ = gl::GetError();
         }
 
         // GLFW: Swap buffers and poll I/O events
