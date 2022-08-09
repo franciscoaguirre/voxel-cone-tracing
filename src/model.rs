@@ -7,28 +7,18 @@ use std::path::Path;
 use cgmath::{vec2, vec3};
 use image::DynamicImage::*;
 
+use crate::aabb::Aabb;
 use crate::mesh::{Mesh, Texture, Vertex};
-use crate::AABB::AABB;
 use crate::shader::Shader;
 
+#[derive(Default)]
 pub struct Model {
     /*  Model Data */
     pub meshes: Vec<Mesh>,
     pub textures_loaded: Vec<Texture>, // stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
-    pub aabb: AABB,
+    pub aabb: Aabb,
     directory: String,
 }
-
-impl Default for Model {
-    fn default() -> Model {
-        Model {
-            meshes: Vec::new(),
-            textures_loaded: Vec::new(),
-            aabb: AABB::default(),
-            directory: String::new(),
-        }
-    }
-} 
 
 impl Model {
     /// constructor, expects a filepath to a 3D model.
@@ -61,7 +51,7 @@ impl Model {
 
         let (models, materials) = obj.expect("Failed to load OBJ file");
         let materials = materials.expect("Failed to load MTL file");
-        let mut aabb = AABB::default();
+        let mut aabb = Aabb::default();
 
         for model in models {
             let mesh = &model.mesh;
@@ -70,22 +60,22 @@ impl Model {
             // data to fill
             let mut vertices: Vec<Vertex> = Vec::with_capacity(num_vertices);
             let indices: Vec<u32> = mesh.indices.clone();
-            let (p, n, t) = (&mesh.positions, &mesh.normals, &mesh.texcoords);
+            let (p, _n, t) = (&mesh.positions, &mesh.normals, &mesh.texcoords);
             for i in 0..num_vertices {
                 let pos_x = p[i * 3];
                 let pos_y = p[i * 3 + 1];
                 let pos_z = p[i * 3 + 2];
 
                 let normal = if i * 3 + 2 < t.len() {
-                 vec3(t[i * 3], t[i * 3 + 1], t[i * 3 + 2])
+                    vec3(t[i * 3], t[i * 3 + 1], t[i * 3 + 2])
                 } else {
-                 vec3(0.0, 0.0, 0.0)
+                    vec3(0.0, 0.0, 0.0)
                 };
 
                 let tex_coords = if i * 2 + 1 < t.len() {
-                 vec2(t[i * 2], t[i * 2 + 1])
+                    vec2(t[i * 2], t[i * 2 + 1])
                 } else {
-                 vec2(0.0, 0.0)
+                    vec2(0.0, 0.0)
                 };
 
                 aabb.refresh_aabb(pos_x, pos_y, pos_z);
@@ -93,7 +83,7 @@ impl Model {
                 vertices.push(Vertex {
                     Position: vec3(pos_x, pos_y, pos_z),
                     Normal: normal,
-                    TexCoords: tex_coords
+                    TexCoords: tex_coords,
                 })
             }
 

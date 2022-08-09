@@ -1,8 +1,8 @@
 use std::{ffi::c_void, mem::size_of, ptr};
 
-use crate::{camera::Camera, constants, Model, Shader};
+use crate::{constants, Model, Shader};
 use c_str_macro::c_str;
-use cgmath::{perspective, vec3, Deg, Matrix4, Point3, Vector3};
+
 use gl::types::*;
 
 static mut VOXEL_POSITION_TEXTURE: GLuint = 0;
@@ -50,7 +50,7 @@ unsafe fn generate_linear_buffer(
         gl::STATIC_DRAW,
     );
 
-    let error = gl::GetError();
+    let _error = gl::GetError();
 
     if *texture > 0 {
         gl::DeleteTextures(1, texture);
@@ -68,7 +68,7 @@ unsafe fn generate_linear_buffer(
         println!("{error}");
     }
 
-    return error;
+    error
 }
 
 unsafe fn calculate_voxel_fragment_list_length(
@@ -127,13 +127,16 @@ unsafe fn voxelize_scene(
     let aabb_longer_side = scene_aabb.longer_axis_length();
 
     let center_scene_matrix = cgmath::Matrix4::from_translation(-aabb_middle_point);
-    // aabb_longer_side is divided by two and we then use the inverse because 
+    // aabb_longer_side is divided by two and we then use the inverse because
     // NDC coordinates goes from -1 to 1
     let normalize_size_matrix = cgmath::Matrix4::from_scale(2f32 / aabb_longer_side);
 
-    let model_normalization_matrix = normalize_size_matrix * center_scene_matrix; 
+    let model_normalization_matrix = normalize_size_matrix * center_scene_matrix;
 
-    voxelization_shader.setMat4(c_str!("model_normalization_matrix"), &model_normalization_matrix);
+    voxelization_shader.setMat4(
+        c_str!("model_normalization_matrix"),
+        &model_normalization_matrix,
+    );
     voxelization_shader.setInt(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
 
     gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, *atomic_counter);
@@ -152,7 +155,7 @@ unsafe fn voxelize_scene(
 
 pub unsafe fn build_voxel_fragment_list() -> (u32, u32, u32) {
     let mut atomic_counter: u32 = 0;
-    let error: GLenum = gl::GetError();
+    let _error: GLenum = gl::GetError();
     generate_atomic_counter_buffer(&mut atomic_counter);
 
     let (voxelization_shader, cow_model) = {
@@ -209,5 +212,9 @@ pub unsafe fn build_voxel_fragment_list() -> (u32, u32, u32) {
     populate_voxel_fragment_list(&voxelization_shader, &models, &mut atomic_counter);
     gl::MemoryBarrier(gl::SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
-    (number_of_voxel_fragments, VOXEL_POSITION_TEXTURE, VOXEL_DIFFUSE_TEXTURE)
+    (
+        number_of_voxel_fragments,
+        VOXEL_POSITION_TEXTURE,
+        VOXEL_DIFFUSE_TEXTURE,
+    )
 }
