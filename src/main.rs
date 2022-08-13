@@ -62,9 +62,9 @@ fn main() {
         gl::Enable(gl::DEPTH_TEST);
 
         Shader::with_geometry_shader(
-            "src/shaders/render_voxel.vert.glsl",
-            "src/shaders/render_voxel.frag.glsl",
-            "src/shaders/render_voxel.geom.glsl",
+            "src/shaders/voxel_fragment/render_voxel.vert.glsl",
+            "src/shaders/voxel_fragment/render_voxel.frag.glsl",
+            "src/shaders/voxel_fragment/render_voxel.geom.glsl",
         )
     };
 
@@ -72,8 +72,8 @@ fn main() {
         gl::Enable(gl::DEPTH_TEST);
 
         let our_shader = Shader::new(
-            "src/shaders/model_loading.vert.glsl",
-            "src/shaders/model_loading.frag.glsl",
+            "src/shaders/model/model_loading.vert.glsl",
+            "src/shaders/model/model_loading.frag.glsl",
         );
 
         let our_model = Model::new("assets/colored_cow.obj");

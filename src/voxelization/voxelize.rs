@@ -104,9 +104,9 @@ pub unsafe fn build_voxel_fragment_list() -> (u32, u32, u32) {
         gl::Enable(gl::DEPTH_TEST);
 
         let our_shader = Shader::with_geometry_shader(
-            "src/shaders/voxelize.vert.glsl",
-            "src/shaders/voxelize.frag.glsl",
-            "src/shaders/voxelize.geom.glsl",
+            "src/shaders/voxel_fragment/voxelize.vert.glsl",
+            "src/shaders/voxel_fragment/voxelize.frag.glsl",
+            "src/shaders/voxel_fragment/voxelize.geom.glsl",
         );
 
         let our_model = Model::new("assets/colored_cow.obj");
