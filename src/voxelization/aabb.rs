@@ -21,13 +21,6 @@ impl Default for Aabb {
 }
 
 impl Aabb {
-    pub fn new(new_min_vertex: Vector3<f32>, new_max_vertex: Vector3<f32>) -> Aabb {
-        Aabb {
-            min_vertex: new_min_vertex,
-            max_vertex: new_max_vertex,
-        }
-    }
-
     // Refreshes Aabb whenever a vertex is added to the structure
     pub fn refresh_aabb(&mut self, pos_x: f32, pos_y: f32, pos_z: f32) {
         // Couldn't find max() or min() functions that worked with floats

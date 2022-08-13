@@ -11,7 +11,7 @@ use cgmath::prelude::*;
 use cgmath::{Vector2, Vector3};
 use memoffset::offset_of;
 
-use crate::shader::Shader;
+use super::shader::Shader;
 
 // NOTE: without repr(C) the compiler may reorder the fields or use different padding/alignment than C.
 // Depending on how you pass the data to OpenGL, this may be bad. In this case it's not strictly

@@ -7,9 +7,9 @@ use std::path::Path;
 use cgmath::{vec2, vec3};
 use image::DynamicImage::*;
 
-use crate::aabb::Aabb;
-use crate::mesh::{Mesh, Texture, Vertex};
-use crate::shader::Shader;
+use super::mesh::{Mesh, Texture, Vertex};
+use super::shader::Shader;
+use crate::voxelization::aabb::Aabb;
 
 #[derive(Default)]
 pub struct Model {

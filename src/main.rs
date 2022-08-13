@@ -9,20 +9,9 @@ use glfw::Context;
 
 use cgmath::{perspective, vec3, Deg, Matrix4, Point3};
 
-mod shader;
-use shader::Shader;
+mod rendering;
+use rendering::{camera::Camera, common, model::Model, shader::Shader};
 
-mod camera;
-use camera::Camera;
-
-mod mesh;
-
-mod aabb;
-
-mod model;
-use model::Model;
-
-mod common;
 mod constants;
 mod voxelization;
 

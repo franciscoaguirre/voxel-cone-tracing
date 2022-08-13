@@ -1,6 +1,6 @@
 use std::{ffi::c_void, mem::size_of, ptr};
 
-use crate::{constants, Model, Shader};
+use crate::{constants, rendering::model::Model, rendering::shader::Shader};
 use c_str_macro::c_str;
 
 use gl::types::*;
@@ -9,8 +9,8 @@ static mut VOXEL_POSITION_TEXTURE: GLuint = 0;
 static mut VOXEL_POSITION_TEXTURE_BUFFER: GLuint = 0;
 static mut VOXEL_DIFFUSE_TEXTURE: GLuint = 0;
 static mut VOXEL_DIFFUSE_TEXTURE_BUFFER: GLuint = 0;
-static mut VOXEL_NORMAL_TEXTURE: GLuint = 0;
-static mut VOXEL_NORMAL_TEXTURE_BUFFER: GLuint = 0;
+// static mut VOXEL_NORMAL_TEXTURE: GLuint = 0;
+// static mut VOXEL_NORMAL_TEXTURE_BUFFER: GLuint = 0;
 
 unsafe fn generate_atomic_counter_buffer(buffer: &mut u32) {
     let initial_value: u32 = 0;

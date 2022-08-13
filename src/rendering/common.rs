@@ -1,4 +1,4 @@
-use crate::{camera::Camera_Movement, Camera};
+use super::camera::{Camera, Camera_Movement};
 use glfw::{Action, Key};
 use std::sync::mpsc::Receiver;
 
