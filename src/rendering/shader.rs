@@ -5,7 +5,6 @@ use std::io::Read;
 use std::ptr;
 use std::str;
 
-
 use gl::types::*;
 
 use cgmath::prelude::*;

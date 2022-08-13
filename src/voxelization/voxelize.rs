@@ -56,7 +56,7 @@ unsafe fn populate_voxel_fragment_list(
 
 unsafe fn voxelize_scene(
     voxelization_shader: &Shader,
-    models: &[Model; 1],
+    models: &[Model; 1], // TODO: More than one?
     atomic_counter: &mut u32,
 ) {
     gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
