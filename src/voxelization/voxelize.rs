@@ -1,5 +1,6 @@
-use std::{ffi::c_void, mem::size_of, ptr};
+use std::mem::size_of;
 
+use super::helpers;
 use crate::{constants, rendering::model::Model, rendering::shader::Shader};
 use c_str_macro::c_str;
 
@@ -11,65 +12,6 @@ static mut VOXEL_DIFFUSE_TEXTURE: GLuint = 0;
 static mut VOXEL_DIFFUSE_TEXTURE_BUFFER: GLuint = 0;
 // static mut VOXEL_NORMAL_TEXTURE: GLuint = 0;
 // static mut VOXEL_NORMAL_TEXTURE_BUFFER: GLuint = 0;
-
-unsafe fn generate_atomic_counter_buffer(buffer: &mut u32) {
-    let initial_value: u32 = 0;
-
-    if *buffer != 0 {
-        gl::DeleteBuffers(1, buffer);
-    }
-
-    gl::GenBuffers(1, buffer);
-    gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, *buffer);
-    gl::BufferData(
-        gl::ATOMIC_COUNTER_BUFFER,
-        size_of::<GLuint>() as isize,
-        initial_value as *const c_void,
-        gl::STATIC_DRAW,
-    );
-    gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, 0);
-}
-
-unsafe fn generate_linear_buffer(
-    size: usize,
-    format: GLenum,
-    texture: *mut GLuint,
-    texture_buffer: *mut GLuint,
-) -> u32 {
-    if *texture_buffer > 0 {
-        gl::DeleteBuffers(1, texture_buffer);
-    }
-
-    gl::GenBuffers(1, texture_buffer);
-
-    gl::BindBuffer(gl::TEXTURE_BUFFER, *texture_buffer);
-    gl::BufferData(
-        gl::TEXTURE_BUFFER,
-        size as isize,
-        ptr::null::<c_void>(),
-        gl::STATIC_DRAW,
-    );
-
-    let _error = gl::GetError();
-
-    if *texture > 0 {
-        gl::DeleteTextures(1, texture);
-    }
-
-    gl::GenTextures(1, texture);
-    gl::BindTexture(gl::TEXTURE_BUFFER, *texture);
-    gl::TexBuffer(gl::TEXTURE_BUFFER, format, *texture_buffer);
-    gl::BindBuffer(gl::TEXTURE_BUFFER, 0);
-
-    let error = gl::GetError();
-
-    if error > 0 {
-        // TODO: Use something like glewGetErrorString
-        println!("{error}");
-    }
-
-    error
-}
 
 unsafe fn calculate_voxel_fragment_list_length(
     voxelization_shader: &Shader,
@@ -156,7 +98,7 @@ unsafe fn voxelize_scene(
 pub unsafe fn build_voxel_fragment_list() -> (u32, u32, u32) {
     let mut atomic_counter: u32 = 0;
     let _error: GLenum = gl::GetError();
-    generate_atomic_counter_buffer(&mut atomic_counter);
+    helpers::generate_atomic_counter_buffer(&mut atomic_counter);
 
     let (voxelization_shader, cow_model) = {
         gl::Enable(gl::DEPTH_TEST);
@@ -191,13 +133,13 @@ pub unsafe fn build_voxel_fragment_list() -> (u32, u32, u32) {
 
     dbg!(number_of_voxel_fragments);
 
-    generate_linear_buffer(
+    helpers::generate_linear_buffer(
         size_of::<GLuint>() * number_of_voxel_fragments as usize,
         gl::R32UI,
         &mut VOXEL_POSITION_TEXTURE,
         &mut VOXEL_POSITION_TEXTURE_BUFFER,
     );
-    generate_linear_buffer(
+    helpers::generate_linear_buffer(
         size_of::<GLuint>() * number_of_voxel_fragments as usize,
         gl::RGBA8,
         &mut VOXEL_DIFFUSE_TEXTURE,
