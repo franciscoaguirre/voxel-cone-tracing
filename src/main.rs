@@ -11,6 +11,7 @@ use cgmath::{perspective, vec3, Deg, Matrix4, Point3};
 
 mod rendering;
 use rendering::{camera::Camera, common, model::Model, shader::Shader};
+use voxelization::octree::build_octree;
 
 mod constants;
 mod voxelization;
@@ -76,7 +77,7 @@ fn main() {
             "src/shaders/model/model_loading.frag.glsl",
         );
 
-        let our_model = Model::new("assets/colored_cow.obj");
+        let our_model = Model::new("assets/triangle.obj");
 
         (our_shader, our_model)
     };
@@ -139,6 +140,10 @@ fn main() {
             voxel_diffuse_texture,
         )
     };
+
+    unsafe {
+        build_octree(voxel_position_texture, number_of_voxel_fragments);
+    }
 
     // vao to render voxel fragment list
     let vao = unsafe {
@@ -207,10 +212,10 @@ fn main() {
 
             //render_model_shader.useProgram();
             // Not using cow model, using voxel fragment list
-            render_model_shader.useProgram();
-            render_model_shader.setMat4(c_str!("projection"), &projection);
-            render_model_shader.setMat4(c_str!("view"), &view);
-            render_model_shader.setMat4(c_str!("model"), &model);
+            // render_model_shader.useProgram();
+            // render_model_shader.setMat4(c_str!("projection"), &projection);
+            // render_model_shader.setMat4(c_str!("view"), &view);
+            // render_model_shader.setMat4(c_str!("model"), &model);
 
             //our_model.Draw(&render_model_shader);
             gl::BindImageTexture(
