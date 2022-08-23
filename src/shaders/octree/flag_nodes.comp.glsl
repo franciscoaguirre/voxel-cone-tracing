@@ -11,5 +11,14 @@ uniform layout(binding = 1, r32ui) uimageBuffer u_octreeBuf;
 
 void main()
 {
+    uint thread_index = gl_GlobalInvocationID.x; // TODO: Make grid bigger
+    uvec4 voxel_position = imageLoad(u_voxelPos, int(thread_index));
+    int current_voxel_dimension = voxel_dimension;
+    int child_index = 0;
+    uint node = imageLoad(u_octreeBuf, child_index).r;
     
+    for (int i = 0; i < octree_level; i++)
+    {
+        current_voxel_dimension /= 2; // i.e. 256 / 2 = 128
+    }
 }

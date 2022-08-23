@@ -43,7 +43,7 @@ fn main() {
         .create_window(
             constants::SOURCE_WIDTH as u32,
             constants::SOURCE_HEIGHT as u32,
-            "LearnOpenGL",
+            "Voxel Cone Tracing",
             glfw::WindowMode::Windowed,
         )
         .expect("Failed to create GLFW window");
@@ -77,7 +77,7 @@ fn main() {
             "src/shaders/model/model_loading.frag.glsl",
         );
 
-        let our_model = Model::new("assets/triangle.obj");
+        let our_model = Model::new("assets/colored_cow.obj");
 
         (our_shader, our_model)
     };
