@@ -43,7 +43,7 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
         c_str!("number_of_voxel_fragments"),
         number_of_voxel_fragments as i32,
     );
-    flag_nodes_shader.set_int(c_str!("octree_level"), 1);
+    flag_nodes_shader.set_int(c_str!("octree_level"), 0);
     flag_nodes_shader.set_int(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
 
     gl::BindImageTexture(
@@ -76,7 +76,6 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
         (size_of::<GLuint>() * node_pool_size) as isize,
         values.as_ptr() as *mut c_void,
     );
-    dbg!(&values[node_pool_size - 20..]);
 
     // Initialize root tile
     // Subdivide nodes until OCTREE_LEVELS (compute shader)
