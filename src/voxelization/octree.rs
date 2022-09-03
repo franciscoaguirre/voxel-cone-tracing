@@ -14,7 +14,9 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
     let _error: GLenum = gl::GetError();
     helpers::generate_atomic_counter_buffer(&mut allocated_tiles_counter);
 
-    let nodes_per_level = vec![1u32];
+    let mut nodes_per_level = vec![constants::OCTREE_LEVELS];
+    nodes_per_level.push(8); // 8 nodes for root
+    nodes_per_level.push(8); // 8 nodes for level 1
 
     let number_of_tiles = (0..constants::OCTREE_LEVELS - 1)
         .map(|exponent| 8usize.pow(exponent))
@@ -41,19 +43,20 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
     let flag_nodes_shader = ComputeShader::new("src/shaders/octree/flag_nodes.comp.glsl");
     let allocate_nodes_shader = ComputeShader::new("src/shaders/octree/allocate_nodes.comp.glsl");
     // let initialize_nodes_shader =
-    //     ComputeShader::new("src/shaders/octree/initialize_nodes.comp.glsl");
+    //     ComputeShader::new("src/shaders/octree/initialize_nodes.comp.glsl"); We don't need it
+    //     because we initalize everything in 0 already?
 
-    let starting_node_in_level = 0; // Index of first node in a given octree level
-    let starting_free_space = 1; // Index of first free space (unallocated) in the octree
+    let mut starting_node_in_level: i32 = 8; // Index of first node in a given octree level
+    let mut first_free_tile: i32 = 2; // Index of first free tile (unallocated) in the octree
 
-    for octree_level in 1..2 {
+    for octree_level in 1..constants::OCTREE_LEVELS {
         flag_nodes_shader.use_program();
 
         flag_nodes_shader.set_int(
             c_str!("number_of_voxel_fragments"),
             number_of_voxel_fragments as i32,
         );
-        flag_nodes_shader.set_int(c_str!("octree_level"), octree_level);
+        flag_nodes_shader.set_int(c_str!("octree_level"), octree_level as i32);
         flag_nodes_shader.set_int(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
 
         gl::BindImageTexture(
@@ -83,7 +86,7 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
         allocate_nodes_shader.use_program();
 
         allocate_nodes_shader.set_int(c_str!("starting_node_in_level"), starting_node_in_level);
-        allocate_nodes_shader.set_int(c_str!("starting_free_space"), starting_free_space);
+        allocate_nodes_shader.set_int(c_str!("first_free_tile"), first_free_tile);
         gl::BindImageTexture(
             0,
             OCTREE_NODE_POOL_TEXTURE,
@@ -115,9 +118,14 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
         );
         gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, 0);
 
-        dbg!(&tiles_allocated);
 
-        let _nodes_allocated = tiles_allocated * 8;
+        let nodes_allocated = tiles_allocated * 8;
+        dbg!(starting_node_in_level);
+        dbg!(first_free_tile);
+        dbg!(&tiles_allocated);
+        nodes_per_level.push(nodes_allocated);
+        starting_node_in_level += nodes_per_level[octree_level as usize] as i32;
+        first_free_tile += tiles_allocated as i32;
     }
 
     let values = vec![1u32; node_pool_size];
@@ -129,7 +137,7 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
         values.as_ptr() as *mut c_void,
     );
 
-    dbg!(&values[..20]);
+    dbg!(&values[..node_pool_size - 1]);
 
     // TODO: Mipmap to inner nodes
 }

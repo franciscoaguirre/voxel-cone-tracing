@@ -47,7 +47,7 @@ impl ComputeShader {
     }
 
     pub unsafe fn dispatch(&self) {
-        gl::DispatchCompute(1, 1, 1);
+        gl::DispatchCompute(32768, 1, 1);
     }
 
     pub unsafe fn wait(&self) {
