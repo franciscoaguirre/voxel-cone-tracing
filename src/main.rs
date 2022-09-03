@@ -4,8 +4,8 @@ use std::{ffi::c_void, mem::size_of};
 use c_str_macro::c_str;
 extern crate gl;
 extern crate glfw;
-use gl::types::GLfloat;
 use glfw::Context;
+use gl::types::*;
 
 use cgmath::{perspective, vec3, Deg, Matrix4, Point3};
 
@@ -15,6 +15,56 @@ use voxelization::octree::build_octree;
 
 mod constants;
 mod voxelization;
+
+unsafe fn render_voxel_fragments(render_voxel_shader: &Shader,
+                          voxel_position_texture: GLuint,
+                          voxel_diffuse_texture: GLuint,
+                          projection: &Matrix4::<f32>,
+                          view: &Matrix4::<f32>,
+                          model: &Matrix4::<f32>,
+                          number_of_voxel_fragments: u32,
+                          vao: u32) {
+    gl::BindImageTexture(
+        0,
+        voxel_position_texture,
+        0,
+        gl::TRUE,
+        0,
+        gl::READ_ONLY,
+        gl::RGB10_A2UI,
+    );
+
+    gl::BindImageTexture(
+        1,
+        voxel_diffuse_texture,
+        0,
+        gl::TRUE,
+        0,
+        gl::READ_ONLY,
+        gl::RGBA8,
+    );
+
+    render_voxel_shader.useProgram();
+    render_voxel_shader.setMat4(c_str!("projection"), &projection);
+    render_voxel_shader.setMat4(c_str!("view"), &view);
+    render_voxel_shader.setMat4(c_str!("model"), &model);
+
+    render_voxel_shader.setInt(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
+    render_voxel_shader.setFloat(
+        c_str!("half_dimension"),
+        1.0 / constants::VOXEL_DIMENSION as f32,
+    );
+
+    render_voxel_shader.setInt(
+        c_str!("voxel_fragment_count"),
+        number_of_voxel_fragments as i32,
+    );
+
+    gl::BindVertexArray(vao);
+    gl::DrawArrays(gl::POINTS, 0, number_of_voxel_fragments as i32);
+
+    let _ = gl::GetError();
+}
 
 fn main() {
     // Camera setup
@@ -77,7 +127,7 @@ fn main() {
             "src/shaders/model/model_loading.frag.glsl",
         );
 
-        let our_model = Model::new("assets/colored_cow.obj");
+        let our_model = Model::new("assets/triangle.obj");
 
         (our_shader, our_model)
     };
@@ -132,6 +182,7 @@ fn main() {
         let number_of_voxel_fragments = return_value.0;
         let voxel_position_texture = return_value.1;
         let voxel_diffuse_texture = return_value.2;
+        dbg!(number_of_voxel_fragments);
 
         gl::Enable(gl::PROGRAM_POINT_SIZE);
         (
@@ -218,46 +269,14 @@ fn main() {
             // render_model_shader.setMat4(c_str!("model"), &model);
 
             //our_model.Draw(&render_model_shader);
-            gl::BindImageTexture(
-                0,
-                voxel_position_texture,
-                0,
-                gl::TRUE,
-                0,
-                gl::READ_ONLY,
-                gl::RGB10_A2UI,
-            );
-
-            gl::BindImageTexture(
-                1,
-                voxel_diffuse_texture,
-                0,
-                gl::TRUE,
-                0,
-                gl::READ_ONLY,
-                gl::RGBA8,
-            );
-
-            render_voxel_shader.useProgram();
-            render_voxel_shader.setMat4(c_str!("projection"), &projection);
-            render_voxel_shader.setMat4(c_str!("view"), &view);
-            render_voxel_shader.setMat4(c_str!("model"), &model);
-
-            render_voxel_shader.setInt(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
-            render_voxel_shader.setFloat(
-                c_str!("half_dimension"),
-                1.0 / constants::VOXEL_DIMENSION as f32,
-            );
-
-            render_voxel_shader.setInt(
-                c_str!("voxel_fragment_count"),
-                number_of_voxel_fragments as i32,
-            );
-
-            gl::BindVertexArray(vao);
-            gl::DrawArrays(gl::POINTS, 0, number_of_voxel_fragments as i32);
-
-            let _ = gl::GetError();
+            //render_voxel_fragments(&render_voxel_shader,
+                                   //voxel_position_texture,
+                                   //voxel_diffuse_texture,
+                                   //&projection,
+                                   //&view,
+                                   //&model,
+                                   //number_of_voxel_fragments,
+                                   //vao);
         }
 
         // GLFW: Swap buffers and poll I/O events
