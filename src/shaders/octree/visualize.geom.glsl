@@ -1,7 +1,7 @@
 #version 430 core
 
 layout (points) in;
-layout (triangle_strip, max_vertices = 22) out;
+layout (line_strip, max_vertices = 22) out;
 
 in vec4 node_position[];
 in float half_node_size[];
@@ -38,12 +38,64 @@ void create_z_positive_face() {
 
     position = vec4(
         node_position[0].x + half_node_size[0],
+        node_position[0].y + half_node_size[0],
+        node_position[0].z + half_node_size[0],
+        node_position[0].w
+    );
+    gl_Position = canonization_matrix * position;
+    EmitVertex();
+
+    position = vec4(
+        node_position[0].x + half_node_size[0],
         node_position[0].y - half_node_size[0],
         node_position[0].z + half_node_size[0],
         node_position[0].w
     );
     gl_Position = canonization_matrix * position;
     EmitVertex();
+    position = vec4(
+        node_position[0].x - half_node_size[0],
+        node_position[0].y - half_node_size[0],
+        node_position[0].z + half_node_size[0],
+        node_position[0].w
+    );
+    gl_Position = canonization_matrix * position;
+    EmitVertex();
+}
+
+void create_x_negative_face() {
+    vec4 position;
+
+    position = vec4(
+        node_position[0].x - half_node_size[0],
+        node_position[0].y - half_node_size[0],
+        node_position[0].z - half_node_size[0],
+        node_position[0].w
+    );
+    gl_Position = canonization_matrix * position;
+    EmitVertex();
+
+    position = vec4(
+        node_position[0].x - half_node_size[0],
+        node_position[0].y + half_node_size[0],
+        node_position[0].z - half_node_size[0],
+        node_position[0].w
+    );
+    gl_Position = canonization_matrix * position;
+    EmitVertex();
+
+    position = vec4(
+        node_position[0].x - half_node_size[0],
+        node_position[0].y + half_node_size[0],
+        node_position[0].z + half_node_size[0],
+        node_position[0].w
+    );
+    gl_Position = canonization_matrix * position;
+    EmitVertex();
+}
+
+void create_y_positive_face() {
+    vec4 position;
 
     position = vec4(
         node_position[0].x + half_node_size[0],
@@ -53,14 +105,10 @@ void create_z_positive_face() {
     );
     gl_Position = canonization_matrix * position;
     EmitVertex();
-}
-
-void create_x_positive_face() {
-    vec4 position;
 
     position = vec4(
         node_position[0].x + half_node_size[0],
-        node_position[0].y - half_node_size[0],
+        node_position[0].y + half_node_size[0],
         node_position[0].z - half_node_size[0],
         node_position[0].w
     );
@@ -68,7 +116,7 @@ void create_x_positive_face() {
     EmitVertex();
 
     position = vec4(
-        node_position[0].x + half_node_size[0],
+        node_position[0].x - half_node_size[0],
         node_position[0].y + half_node_size[0],
         node_position[0].z - half_node_size[0],
         node_position[0].w
@@ -90,43 +138,8 @@ void create_z_negative_face() {
     EmitVertex();
 
     position = vec4(
-        node_position[0].x - half_node_size[0],
-        node_position[0].y + half_node_size[0],
-        node_position[0].z - half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
-}
-
-void create_x_negative_face() {
-    vec4 position;
-
-    position = vec4(
-        node_position[0].x - half_node_size[0],
+        node_position[0].x + half_node_size[0],
         node_position[0].y - half_node_size[0],
-        node_position[0].z + half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
-
-    position = vec4(
-        node_position[0].x - half_node_size[0],
-        node_position[0].y + half_node_size[0],
-        node_position[0].z + half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
-}
-
-void create_y_positive_face() {
-    vec4 position;
-
-    position = vec4(
-        node_position[0].x - half_node_size[0],
-        node_position[0].y + half_node_size[0],
         node_position[0].z - half_node_size[0],
         node_position[0].w
     );
@@ -137,26 +150,6 @@ void create_y_positive_face() {
         node_position[0].x + half_node_size[0],
         node_position[0].y + half_node_size[0],
         node_position[0].z - half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
-
-    EmitVertex(); // To start from scratch
-
-    position = vec4(
-        node_position[0].x + half_node_size[0],
-        node_position[0].y + half_node_size[0],
-        node_position[0].z + half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
-
-    position = vec4(
-        node_position[0].x - half_node_size[0],
-        node_position[0].y + half_node_size[0],
-        node_position[0].z + half_node_size[0],
         node_position[0].w
     );
     gl_Position = canonization_matrix * position;
@@ -167,17 +160,7 @@ void create_y_negative_face() {
     vec4 position;
 
     position = vec4(
-        node_position[0].x - half_node_size[0],
-        node_position[0].y - half_node_size[0],
-        node_position[0].z + half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
-    EmitVertex(); // To start from here
-
-    position = vec4(
-        node_position[0].x - half_node_size[0],
+        node_position[0].x + half_node_size[0],
         node_position[0].y - half_node_size[0],
         node_position[0].z - half_node_size[0],
         node_position[0].w
@@ -189,15 +172,6 @@ void create_y_negative_face() {
         node_position[0].x + half_node_size[0],
         node_position[0].y - half_node_size[0],
         node_position[0].z + half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
-
-    position = vec4(
-        node_position[0].x + half_node_size[0],
-        node_position[0].y - half_node_size[0],
-        node_position[0].z - half_node_size[0],
         node_position[0].w
     );
     gl_Position = canonization_matrix * position;
@@ -207,14 +181,9 @@ void create_y_negative_face() {
 void main() {
     branch_not_empty = non_empty_branch[0];
     create_z_positive_face();
-    create_x_positive_face();
-    create_z_negative_face();
     create_x_negative_face();
-
     create_y_positive_face();
-
-    EmitVertex(); // To start from scratch
-
+    create_z_negative_face();
     create_y_negative_face();
 
     EndPrimitive();

@@ -69,7 +69,7 @@ void main() {
     half_node_size = normalized_half_node_size;
     non_empty_branch = 1;
   } else {
-    half_node_size = normalized_half_node_size - 0.15;
+    half_node_size = 0;
     non_empty_branch = 0;
   }
 }
