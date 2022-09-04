@@ -12,7 +12,7 @@ void main() {
     vec3 point_of_view = vec3(0.25,0.5,-1.0);
     float lol = abs(dot(normalize(fragment_normal), point_of_view)); 
     // FragColor = vec4(lol * normalize(vec3(0.4,0.4,0.4)), 1.0);
-    FragColor = vec4(fragment_color.xyz * lol, fragment_color.w);
+    FragColor = vec4(fragment_color.xyz * lol, 1.0);
 }
 
 //#version 430 core
