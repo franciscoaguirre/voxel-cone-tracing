@@ -4,26 +4,38 @@ use std::{ffi::c_void, mem::size_of};
 use c_str_macro::c_str;
 extern crate gl;
 extern crate glfw;
-use glfw::Context;
 use gl::types::*;
+use glfw::Context;
 
 use cgmath::{perspective, vec3, Deg, Matrix4, Point3};
 
 mod rendering;
 use rendering::{camera::Camera, common, model::Model, shader::Shader};
-use voxelization::octree::build_octree;
+use voxelization::octree::{build_octree, render_octree};
 
 mod constants;
 mod voxelization;
 
-unsafe fn render_voxel_fragments(render_voxel_shader: &Shader,
-                          voxel_position_texture: GLuint,
-                          voxel_diffuse_texture: GLuint,
-                          projection: &Matrix4::<f32>,
-                          view: &Matrix4::<f32>,
-                          model: &Matrix4::<f32>,
-                          number_of_voxel_fragments: u32,
-                          vao: u32) {
+unsafe fn render_voxel_fragments(
+    voxel_position_texture: GLuint,
+    voxel_diffuse_texture: GLuint,
+    projection: &Matrix4<f32>,
+    view: &Matrix4<f32>,
+    model: &Matrix4<f32>,
+    number_of_voxel_fragments: u32,
+    vao: u32,
+) {
+    gl::Enable(gl::DEPTH_TEST);
+
+    // Set shader program
+    let render_voxel_shader = Shader::with_geometry_shader(
+        "src/shaders/voxel_fragment/render_voxel.vert.glsl",
+        "src/shaders/voxel_fragment/render_voxel.frag.glsl",
+        "src/shaders/voxel_fragment/render_voxel.geom.glsl",
+    );
+
+    render_voxel_shader.useProgram();
+
     gl::BindImageTexture(
         0,
         voxel_position_texture,
@@ -44,10 +56,9 @@ unsafe fn render_voxel_fragments(render_voxel_shader: &Shader,
         gl::RGBA8,
     );
 
-    render_voxel_shader.useProgram();
-    render_voxel_shader.setMat4(c_str!("projection"), &projection);
-    render_voxel_shader.setMat4(c_str!("view"), &view);
-    render_voxel_shader.setMat4(c_str!("model"), &model);
+    render_voxel_shader.setMat4(c_str!("projection"), projection);
+    render_voxel_shader.setMat4(c_str!("view"), view);
+    render_voxel_shader.setMat4(c_str!("model"), model);
 
     render_voxel_shader.setInt(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
     render_voxel_shader.setFloat(
@@ -108,17 +119,6 @@ fn main() {
     // GL: Load all OpenGL function pointers
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    // Set shader program
-    let render_voxel_shader = unsafe {
-        gl::Enable(gl::DEPTH_TEST);
-
-        Shader::with_geometry_shader(
-            "src/shaders/voxel_fragment/render_voxel.vert.glsl",
-            "src/shaders/voxel_fragment/render_voxel.frag.glsl",
-            "src/shaders/voxel_fragment/render_voxel.geom.glsl",
-        )
-    };
-
     let (render_model_shader, _our_model) = unsafe {
         gl::Enable(gl::DEPTH_TEST);
 
@@ -132,56 +132,9 @@ fn main() {
         (our_shader, our_model)
     };
 
-    let mut point_cube = 0;
-    unsafe {
-        let mut data: Vec<f32> = vec![
-            0.0;
-            3usize
-                * constants::VOXEL_DIMENSION as usize
-                * constants::VOXEL_DIMENSION as usize
-                * constants::VOXEL_DIMENSION as usize
-        ];
-
-        let mut y_offset: usize;
-        let mut offset: usize;
-        for y in 0..constants::VOXEL_DIMENSION {
-            y_offset = (y as usize)
-                * (constants::VOXEL_DIMENSION as usize)
-                * (constants::VOXEL_DIMENSION as usize);
-
-            for z in 0..constants::VOXEL_DIMENSION {
-                offset = y_offset + z as usize * constants::VOXEL_DIMENSION as usize;
-
-                for x in 0..constants::VOXEL_DIMENSION {
-                    data[3 * (offset + x as usize)] = x as f32 / constants::VOXEL_DIMENSION as f32;
-                    data[3 * (offset + x as usize) + 1] =
-                        y as f32 / constants::VOXEL_DIMENSION as f32;
-                    data[3 * (offset + x as usize) + 2] =
-                        z as f32 / constants::VOXEL_DIMENSION as f32;
-                }
-            }
-        }
-
-        gl::GenBuffers(1, &mut point_cube);
-        gl::BindBuffer(gl::ARRAY_BUFFER, point_cube);
-        gl::BufferData(
-            gl::ARRAY_BUFFER,
-            size_of::<f32>() as isize
-                * 3isize
-                * constants::VOXEL_DIMENSION as isize
-                * constants::VOXEL_DIMENSION as isize
-                * constants::VOXEL_DIMENSION as isize,
-            data.as_ptr() as *const c_void,
-            gl::STATIC_DRAW,
-        );
-        gl::BindBuffer(gl::ARRAY_BUFFER, 0);
-    };
-
     let (voxel_position_texture, number_of_voxel_fragments, voxel_diffuse_texture) = unsafe {
-        let return_value = voxelization::build_voxel_fragment_list();
-        let number_of_voxel_fragments = return_value.0;
-        let voxel_position_texture = return_value.1;
-        let voxel_diffuse_texture = return_value.2;
+        let (number_of_voxel_fragments, voxel_position_texture, voxel_diffuse_texture) =
+            voxelization::build_voxel_fragment_list();
         dbg!(number_of_voxel_fragments);
 
         gl::Enable(gl::PROGRAM_POINT_SIZE);
@@ -198,34 +151,13 @@ fn main() {
 
     // vao to render voxel fragment list
     let vao = unsafe {
-        let vertices: Vec<f32> = vec![0.0; number_of_voxel_fragments as usize];
-
-        let (mut vao, mut vbo) = (0, 0);
+        let mut vao = 0;
         gl::GenVertexArrays(1, &mut vao);
-        gl::GenBuffers(1, &mut vbo);
-        gl::BindVertexArray(vao);
-        gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-        gl::BufferData(
-            gl::ARRAY_BUFFER,
-            (size_of::<f32>() * vertices.len()) as isize,
-            &vertices[0] as *const f32 as *const c_void,
-            gl::STATIC_DRAW,
-        );
-        gl::VertexAttribPointer(
-            0,
-            3,
-            gl::FLOAT,
-            gl::FALSE,
-            3 * size_of::<GLfloat>() as i32,
-            std::ptr::null(),
-        );
-        gl::EnableVertexAttribArray(0);
-
-        gl::BindBuffer(gl::ARRAY_BUFFER, 0);
-        gl::BindVertexArray(0);
 
         vao
     };
+
+    let mut current_voxel_fragment_count = 0;
 
     // Render loop
     while !window.should_close() {
@@ -250,6 +182,9 @@ fn main() {
             gl::ClearColor(0.1, 0.1, 0.1, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
             gl::Enable(gl::DEPTH_TEST);
+            //gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
+            //gl::Enable(gl::BLEND);
+            //gl::PolygonMode(gl::FRONT_AND_BACK, gl::FILL);
 
             let projection: Matrix4<f32> = perspective(
                 Deg(camera.Zoom),
@@ -269,15 +204,22 @@ fn main() {
             // render_model_shader.setMat4(c_str!("model"), &model);
 
             //our_model.Draw(&render_model_shader);
-            //render_voxel_fragments(&render_voxel_shader,
-                                   //voxel_position_texture,
-                                   //voxel_diffuse_texture,
-                                   //&projection,
-                                   //&view,
-                                   //&model,
-                                   //number_of_voxel_fragments,
-                                   //vao);
+            render_voxel_fragments(
+                voxel_position_texture,
+                voxel_diffuse_texture,
+                &projection,
+                &view,
+                &model,
+                current_voxel_fragment_count,
+                vao,
+            );
+
+            //gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
+            render_octree(&model, &view, &projection);
         }
+
+        current_voxel_fragment_count =
+            (current_voxel_fragment_count + 100).min(number_of_voxel_fragments);
 
         // GLFW: Swap buffers and poll I/O events
         window.swap_buffers();
