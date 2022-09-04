@@ -35,20 +35,23 @@ uint calculate_node_index(uint tile_index, bvec3 subsection) {
          uint(subsection[2]) * 4; // binary -> base10, this gives a unique index per subsection. Then add it to the tile_index
 }
 
-void update_node_coordinates(
+uvec3 update_node_coordinates(
   uvec3 current_node_coordinates,
   bvec3 subsection,
   uint current_half_node_size
 ) {
+  uvec3 ret = current_node_coordinates;
   if (subsection.x) {
-    current_node_coordinates.x += current_half_node_size;
+    ret.x += current_half_node_size;
   }
   if (subsection.y) {
-    current_node_coordinates.y += current_half_node_size;
+    ret.y += current_half_node_size;
   }
   if (subsection.z) {
-    current_node_coordinates.z += current_half_node_size;
+    ret.z += current_half_node_size;
   }
+
+  return ret;
 }
 
 void main()
@@ -72,14 +75,15 @@ void main()
     
     for (uint i = 0; i < octree_level; i++)
     {
-        current_half_node_size /= 2;
 
         // TODO: Does it mutate current_node_coordinates?
-        update_node_coordinates(
+        current_node_coordinates = update_node_coordinates(
           current_node_coordinates,
           subsection,
           current_half_node_size
         );
+
+        current_half_node_size /= 2;
 
         current_tile_index = imageLoad(u_nodePoolBuff, int(current_node_index)).r;
 
