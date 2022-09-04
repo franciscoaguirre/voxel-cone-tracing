@@ -1,6 +1,6 @@
 #version 430 core
 
-layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 
 uniform int number_of_voxel_fragments;
 uniform int octree_level;
@@ -73,18 +73,16 @@ void main()
 
     uint current_node_index = calculate_node_index(current_tile_index, subsection);
     
+    current_node_coordinates = update_node_coordinates(
+      current_node_coordinates,
+      subsection,
+      current_half_node_size
+    );
+
+    current_half_node_size /= 2;
+
     for (uint i = 0; i < octree_level; i++)
     {
-
-        // TODO: Does it mutate current_node_coordinates?
-        current_node_coordinates = update_node_coordinates(
-          current_node_coordinates,
-          subsection,
-          current_half_node_size
-        );
-
-        current_half_node_size /= 2;
-
         current_tile_index = imageLoad(u_nodePoolBuff, int(current_node_index)).r;
 
         bvec3 subsection = calculate_node_subsection(current_node_coordinates,
@@ -92,6 +90,14 @@ void main()
                                                      voxel_fragment_position.xyz);
 
         current_node_index = calculate_node_index(current_tile_index, subsection);
+
+        current_node_coordinates = update_node_coordinates(
+          current_node_coordinates,
+          subsection,
+          current_half_node_size
+        );
+
+        current_half_node_size /= 2;
     }
 
     imageStore(u_nodePoolBuff, int(current_node_index), uvec4(NODE_FLAG_VALUE, 0, 0, 0));

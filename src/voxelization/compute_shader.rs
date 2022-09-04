@@ -46,8 +46,8 @@ impl ComputeShader {
         gl::UseProgram(self.id);
     }
 
-    pub unsafe fn dispatch(&self) {
-        gl::DispatchCompute(32768, 1, 1);
+    pub unsafe fn dispatch(&self, number_of_groups: u32) {
+        gl::DispatchCompute(number_of_groups, 1, 1);
     }
 
     pub unsafe fn wait(&self) {

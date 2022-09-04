@@ -1,9 +1,9 @@
 use std::{ffi::c_void, mem::size_of};
 
+use crate::{constants::NODES_PER_TILE, rendering::shader::Shader};
 use c_str_macro::c_str;
 use cgmath::Matrix4;
 use gl::types::*;
-use crate::rendering::shader::Shader;
 
 use super::{compute_shader::ComputeShader, helpers};
 use crate::constants;
@@ -31,12 +31,13 @@ unsafe fn show_values_per_tile(offset: usize, number_of_tiles: usize) {
     );
 
     for tile in 0..number_of_tiles {
-      let lower_limit: usize = (tile + offset) * constants::NODES_PER_TILE as usize;
-      let upper_limit: usize = lower_limit + constants::NODES_PER_TILE as usize;
-      dbg!(&values[lower_limit..upper_limit]);
+        let lower_limit: usize = (tile + offset) * constants::NODES_PER_TILE as usize;
+        let upper_limit: usize = lower_limit + constants::NODES_PER_TILE as usize;
+        dbg!(&values[lower_limit..upper_limit]);
     }
 }
 
+static mut TILES_PER_LEVEL: Vec<u32> = Vec::new();
 
 pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragments: u32) {
     let mut allocated_tiles_counter: u32 = 0;
@@ -44,7 +45,7 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
     helpers::generate_atomic_counter_buffer(&mut allocated_tiles_counter);
 
     let max_node_pool_size = get_max_node_pool_size();
-    let mut tiles_per_level = vec![1];
+    TILES_PER_LEVEL.push(1);
 
     helpers::generate_linear_buffer(
         size_of::<GLuint>() * max_node_pool_size as usize,
@@ -65,9 +66,6 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
 
     let flag_nodes_shader = ComputeShader::new("src/shaders/octree/flag_nodes.comp.glsl");
     let allocate_nodes_shader = ComputeShader::new("src/shaders/octree/allocate_nodes.comp.glsl");
-    // let initialize_nodes_shader =
-    //     ComputeShader::new("src/shaders/octree/initialize_nodes.comp.glsl"); We don't need it
-    //     because we initalize everything in 0 already?
 
     let mut first_tile_in_level: i32 = 0; // Index of first tile in a given octree level
     let mut first_free_tile: i32 = 1; // Index of first free tile (unallocated) in the octree
@@ -101,10 +99,8 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
             gl::R32UI,
         );
 
-        flag_nodes_shader.dispatch();
+        flag_nodes_shader.dispatch(65_535); // TODO: Calculate number of groups
         flag_nodes_shader.wait();
-
-        // TODO: Subdivide nodes until OCTREE_LEVELS (compute shader)
 
         allocate_nodes_shader.use_program();
 
@@ -121,7 +117,7 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
         );
         gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, allocated_tiles_counter);
 
-        allocate_nodes_shader.dispatch();
+        allocate_nodes_shader.dispatch(65_535); // TODO: Calculate number of groups
         allocate_nodes_shader.wait();
 
         let mut tiles_allocated: GLuint = 0;
@@ -141,8 +137,10 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
         );
         gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, 0);
 
-        tiles_per_level.push(tiles_allocated);
-        first_tile_in_level += tiles_per_level[octree_level as usize] as i32;
+        dbg!(tiles_allocated);
+
+        TILES_PER_LEVEL.push(tiles_allocated);
+        first_tile_in_level += TILES_PER_LEVEL[octree_level as usize] as i32;
         first_free_tile += tiles_allocated as i32;
     }
 
@@ -150,11 +148,12 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
     // TODO: Mipmap to inner nodes
 }
 
-pub unsafe fn render_octree(model: &Matrix4<f32>, view: &Matrix4<f32>, projection: &Matrix4<f32>) {
-    let max_node_pool_size = get_max_node_pool_size();
-
-    gl::Enable(gl::POINT_SIZE);
-
+pub unsafe fn render_octree(
+    model: &Matrix4<f32>,
+    view: &Matrix4<f32>,
+    projection: &Matrix4<f32>,
+    octree_level: i32,
+) {
     let visualize_octree_shader = Shader::with_geometry_shader(
         "src/shaders/octree/visualize.vert.glsl",
         "src/shaders/octree/visualize.frag.glsl",
@@ -173,7 +172,7 @@ pub unsafe fn render_octree(model: &Matrix4<f32>, view: &Matrix4<f32>, projectio
         gl::R32UI,
     );
 
-    visualize_octree_shader.setInt(c_str!("octree_levels"), 3 as i32);
+    visualize_octree_shader.setInt(c_str!("octree_levels"), octree_level);
     visualize_octree_shader.setInt(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
 
     visualize_octree_shader.setMat4(c_str!("projection"), projection);
@@ -189,7 +188,7 @@ pub unsafe fn render_octree(model: &Matrix4<f32>, view: &Matrix4<f32>, projectio
     gl::GenVertexArrays(1, &mut vao);
     gl::BindVertexArray(vao);
 
-    gl::DrawArrays(gl::POINTS, 0, max_node_pool_size as i32);
+    gl::DrawArrays(gl::POINTS, 0, 8u32.pow(octree_level as u32) as i32);
 }
 
 fn get_constant_pointer(number: &u32) -> *const c_void {
