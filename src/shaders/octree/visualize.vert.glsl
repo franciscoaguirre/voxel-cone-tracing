@@ -8,6 +8,7 @@ uniform layout(binding = 0, r32ui) uimageBuffer u_nodePoolBuff;
 out vec4 node_position;
 out float half_node_size;
 out int non_empty_branch;
+out int keep_on_going;
 
 const int NODES_PER_TILE = 8;
 

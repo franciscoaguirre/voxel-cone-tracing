@@ -5,7 +5,7 @@ use c_str_macro::c_str;
 extern crate gl;
 extern crate glfw;
 use gl::types::*;
-use glfw::Context;
+use glfw::{Action, Context, Key, Window};
 
 use cgmath::{perspective, vec3, Deg, Matrix4, Point3};
 
@@ -157,34 +157,40 @@ fn main() {
         vao
     };
 
-    let mut current_voxel_fragment_count = 0;
+    // Animation variables
+    let mut current_voxel_fragment_count: u32 = 0;
+    let mut current_octree_level: u32 = 0;
+    let mut frame_index = 1;
 
     // Render loop
     while !window.should_close() {
+        frame_index += 1;
+
         let current_frame = glfw.get_time() as f32;
+
         delta_time = current_frame - last_frame;
         last_frame = current_frame;
 
-        // Events
-        common::process_events(
-            &events,
-            &mut first_mouse,
-            &mut last_x,
-            &mut last_y,
-            &mut camera,
-        );
+        for (_, event) in glfw::flush_messages(&events) {
+            // Events
+            common::process_events(
+                &event,
+                &mut first_mouse,
+                &mut last_x,
+                &mut last_y,
+                &mut camera,
+            );
+            handle_update_octree_level(&event, &mut current_octree_level);
+        }
 
         // Input
         common::process_input(&mut window, delta_time, &mut camera);
 
         // Render
         unsafe {
-            gl::ClearColor(1.0, 0.0, 0.0, 1.0);
+            gl::ClearColor(0.2, 0.2, 0.2, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
             gl::Enable(gl::DEPTH_TEST);
-            //gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
-            //gl::Enable(gl::BLEND);
-            //gl::PolygonMode(gl::FRONT_AND_BACK, gl::FILL);
 
             let projection: Matrix4<f32> = perspective(
                 Deg(camera.Zoom),
@@ -204,25 +210,39 @@ fn main() {
             // render_model_shader.setMat4(c_str!("model"), &model);
 
             //our_model.Draw(&render_model_shader);
-            render_voxel_fragments(
-                voxel_position_texture,
-                voxel_diffuse_texture,
-                &projection,
-                &view,
-                &model,
-                current_voxel_fragment_count,
-                vao,
-            );
+            // render_voxel_fragments(
+            //     voxel_position_texture,
+            //     voxel_diffuse_texture,
+            //     &projection,
+            //     &view,
+            //     &model,
+            //     current_voxel_fragment_count,
+            //     vao,
+            // );
 
             //gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
-            render_octree(&model, &view, &projection);
+            render_octree(&model, &view, &projection, current_octree_level as i32);
         }
 
         current_voxel_fragment_count =
-            (current_voxel_fragment_count + 100).min(number_of_voxel_fragments);
+            (current_voxel_fragment_count + 10000).min(number_of_voxel_fragments);
 
         // GLFW: Swap buffers and poll I/O events
         window.swap_buffers();
         glfw.poll_events();
+    }
+}
+
+fn handle_update_octree_level(event: &glfw::WindowEvent, current_octree_level: &mut u32) {
+    match *event {
+        glfw::WindowEvent::Key(Key::Left, _, Action::Press, _) => {
+            if *current_octree_level != 0 {
+                *current_octree_level -= 1
+            }
+        }
+        glfw::WindowEvent::Key(Key::Right, _, Action::Press, _) => {
+            *current_octree_level = (*current_octree_level + 1).min(constants::OCTREE_LEVELS);
+        }
+        _ => {}
     }
 }
