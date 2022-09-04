@@ -173,7 +173,7 @@ pub unsafe fn render_octree(model: &Matrix4<f32>, view: &Matrix4<f32>, projectio
         gl::R32UI,
     );
 
-    visualize_octree_shader.setInt(c_str!("octree_levels"), 3 as i32);
+    visualize_octree_shader.setInt(c_str!("octree_levels"), 2 as i32);
     visualize_octree_shader.setInt(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
 
     visualize_octree_shader.setMat4(c_str!("projection"), projection);
