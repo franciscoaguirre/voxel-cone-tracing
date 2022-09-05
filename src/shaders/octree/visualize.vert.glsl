@@ -1,6 +1,9 @@
 #version 430 core
 
 uniform int octree_levels;
+uniform int offset;
+uniform int show_empty_nodes;
+uniform int draw_by_parts;
 uniform int voxel_dimension;
 
 uniform layout(binding = 0, r32ui) uimageBuffer u_nodePoolBuff;
@@ -41,7 +44,13 @@ uvec3 update_node_coordinates(
 void main() {
   int tile = 0;
   int thread_index = gl_VertexID;
-  int subnode = thread_index % 8;
+  int subnode;
+  if (draw_by_parts == 1) {
+    subnode = offset;
+  } else {
+    subnode = thread_index % 8;
+
+  }
   uvec3 current_node_coordinates = uvec3(0, 0, 0);
   uint current_half_node_size = voxel_dimension / 2;
   bool continue_for = true;
@@ -64,13 +73,13 @@ void main() {
 
   float normalized_half_node_size = current_half_node_size * 2.0 / float(voxel_dimension);
   node_position = vec4((current_node_coordinates.xyz / float(voxel_dimension)) * 2.0 - vec3(1.0), 1.0);
-  node_position += normalized_half_node_size;
+  node_position.xyz += normalized_half_node_size;
   gl_Position = node_position;
   if(tile != 0 || octree_levels == 0) {
     half_node_size = normalized_half_node_size;
     non_empty_branch = 1;
   } else {
-    half_node_size = 0;
+    half_node_size = normalized_half_node_size * int(show_empty_nodes);
     non_empty_branch = 0;
   }
 }
