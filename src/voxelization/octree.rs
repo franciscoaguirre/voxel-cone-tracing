@@ -144,7 +144,7 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
         first_free_tile += tiles_allocated as i32;
     }
 
-    show_values_per_tile(0, 5);
+    show_values_per_tile(0, 8);
     // TODO: Mipmap to inner nodes
 }
 
@@ -153,6 +153,7 @@ pub unsafe fn render_octree(
     view: &Matrix4<f32>,
     projection: &Matrix4<f32>,
     octree_level: i32,
+    show_empty_nodes: bool
 ) {
     let visualize_octree_shader = Shader::with_geometry_shader(
         "src/shaders/octree/visualize.vert.glsl",
@@ -174,6 +175,7 @@ pub unsafe fn render_octree(
 
     visualize_octree_shader.setInt(c_str!("octree_levels"), octree_level);
     visualize_octree_shader.setInt(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
+    visualize_octree_shader.setBool(c_str!("show_empty_nodes"), show_empty_nodes);
 
     visualize_octree_shader.setMat4(c_str!("projection"), projection);
     visualize_octree_shader.setMat4(c_str!("view"), view);
@@ -188,7 +190,21 @@ pub unsafe fn render_octree(
     gl::GenVertexArrays(1, &mut vao);
     gl::BindVertexArray(vao);
 
-    gl::DrawArrays(gl::POINTS, 0, 8u32.pow(octree_level as u32) as i32);
+    if octree_level == 8 {
+        // TODO: make this work, having octree_levels uniform at 8 is what makes it fail so console
+        // log the shader errors, it seems to be failing silently
+        for offset in 0..8 {
+            visualize_octree_shader.setInt(c_str!("offset"), 1);
+            visualize_octree_shader.setInt(c_str!("draw_by_parts"), offset);
+            gl::DrawArrays(gl::POINTS, 0, 8u32.pow(7 as u32) as i32);
+        }
+    } else {
+        visualize_octree_shader.setInt(c_str!("offset"), 0);
+        visualize_octree_shader.setInt(c_str!("draw_by_parts"), 0);
+        gl::DrawArrays(gl::POINTS, 0, 8u32.pow(octree_level as u32) as i32);
+    }
+
+    show_values_per_tile(0, 2);
 }
 
 fn get_constant_pointer(number: &u32) -> *const c_void {

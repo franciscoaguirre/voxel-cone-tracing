@@ -13,7 +13,7 @@ const uint NODES_PER_TILE = 8;
 const int NODE_FLAG_VALUE = 0x80000000;
 
 bool within_second_half(uint min, uint half_node_size, uint coordinate_position) {
- return coordinate_position > min + half_node_size;
+ return coordinate_position >= min + half_node_size;
 }
 
 // Each node is divided into 8 subsections/children, for each coordinate the node is divided in two.
@@ -57,6 +57,11 @@ uvec3 update_node_coordinates(
 void main()
 {
     const uint thread_index = gl_GlobalInvocationID.x; // TODO: Make grid bigger
+
+    if (thread_index >= number_of_voxel_fragments) {
+      return;
+    }
+
     uvec4 voxel_fragment_position = imageLoad(u_voxelPos, int(thread_index));
     uint current_half_node_size = voxel_dimension / 2;
 

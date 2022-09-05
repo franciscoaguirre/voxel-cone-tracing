@@ -5,7 +5,7 @@ use c_str_macro::c_str;
 extern crate gl;
 extern crate glfw;
 use gl::types::*;
-use glfw::{Action, Context, Key, Window};
+use glfw::{Action, Context, Key};
 
 use cgmath::{perspective, vec3, Deg, Matrix4, Point3};
 
@@ -119,7 +119,7 @@ fn main() {
     // GL: Load all OpenGL function pointers
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let (render_model_shader, _our_model) = unsafe {
+    let (render_model_shader, our_model) = unsafe {
         gl::Enable(gl::DEPTH_TEST);
 
         let our_shader = Shader::new(
@@ -157,10 +157,26 @@ fn main() {
         vao
     };
 
+
+    let scene_aabb = &our_model.aabb;
+    let aabb_middle_point = scene_aabb.middle_point();
+    let aabb_longer_side = scene_aabb.longer_axis_length();
+
+    let center_scene_matrix = cgmath::Matrix4::from_translation(-aabb_middle_point);
+    // aabb_longer_side is divided by two and we then use the inverse because
+    // NDC coordinates goes from -1 to 1
+    let normalize_size_matrix = cgmath::Matrix4::from_scale(2f32 / aabb_longer_side);
+
+    let model_normalization_matrix = normalize_size_matrix * center_scene_matrix;
+
     // Animation variables
     let mut current_voxel_fragment_count: u32 = 0;
     let mut current_octree_level: u32 = 0;
     let mut frame_index = 1;
+    let mut show_empty_nodes = false;
+    let mut show_model = false;
+    let mut show_voxel_fragment_list = false;
+    let mut show_octree = false;
 
     // Render loop
     while !window.should_close() {
@@ -180,7 +196,8 @@ fn main() {
                 &mut last_y,
                 &mut camera,
             );
-            handle_update_octree_level(&event, &mut current_octree_level);
+            handle_update_octree_level(&event, &mut current_octree_level, &mut show_empty_nodes);
+            handle_showing_entities(&event, &mut show_model, &mut show_voxel_fragment_list, &mut show_octree);
         }
 
         // Input
@@ -202,26 +219,32 @@ fn main() {
             let mut model = Matrix4::<f32>::from_translation(vec3(0.0, 0.0, 0.0));
             model = model * Matrix4::from_scale(1.); // i
 
-            //render_model_shader.useProgram();
-            // Not using cow model, using voxel fragment list
-            // render_model_shader.useProgram();
-            // render_model_shader.setMat4(c_str!("projection"), &projection);
-            // render_model_shader.setMat4(c_str!("view"), &view);
-            // render_model_shader.setMat4(c_str!("model"), &model);
+            if show_model {
+                render_model_shader.useProgram();
+                render_model_shader.useProgram();
+                render_model_shader.setMat4(c_str!("projection"), &projection);
+                render_model_shader.setMat4(c_str!("view"), &view);
+                render_model_shader.setMat4(c_str!("model"), &model_normalization_matrix);
 
-            //our_model.Draw(&render_model_shader);
-            // render_voxel_fragments(
-            //     voxel_position_texture,
-            //     voxel_diffuse_texture,
-            //     &projection,
-            //     &view,
-            //     &model,
-            //     current_voxel_fragment_count,
-            //     vao,
-            // );
+                our_model.Draw(&render_model_shader);
+            }
 
-            //gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
-            render_octree(&model, &view, &projection, current_octree_level as i32);
+            if show_voxel_fragment_list {
+                render_voxel_fragments(
+                    voxel_position_texture,
+                    voxel_diffuse_texture,
+                    &projection,
+                    &view,
+                    &model,
+                    current_voxel_fragment_count,
+                    vao,
+                );
+            }
+
+            if show_octree {
+                render_octree(&model, &view, &projection, current_octree_level as i32, show_empty_nodes);
+            }
+            
         }
 
         current_voxel_fragment_count =
@@ -233,7 +256,7 @@ fn main() {
     }
 }
 
-fn handle_update_octree_level(event: &glfw::WindowEvent, current_octree_level: &mut u32) {
+fn handle_update_octree_level(event: &glfw::WindowEvent, current_octree_level: &mut u32, show_empty_nodes: &mut bool) {
     match *event {
         glfw::WindowEvent::Key(Key::Left, _, Action::Press, _) => {
             if *current_octree_level != 0 {
@@ -242,6 +265,25 @@ fn handle_update_octree_level(event: &glfw::WindowEvent, current_octree_level: &
         }
         glfw::WindowEvent::Key(Key::Right, _, Action::Press, _) => {
             *current_octree_level = (*current_octree_level + 1).min(constants::OCTREE_LEVELS);
+        }
+        glfw::WindowEvent::Key(Key::M, _, Action::Press, _) => {
+            *show_empty_nodes = !*show_empty_nodes;
+        }
+        _ => {}
+    }
+}
+
+
+fn handle_showing_entities(event: &glfw::WindowEvent, show_model: &mut bool, show_voxel_fragment_list: &mut bool, show_octree: &mut bool) {
+    match *event {
+        glfw::WindowEvent::Key(Key::Num1, _, Action::Press, _) => {
+            *show_model = !*show_model;
+        }
+        glfw::WindowEvent::Key(Key::Num2, _, Action::Press, _) => {
+            *show_voxel_fragment_list = !*show_voxel_fragment_list;
+        }
+        glfw::WindowEvent::Key(Key::Num3, _, Action::Press, _) => {
+            *show_octree = !*show_octree;
         }
         _ => {}
     }
