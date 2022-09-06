@@ -51,7 +51,7 @@ impl ComputeShader {
     }
 
     pub unsafe fn wait(&self) {
-        gl::MemoryBarrier(gl::ALL_BARRIER_BITS | gl::ATOMIC_COUNTER_BARRIER_BIT);
+        gl::MemoryBarrier(gl::ALL_BARRIER_BITS);
     }
 
     // pub unsafe fn set_values(&self, _values: *const c_void) {

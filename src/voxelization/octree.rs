@@ -1,6 +1,6 @@
 use std::{ffi::c_void, mem::size_of};
 
-use crate::{constants::NODES_PER_TILE, rendering::shader::Shader};
+use crate::rendering::shader::Shader;
 use c_str_macro::c_str;
 use cgmath::Matrix4;
 use gl::types::*;
@@ -10,6 +10,11 @@ use crate::constants;
 
 static mut OCTREE_NODE_POOL_TEXTURE: GLuint = 0;
 static mut OCTREE_NODE_POOL_TEXTURE_BUFFER: GLuint = 0;
+
+static mut OCTREE_DIFFUSE_TEXTURE: GLuint = 0;
+static mut OCTREE_DIFFUSE_TEXTURE_BUFFER: GLuint = 0;
+
+static mut TILES_PER_LEVEL: Vec<u32> = Vec::new();
 
 fn get_max_node_pool_size() -> usize {
     let number_of_tiles = (0..constants::OCTREE_LEVELS)
@@ -21,7 +26,7 @@ fn get_max_node_pool_size() -> usize {
 unsafe fn show_values_per_tile(offset: usize, number_of_tiles: usize) {
     let max_node_pool_size = get_max_node_pool_size();
 
-    let values = vec![1u32; max_node_pool_size];
+    let values = vec![0u32; max_node_pool_size];
     gl::BindBuffer(gl::TEXTURE_BUFFER, OCTREE_NODE_POOL_TEXTURE_BUFFER);
     gl::GetBufferSubData(
         gl::TEXTURE_BUFFER,
@@ -37,9 +42,11 @@ unsafe fn show_values_per_tile(offset: usize, number_of_tiles: usize) {
     }
 }
 
-static mut TILES_PER_LEVEL: Vec<u32> = Vec::new();
-
-pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragments: u32) {
+pub unsafe fn build_octree(
+    voxel_position_texture: GLuint,
+    number_of_voxel_fragments: u32,
+    voxel_diffuse_texture: GLuint,
+) {
     let mut allocated_tiles_counter: u32 = 0;
     let _error: GLenum = gl::GetError();
     helpers::generate_atomic_counter_buffer(&mut allocated_tiles_counter);
@@ -54,8 +61,25 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
         &mut OCTREE_NODE_POOL_TEXTURE_BUFFER,
     );
 
-    gl::BindBuffer(gl::TEXTURE_BUFFER, OCTREE_NODE_POOL_TEXTURE_BUFFER);
+    helpers::generate_linear_buffer(
+        size_of::<GLuint>() * max_node_pool_size as usize,
+        gl::R32UI,
+        &mut OCTREE_DIFFUSE_TEXTURE,
+        &mut OCTREE_DIFFUSE_TEXTURE_BUFFER,
+    );
+
     let data = vec![0u32; max_node_pool_size];
+
+    gl::BindBuffer(gl::TEXTURE_BUFFER, OCTREE_NODE_POOL_TEXTURE_BUFFER);
+    gl::BufferData(
+        gl::TEXTURE_BUFFER,
+        (size_of::<GLuint>() * max_node_pool_size) as isize,
+        data.as_ptr() as *const c_void,
+        gl::STATIC_DRAW,
+    );
+    gl::BindBuffer(gl::TEXTURE_BUFFER, 0);
+
+    gl::BindBuffer(gl::TEXTURE_BUFFER, OCTREE_DIFFUSE_TEXTURE_BUFFER);
     gl::BufferData(
         gl::TEXTURE_BUFFER,
         (size_of::<GLuint>() * max_node_pool_size) as isize,
@@ -66,11 +90,12 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
 
     let flag_nodes_shader = ComputeShader::new("src/shaders/octree/flag_nodes.comp.glsl");
     let allocate_nodes_shader = ComputeShader::new("src/shaders/octree/allocate_nodes.comp.glsl");
+    let leaf_store_shader = ComputeShader::new("src/shaders/octree/leaf_store.comp.glsl");
 
     let mut first_tile_in_level: i32 = 0; // Index of first tile in a given octree level
     let mut first_free_tile: i32 = 1; // Index of first free tile (unallocated) in the octree
 
-    for octree_level in 0..constants::OCTREE_LEVELS {
+    for octree_level in 1..constants::OCTREE_LEVELS {
         flag_nodes_shader.use_program();
 
         flag_nodes_shader.set_int(
@@ -129,6 +154,7 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
             size_of::<GLuint>() as isize,
             get_mutable_pointer(&mut tiles_allocated),
         );
+        // Reset counter to zero
         gl::BufferSubData(
             gl::ATOMIC_COUNTER_BUFFER,
             0,
@@ -144,8 +170,70 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
         first_free_tile += tiles_allocated as i32;
     }
 
-    show_values_per_tile(0, 8);
-    // TODO: Mipmap to inner nodes
+    show_values_per_tile(0, 1);
+
+    leaf_store_shader.use_program();
+    leaf_store_shader.set_int(
+        c_str!("number_of_voxel_fragments"),
+        number_of_voxel_fragments as i32,
+    );
+    leaf_store_shader.set_int(c_str!("octree_level"), constants::OCTREE_LEVELS as i32);
+    leaf_store_shader.set_int(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
+    gl::BindImageTexture(
+        0,
+        OCTREE_NODE_POOL_TEXTURE,
+        0,
+        gl::FALSE,
+        0,
+        gl::READ_ONLY,
+        gl::R32UI,
+    );
+    gl::BindImageTexture(
+        1,
+        OCTREE_DIFFUSE_TEXTURE,
+        0,
+        gl::FALSE,
+        0,
+        gl::READ_WRITE,
+        gl::R32UI,
+    );
+    gl::BindImageTexture(
+        2,
+        voxel_position_texture,
+        0,
+        gl::FALSE,
+        0,
+        gl::READ_ONLY,
+        gl::RGB10_A2UI,
+    );
+    gl::BindImageTexture(
+        3,
+        voxel_diffuse_texture,
+        0,
+        gl::FALSE,
+        0,
+        gl::READ_ONLY,
+        gl::RGBA8,
+    );
+    leaf_store_shader.dispatch(65_535);
+    leaf_store_shader.wait();
+
+    let values = vec![0u32; max_node_pool_size];
+    gl::BindBuffer(gl::TEXTURE_BUFFER, OCTREE_DIFFUSE_TEXTURE_BUFFER);
+    gl::GetBufferSubData(
+        gl::TEXTURE_BUFFER,
+        0,
+        (size_of::<GLuint>() * max_node_pool_size) as isize,
+        values.as_ptr() as *mut c_void,
+    );
+
+    // for (index, &value) in values.iter().enumerate() {
+    //     if value != 0 {
+    //         dbg!(value);
+    //         dbg!(index);
+    //         break;
+    //     }
+    // }
 }
 
 pub unsafe fn render_octree(
@@ -153,7 +241,7 @@ pub unsafe fn render_octree(
     view: &Matrix4<f32>,
     projection: &Matrix4<f32>,
     octree_level: i32,
-    show_empty_nodes: bool
+    show_empty_nodes: bool,
 ) {
     let visualize_octree_shader = Shader::with_geometry_shader(
         "src/shaders/octree/visualize.vert.glsl",
@@ -168,6 +256,15 @@ pub unsafe fn render_octree(
         OCTREE_NODE_POOL_TEXTURE,
         0,
         gl::TRUE,
+        0,
+        gl::READ_WRITE,
+        gl::R32UI,
+    );
+    gl::BindImageTexture(
+        1,
+        OCTREE_DIFFUSE_TEXTURE,
+        0,
+        gl::FALSE,
         0,
         gl::READ_WRITE,
         gl::R32UI,
@@ -190,21 +287,9 @@ pub unsafe fn render_octree(
     gl::GenVertexArrays(1, &mut vao);
     gl::BindVertexArray(vao);
 
-    if octree_level == 8 {
-        // TODO: make this work, having octree_levels uniform at 8 is what makes it fail so console
-        // log the shader errors, it seems to be failing silently
-        for offset in 0..8 {
-            visualize_octree_shader.setInt(c_str!("offset"), 1);
-            visualize_octree_shader.setInt(c_str!("draw_by_parts"), offset);
-            gl::DrawArrays(gl::POINTS, 0, 8u32.pow(7 as u32) as i32);
-        }
-    } else {
-        visualize_octree_shader.setInt(c_str!("offset"), 0);
-        visualize_octree_shader.setInt(c_str!("draw_by_parts"), 0);
-        gl::DrawArrays(gl::POINTS, 0, 8u32.pow(octree_level as u32) as i32);
-    }
-
-    show_values_per_tile(0, 2);
+    visualize_octree_shader.setInt(c_str!("offset"), 0);
+    visualize_octree_shader.setInt(c_str!("draw_by_parts"), 0);
+    gl::DrawArrays(gl::POINTS, 0, 8u32.pow(octree_level as u32) as i32);
 }
 
 fn get_constant_pointer(number: &u32) -> *const c_void {

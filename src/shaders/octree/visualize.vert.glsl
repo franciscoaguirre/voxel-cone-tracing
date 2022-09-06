@@ -7,11 +7,13 @@ uniform int draw_by_parts;
 uniform int voxel_dimension;
 
 uniform layout(binding = 0, r32ui) uimageBuffer u_nodePoolBuff;
+uniform layout(binding = 1, r32ui) uimageBuffer octree_diffuse_texture;
 
 out vec4 node_position;
 out float half_node_size;
 out int non_empty_branch;
 out int keep_on_going;
+out uint geometry_color;
 
 const int NODES_PER_TILE = 8;
 
@@ -49,12 +51,12 @@ void main() {
     subnode = offset;
   } else {
     subnode = thread_index % 8;
-
   }
   uvec3 current_node_coordinates = uvec3(0, 0, 0);
   uint current_half_node_size = voxel_dimension / 2;
   bool continue_for = true;
   int i = 0;
+  int previous_tile = 0;
 
   for (i = 0; (i < octree_levels) && continue_for; i++) {
     tile = int(imageLoad(u_nodePoolBuff, tile * NODES_PER_TILE + subnode).r);
@@ -75,6 +77,9 @@ void main() {
   node_position = vec4((current_node_coordinates.xyz / float(voxel_dimension)) * 2.0 - vec3(1.0), 1.0);
   node_position.xyz += normalized_half_node_size;
   gl_Position = node_position;
+  /* uint color = imageLoad(octree_diffuse_texture, 89910).r; */
+  uint color = imageLoad(octree_diffuse_texture, tile * NODES_PER_TILE + subnode).r;
+  geometry_color = color;
   if(tile != 0 || octree_levels == 0) {
     half_node_size = normalized_half_node_size;
     non_empty_branch = 1;

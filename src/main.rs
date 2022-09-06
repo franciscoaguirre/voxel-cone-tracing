@@ -127,7 +127,7 @@ fn main() {
             "src/shaders/model/model_loading.frag.glsl",
         );
 
-        let our_model = Model::new("assets/triangle.obj");
+        let our_model = Model::new("assets/colored_cow.obj");
 
         (our_shader, our_model)
     };
@@ -146,7 +146,11 @@ fn main() {
     };
 
     unsafe {
-        build_octree(voxel_position_texture, number_of_voxel_fragments);
+        build_octree(
+            voxel_position_texture,
+            number_of_voxel_fragments,
+            voxel_diffuse_texture,
+        );
     }
 
     // vao to render voxel fragment list
@@ -156,7 +160,6 @@ fn main() {
 
         vao
     };
-
 
     let scene_aabb = &our_model.aabb;
     let aabb_middle_point = scene_aabb.middle_point();
@@ -197,7 +200,12 @@ fn main() {
                 &mut camera,
             );
             handle_update_octree_level(&event, &mut current_octree_level, &mut show_empty_nodes);
-            handle_showing_entities(&event, &mut show_model, &mut show_voxel_fragment_list, &mut show_octree);
+            handle_showing_entities(
+                &event,
+                &mut show_model,
+                &mut show_voxel_fragment_list,
+                &mut show_octree,
+            );
         }
 
         // Input
@@ -232,9 +240,15 @@ fn main() {
             }
 
             if show_octree {
-                render_octree(&model, &view, &projection, current_octree_level as i32, show_empty_nodes);
+                render_octree(
+                    &model,
+                    &view,
+                    &projection,
+                    current_octree_level as i32,
+                    show_empty_nodes,
+                );
             }
-            
+
             model = model_normalization_matrix * model;
 
             if show_model {
@@ -257,7 +271,11 @@ fn main() {
     }
 }
 
-fn handle_update_octree_level(event: &glfw::WindowEvent, current_octree_level: &mut u32, show_empty_nodes: &mut bool) {
+fn handle_update_octree_level(
+    event: &glfw::WindowEvent,
+    current_octree_level: &mut u32,
+    show_empty_nodes: &mut bool,
+) {
     match *event {
         glfw::WindowEvent::Key(Key::Left, _, Action::Press, _) => {
             if *current_octree_level != 0 {
@@ -274,8 +292,12 @@ fn handle_update_octree_level(event: &glfw::WindowEvent, current_octree_level: &
     }
 }
 
-
-fn handle_showing_entities(event: &glfw::WindowEvent, show_model: &mut bool, show_voxel_fragment_list: &mut bool, show_octree: &mut bool) {
+fn handle_showing_entities(
+    event: &glfw::WindowEvent,
+    show_model: &mut bool,
+    show_voxel_fragment_list: &mut bool,
+    show_octree: &mut bool,
+) {
     match *event {
         glfw::WindowEvent::Key(Key::Num1, _, Action::Press, _) => {
             *show_model = !*show_model;

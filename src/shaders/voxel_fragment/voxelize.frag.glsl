@@ -33,24 +33,22 @@ uvec4 calculate_texture_coordinates() {
     uvec4 temp = uvec4(
         gl_FragCoord.x,
         gl_FragCoord.y,
-        voxel_dimension * gl_FragCoord.z,
+        (voxel_dimension - 1) * gl_FragCoord.z,
         0
     );
     uvec4 texture_coordinates;
     if (fragment_dominant_axis == 0) {
-        texture_coordinates.x = voxel_dimension - temp.z;
+        texture_coordinates.x = (voxel_dimension - 1) - temp.z;
         texture_coordinates.z = temp.x;
         texture_coordinates.y = temp.y;
     } else if(fragment_dominant_axis == 1) {
         texture_coordinates.z = temp.y;
-        texture_coordinates.y = voxel_dimension - temp.z;
+        texture_coordinates.y = (voxel_dimension - 1) - temp.z;
         texture_coordinates.x = temp.x;
     } else {
         texture_coordinates = temp;
     }
 
-    // TODO: Why does this work?
-    texture_coordinates.z = voxel_dimension - texture_coordinates.z;
     return texture_coordinates;
 }
 

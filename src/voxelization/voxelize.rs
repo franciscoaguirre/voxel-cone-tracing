@@ -109,7 +109,7 @@ pub unsafe fn build_voxel_fragment_list() -> (u32, u32, u32) {
             "src/shaders/voxel_fragment/voxelize.geom.glsl",
         );
 
-        let our_model = Model::new("assets/triangle.obj");
+        let our_model = Model::new("assets/colored_cow.obj");
 
         (our_shader, our_model)
     };
@@ -151,16 +151,16 @@ pub unsafe fn build_voxel_fragment_list() -> (u32, u32, u32) {
 
     populate_voxel_fragment_list(&voxelization_shader, &models, &mut atomic_counter);
 
-    // let values = vec![1u32; number_of_voxel_fragments as usize];
-    // gl::BindBuffer(gl::TEXTURE_BUFFER, VOXEL_POSITION_TEXTURE_BUFFER);
-    // gl::GetBufferSubData(
-    //     gl::TEXTURE_BUFFER,
-    //     0,
-    //     (size_of::<GLuint>() * number_of_voxel_fragments as usize) as isize,
-    //     values.as_ptr() as *mut c_void,
-    // );
-    //
-    // dbg!(&values);
+    let values = vec![1u32; number_of_voxel_fragments as usize];
+    gl::BindBuffer(gl::TEXTURE_BUFFER, VOXEL_POSITION_TEXTURE_BUFFER);
+    gl::GetBufferSubData(
+        gl::TEXTURE_BUFFER,
+        0,
+        (size_of::<GLuint>() * number_of_voxel_fragments as usize) as isize,
+        values.as_ptr() as *mut c_void,
+    );
+
+    dbg!(&values);
 
     gl::MemoryBarrier(gl::SHADER_IMAGE_ACCESS_BARRIER_BIT);
 

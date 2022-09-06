@@ -6,12 +6,24 @@ layout (line_strip, max_vertices = 22) out;
 in vec4 node_position[];
 in float half_node_size[];
 in int non_empty_branch[];
+in uint geometry_color[];
 
 out flat int branch_not_empty;
+out vec4 fragment_color;
 
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+
+vec4 convRGBA8ToVec4(in uint val)
+{
+    return vec4(
+        float((int(val) & 0x000000FF)),
+        float((int(val) & 0x0000FF00) >> 8U),
+	    float((int(val) & 0x00FF0000) >> 16U),
+        float((int(val) & 0xFF000000) >> 24U)
+    );
+}
 
 mat4 canonization_matrix = projection * view * model;
 
@@ -179,6 +191,9 @@ void create_y_negative_face() {
 }
 
 void main() {
+    vec4 color = convRGBA8ToVec4(geometry_color[0]).rgba / 255;
+    fragment_color = color;
+
     branch_not_empty = non_empty_branch[0];
     create_z_positive_face();
     create_x_negative_face();

@@ -2,18 +2,24 @@
 
 layout (local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 
-uniform int number_of_voxel_fragments;
-uniform int octree_level;
-uniform int voxel_dimension;
+uniform layout(binding = 0, r32ui) uimageBuffer octree_node_pool;
+uniform layout(binding = 1, r32ui) uimageBuffer octree_diffuse_texture;
 
-uniform layout(binding = 0, rgb10_a2ui) uimageBuffer u_voxelPos;
-uniform layout(binding = 1, r32ui) uimageBuffer u_nodePoolBuff;
+uniform layout(binding = 2, rgb10_a2ui) uimageBuffer voxel_position_texture;
+uniform layout(binding = 3, rgba8) imageBuffer voxel_diffuse_texture;
+
+uniform int voxel_dimension;
+uniform int octree_level;
+uniform int number_of_voxel_fragments;
 
 const uint NODES_PER_TILE = 8;
-const int NODE_FLAG_VALUE = 0x80000000;
+
+void imageAtomicRGBA8Average(vec4 val, int coord);
+uint convVec4ToRGBA8(vec4 val);
+vec4 convRGBA8ToVec4(uint val);
 
 bool within_second_half(uint min, uint half_node_size, uint coordinate_position) {
- return coordinate_position >= min + half_node_size;
+ return coordinate_position > min + half_node_size;
 }
 
 // Each node is divided into 8 subsections/children, for each coordinate the node is divided in two.
@@ -54,30 +60,26 @@ uvec3 update_node_coordinates(
   return ret;
 }
 
-void main()
-{
-    const uint thread_index = gl_GlobalInvocationID.x;
+void main() {
+    uint thread_index = gl_GlobalInvocationID.x;
 
     if (thread_index >= number_of_voxel_fragments) {
-      return;
+        return;
     }
 
-    uvec4 voxel_fragment_position = imageLoad(u_voxelPos, int(thread_index));
+    uvec4 voxel_fragment_position = imageLoad(voxel_position_texture, int(thread_index));
     uint current_half_node_size = voxel_dimension / 2;
-
-    // Start journey in first tile, in node calculated via coordinates
     uint current_tile_index = 0;
-
-    // Each node's coordinates are the coordinates of the point with lower (x, y, z)
-    // within the node.
     uvec3 current_node_coordinates = uvec3(0, 0, 0);
 
-    bvec3 subsection = calculate_node_subsection(current_node_coordinates,
-                                                 current_half_node_size,
-                                                 voxel_fragment_position.xyz);
+    bvec3 subsection = calculate_node_subsection(
+        current_node_coordinates,
+        current_half_node_size,
+        voxel_fragment_position.xyz
+    );
 
     uint current_node_index = calculate_node_index(current_tile_index, subsection);
-    
+
     current_node_coordinates = update_node_coordinates(
       current_node_coordinates,
       subsection,
@@ -88,7 +90,7 @@ void main()
 
     for (uint i = 0; i < octree_level; i++)
     {
-        current_tile_index = imageLoad(u_nodePoolBuff, int(current_node_index)).r;
+        current_tile_index = imageLoad(octree_node_pool, int(current_node_index)).r;
 
         bvec3 subsection = calculate_node_subsection(current_node_coordinates,
                                                      current_half_node_size,
@@ -105,5 +107,46 @@ void main()
         current_half_node_size /= 2;
     }
 
-    imageStore(u_nodePoolBuff, int(current_node_index), uvec4(NODE_FLAG_VALUE, 0, 0, 0));
+    vec4 color = imageLoad(voxel_diffuse_texture, int(thread_index));
+
+    imageAtomicRGBA8Average(color, int(current_node_index));
+}
+
+vec4 convRGBA8ToVec4(in uint val)
+{
+    return vec4(
+        float((int(val) & 0x000000FF)),
+        float((int(val) & 0x0000FF00) >> 8U),
+	    float((int(val) & 0x00FF0000) >> 16U),
+        float((int(val) & 0xFF000000) >> 24U)
+    );
+}
+
+uint convVec4ToRGBA8(in vec4 val)
+{
+    return (int(val.w) & 0x000000FF) << 24U
+        | (int(val.z) & 0x000000FF) << 16U
+        | (int(val.y) & 0x000000FF) << 8U
+        | (int(val.x) & 0x000000FF);
+}
+
+void imageAtomicRGBA8Average(vec4 val, int coord)
+{
+    val.rgb *= 255.0;
+	val.a = 1;
+
+	uint newVal = convVec4ToRGBA8(val);
+	uint prev = 0;
+	uint cur;
+
+    // Loop as long as destination value gets changed by other threads
+    while((cur = imageAtomicCompSwap(octree_diffuse_texture, coord, prev, newVal)) != prev)
+    {
+       prev = cur;
+	   vec4 rval = convRGBA8ToVec4( cur );
+	   rval.xyz = rval.xyz*rval.w;
+	   vec4 curVal = rval +  val;
+	   curVal.xyz /= curVal.w;
+	   newVal = convVec4ToRGBA8( curVal );
+    }
 }
