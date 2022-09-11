@@ -219,16 +219,6 @@ fn main() {
             let mut model = Matrix4::<f32>::from_translation(vec3(0.0, 0.0, 0.0));
             model = model * Matrix4::from_scale(1.); // i
 
-            if show_model {
-                render_model_shader.useProgram();
-                render_model_shader.useProgram();
-                render_model_shader.setMat4(c_str!("projection"), &projection);
-                render_model_shader.setMat4(c_str!("view"), &view);
-                render_model_shader.setMat4(c_str!("model"), &model_normalization_matrix);
-
-                our_model.Draw(&render_model_shader);
-            }
-
             if show_voxel_fragment_list {
                 render_voxel_fragments(
                     voxel_position_texture,
@@ -245,6 +235,17 @@ fn main() {
                 render_octree(&model, &view, &projection, current_octree_level as i32, show_empty_nodes);
             }
             
+            model = model_normalization_matrix * model;
+
+            if show_model {
+                render_model_shader.useProgram();
+                render_model_shader.useProgram();
+                render_model_shader.setMat4(c_str!("projection"), &projection);
+                render_model_shader.setMat4(c_str!("view"), &view);
+                render_model_shader.setMat4(c_str!("model"), &model_normalization_matrix);
+
+                our_model.Draw(&render_model_shader);
+            }
         }
 
         current_voxel_fragment_count =
