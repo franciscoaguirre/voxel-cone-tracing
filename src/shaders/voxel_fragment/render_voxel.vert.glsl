@@ -30,15 +30,4 @@ void main() {
     vertex_id = gl_VertexID;
     voxel_color = imageLoad(voxel_diffuse_texture, gl_VertexID);
 
-    // TODO: Later
-    /* texture_coordinates.x = gl_VertexID % voxel_dimension; */
-    /* texture_coordinates.z = (gl_VertexID / voxel_dimension) % voxel_dimension; */
-    /* texture_coordinates.y = gl_VertexID / (voxel_dimension * voxel_dimension); */
-    /* gl_Position = projection * view * model * vec4(texture_coordinates, 1.0); */
-    /*  */
-    /* vertex_position = vec4(texture_coordinates / float(voxel_dimension) * 2.0 - 1, 1.0); */
-    /* vertex_position.z += 1.0 / voxel_dimension; */
-    /* vertex_position.x -= 1.0 / voxel_dimension; */
-
-    // TODO: Color and normal
 }
