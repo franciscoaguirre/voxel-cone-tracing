@@ -1,4 +1,6 @@
+use std::env;
 use std::mem::size_of;
+use std::path::Path;
 
 use super::helpers;
 use crate::{constants, rendering::model::Model, rendering::shader::Shader};
@@ -95,7 +97,7 @@ unsafe fn voxelize_scene(
     gl::Viewport(0, 0, constants::SOURCE_WIDTH, constants::SOURCE_HEIGHT);
 }
 
-pub unsafe fn build_voxel_fragment_list() -> (u32, u32, u32) {
+pub unsafe fn build_voxel_fragment_list(model_path: &str) -> (u32, u32, u32) {
     let mut atomic_counter: u32 = 0;
     let _error: GLenum = gl::GetError();
     helpers::generate_atomic_counter_buffer(&mut atomic_counter);
@@ -109,7 +111,10 @@ pub unsafe fn build_voxel_fragment_list() -> (u32, u32, u32) {
             "assets/shaders/voxel_fragment/voxelize.geom.glsl",
         );
 
-        let our_model = Model::new("assets/models/triangle.obj");
+        let previous_current_dir = env::current_dir().unwrap();
+        env::set_current_dir(Path::new("assets/models")).unwrap();
+        let our_model = Model::new(model_path);
+        env::set_current_dir(previous_current_dir).unwrap();
 
         (our_shader, our_model)
     };
