@@ -1,3 +1,4 @@
+use std::env;
 use std::os::raw::c_void;
 use std::path::Path;
 
@@ -124,7 +125,7 @@ impl Model {
         }
 
         let texture = Texture {
-            id: unsafe { texture_from_file(path, &self.directory) },
+            id: unsafe { texture_from_file(path) },
             type_: type_name.into(),
             path: path.into(),
         };
@@ -133,9 +134,7 @@ impl Model {
     }
 }
 
-unsafe fn texture_from_file(path: &str, directory: &str) -> u32 {
-    let filename = format!("{}/{}", directory, path);
-
+unsafe fn texture_from_file(filename: &str) -> u32 {
     let mut texture_id = 0;
     gl::GenTextures(1, &mut texture_id);
 

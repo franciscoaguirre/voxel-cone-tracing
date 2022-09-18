@@ -1,5 +1,8 @@
 extern crate c_str_macro;
 
+use std::env;
+use std::path::Path;
+
 use c_str_macro::c_str;
 extern crate gl;
 extern crate glfw;
@@ -76,7 +79,18 @@ unsafe fn render_voxel_fragments(
     let _ = gl::GetError();
 }
 
+fn process_command_line_arguments() -> String {
+    let arguments: Vec<String> = env::args().collect();
+    if arguments.len() == 2 {
+        arguments[1].clone()
+    } else {
+        String::from("triangle.obj")
+    }
+}
+
 fn main() {
+    let model_path = process_command_line_arguments();
+
     // Camera setup
     let mut camera = Camera {
         Position: Point3::new(0.0, 0.0, -3.0),
@@ -126,14 +140,17 @@ fn main() {
             "assets/shaders/model/model_loading.frag.glsl",
         );
 
-        let our_model = Model::new("assets/models/triangle.obj");
+        let previous_current_dir = env::current_dir().unwrap();
+        env::set_current_dir(Path::new("assets/models")).unwrap();
+        let our_model = Model::new(&model_path);
+        env::set_current_dir(previous_current_dir).unwrap();
 
         (our_shader, our_model)
     };
 
     let (voxel_position_texture, number_of_voxel_fragments, voxel_diffuse_texture) = unsafe {
         let (number_of_voxel_fragments, voxel_position_texture, voxel_diffuse_texture) =
-            voxelization::build_voxel_fragment_list();
+            voxelization::build_voxel_fragment_list(&model_path);
         dbg!(number_of_voxel_fragments);
 
         gl::Enable(gl::PROGRAM_POINT_SIZE);
