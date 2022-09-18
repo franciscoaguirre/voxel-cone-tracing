@@ -64,8 +64,9 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
     );
     gl::BindBuffer(gl::TEXTURE_BUFFER, 0);
 
-    let flag_nodes_shader = ComputeShader::new("src/shaders/octree/flag_nodes.comp.glsl");
-    let allocate_nodes_shader = ComputeShader::new("src/shaders/octree/allocate_nodes.comp.glsl");
+    let flag_nodes_shader = ComputeShader::new("assets/shaders/octree/flag_nodes.comp.glsl");
+    let allocate_nodes_shader =
+        ComputeShader::new("assets/shaders/octree/allocate_nodes.comp.glsl");
 
     let mut first_tile_in_level: i32 = 0; // Index of first tile in a given octree level
     let mut first_free_tile: i32 = 1; // Index of first free tile (unallocated) in the octree
@@ -153,12 +154,12 @@ pub unsafe fn render_octree(
     view: &Matrix4<f32>,
     projection: &Matrix4<f32>,
     octree_level: i32,
-    show_empty_nodes: bool
+    show_empty_nodes: bool,
 ) {
     let visualize_octree_shader = Shader::with_geometry_shader(
-        "src/shaders/octree/visualize.vert.glsl",
-        "src/shaders/octree/visualize.frag.glsl",
-        "src/shaders/octree/visualize.geom.glsl",
+        "assets/shaders/octree/visualize.vert.glsl",
+        "assets/shaders/octree/visualize.frag.glsl",
+        "assets/shaders/octree/visualize.geom.glsl",
     );
 
     visualize_octree_shader.useProgram();

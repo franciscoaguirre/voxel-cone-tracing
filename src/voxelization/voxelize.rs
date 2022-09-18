@@ -104,12 +104,12 @@ pub unsafe fn build_voxel_fragment_list() -> (u32, u32, u32) {
         gl::Enable(gl::DEPTH_TEST);
 
         let our_shader = Shader::with_geometry_shader(
-            "src/shaders/voxel_fragment/voxelize.vert.glsl",
-            "src/shaders/voxel_fragment/voxelize.frag.glsl",
-            "src/shaders/voxel_fragment/voxelize.geom.glsl",
+            "assets/shaders/voxel_fragment/voxelize.vert.glsl",
+            "assets/shaders/voxel_fragment/voxelize.frag.glsl",
+            "assets/shaders/voxel_fragment/voxelize.geom.glsl",
         );
 
-        let our_model = Model::new("assets/triangle.obj");
+        let our_model = Model::new("assets/models/triangle.obj");
 
         (our_shader, our_model)
     };

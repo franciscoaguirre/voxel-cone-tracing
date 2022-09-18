@@ -10,7 +10,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 1
-map_Kd textures/pink.jpeg
+map_Kd ../textures/pink.jpeg
 
 newmtl hide
 Ns 0.000000
@@ -21,7 +21,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 1
-map_Kd textures/spot.jpeg
+map_Kd ../textures/spot.jpeg
 
 newmtl hoofs
 Ns 29.999999
@@ -32,7 +32,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd textures/brown.jpeg
+map_Kd ../textures/brown.jpeg
 
 newmtl horns
 Ns 20.000006
@@ -43,7 +43,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd textures/brown.jpeg
+map_Kd ../textures/brown.jpeg
 
 newmtl tail
 Ns 0.000000
@@ -64,7 +64,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 1
-map_Kd textures/pink.jpeg
+map_Kd ../textures/pink.jpeg
 
 newmtl utter_tail
 Ns 0.000000
