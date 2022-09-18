@@ -7,4 +7,4 @@ pub const OCTREE_LEVELS: u32 = 7;
 pub const NODES_PER_TILE: u32 = 8;
 
 // For compute shaders
-pub const WORKING_GROUP_SIZE: u32 = 64;
+//pub const WORKING_GROUP_SIZE: u32 = 64;

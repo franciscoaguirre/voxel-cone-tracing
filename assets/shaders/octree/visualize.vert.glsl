@@ -1,4 +1,7 @@
-#version 430 core
+#version 460 core
+
+#include "./_constants.glsl"
+#include "./_octree_traversal.glsl"
 
 uniform int octree_levels;
 uniform int offset;
@@ -13,32 +16,12 @@ out float half_node_size;
 out int non_empty_branch;
 out int keep_on_going;
 
-const int NODES_PER_TILE = 8;
-
 bvec3 number_to_subsection(int number) {
     bvec3 subsection;
     subsection.x = bool(number & 1);
     subsection.y = bool(number & 2);
     subsection.z = bool(number & 4);
     return subsection;
-}
-
-uvec3 update_node_coordinates(
-  uvec3 node_coordinates,
-  bvec3 subsection,
-  uint half_node_size
-) {
-  uvec3 ret = node_coordinates;
-  if (subsection.x) {
-    ret.x += half_node_size;
-  }
-  if (subsection.y) {
-    ret.y += half_node_size;
-  }
-  if (subsection.z) {
-    ret.z += half_node_size;
-  }
-  return ret;
 }
 
 void main() {
