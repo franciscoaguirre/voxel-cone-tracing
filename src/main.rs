@@ -33,7 +33,7 @@ unsafe fn render_voxel_fragments(
         "assets/shaders/voxel_fragment/render_voxel.geom.glsl",
     );
 
-    render_voxel_shader.useProgram();
+    render_voxel_shader.use_program();
 
     gl::BindImageTexture(
         0,
@@ -55,17 +55,17 @@ unsafe fn render_voxel_fragments(
         gl::RGBA8,
     );
 
-    render_voxel_shader.setMat4(c_str!("projection"), projection);
-    render_voxel_shader.setMat4(c_str!("view"), view);
-    render_voxel_shader.setMat4(c_str!("model"), model);
+    render_voxel_shader.set_mat4(c_str!("projection"), projection);
+    render_voxel_shader.set_mat4(c_str!("view"), view);
+    render_voxel_shader.set_mat4(c_str!("model"), model);
 
-    render_voxel_shader.setInt(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
-    render_voxel_shader.setFloat(
+    render_voxel_shader.set_int(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
+    render_voxel_shader.set_float(
         c_str!("half_dimension"),
         1.0 / constants::VOXEL_DIMENSION as f32,
     );
 
-    render_voxel_shader.setInt(
+    render_voxel_shader.set_int(
         c_str!("voxel_fragment_count"),
         number_of_voxel_fragments as i32,
     );
@@ -170,7 +170,6 @@ fn main() {
     // Animation variables
     let mut current_voxel_fragment_count: u32 = 0;
     let mut current_octree_level: u32 = 0;
-    let mut frame_index = 1;
     let mut show_empty_nodes = false;
     let mut show_model = false;
     let mut show_voxel_fragment_list = false;
@@ -178,8 +177,6 @@ fn main() {
 
     // Render loop
     while !window.should_close() {
-        frame_index += 1;
-
         let current_frame = glfw.get_time() as f32;
 
         delta_time = current_frame - last_frame;
@@ -244,16 +241,14 @@ fn main() {
                 );
             }
 
-            model = model_normalization_matrix * model;
-
             if show_model {
-                render_model_shader.useProgram();
-                render_model_shader.useProgram();
-                render_model_shader.setMat4(c_str!("projection"), &projection);
-                render_model_shader.setMat4(c_str!("view"), &view);
-                render_model_shader.setMat4(c_str!("model"), &model_normalization_matrix);
+                render_model_shader.use_program();
+                render_model_shader.use_program();
+                render_model_shader.set_mat4(c_str!("projection"), &projection);
+                render_model_shader.set_mat4(c_str!("view"), &view);
+                render_model_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
 
-                our_model.Draw(&render_model_shader);
+                our_model.draw(&render_model_shader);
             }
         }
 

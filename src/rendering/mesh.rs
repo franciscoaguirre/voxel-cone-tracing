@@ -1,6 +1,3 @@
-#![allow(non_snake_case)]
-#![allow(dead_code)]
-
 use std::ffi::CString;
 use std::mem::size_of;
 use std::os::raw::c_void;
@@ -15,23 +12,23 @@ use super::shader::Shader;
 
 // NOTE: without repr(C) the compiler may reorder the fields or use different padding/alignment than C.
 // Depending on how you pass the data to OpenGL, this may be bad. In this case it's not strictly
-// necessary though because of the `offset!` macro used below in setupMesh()
+// necessary though because of the `offset!` macro used below in setup_mesh()
 #[repr(C, packed)]
 pub struct Vertex {
     // position
-    pub Position: Vector3<f32>,
+    pub position: Vector3<f32>,
     // normal
-    pub Normal: Vector3<f32>,
+    pub normal: Vector3<f32>,
     // texCoords
-    pub TexCoords: Vector2<f32>,
+    pub texture_coordinates: Vector2<f32>,
 }
 
 impl Default for Vertex {
     fn default() -> Self {
         Vertex {
-            Position: Vector3::zero(),
-            Normal: Vector3::zero(),
-            TexCoords: Vector2::zero(),
+            position: Vector3::zero(),
+            normal: Vector3::zero(),
+            texture_coordinates: Vector2::zero(),
         }
     }
 }
@@ -48,11 +45,11 @@ pub struct Mesh {
     pub vertices: Vec<Vertex>,
     pub indices: Vec<u32>,
     pub textures: Vec<Texture>,
-    pub VAO: u32,
+    pub vao: u32,
 
     /*  Render data  */
-    VBO: u32,
-    EBO: u32,
+    vbo: u32,
+    ebo: u32,
 }
 
 impl Mesh {
@@ -61,25 +58,25 @@ impl Mesh {
             vertices,
             indices,
             textures,
-            VAO: 0,
-            VBO: 0,
-            EBO: 0,
+            vao: 0,
+            vbo: 0,
+            ebo: 0,
         };
 
         // now that we have all the required data, set the vertex buffers and its attribute pointers.
-        unsafe { mesh.setupMesh() }
+        unsafe { mesh.setup_mesh() }
         mesh
     }
 
     /// render the mesh
-    pub unsafe fn Draw(&self, shader: &Shader) {
+    pub unsafe fn draw(&self, shader: &Shader) {
         // bind appropriate textures
-        let mut diffuseNr = 0;
-        let mut specularNr = 0;
-        let mut normalNr = 0;
-        let mut heightNr = 0;
+        let mut num_diffuse = 0;
+        let mut num_specular = 0;
+        let mut num_normal = 0;
+        let mut num_height = 0;
         if !self.textures.is_empty() {
-            shader.setBool(c_str!("has_texture"), true);
+            shader.set_bool(c_str!("has_texture"), true);
         }
         for (i, texture) in self.textures.iter().enumerate() {
             gl::ActiveTexture(gl::TEXTURE0 + i as u32); // active proper texture unit before binding
@@ -87,20 +84,20 @@ impl Mesh {
             let name = &texture.type_;
             let number = match name.as_str() {
                 "texture_diffuse" => {
-                    diffuseNr += 1;
-                    diffuseNr
+                    num_diffuse += 1;
+                    num_diffuse
                 }
                 "texture_specular" => {
-                    specularNr += 1;
-                    specularNr
+                    num_specular += 1;
+                    num_specular
                 }
                 "texture_normal" => {
-                    normalNr += 1;
-                    normalNr
+                    num_normal += 1;
+                    num_normal
                 }
                 "texture_height" => {
-                    heightNr += 1;
-                    heightNr
+                    num_height += 1;
+                    num_height
                 }
                 _ => panic!("unknown texture type"),
             };
@@ -108,7 +105,7 @@ impl Mesh {
             // TODO: Use shader struct
             let sampler = CString::new(format!("{}{}", name, number)).unwrap();
             gl::Uniform1i(
-                gl::GetUniformLocation(shader.ID, sampler.as_ptr()),
+                gl::GetUniformLocation(shader.id, sampler.as_ptr()),
                 i as i32,
             );
             // and finally bind the texture
@@ -116,7 +113,7 @@ impl Mesh {
         }
 
         // draw mesh
-        gl::BindVertexArray(self.VAO);
+        gl::BindVertexArray(self.vao);
         gl::DrawElements(
             gl::TRIANGLES,
             self.indices.len() as i32,
@@ -129,15 +126,15 @@ impl Mesh {
         gl::ActiveTexture(gl::TEXTURE0);
     }
 
-    unsafe fn setupMesh(&mut self) {
+    unsafe fn setup_mesh(&mut self) {
         // create buffers/arrays
-        gl::GenVertexArrays(1, &mut self.VAO);
-        gl::GenBuffers(1, &mut self.VBO);
-        gl::GenBuffers(1, &mut self.EBO);
+        gl::GenVertexArrays(1, &mut self.vao);
+        gl::GenBuffers(1, &mut self.vbo);
+        gl::GenBuffers(1, &mut self.ebo);
 
-        gl::BindVertexArray(self.VAO);
+        gl::BindVertexArray(self.vao);
         // load data into vertex buffers
-        gl::BindBuffer(gl::ARRAY_BUFFER, self.VBO);
+        gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo);
         // A great thing about structs with repr(C) is that their memory layout is sequential for all its items.
         // The effect is that we can simply pass a pointer to the struct and it translates perfectly to a glm::vec3/2 array which
         // again translates to 3/2 floats which translates to a byte array.
@@ -145,14 +142,14 @@ impl Mesh {
         let data = &self.vertices[0] as *const Vertex as *const c_void;
         gl::BufferData(gl::ARRAY_BUFFER, size, data, gl::STATIC_DRAW);
 
-        gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, self.EBO);
+        gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, self.ebo);
         let size = (self.indices.len() * size_of::<u32>()) as isize;
         let data = &self.indices[0] as *const u32 as *const c_void;
         gl::BufferData(gl::ELEMENT_ARRAY_BUFFER, size, data, gl::STATIC_DRAW);
 
         // set the vertex attribute pointers
         let size = size_of::<Vertex>() as i32;
-        // vertex Positions
+        // vertex positions
         gl::EnableVertexAttribArray(0);
         gl::VertexAttribPointer(
             0,
@@ -160,7 +157,7 @@ impl Mesh {
             gl::FLOAT,
             gl::FALSE,
             size,
-            offset_of!(Vertex, Position) as *const c_void,
+            offset_of!(Vertex, position) as *const c_void,
         );
         // vertex normals
         gl::EnableVertexAttribArray(1);
@@ -170,7 +167,7 @@ impl Mesh {
             gl::FLOAT,
             gl::FALSE,
             size,
-            offset_of!(Vertex, Normal) as *const c_void,
+            offset_of!(Vertex, normal) as *const c_void,
         );
         // vertex texture coords
         gl::EnableVertexAttribArray(2);
@@ -180,7 +177,7 @@ impl Mesh {
             gl::FLOAT,
             gl::FALSE,
             size,
-            offset_of!(Vertex, TexCoords) as *const c_void,
+            offset_of!(Vertex, texture_coordinates) as *const c_void,
         );
 
         gl::BindVertexArray(0);

@@ -1,5 +1,4 @@
 pub mod aabb;
-pub mod compute_shader;
 pub mod octree;
 pub mod voxelize;
 

@@ -1,4 +1,4 @@
-use std::{ffi::c_void, mem::size_of};
+use std::mem::size_of;
 
 use super::helpers;
 use crate::{constants, rendering::model::Model, rendering::shader::Shader};
@@ -18,8 +18,8 @@ unsafe fn calculate_voxel_fragment_list_length(
     models: &[Model; 1],
     atomic_counter: &mut u32,
 ) {
-    voxelization_shader.useProgram();
-    voxelization_shader.setBool(c_str!("should_store"), false);
+    voxelization_shader.use_program();
+    voxelization_shader.set_bool(c_str!("should_store"), false);
     voxelize_scene(voxelization_shader, models, atomic_counter);
 }
 
@@ -28,8 +28,8 @@ unsafe fn populate_voxel_fragment_list(
     models: &[Model; 1],
     atomic_counter: &mut u32,
 ) {
-    voxelization_shader.useProgram();
-    voxelization_shader.setBool(c_str!("should_store"), true);
+    voxelization_shader.use_program();
+    voxelization_shader.set_bool(c_str!("should_store"), true);
 
     gl::BindImageTexture(
         0,
@@ -49,7 +49,7 @@ unsafe fn populate_voxel_fragment_list(
         gl::READ_WRITE,
         gl::RGBA8,
     );
-    voxelization_shader.setInt(c_str!("u_voxelPos"), 0);
+    voxelization_shader.set_int(c_str!("u_voxelPos"), 0);
 
     voxelize_scene(voxelization_shader, models, atomic_counter);
 }
@@ -75,18 +75,18 @@ unsafe fn voxelize_scene(
 
     let model_normalization_matrix = normalize_size_matrix * center_scene_matrix;
 
-    voxelization_shader.setMat4(
+    voxelization_shader.set_mat4(
         c_str!("model_normalization_matrix"),
         &model_normalization_matrix,
     );
-    voxelization_shader.setInt(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
+    voxelization_shader.set_int(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
 
     gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, *atomic_counter);
 
-    voxelization_shader.setVec3(c_str!("fallback_color"), 1.0, 1.0, 1.0);
+    voxelization_shader.set_vec3(c_str!("fallback_color"), 1.0, 1.0, 1.0);
     for model in models {
         // TODO: Do we need to set more things in the shader?
-        model.Draw(voxelization_shader);
+        model.draw(voxelization_shader);
     }
 
     gl::Disable(gl::CULL_FACE);

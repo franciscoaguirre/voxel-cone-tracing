@@ -1,6 +1,3 @@
-#![allow(non_snake_case)]
-#![allow(dead_code)]
-
 use std::os::raw::c_void;
 use std::path::Path;
 
@@ -24,20 +21,20 @@ impl Model {
     /// constructor, expects a filepath to a 3D model.
     pub fn new(path: &str) -> Model {
         let mut model = Model::default();
-        model.loadModel(path);
+        model.load_model(path);
         model
     }
 
-    pub fn Draw(&self, shader: &Shader) {
+    pub fn draw(&self, shader: &Shader) {
         for mesh in &self.meshes {
             unsafe {
-                mesh.Draw(shader);
+                mesh.draw(shader);
             }
         }
     }
 
     // loads a model from file and stores the resulting meshes in the meshes vector.
-    fn loadModel(&mut self, path: &str) {
+    fn load_model(&mut self, path: &str) {
         let path = Path::new(path);
 
         // retrieve the directory path of the filepath
@@ -81,9 +78,9 @@ impl Model {
                 aabb.refresh_aabb(pos_x, pos_y, pos_z);
 
                 vertices.push(Vertex {
-                    Position: vec3(pos_x, pos_y, pos_z),
-                    Normal: normal,
-                    TexCoords: tex_coords,
+                    position: vec3(pos_x, pos_y, pos_z),
+                    normal,
+                    texture_coordinates: tex_coords,
                 })
             }
 
@@ -95,19 +92,19 @@ impl Model {
                 // 1. diffuse map
                 if !material.diffuse_texture.is_empty() {
                     let texture =
-                        self.loadMaterialTexture(&material.diffuse_texture, "texture_diffuse");
+                        self.load_material_texture(&material.diffuse_texture, "texture_diffuse");
                     textures.push(texture);
                 }
                 // 2. specular map
                 if !material.specular_texture.is_empty() {
                     let texture =
-                        self.loadMaterialTexture(&material.specular_texture, "texture_specular");
+                        self.load_material_texture(&material.specular_texture, "texture_specular");
                     textures.push(texture);
                 }
                 // 3. normal map
                 if !material.normal_texture.is_empty() {
                     let texture =
-                        self.loadMaterialTexture(&material.normal_texture, "texture_normal");
+                        self.load_material_texture(&material.normal_texture, "texture_normal");
                     textures.push(texture);
                 }
                 // NOTE: no height maps
@@ -118,7 +115,7 @@ impl Model {
         self.aabb = aabb;
     }
 
-    fn loadMaterialTexture(&mut self, path: &str, typeName: &str) -> Texture {
+    fn load_material_texture(&mut self, path: &str, type_name: &str) -> Texture {
         {
             let texture = self.textures_loaded.iter().find(|t| t.path == path);
             if let Some(texture) = texture {
@@ -127,8 +124,8 @@ impl Model {
         }
 
         let texture = Texture {
-            id: unsafe { TextureFromFile(path, &self.directory) },
-            type_: typeName.into(),
+            id: unsafe { texture_from_file(path, &self.directory) },
+            type_: type_name.into(),
             path: path.into(),
         };
         self.textures_loaded.push(texture.clone());
@@ -136,11 +133,11 @@ impl Model {
     }
 }
 
-unsafe fn TextureFromFile(path: &str, directory: &str) -> u32 {
+unsafe fn texture_from_file(path: &str, directory: &str) -> u32 {
     let filename = format!("{}/{}", directory, path);
 
-    let mut textureID = 0;
-    gl::GenTextures(1, &mut textureID);
+    let mut texture_id = 0;
+    gl::GenTextures(1, &mut texture_id);
 
     let img = image::open(&Path::new(&filename)).expect("Texture failed to load");
     let img = img.flipv();
@@ -156,7 +153,7 @@ unsafe fn TextureFromFile(path: &str, directory: &str) -> u32 {
     let height = img.height();
     let data = img.into_bytes();
 
-    gl::BindTexture(gl::TEXTURE_2D, textureID);
+    gl::BindTexture(gl::TEXTURE_2D, texture_id);
     gl::TexImage2D(
         gl::TEXTURE_2D,
         0,
@@ -179,5 +176,5 @@ unsafe fn TextureFromFile(path: &str, directory: &str) -> u32 {
     );
     gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
 
-    textureID
+    texture_id
 }

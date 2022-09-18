@@ -2,7 +2,6 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 
-
 use cgmath::prelude::*;
 use cgmath::vec3;
 

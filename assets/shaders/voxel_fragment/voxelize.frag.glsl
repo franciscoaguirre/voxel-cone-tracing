@@ -1,4 +1,4 @@
-#version 430 core
+#version 460 core
 
 in vec3 fragment_position;
 in vec3 fragment_normal;

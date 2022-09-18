@@ -1,11 +1,11 @@
 use std::{ffi::c_void, mem::size_of};
 
-use crate::{constants::NODES_PER_TILE, rendering::shader::Shader};
+use crate::rendering::shader::Shader;
 use c_str_macro::c_str;
 use cgmath::Matrix4;
 use gl::types::*;
 
-use super::{compute_shader::ComputeShader, helpers};
+use super::helpers;
 use crate::constants;
 
 static mut OCTREE_NODE_POOL_TEXTURE: GLuint = 0;
@@ -64,9 +64,9 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
     );
     gl::BindBuffer(gl::TEXTURE_BUFFER, 0);
 
-    let flag_nodes_shader = ComputeShader::new("assets/shaders/octree/flag_nodes.comp.glsl");
+    let flag_nodes_shader = Shader::new_compute("assets/shaders/octree/flag_nodes.comp.glsl");
     let allocate_nodes_shader =
-        ComputeShader::new("assets/shaders/octree/allocate_nodes.comp.glsl");
+        Shader::new_compute("assets/shaders/octree/allocate_nodes.comp.glsl");
 
     let mut first_tile_in_level: i32 = 0; // Index of first tile in a given octree level
     let mut first_free_tile: i32 = 1; // Index of first free tile (unallocated) in the octree
@@ -162,7 +162,7 @@ pub unsafe fn render_octree(
         "assets/shaders/octree/visualize.geom.glsl",
     );
 
-    visualize_octree_shader.useProgram();
+    visualize_octree_shader.use_program();
 
     gl::BindImageTexture(
         0,
@@ -174,15 +174,15 @@ pub unsafe fn render_octree(
         gl::R32UI,
     );
 
-    visualize_octree_shader.setInt(c_str!("octree_levels"), octree_level);
-    visualize_octree_shader.setInt(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
-    visualize_octree_shader.setBool(c_str!("show_empty_nodes"), show_empty_nodes);
+    visualize_octree_shader.set_int(c_str!("octree_levels"), octree_level);
+    visualize_octree_shader.set_int(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
+    visualize_octree_shader.set_bool(c_str!("show_empty_nodes"), show_empty_nodes);
 
-    visualize_octree_shader.setMat4(c_str!("projection"), projection);
-    visualize_octree_shader.setMat4(c_str!("view"), view);
-    visualize_octree_shader.setMat4(c_str!("model"), model);
+    visualize_octree_shader.set_mat4(c_str!("projection"), projection);
+    visualize_octree_shader.set_mat4(c_str!("view"), view);
+    visualize_octree_shader.set_mat4(c_str!("model"), model);
 
-    visualize_octree_shader.setFloat(
+    visualize_octree_shader.set_float(
         c_str!("half_dimension"),
         1.0 / constants::VOXEL_DIMENSION as f32,
     );
@@ -195,13 +195,13 @@ pub unsafe fn render_octree(
         // TODO: make this work, having octree_levels uniform at 8 is what makes it fail so console
         // log the shader errors, it seems to be failing silently
         for offset in 0..8 {
-            visualize_octree_shader.setInt(c_str!("offset"), 1);
-            visualize_octree_shader.setInt(c_str!("draw_by_parts"), offset);
+            visualize_octree_shader.set_int(c_str!("offset"), 1);
+            visualize_octree_shader.set_int(c_str!("draw_by_parts"), offset);
             gl::DrawArrays(gl::POINTS, 0, 8u32.pow(7 as u32) as i32);
         }
     } else {
-        visualize_octree_shader.setInt(c_str!("offset"), 0);
-        visualize_octree_shader.setInt(c_str!("draw_by_parts"), 0);
+        visualize_octree_shader.set_int(c_str!("offset"), 0);
+        visualize_octree_shader.set_int(c_str!("draw_by_parts"), 0);
         gl::DrawArrays(gl::POINTS, 0, 8u32.pow(octree_level as u32) as i32);
     }
 

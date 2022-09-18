@@ -1,6 +1,8 @@
-#version 430 core
+#version 460 core
 
-layout (local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+#include "./_constants.glsl"
+
+layout (local_size_x = WORKING_GROUP_SIZE, local_size_y = 1, local_size_z = 1) in;
 
 uniform int first_tile_in_level;
 uniform int first_free_tile;
@@ -8,9 +10,6 @@ uniform int first_free_tile;
 uniform layout(binding = 0, r32ui) uimageBuffer u_nodePoolBuff;
 
 uniform layout(binding = 0, offset = 0) atomic_uint allocated_tiles_counter;
-
-const int NODES_PER_TILE = 8;
-const int NODE_FLAG_VALUE = 0x80000000;
 
 bool is_node_flagged(uint node) {
     return (node & NODE_FLAG_VALUE) != 0;
