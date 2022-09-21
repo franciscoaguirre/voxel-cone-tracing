@@ -3,12 +3,15 @@ use gl::types::*;
 use std::{ffi::c_void, mem::size_of};
 
 use super::{
-    common::{OCTREE_NODE_POOL_TEXTURE, OCTREE_NODE_POOL_TEXTURE_BUFFER, TILES_PER_LEVEL},
+    common::{
+        OCTREE_NODE_POOL_BRICK_POINTERS_TEXTURE, OCTREE_NODE_POOL_BRICK_POINTERS_TEXTURE_BUFFER,
+        OCTREE_NODE_POOL_TEXTURE, OCTREE_NODE_POOL_TEXTURE_BUFFER, TILES_PER_LEVEL,
+    },
     helpers,
 };
-use crate::rendering::shader::Shader;
 use crate::{
-    constants::{OCTREE_LEVELS, VOXEL_DIMENSION},
+    constants::{BRICK_POOL_RESOLUTION, OCTREE_LEVELS, VOXEL_DIMENSION, WORKING_GROUP_SIZE},
+    rendering::shader::Shader,
     voxelization,
 };
 
@@ -16,6 +19,10 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
     let mut allocated_tiles_counter: u32 = 0;
     let _error: GLenum = gl::GetError();
     voxelization::helpers::generate_atomic_counter_buffer(&mut allocated_tiles_counter);
+
+    let mut next_free_brick_counter: u32 = 0;
+    let _error: GLenum = gl::GetError();
+    voxelization::helpers::generate_atomic_counter_buffer(&mut next_free_brick_counter);
 
     let max_node_pool_size = helpers::get_max_node_pool_size();
     TILES_PER_LEVEL.push(1);
@@ -25,6 +32,13 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
         gl::R32UI,
         &mut OCTREE_NODE_POOL_TEXTURE,
         &mut OCTREE_NODE_POOL_TEXTURE_BUFFER,
+    );
+
+    voxelization::helpers::generate_linear_buffer(
+        size_of::<GLuint>() * max_node_pool_size as usize,
+        gl::R32UI,
+        &mut OCTREE_NODE_POOL_BRICK_POINTERS_TEXTURE,
+        &mut OCTREE_NODE_POOL_BRICK_POINTERS_TEXTURE_BUFFER,
     );
 
     gl::BindBuffer(gl::TEXTURE_BUFFER, OCTREE_NODE_POOL_TEXTURE_BUFFER);
@@ -40,6 +54,13 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
     let flag_nodes_shader = Shader::new_compute("assets/shaders/octree/flag_nodes.comp.glsl");
     let allocate_nodes_shader =
         Shader::new_compute("assets/shaders/octree/allocate_nodes.comp.glsl");
+    let allocate_bricks_shader =
+        Shader::new_compute("assets/shaders/octree/allocate_bricks.comp.glsl");
+
+    allocate_bricks_shader.set_uint(
+        c_str!("brick_pool_resolution"),
+        BRICK_POOL_RESOLUTION as u32,
+    );
 
     let mut first_tile_in_level: i32 = 0; // Index of first tile in a given octree level
     let mut first_free_tile: i32 = 1; // Index of first free tile (unallocated) in the octree
@@ -119,5 +140,46 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
     }
 
     helpers::show_values_per_tile(0, 8);
+
+    gl::BindImageTexture(
+        0,
+        OCTREE_NODE_POOL_TEXTURE,
+        0,
+        gl::FALSE,
+        0,
+        gl::READ_ONLY,
+        gl::R32UI,
+    );
+
+    gl::BindImageTexture(
+        1,
+        OCTREE_NODE_POOL_BRICK_POINTERS_TEXTURE,
+        0,
+        gl::FALSE,
+        0,
+        gl::WRITE_ONLY,
+        gl::R32UI,
+    );
+
+    gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, next_free_brick_counter);
+
+    let all_tiles_allocated: u32 = TILES_PER_LEVEL.iter().sum();
+
+    allocate_bricks_shader.dispatch(all_tiles_allocated / WORKING_GROUP_SIZE + 1);
+    allocate_bricks_shader.wait();
+
     // TODO: Mipmap to inner nodes
+
+    let values = vec![1u32; max_node_pool_size];
+    gl::BindBuffer(
+        gl::TEXTURE_BUFFER,
+        OCTREE_NODE_POOL_BRICK_POINTERS_TEXTURE_BUFFER,
+    );
+    gl::GetBufferSubData(
+        gl::TEXTURE_BUFFER,
+        0,
+        (size_of::<GLuint>() * max_node_pool_size) as isize,
+        values.as_ptr() as *mut c_void,
+    );
+    dbg!(&values[..20]);
 }

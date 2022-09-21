@@ -86,6 +86,10 @@ impl Shader {
         gl::Uniform1i(gl::GetUniformLocation(self.id, name.as_ptr()), value);
     }
     /// ------------------------------------------------------------------------
+    pub unsafe fn set_uint(&self, name: &CStr, value: u32) {
+        gl::Uniform1ui(gl::GetUniformLocation(self.id, name.as_ptr()), value);
+    }
+    /// ------------------------------------------------------------------------
     pub unsafe fn set_float(&self, name: &CStr, value: f32) {
         gl::Uniform1f(gl::GetUniformLocation(self.id, name.as_ptr()), value);
     }
