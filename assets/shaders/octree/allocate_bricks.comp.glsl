@@ -21,14 +21,11 @@ void allocate_3x3x3_texture_brick(in int node_address) {
     texture_address.z = next_free_brick / (brick_pool_resolution_bricks * brick_pool_resolution_bricks);
     texture_address *= 3;
 
-    /* imageStore(node_pool_brick_pointers, node_address, uvec4(vec3ToUintXYZ10(texture_address), 0, 0, 0)); */
-    /* imageStore(node_pool_brick_pointers, 0, uvec4(255, 0, 0, 0)); */
+    imageStore(node_pool_brick_pointers, node_address, uvec4(vec3ToUintXYZ10(texture_address), 0, 0, 0));
 }
 
 void main() {
-    uint tile_address = gl_GlobalInvocationID.x; // TODO: Multiply by 8?
-
-    imageStore(node_pool_brick_pointers, 0, uvec4(255, 0, 0, 0));
+    uint tile_address = gl_GlobalInvocationID.x * 8;
 
     for (int i = 0; i < NODES_PER_TILE; i++) {
         int node_address = int(tile_address + i);
