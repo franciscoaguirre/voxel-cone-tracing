@@ -98,9 +98,7 @@ unsafe fn voxelize_scene(
 }
 
 pub unsafe fn build_voxel_fragment_list(model_path: &str) -> (u32, u32, u32) {
-    let mut atomic_counter: u32 = 0;
-    let _error: GLenum = gl::GetError();
-    helpers::generate_atomic_counter_buffer(&mut atomic_counter);
+    let mut atomic_counter: u32 = helpers::generate_atomic_counter_buffer();
 
     let (voxelization_shader, cow_model) = {
         gl::Enable(gl::DEPTH_TEST);

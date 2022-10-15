@@ -30,11 +30,3 @@ pub fn get_max_node_pool_size() -> usize {
         .sum::<usize>();
     number_of_tiles * 8
 }
-
-pub fn get_constant_pointer(number: &u32) -> *const c_void {
-    number as *const u32 as *const c_void
-}
-
-pub fn get_mutable_pointer(number: &mut u32) -> *mut c_void {
-    number as *mut u32 as *mut c_void
-}
