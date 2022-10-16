@@ -80,7 +80,7 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
         first_free_tile += tiles_allocated as i32;
     }
 
-    helpers::show_values_per_tile(0, 8);
+    // helpers::show_values_per_tile(0, 8);
 
     let all_tiles_allocated: u32 = TILES_PER_LEVEL.iter().sum();
 
