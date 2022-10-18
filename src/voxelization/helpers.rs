@@ -1,13 +1,9 @@
 use gl::types::*;
 use std::{ffi::c_void, mem::size_of, ptr};
 
-pub unsafe fn generate_atomic_counter_buffer() -> u32 {
+pub unsafe fn generate_atomic_counter_buffer() -> GLuint {
     let mut buffer: u32 = 0;
     let initial_value: u32 = 0;
-
-    if buffer != 0 {
-        gl::DeleteBuffers(1, &buffer);
-    }
 
     gl::GenBuffers(1, &mut buffer);
     gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, buffer);
@@ -29,7 +25,7 @@ pub unsafe fn generate_linear_buffer(
     format: GLenum,
     texture: *mut GLuint,
     texture_buffer: *mut GLuint,
-) -> u32 {
+) -> GLuint {
     if *texture_buffer > 0 {
         gl::DeleteBuffers(1, texture_buffer);
     }
@@ -63,6 +59,31 @@ pub unsafe fn generate_linear_buffer(
     }
 
     error
+}
+
+pub unsafe fn generate_3d_texture(size: usize) -> GLuint {
+    let mut texture: GLuint = 0;
+    let voxels_per_brick_one_dimension: usize = 3;
+    let voxels_per_brick = voxels_per_brick_one_dimension.pow(3);
+    let size_one_dimension = (size * voxels_per_brick_one_dimension) as i32;
+    let initial_data = vec![0u32; size * voxels_per_brick];
+
+    gl::GenTextures(1, &mut texture);
+    gl::BindTexture(gl::TEXTURE_3D, texture);
+    gl::TexImage3D(
+        gl::TEXTURE_3D,
+        0,
+        gl::RGB as i32,
+        size_one_dimension,
+        size_one_dimension,
+        size_one_dimension,
+        0,
+        gl::RGB,
+        gl::UNSIGNED_BYTE,
+        initial_data.as_ptr() as *const c_void,
+    );
+
+    texture
 }
 
 pub fn get_constant_pointer(number: &u32) -> *const c_void {

@@ -9,17 +9,21 @@ use super::{
     helpers,
 };
 use crate::{
-    constants::OCTREE_LEVELS,
+    constants::{NODES_PER_TILE, OCTREE_LEVELS},
     voxelization::{
         self,
         octree::{
             allocate_bricks::AllocateBricksPass, allocate_nodes::AllocateNodesPass,
-            flag_nodes::FlagNodesPass,
+            flag_nodes::FlagNodesPass, write_leaf_nodes::WriteLeafNodesPass,
         },
     },
 };
 
-pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragments: u32) {
+pub unsafe fn build_octree(
+    voxel_position_texture: GLuint,
+    number_of_voxel_fragments: u32,
+    voxel_diffuse_texture: GLuint,
+) {
     let allocated_tiles_counter = voxelization::helpers::generate_atomic_counter_buffer();
     let next_free_brick_counter: u32 = voxelization::helpers::generate_atomic_counter_buffer();
 
@@ -62,14 +66,20 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
         OCTREE_NODE_POOL_TEXTURE,
         OCTREE_NODE_POOL_BRICK_POINTERS_TEXTURE,
     );
+    let write_leaf_nodes_pass = WriteLeafNodesPass::init(
+        voxel_position_texture,
+        voxel_diffuse_texture,
+        OCTREE_NODE_POOL_BRICK_POINTERS_TEXTURE,
+        OCTREE_NODE_POOL_TEXTURE,
+    );
 
     let mut first_tile_in_level: i32 = 0; // Index of first tile in a given octree level
     let mut first_free_tile: i32 = 1; // Index of first free tile (unallocated) in the octree
 
     for octree_level in 0..OCTREE_LEVELS {
-        flag_nodes_pass.run(octree_level);
+        // flag_nodes_pass.run(octree_level);
 
-        allocate_nodes_pass.run(first_tile_in_level, first_free_tile);
+        // allocate_nodes_pass.run(first_tile_in_level, first_free_tile);
 
         let tiles_allocated =
             voxelization::helpers::get_value_from_atomic_counter(allocated_tiles_counter);
@@ -84,7 +94,13 @@ pub unsafe fn build_octree(voxel_position_texture: GLuint, number_of_voxel_fragm
 
     let all_tiles_allocated: u32 = TILES_PER_LEVEL.iter().sum();
 
-    allocate_bricks_pass.run(all_tiles_allocated);
+    // allocate_bricks_pass.run(all_tiles_allocated);
+
+    let brick_pool_colors_texture = voxelization::helpers::generate_3d_texture(
+        all_tiles_allocated as usize * NODES_PER_TILE as usize,
+    );
+
+    // write_leaf_nodes_pass.run(brick_pool_colors_texture);
 
     // TODO: Mipmap to inner nodes
 

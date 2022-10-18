@@ -32,5 +32,8 @@ void main() {
         allocate_3x3x3_texture_brick(node_address);
 
         // TODO: Brick flag?
+        // uint nodeNextU = imageLoad(nodePool_next, address).x;
+        // imageStore(nodePool_next, address,
+        // uvec4(NODE_MASK_BRICK | nodeNextU, 0, 0, 0));
     }
 }

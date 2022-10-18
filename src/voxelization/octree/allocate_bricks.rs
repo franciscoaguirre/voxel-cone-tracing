@@ -26,7 +26,6 @@ impl AllocateBricksPass {
     }
 
     pub unsafe fn run(&self, all_tiles_allocated: u32) {
-        dbg!(BRICK_POOL_RESOLUTION);
         self.shader.use_program();
 
         self.shader.set_uint(
