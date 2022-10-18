@@ -162,7 +162,11 @@ fn main() {
     };
 
     unsafe {
-        build_octree(voxel_position_texture, number_of_voxel_fragments);
+        build_octree(
+            voxel_position_texture,
+            number_of_voxel_fragments,
+            voxel_diffuse_texture,
+        );
     }
 
     // vao to render voxel fragment list

@@ -1,7 +1,7 @@
 #version 460 core
 
 #include "./_constants.glsl"
-#include "./_octree_traversal.glsl"
+#include "./_traversal_helpers.glsl"
 
 uniform int octree_levels;
 uniform int offset;
