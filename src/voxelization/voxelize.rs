@@ -3,7 +3,10 @@ use std::mem::size_of;
 use std::path::Path;
 
 use super::helpers;
-use crate::{constants, rendering::model::Model, rendering::shader::Shader};
+use crate::{
+    constants, gl_check_error, helpers::debug::gl_check_error_, rendering::model::Model,
+    rendering::shader::Shader,
+};
 use c_str_macro::c_str;
 
 use gl::types::*;
@@ -129,8 +132,7 @@ pub unsafe fn build_voxel_fragment_list(model_path: &str) -> (u32, u32, u32) {
         gl::MAP_READ_BIT | gl::MAP_WRITE_BIT,
     ) as *mut GLuint;
 
-    let _error = gl::GetError();
-    // TODO: How to show these errors?
+    gl_check_error!();
 
     let number_of_voxel_fragments = *count;
 
