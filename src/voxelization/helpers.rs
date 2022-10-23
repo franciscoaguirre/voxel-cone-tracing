@@ -1,6 +1,8 @@
 use gl::types::*;
 use std::{ffi::c_void, mem::size_of, ptr};
 
+use crate::{gl_check_error, helpers::debug::gl_check_error_};
+
 pub unsafe fn generate_atomic_counter_buffer() -> GLuint {
     let mut buffer: u32 = 0;
     let initial_value: u32 = 0;
@@ -15,7 +17,7 @@ pub unsafe fn generate_atomic_counter_buffer() -> GLuint {
     );
     gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, 0);
 
-    let _error: GLenum = gl::GetError();
+    gl_check_error!();
 
     buffer
 }
@@ -25,7 +27,7 @@ pub unsafe fn generate_linear_buffer(
     format: GLenum,
     texture: *mut GLuint,
     texture_buffer: *mut GLuint,
-) -> GLuint {
+) {
     if *texture_buffer > 0 {
         gl::DeleteBuffers(1, texture_buffer);
     }
@@ -40,7 +42,7 @@ pub unsafe fn generate_linear_buffer(
         gl::STATIC_DRAW,
     );
 
-    let _error = gl::GetError();
+    gl_check_error!();
 
     if *texture > 0 {
         gl::DeleteTextures(1, texture);
@@ -51,14 +53,7 @@ pub unsafe fn generate_linear_buffer(
     gl::TexBuffer(gl::TEXTURE_BUFFER, format, *texture_buffer);
     gl::BindBuffer(gl::TEXTURE_BUFFER, 0);
 
-    let error = gl::GetError();
-
-    if error > 0 {
-        // TODO: Use something like glewGetErrorString
-        println!("{error}");
-    }
-
-    error
+    gl_check_error!();
 }
 
 pub unsafe fn generate_3d_texture(size: usize) -> GLuint {
