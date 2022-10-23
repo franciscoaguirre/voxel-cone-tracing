@@ -77,9 +77,9 @@ pub unsafe fn build_octree(
     let mut first_free_tile: i32 = 1; // Index of first free tile (unallocated) in the octree
 
     for octree_level in 0..OCTREE_LEVELS {
-        // flag_nodes_pass.run(octree_level);
+        flag_nodes_pass.run(octree_level);
 
-        // allocate_nodes_pass.run(first_tile_in_level, first_free_tile);
+        allocate_nodes_pass.run(first_tile_in_level, first_free_tile);
 
         let tiles_allocated =
             voxelization::helpers::get_value_from_atomic_counter(allocated_tiles_counter);
@@ -94,13 +94,13 @@ pub unsafe fn build_octree(
 
     let all_tiles_allocated: u32 = TILES_PER_LEVEL.iter().sum();
 
-    // allocate_bricks_pass.run(all_tiles_allocated);
+    allocate_bricks_pass.run(all_tiles_allocated);
 
     let brick_pool_colors_texture = voxelization::helpers::generate_3d_texture(
         all_tiles_allocated as usize * NODES_PER_TILE as usize,
     );
 
-    // write_leaf_nodes_pass.run(brick_pool_colors_texture);
+    write_leaf_nodes_pass.run(brick_pool_colors_texture);
 
     // TODO: Mipmap to inner nodes
 

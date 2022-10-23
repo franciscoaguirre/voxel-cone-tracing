@@ -16,7 +16,7 @@ uniform layout(binding = 4, r32ui) uimageBuffer node_pool;
 uniform uint voxel_dimension;
 uniform int max_octree_level;
 
-void store_in_leaf(vec3 voxel_position, int node_address, uvec4 voxel_color) {
+void store_in_leaf(vec3 voxel_position, int node_address, vec4 voxel_color) {
     uint brick_coordinates_compact = imageLoad(node_pool_brick_pointers, node_address).r;
     memoryBarrier();
     
@@ -38,14 +38,14 @@ void main() {
     // Get voxel attributes from voxel fragment list
     const uint thread_index = gl_GlobalInvocationID.x;
     uvec4 voxel_position = imageLoad(voxel_positions, int(thread_index));
-    uvec4 voxel_color = imageLoad(voxel_colors, int(thread_index));
+    vec4 voxel_color = imageLoad(voxel_colors, int(thread_index));
     // TODO: Load normal from images
     memoryBarrier();
     
     // We send the voxel position to traverse the octree and find the leaf
     int node_address = traverse_octree(
         uvec3(voxel_position),
-        voxel_dimension,
+        int(voxel_dimension),
         max_octree_level,
         node_pool
     );
