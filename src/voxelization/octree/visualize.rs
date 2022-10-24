@@ -4,6 +4,8 @@ use cgmath::Matrix4;
 use super::common::OCTREE_NODE_POOL_TEXTURE;
 use super::helpers;
 use crate::constants::VOXEL_DIMENSION;
+use crate::gl_check_error;
+use crate::helpers::debug::gl_check_error_;
 use crate::rendering::shader::Shader;
 
 pub unsafe fn render_octree(
@@ -59,5 +61,7 @@ pub unsafe fn render_octree(
         gl::DrawArrays(gl::POINTS, 0, 8u32.pow(octree_level as u32) as i32);
     }
 
-    helpers::show_values_per_tile(0, 2);
+    gl_check_error!();
+
+    // helpers::show_values_per_tile(0, 2);
 }

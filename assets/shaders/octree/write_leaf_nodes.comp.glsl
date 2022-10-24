@@ -37,6 +37,8 @@ void store_in_leaf(vec3 voxel_position, int node_address, vec4 voxel_color) {
 void main() {
     // Get voxel attributes from voxel fragment list
     const uint thread_index = gl_GlobalInvocationID.x;
+    // We need to traverse the tree to get the node because we
+    // need the voxel attributes (color, normal, etc)
     uvec4 voxel_position = imageLoad(voxel_positions, int(thread_index));
     vec4 voxel_color = imageLoad(voxel_colors, int(thread_index));
     // TODO: Load normal from images

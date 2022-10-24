@@ -14,7 +14,8 @@ use crate::{
         self,
         octree::{
             allocate_bricks::AllocateBricksPass, allocate_nodes::AllocateNodesPass,
-            flag_nodes::FlagNodesPass, write_leaf_nodes::WriteLeafNodesPass,
+            flag_nodes::FlagNodesPass, spread_leaf_bricks::SpreadLeafBricksPass,
+            write_leaf_nodes::WriteLeafNodesPass,
         },
     },
 };
@@ -72,6 +73,11 @@ pub unsafe fn build_octree(
         OCTREE_NODE_POOL_BRICK_POINTERS_TEXTURE,
         OCTREE_NODE_POOL_TEXTURE,
     );
+    let spread_leaf_bricks_pass = SpreadLeafBricksPass::init(
+        OCTREE_NODE_POOL_BRICK_POINTERS_TEXTURE,
+        OCTREE_NODE_POOL_TEXTURE,
+        voxel_position_texture,
+    );
 
     let mut first_tile_in_level: i32 = 0; // Index of first tile in a given octree level
     let mut first_free_tile: i32 = 1; // Index of first free tile (unallocated) in the octree
@@ -96,11 +102,14 @@ pub unsafe fn build_octree(
 
     allocate_bricks_pass.run(all_tiles_allocated);
 
+    dbg!(&all_tiles_allocated);
+
     let brick_pool_colors_texture = voxelization::helpers::generate_3d_texture(
         all_tiles_allocated as usize * NODES_PER_TILE as usize,
     );
 
     write_leaf_nodes_pass.run(brick_pool_colors_texture);
+    spread_leaf_bricks_pass.run(brick_pool_colors_texture);
 
     // TODO: Mipmap to inner nodes
 
