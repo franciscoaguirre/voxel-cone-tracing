@@ -369,9 +369,11 @@ fn handle_update_octree_level(
             if *current_octree_level != 0 {
                 *current_octree_level -= 1
             }
+            dbg!(current_octree_level);
         }
         glfw::WindowEvent::Key(Key::Right, _, Action::Press, _) => {
             *current_octree_level = (*current_octree_level + 1).min(constants::OCTREE_LEVELS);
+            dbg!(current_octree_level);
         }
         glfw::WindowEvent::Key(Key::M, _, Action::Press, _) => {
             *show_empty_nodes = !*show_empty_nodes;
