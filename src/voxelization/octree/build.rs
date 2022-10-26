@@ -13,8 +13,22 @@ use crate::{
     voxelization::{
         self,
         octree::{
-            allocate_bricks::AllocateBricksPass, allocate_nodes::AllocateNodesPass,
-            flag_nodes::FlagNodesPass, spread_leaf_bricks::SpreadLeafBricksPass,
+            allocate_bricks::AllocateBricksPass,
+            allocate_nodes::AllocateNodesPass,
+            common::{
+                OCTREE_NODE_POOL_NEIGHBOUR_X_NEGATIVE_TEXTURE,
+                OCTREE_NODE_POOL_NEIGHBOUR_X_NEGATIVE_TEXTURE_BUFFER,
+                OCTREE_NODE_POOL_NEIGHBOUR_X_TEXTURE, OCTREE_NODE_POOL_NEIGHBOUR_X_TEXTURE_BUFFER,
+                OCTREE_NODE_POOL_NEIGHBOUR_Y_NEGATIVE_TEXTURE,
+                OCTREE_NODE_POOL_NEIGHBOUR_Y_NEGATIVE_TEXTURE_BUFFER,
+                OCTREE_NODE_POOL_NEIGHBOUR_Y_TEXTURE, OCTREE_NODE_POOL_NEIGHBOUR_Y_TEXTURE_BUFFER,
+                OCTREE_NODE_POOL_NEIGHBOUR_Z_NEGATIVE_TEXTURE,
+                OCTREE_NODE_POOL_NEIGHBOUR_Z_NEGATIVE_TEXTURE_BUFFER,
+                OCTREE_NODE_POOL_NEIGHBOUR_Z_TEXTURE, OCTREE_NODE_POOL_NEIGHBOUR_Z_TEXTURE_BUFFER,
+            },
+            flag_nodes::FlagNodesPass,
+            neighbour_pointers::NeighbourPointersPass,
+            spread_leaf_bricks::SpreadLeafBricksPass,
             write_leaf_nodes::WriteLeafNodesPass,
         },
     },
@@ -29,32 +43,75 @@ pub unsafe fn build_octree(
     let next_free_brick_counter: u32 = voxelization::helpers::generate_atomic_counter_buffer();
 
     let max_node_pool_size = helpers::get_max_node_pool_size();
+    let max_node_pool_size_in_bytes = size_of::<GLuint>() * max_node_pool_size as usize;
     TILES_PER_LEVEL.push(1);
 
     voxelization::helpers::generate_linear_buffer(
-        size_of::<GLuint>() * max_node_pool_size as usize,
+        max_node_pool_size_in_bytes,
         gl::R32UI,
         &mut OCTREE_NODE_POOL_TEXTURE,
         &mut OCTREE_NODE_POOL_TEXTURE_BUFFER,
     );
 
     voxelization::helpers::generate_linear_buffer(
-        size_of::<GLuint>() * max_node_pool_size as usize,
+        max_node_pool_size_in_bytes,
         gl::R32UI,
         &mut OCTREE_NODE_POOL_BRICK_POINTERS_TEXTURE,
         &mut OCTREE_NODE_POOL_BRICK_POINTERS_TEXTURE_BUFFER,
     );
 
-    voxelization::helpers::clear_texture_buffer(
-        OCTREE_NODE_POOL_TEXTURE_BUFFER,
-        max_node_pool_size,
+    voxelization::helpers::generate_linear_buffer(
+        max_node_pool_size_in_bytes,
+        gl::R32UI,
+        &mut OCTREE_NODE_POOL_NEIGHBOUR_X_TEXTURE,
+        &mut OCTREE_NODE_POOL_NEIGHBOUR_X_TEXTURE_BUFFER,
     );
 
-    voxelization::helpers::clear_texture_buffer(
-        OCTREE_NODE_POOL_BRICK_POINTERS_TEXTURE,
-        max_node_pool_size,
+    voxelization::helpers::generate_linear_buffer(
+        max_node_pool_size_in_bytes,
+        gl::R32UI,
+        &mut OCTREE_NODE_POOL_NEIGHBOUR_X_NEGATIVE_TEXTURE,
+        &mut OCTREE_NODE_POOL_NEIGHBOUR_X_NEGATIVE_TEXTURE_BUFFER,
     );
 
+    voxelization::helpers::generate_linear_buffer(
+        max_node_pool_size_in_bytes,
+        gl::R32UI,
+        &mut OCTREE_NODE_POOL_NEIGHBOUR_Y_TEXTURE,
+        &mut OCTREE_NODE_POOL_NEIGHBOUR_Y_TEXTURE_BUFFER,
+    );
+
+    voxelization::helpers::generate_linear_buffer(
+        max_node_pool_size_in_bytes,
+        gl::R32UI,
+        &mut OCTREE_NODE_POOL_NEIGHBOUR_Y_NEGATIVE_TEXTURE,
+        &mut OCTREE_NODE_POOL_NEIGHBOUR_Y_NEGATIVE_TEXTURE_BUFFER,
+    );
+
+    voxelization::helpers::generate_linear_buffer(
+        max_node_pool_size_in_bytes,
+        gl::R32UI,
+        &mut OCTREE_NODE_POOL_NEIGHBOUR_Z_TEXTURE,
+        &mut OCTREE_NODE_POOL_NEIGHBOUR_Z_TEXTURE_BUFFER,
+    );
+
+    voxelization::helpers::generate_linear_buffer(
+        max_node_pool_size_in_bytes,
+        gl::R32UI,
+        &mut OCTREE_NODE_POOL_NEIGHBOUR_Z_NEGATIVE_TEXTURE,
+        &mut OCTREE_NODE_POOL_NEIGHBOUR_Z_NEGATIVE_TEXTURE_BUFFER,
+    );
+
+    let neighbour_pointers_pass = NeighbourPointersPass::init(
+        voxel_position_texture,
+        OCTREE_NODE_POOL_TEXTURE,
+        OCTREE_NODE_POOL_NEIGHBOUR_X_TEXTURE,
+        OCTREE_NODE_POOL_NEIGHBOUR_X_NEGATIVE_TEXTURE,
+        OCTREE_NODE_POOL_NEIGHBOUR_Y_TEXTURE,
+        OCTREE_NODE_POOL_NEIGHBOUR_Y_NEGATIVE_TEXTURE,
+        OCTREE_NODE_POOL_NEIGHBOUR_Z_TEXTURE,
+        OCTREE_NODE_POOL_NEIGHBOUR_Z_NEGATIVE_TEXTURE,
+    );
     let flag_nodes_pass = FlagNodesPass::init(
         number_of_voxel_fragments,
         voxel_position_texture,
@@ -83,6 +140,8 @@ pub unsafe fn build_octree(
     let mut first_free_tile: i32 = 1; // Index of first free tile (unallocated) in the octree
 
     for octree_level in 0..OCTREE_LEVELS {
+        neighbour_pointers_pass.run(octree_level);
+
         flag_nodes_pass.run(octree_level);
 
         allocate_nodes_pass.run(first_tile_in_level, first_free_tile);
