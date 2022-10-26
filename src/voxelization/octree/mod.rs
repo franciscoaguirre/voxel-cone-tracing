@@ -7,6 +7,7 @@ pub mod visualize;
 mod allocate_bricks;
 mod allocate_nodes;
 mod flag_nodes;
+mod neighbour_pointers;
 mod spread_leaf_bricks;
 mod write_leaf_nodes;
 

@@ -2,7 +2,6 @@ use c_str_macro::c_str;
 use cgmath::Matrix4;
 
 use super::common::OCTREE_NODE_POOL_TEXTURE;
-use super::helpers;
 use crate::constants::VOXEL_DIMENSION;
 use crate::gl_check_error;
 use crate::helpers::debug::gl_check_error_;
