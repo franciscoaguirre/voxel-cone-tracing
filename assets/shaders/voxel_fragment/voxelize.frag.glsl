@@ -12,7 +12,7 @@ layout (pixel_center_integer) in vec4 gl_FragCoord;
 layout (binding = 0, offset = 0) uniform atomic_uint voxel_fragment_count;
 
 uniform layout(binding = 0, rgb10_a2ui) uimageBuffer u_voxelPos;
-uniform layout(binding = 1, rgba8 ) imageBuffer u_voxelKd;
+uniform layout(binding = 1, rgba8) imageBuffer u_voxelKd;
 uniform layout(binding = 2, rgba16f) imageBuffer u_voxelNrml;
 
 uniform vec3 fallback_color;
@@ -68,7 +68,7 @@ void store_voxel_fragment(uvec4 texture_coordinates, uint fragment_list_index) {
 
     imageStore(u_voxelPos, int(fragment_list_index), texture_coordinates);
     imageStore(u_voxelNrml, int(fragment_list_index), vec4(voxel_normal, 0));
-    imageStore(u_voxelKd, int(fragment_list_index), vec4(voxel_color, 0));
+    imageStore(u_voxelKd, int(fragment_list_index), vec4(voxel_color, 0)); // TODO: Why alpha == 0?
 }
 
 void main() {

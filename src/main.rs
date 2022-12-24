@@ -102,6 +102,10 @@ extern "system" fn gl_debug_output_callback(
     message: *const GLchar,
     _user_param: *mut c_void,
 ) {
+    if type_ == 33360 {
+        return;
+    }
+
     if id == 131_169 || id == 131_185 || id == 131_218 || id == 131_204 {
         // ignore these non-significant error codes
         return;
@@ -166,7 +170,7 @@ fn main() {
         glfw::OpenGlProfileHint::Core,
     ));
     // TODO: Turn this back on when we aim to remove warnings because it fills the console
-    // glfw.window_hint(glfw::WindowHint::OpenGlDebugContext(true)); // TODO: Remove if release
+    glfw.window_hint(glfw::WindowHint::OpenGlDebugContext(true)); // TODO: Remove if release
 
     // GLFW: Window creation
     let (mut window, events) = glfw

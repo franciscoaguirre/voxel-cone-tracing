@@ -30,7 +30,8 @@ void store_in_leaf(vec3 voxel_position, int node_address, vec4 voxel_color) {
     imageStore(
         brick_pool_colors,
         brick_coordinates + 2 * ivec3(CHILD_OFFSETS[offset]),
-        voxel_color / 255.0
+        vec4(1.0, 0.0, 0.0, 0.0)
+        // voxel_color / 255.0 // TODO: Is this between 0 and 1?
     );
 }
 

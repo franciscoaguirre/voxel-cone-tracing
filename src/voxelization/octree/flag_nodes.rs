@@ -4,24 +4,20 @@ use gl::types::*;
 use crate::constants::VOXEL_DIMENSION;
 use crate::rendering::shader::Shader;
 
+use super::common::OCTREE_NODE_POOL;
+
 pub struct FlagNodesPass {
     shader: Shader,
     number_of_voxel_fragments: u32,
     voxel_position_texture: GLuint,
-    octree_node_pool_texture: GLuint,
 }
 
 impl FlagNodesPass {
-    pub fn init(
-        number_of_voxel_fragments: u32,
-        voxel_position_texture: GLuint,
-        octree_node_pool_texture: GLuint,
-    ) -> Self {
+    pub fn init(number_of_voxel_fragments: u32, voxel_position_texture: GLuint) -> Self {
         Self {
             shader: Shader::new_compute("assets/shaders/octree/flag_nodes.comp.glsl"),
             number_of_voxel_fragments,
             voxel_position_texture,
-            octree_node_pool_texture,
         }
     }
 
@@ -48,7 +44,7 @@ impl FlagNodesPass {
         );
         gl::BindImageTexture(
             1,
-            self.octree_node_pool_texture,
+            OCTREE_NODE_POOL.0,
             0,
             gl::FALSE,
             0,

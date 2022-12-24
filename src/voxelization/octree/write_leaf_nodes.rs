@@ -6,27 +6,20 @@ use crate::{
     rendering::shader::Shader,
 };
 
+use super::common::{OCTREE_NODE_POOL, OCTREE_NODE_POOL_BRICK_POINTERS};
+
 pub struct WriteLeafNodesPass {
     shader: Shader,
     voxel_positions_texture: GLuint,
     voxel_colors_texture: GLuint,
-    node_pool_brick_pointers_texture: GLuint,
-    node_pool_texture: GLuint,
 }
 
 impl WriteLeafNodesPass {
-    pub fn init(
-        voxel_positions_texture: GLuint,
-        voxel_colors_texture: GLuint,
-        node_pool_brick_pointers_texture: GLuint,
-        node_pool_texture: GLuint,
-    ) -> Self {
+    pub fn init(voxel_positions_texture: GLuint, voxel_colors_texture: GLuint) -> Self {
         Self {
             shader: Shader::new_compute("assets/shaders/octree/write_leaf_nodes.comp.glsl"),
             voxel_positions_texture,
             voxel_colors_texture,
-            node_pool_brick_pointers_texture,
-            node_pool_texture,
         }
     }
 
@@ -35,6 +28,7 @@ impl WriteLeafNodesPass {
 
         self.shader
             .set_uint(c_str!("voxel_dimension"), VOXEL_DIMENSION as u32);
+        self.shader.set_int(c_str!("max_octree_level"), 3i32);
         self.shader
             .set_int(c_str!("max_octree_level"), OCTREE_LEVELS as i32);
 
@@ -61,7 +55,7 @@ impl WriteLeafNodesPass {
 
         gl::BindImageTexture(
             2,
-            self.node_pool_brick_pointers_texture,
+            OCTREE_NODE_POOL_BRICK_POINTERS.0,
             0,
             gl::FALSE,
             0,
@@ -76,12 +70,12 @@ impl WriteLeafNodesPass {
             gl::FALSE,
             0,
             gl::READ_WRITE,
-            gl::R32UI,
+            gl::RGBA8,
         );
 
         gl::BindImageTexture(
             4,
-            self.node_pool_texture,
+            OCTREE_NODE_POOL.0,
             0,
             gl::FALSE,
             0,
