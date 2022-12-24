@@ -1,11 +1,15 @@
 use c_str_macro::c_str;
 use cgmath::Matrix4;
 
-use super::common::OCTREE_NODE_POOL_TEXTURE;
+use super::common::OCTREE_NODE_POOL;
 use crate::constants::VOXEL_DIMENSION;
 use crate::gl_check_error;
 use crate::helpers::debug::gl_check_error_;
 use crate::rendering::shader::Shader;
+use crate::voxelization::helpers;
+use crate::voxelization::octree::common::{
+    BRICK_POOL_COLORS_TEXTURE, OCTREE_NODE_POOL_BRICK_POINTERS,
+};
 
 pub unsafe fn render_octree(
     model: &Matrix4<f32>,
@@ -24,13 +28,22 @@ pub unsafe fn render_octree(
 
     gl::BindImageTexture(
         0,
-        OCTREE_NODE_POOL_TEXTURE,
+        OCTREE_NODE_POOL.0,
         0,
         gl::TRUE,
         0,
         gl::READ_WRITE,
         gl::R32UI,
     );
+
+    helpers::bind_image_texture(
+        1,
+        OCTREE_NODE_POOL_BRICK_POINTERS.0,
+        gl::READ_WRITE,
+        gl::R32UI,
+    );
+
+    helpers::bind_image_texture(2, BRICK_POOL_COLORS_TEXTURE, gl::READ_WRITE, gl::RGBA8);
 
     visualize_octree_shader.set_int(c_str!("octree_levels"), octree_level);
     visualize_octree_shader.set_int(c_str!("voxel_dimension"), VOXEL_DIMENSION);

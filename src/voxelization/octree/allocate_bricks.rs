@@ -1,27 +1,20 @@
 use c_str_macro::c_str;
-use gl::types::*;
 
 use crate::constants::{BRICK_POOL_RESOLUTION, WORKING_GROUP_SIZE};
 use crate::rendering::shader::Shader;
 
+use super::common::{OCTREE_NODE_POOL, OCTREE_NODE_POOL_BRICK_POINTERS};
+
 pub struct AllocateBricksPass {
     shader: Shader,
     next_free_brick_counter: u32,
-    octree_node_pool_texture: GLuint,
-    octree_node_pool_brick_pointers_texture: GLuint,
 }
 
 impl AllocateBricksPass {
-    pub fn init(
-        next_free_brick_counter: u32,
-        octree_node_pool_texture: GLuint,
-        octree_node_pool_brick_pointers_texture: GLuint,
-    ) -> Self {
+    pub fn init(next_free_brick_counter: u32) -> Self {
         Self {
             shader: Shader::new_compute("assets/shaders/octree/allocate_bricks.comp.glsl"),
             next_free_brick_counter,
-            octree_node_pool_texture,
-            octree_node_pool_brick_pointers_texture,
         }
     }
 
@@ -35,7 +28,7 @@ impl AllocateBricksPass {
 
         gl::BindImageTexture(
             0,
-            self.octree_node_pool_texture,
+            OCTREE_NODE_POOL.0,
             0,
             gl::FALSE,
             0,
@@ -45,7 +38,7 @@ impl AllocateBricksPass {
 
         gl::BindImageTexture(
             1,
-            self.octree_node_pool_brick_pointers_texture,
+            OCTREE_NODE_POOL_BRICK_POINTERS.0,
             0,
             gl::FALSE,
             0,

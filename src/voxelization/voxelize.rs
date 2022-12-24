@@ -11,12 +11,9 @@ use c_str_macro::c_str;
 
 use gl::types::*;
 
-static mut VOXEL_POSITION_TEXTURE: GLuint = 0;
-static mut VOXEL_POSITION_TEXTURE_BUFFER: GLuint = 0;
-static mut VOXEL_DIFFUSE_TEXTURE: GLuint = 0;
-static mut VOXEL_DIFFUSE_TEXTURE_BUFFER: GLuint = 0;
-// static mut VOXEL_NORMAL_TEXTURE: GLuint = 0;
-// static mut VOXEL_NORMAL_TEXTURE_BUFFER: GLuint = 0;
+static mut VOXEL_POSITIONS: (GLuint, GLuint) = (0, 0);
+static mut VOXEL_COLORS: (GLuint, GLuint) = (0, 0);
+// static mut VOXEL_NORMALS: (GLuint, GLuint) = (0, 0);
 
 unsafe fn calculate_voxel_fragment_list_length(
     voxelization_shader: &Shader,
@@ -38,7 +35,7 @@ unsafe fn populate_voxel_fragment_list(
 
     gl::BindImageTexture(
         0,
-        VOXEL_POSITION_TEXTURE,
+        VOXEL_POSITIONS.0,
         0,
         gl::FALSE,
         0,
@@ -47,7 +44,7 @@ unsafe fn populate_voxel_fragment_list(
     );
     gl::BindImageTexture(
         1,
-        VOXEL_DIFFUSE_TEXTURE,
+        VOXEL_COLORS.0,
         0,
         gl::FALSE,
         0,
@@ -136,17 +133,14 @@ pub unsafe fn build_voxel_fragment_list(model_path: &str) -> (u32, u32, u32) {
 
     let number_of_voxel_fragments = *count;
 
-    helpers::generate_linear_buffer(
+    VOXEL_POSITIONS = helpers::generate_texture_buffer(
         size_of::<GLuint>() * number_of_voxel_fragments as usize,
         gl::R32UI,
-        &mut VOXEL_POSITION_TEXTURE,
-        &mut VOXEL_POSITION_TEXTURE_BUFFER,
     );
-    helpers::generate_linear_buffer(
+
+    VOXEL_COLORS = helpers::generate_texture_buffer(
         size_of::<GLuint>() * number_of_voxel_fragments as usize,
         gl::RGBA8,
-        &mut VOXEL_DIFFUSE_TEXTURE,
-        &mut VOXEL_DIFFUSE_TEXTURE_BUFFER,
     );
 
     *count = 0;
@@ -169,9 +163,5 @@ pub unsafe fn build_voxel_fragment_list(model_path: &str) -> (u32, u32, u32) {
 
     gl::MemoryBarrier(gl::SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
-    (
-        number_of_voxel_fragments,
-        VOXEL_POSITION_TEXTURE,
-        VOXEL_DIFFUSE_TEXTURE,
-    )
+    (number_of_voxel_fragments, VOXEL_POSITIONS.0, VOXEL_COLORS.0)
 }

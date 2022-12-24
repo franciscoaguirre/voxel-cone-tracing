@@ -22,19 +22,11 @@ pub unsafe fn generate_atomic_counter_buffer() -> GLuint {
     buffer
 }
 
-pub unsafe fn generate_linear_buffer(
-    size: usize,
-    format: GLenum,
-    texture: *mut GLuint,
-    texture_buffer: *mut GLuint,
-) {
-    if *texture_buffer > 0 {
-        gl::DeleteBuffers(1, texture_buffer);
-    }
+pub unsafe fn generate_texture_buffer(size: usize, format: GLenum) -> (GLuint, GLuint) {
+    let mut texture_buffer: GLuint = 0;
+    gl::GenBuffers(1, &mut texture_buffer);
 
-    gl::GenBuffers(1, texture_buffer);
-
-    gl::BindBuffer(gl::TEXTURE_BUFFER, *texture_buffer);
+    gl::BindBuffer(gl::TEXTURE_BUFFER, texture_buffer);
     gl::BufferData(
         gl::TEXTURE_BUFFER,
         size as isize,
@@ -42,40 +34,45 @@ pub unsafe fn generate_linear_buffer(
         gl::STATIC_DRAW,
     );
 
-    gl_check_error!();
+    let mut texture: GLuint = 0;
 
-    if *texture > 0 {
-        gl::DeleteTextures(1, texture);
-    }
-
-    gl::GenTextures(1, texture);
-    gl::BindTexture(gl::TEXTURE_BUFFER, *texture);
-    gl::TexBuffer(gl::TEXTURE_BUFFER, format, *texture_buffer);
+    gl::GenTextures(1, &mut texture);
+    gl::BindTexture(gl::TEXTURE_BUFFER, texture);
+    gl::TexBuffer(gl::TEXTURE_BUFFER, format, texture_buffer);
     gl::BindBuffer(gl::TEXTURE_BUFFER, 0);
 
-    gl_check_error!();
+    clear_texture_buffer(texture_buffer, size);
 
-    clear_texture_buffer(*texture_buffer, size);
+    (texture, texture_buffer)
 }
 
-pub unsafe fn generate_3d_texture(size: usize) -> GLuint {
+pub unsafe fn generate_3d_texture(size_one_dimension: u32) -> GLuint {
+    // let mut max_3d_texture_size = 0;
+    // gl::GetIntegerv(gl::MAX_3D_TEXTURE_SIZE, &mut max_3d_texture_size);
+    // dbg!(&max_3d_texture_size);
+
     let mut texture: GLuint = 0;
-    let voxels_per_brick_one_dimension: usize = 3;
-    let voxels_per_brick = voxels_per_brick_one_dimension.pow(3);
-    let size_one_dimension = (size * voxels_per_brick_one_dimension) as i32;
-    let initial_data = vec![0u32; size * voxels_per_brick];
+
+    // Apparently powers of two are recommended
+    let size_one_dimension = size_one_dimension.next_power_of_two() as i32;
+
+    let size = size_one_dimension.pow(3);
+
+    // dbg!(&size_one_dimension);
+
+    let initial_data = vec![0u32; size as usize];
 
     gl::GenTextures(1, &mut texture);
     gl::BindTexture(gl::TEXTURE_3D, texture);
     gl::TexImage3D(
         gl::TEXTURE_3D,
         0,
-        gl::RGB as i32,
+        gl::RGBA as i32,
         size_one_dimension,
         size_one_dimension,
         size_one_dimension,
         0,
-        gl::RGB,
+        gl::RGBA,
         gl::UNSIGNED_BYTE,
         initial_data.as_ptr() as *const c_void,
     );
@@ -118,9 +115,10 @@ pub unsafe fn get_values_from_texture_buffer(texture_buffer: GLuint, size: usize
     gl::GetBufferSubData(
         gl::TEXTURE_BUFFER,
         0,
-        (size_of::<GLuint>() * size) as isize,
+        size as isize,
         values.as_ptr() as *mut c_void,
     );
+
     values
 }
 

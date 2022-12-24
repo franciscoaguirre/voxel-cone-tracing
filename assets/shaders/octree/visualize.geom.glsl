@@ -6,8 +6,10 @@ layout (line_strip, max_vertices = 22) out;
 in vec4 node_position[];
 in float half_node_size[];
 in int non_empty_branch[];
+in vec4 node_color[];
 
 out flat int branch_not_empty;
+out flat vec4 final_color;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -180,6 +182,7 @@ void create_y_negative_face() {
 
 void main() {
     branch_not_empty = non_empty_branch[0];
+    final_color = node_color[0];
     create_z_positive_face();
     create_x_negative_face();
     create_y_positive_face();

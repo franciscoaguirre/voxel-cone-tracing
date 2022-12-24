@@ -3,18 +3,18 @@ use gl::types::*;
 
 use crate::rendering::shader::Shader;
 
+use super::common::OCTREE_NODE_POOL;
+
 pub struct AllocateNodesPass {
     shader: Shader,
     allocated_tiles_counter: u32,
-    octree_node_pool_texture: GLuint,
 }
 
 impl AllocateNodesPass {
-    pub fn init(allocated_tiles_counter: u32, octree_node_pool_texture: GLuint) -> Self {
+    pub fn init(allocated_tiles_counter: u32) -> Self {
         Self {
             shader: Shader::new_compute("assets/shaders/octree/allocate_nodes.comp.glsl"),
             allocated_tiles_counter,
-            octree_node_pool_texture,
         }
     }
 
@@ -27,7 +27,7 @@ impl AllocateNodesPass {
             .set_int(c_str!("first_free_tile"), first_free_tile);
         gl::BindImageTexture(
             0,
-            self.octree_node_pool_texture,
+            OCTREE_NODE_POOL.0,
             0,
             gl::FALSE,
             0,

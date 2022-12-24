@@ -2,14 +2,14 @@ use std::{ffi::c_void, mem::size_of};
 
 use gl::types::*;
 
-use super::common::OCTREE_NODE_POOL_TEXTURE_BUFFER;
+use super::common::OCTREE_NODE_POOL;
 use crate::constants;
 
 pub unsafe fn show_values_per_tile(offset: usize, number_of_tiles: usize) {
     let max_node_pool_size = get_max_node_pool_size();
 
     let values = vec![1u32; max_node_pool_size];
-    gl::BindBuffer(gl::TEXTURE_BUFFER, OCTREE_NODE_POOL_TEXTURE_BUFFER);
+    gl::BindBuffer(gl::TEXTURE_BUFFER, OCTREE_NODE_POOL.1);
     gl::GetBufferSubData(
         gl::TEXTURE_BUFFER,
         0,

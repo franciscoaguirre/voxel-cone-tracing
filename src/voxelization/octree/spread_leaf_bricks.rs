@@ -6,23 +6,17 @@ use crate::{
     rendering::shader::Shader,
 };
 
+use super::common::{OCTREE_NODE_POOL, OCTREE_NODE_POOL_BRICK_POINTERS};
+
 pub struct SpreadLeafBricksPass {
     shader: Shader,
-    node_pool_brick_pointers_texture: GLuint,
-    node_pool_texture: GLuint,
     voxel_positions_texture: GLuint,
 }
 
 impl SpreadLeafBricksPass {
-    pub fn init(
-        node_pool_brick_pointers_texture: GLuint,
-        node_pool_texture: GLuint,
-        voxel_positions_texture: GLuint,
-    ) -> Self {
+    pub fn init(voxel_positions_texture: GLuint) -> Self {
         Self {
             shader: Shader::new_compute("assets/shaders/octree/spread_leaf_bricks.comp.glsl"),
-            node_pool_brick_pointers_texture,
-            node_pool_texture,
             voxel_positions_texture,
         }
     }
@@ -32,12 +26,11 @@ impl SpreadLeafBricksPass {
 
         self.shader
             .set_uint(c_str!("voxel_dimension"), VOXEL_DIMENSION as u32);
-        self.shader
-            .set_int(c_str!("octree_levels"), OCTREE_LEVELS as i32);
+        self.shader.set_uint(c_str!("octree_levels"), OCTREE_LEVELS);
 
         gl::BindImageTexture(
             0,
-            self.node_pool_brick_pointers_texture,
+            OCTREE_NODE_POOL_BRICK_POINTERS.0,
             0,
             gl::FALSE,
             0,
@@ -57,7 +50,7 @@ impl SpreadLeafBricksPass {
 
         gl::BindImageTexture(
             2,
-            self.node_pool_texture,
+            OCTREE_NODE_POOL.0,
             0,
             gl::FALSE,
             0,

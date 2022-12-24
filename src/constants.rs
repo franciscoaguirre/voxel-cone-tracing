@@ -2,7 +2,7 @@ pub const SOURCE_WIDTH: i32 = 1024;
 pub const SOURCE_HEIGHT: i32 = 1024;
 
 pub const VOXEL_DIMENSION: i32 = 256;
-pub const BRICK_POOL_RESOLUTION: i32 = 70 * 3;
+pub const BRICK_POOL_RESOLUTION: u32 = 70 * 3;
 
 // First level is level 0
 pub const OCTREE_LEVELS: u32 = 8;
