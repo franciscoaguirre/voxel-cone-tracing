@@ -3,8 +3,6 @@ use cgmath::Matrix4;
 
 use super::common::OCTREE_NODE_POOL;
 use crate::constants::VOXEL_DIMENSION;
-use crate::gl_check_error;
-use crate::helpers::debug::gl_check_error_;
 use crate::rendering::shader::Shader;
 use crate::voxelization::helpers;
 use crate::voxelization::octree::common::{
@@ -72,8 +70,6 @@ pub unsafe fn render_octree(
         visualize_octree_shader.set_int(c_str!("draw_by_parts"), 0);
         gl::DrawArrays(gl::POINTS, 0, 8u32.pow(octree_level as u32) as i32);
     }
-
-    gl_check_error!();
 
     // helpers::show_values_per_tile(0, 2);
 }

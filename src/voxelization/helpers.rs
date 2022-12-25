@@ -67,7 +67,7 @@ pub unsafe fn generate_3d_texture(size_one_dimension: u32) -> GLuint {
     gl::TexImage3D(
         gl::TEXTURE_3D,
         0,
-        gl::RGBA as i32,
+        gl::RGBA8 as i32,
         size_one_dimension,
         size_one_dimension,
         size_one_dimension,
@@ -76,6 +76,7 @@ pub unsafe fn generate_3d_texture(size_one_dimension: u32) -> GLuint {
         gl::UNSIGNED_BYTE,
         initial_data.as_ptr() as *const c_void,
     );
+    gl::BindTexture(gl::TEXTURE_3D, 0);
 
     texture
 }

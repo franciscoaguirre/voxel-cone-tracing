@@ -26,12 +26,11 @@ void store_in_leaf(vec3 voxel_position, int node_address, vec4 voxel_color) {
     ivec3 brick_coordinates = ivec3(uintXYZ10ToVec3(brick_coordinates_compact));
     uvec3 offset_vector = uvec3(voxel_position);
     uint offset = offset_vector.x + offset_vector.y * 2U + offset_vector.z * 4U;
-    
+
     imageStore(
         brick_pool_colors,
         brick_coordinates + 2 * ivec3(CHILD_OFFSETS[offset]),
-        vec4(1.0, 0.0, 0.0, 0.0)
-        // voxel_color / 255.0 // TODO: Is this between 0 and 1?
+        voxel_color
     );
 }
 
@@ -44,7 +43,7 @@ void main() {
     vec4 voxel_color = imageLoad(voxel_colors, int(thread_index));
     // TODO: Load normal from images
     memoryBarrier();
-    
+
     // We send the voxel position to traverse the octree and find the leaf
     int node_address = traverse_octree(
         uvec3(voxel_position),

@@ -102,6 +102,7 @@ extern "system" fn gl_debug_output_callback(
     message: *const GLchar,
     _user_param: *mut c_void,
 ) {
+    // Ignore performance errors
     if type_ == 33360 {
         return;
     }

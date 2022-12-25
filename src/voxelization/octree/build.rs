@@ -1,5 +1,5 @@
 use gl::types::*;
-use std::mem::size_of;
+use std::{ffi::c_void, mem::size_of};
 
 use super::{
     common::{
@@ -58,7 +58,7 @@ pub unsafe fn build_octree(
     let allocate_bricks_pass = AllocateBricksPass::init(next_free_brick_counter);
     let write_leaf_nodes_pass =
         WriteLeafNodesPass::init(voxel_position_texture, voxel_diffuse_texture);
-    let spread_leaf_bricks_pass = SpreadLeafBricksPass::init(voxel_position_texture);
+    // let spread_leaf_bricks_pass = SpreadLeafBricksPass::init(voxel_position_texture);
     // let border_transfer_pass = BorderTransferPass::init();
 
     let mut first_tile_in_level: i32 = 0; // Index of first tile in a given octree level
@@ -88,6 +88,12 @@ pub unsafe fn build_octree(
 
     allocate_bricks_pass.run(all_tiles_allocated);
 
+    let values = voxelization::helpers::get_values_from_texture_buffer(
+        OCTREE_NODE_POOL_BRICK_POINTERS.1,
+        (all_tiles_allocated * NODES_PER_TILE) as usize,
+    );
+    dbg!(&values[..20]);
+
     // dbg!(&all_tiles_allocated);
     // dbg!(all_tiles_allocated * NODES_PER_TILE);
 
@@ -99,9 +105,40 @@ pub unsafe fn build_octree(
         voxelization::helpers::generate_3d_texture(brick_pool_colors_texture_size_one_dimension);
     BRICK_POOL_COLORS_TEXTURE = brick_pool_colors_texture;
 
+    let size = brick_pool_colors_texture_size_one_dimension
+        .next_power_of_two()
+        .pow(3);
+
     write_leaf_nodes_pass.run(brick_pool_colors_texture);
 
-    spread_leaf_bricks_pass.run(brick_pool_colors_texture);
+    let bricks = vec![1u32; size as usize];
+    gl::BindTexture(gl::TEXTURE_3D, brick_pool_colors_texture);
+    gl::GetTexImage(
+        gl::TEXTURE_3D,
+        0,
+        gl::RGBA,
+        gl::UNSIGNED_BYTE,
+        bricks.as_ptr() as *mut c_void,
+    );
+    gl::BindTexture(gl::TEXTURE_3D, 0);
+
+    // dbg!(&bricks[1 * 256 * 256]);
+    // dbg!(&bricks[..20]);
+
+    let mut already_seen_numbers = Vec::new();
+    bricks
+        .iter()
+        .enumerate()
+        .filter(|(_, &brick)| brick != 0)
+        .for_each(|(index, brick)| {
+            if !already_seen_numbers.contains(brick) {
+                dbg!(index);
+                dbg!(brick);
+                already_seen_numbers.push(*brick);
+            }
+        });
+
+    // spread_leaf_bricks_pass.run(brick_pool_colors_texture);
 
     // border_transfer_pass.run();
     // border_transfer_pass.run();

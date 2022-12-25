@@ -28,9 +28,8 @@ impl WriteLeafNodesPass {
 
         self.shader
             .set_uint(c_str!("voxel_dimension"), VOXEL_DIMENSION as u32);
-        self.shader.set_int(c_str!("max_octree_level"), 3i32);
         self.shader
-            .set_int(c_str!("max_octree_level"), OCTREE_LEVELS as i32);
+            .set_int(c_str!("max_octree_level"), (OCTREE_LEVELS - 1) as i32);
 
         // Bind images
         gl::BindImageTexture(
@@ -40,7 +39,7 @@ impl WriteLeafNodesPass {
             gl::FALSE,
             0,
             gl::READ_WRITE,
-            gl::R32UI,
+            gl::RGB10_A2UI,
         );
 
         gl::BindImageTexture(
@@ -50,7 +49,7 @@ impl WriteLeafNodesPass {
             gl::FALSE,
             0,
             gl::READ_WRITE,
-            gl::R32UI,
+            gl::RGBA8,
         );
 
         gl::BindImageTexture(
@@ -67,9 +66,9 @@ impl WriteLeafNodesPass {
             3,
             brick_pool_colors_texture,
             0,
-            gl::FALSE,
+            gl::TRUE,
             0,
-            gl::READ_WRITE,
+            gl::WRITE_ONLY,
             gl::RGBA8,
         );
 
