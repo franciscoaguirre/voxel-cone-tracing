@@ -7,19 +7,21 @@ use std::ptr;
 use c_str_macro::c_str;
 extern crate gl;
 extern crate glfw;
+use cgmath::{perspective, vec3, Deg, Matrix4, Point3};
 use gl::types::*;
 use glfw::{Action, Context, Key};
+use structopt::StructOpt;
 
-use cgmath::{perspective, vec3, Deg, Matrix4, Point3};
-
+mod cli_arguments;
+mod constants;
+mod helpers;
 mod rendering;
+mod voxelization;
+
+use cli_arguments::Options;
 use helpers::debug::gl_debug_output_callback;
 use rendering::{camera::Camera, common, model::Model, shader::Shader};
 use voxelization::octree::{build_octree, render_octree};
-
-mod constants;
-mod helpers;
-mod voxelization;
 
 unsafe fn render_voxel_fragments(
     voxel_position_texture: GLuint,
@@ -80,29 +82,19 @@ unsafe fn render_voxel_fragments(
     gl::DrawArrays(gl::POINTS, 0, number_of_voxel_fragments as i32);
 }
 
-fn process_command_line_arguments() -> String {
-    let arguments: Vec<String> = env::args().collect();
-    if arguments.len() == 2 {
-        arguments[1].clone()
-    } else {
-        String::from("triangle.obj")
-    }
-}
-
 fn main() {
-    let model_path = process_command_line_arguments();
+    let options = Options::from_args();
 
     // Camera setup
     let mut camera = Camera {
         Position: Point3::new(0.0, 0.0, -3.0),
         ..Camera::default()
     };
-
     let mut first_mouse = true;
     let mut last_x: f32 = constants::SOURCE_WIDTH as f32 / 2.0;
     let mut last_y: f32 = constants::SOURCE_HEIGHT as f32 / 2.0;
 
-    // Timing
+    // Timing setup
     let mut delta_time: f32;
     let mut last_frame: f32 = 0.0;
 
@@ -112,7 +104,7 @@ fn main() {
     glfw.window_hint(glfw::WindowHint::OpenGlProfile(
         glfw::OpenGlProfileHint::Core,
     ));
-    glfw.window_hint(glfw::WindowHint::OpenGlDebugContext(true));
+    glfw.window_hint(glfw::WindowHint::OpenGlDebugContext(options.debug));
 
     // GLFW: Window creation
     let (mut window, events) = glfw
@@ -165,7 +157,7 @@ fn main() {
 
         let previous_current_dir = env::current_dir().unwrap();
         env::set_current_dir(Path::new("assets/models")).unwrap();
-        let our_model = Model::new(&model_path);
+        let our_model = Model::new(&options.model);
         env::set_current_dir(previous_current_dir).unwrap();
 
         (our_shader, our_model)
@@ -173,7 +165,7 @@ fn main() {
 
     let (voxel_position_texture, number_of_voxel_fragments, voxel_diffuse_texture) = unsafe {
         let (number_of_voxel_fragments, voxel_position_texture, voxel_diffuse_texture) =
-            voxelization::build_voxel_fragment_list(&model_path);
+            voxelization::build_voxel_fragment_list(&options.model);
         dbg!(number_of_voxel_fragments);
 
         gl::Enable(gl::PROGRAM_POINT_SIZE);
