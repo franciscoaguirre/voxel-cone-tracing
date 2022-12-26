@@ -2,7 +2,7 @@ use c_str_macro::c_str;
 use cgmath::Matrix4;
 
 use super::common::OCTREE_NODE_POOL;
-use crate::constants::VOXEL_DIMENSION;
+use crate::config::CONFIG;
 use crate::rendering::shader::Shader;
 use crate::voxelization::helpers;
 use crate::voxelization::octree::common::{
@@ -44,14 +44,17 @@ pub unsafe fn render_octree(
     helpers::bind_image_texture(2, BRICK_POOL_COLORS_TEXTURE, gl::READ_WRITE, gl::RGBA8);
 
     visualize_octree_shader.set_int(c_str!("octree_levels"), octree_level);
-    visualize_octree_shader.set_int(c_str!("voxel_dimension"), VOXEL_DIMENSION);
+    visualize_octree_shader.set_int(c_str!("voxel_dimension"), CONFIG.voxel_dimension);
     visualize_octree_shader.set_bool(c_str!("show_empty_nodes"), show_empty_nodes);
 
     visualize_octree_shader.set_mat4(c_str!("projection"), projection);
     visualize_octree_shader.set_mat4(c_str!("view"), view);
     visualize_octree_shader.set_mat4(c_str!("model"), model);
 
-    visualize_octree_shader.set_float(c_str!("half_dimension"), 1.0 / VOXEL_DIMENSION as f32);
+    visualize_octree_shader.set_float(
+        c_str!("half_dimension"),
+        1.0 / CONFIG.voxel_dimension as f32,
+    );
 
     let mut vao = 0;
     gl::GenVertexArrays(1, &mut vao);

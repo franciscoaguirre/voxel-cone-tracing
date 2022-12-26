@@ -14,3 +14,6 @@ memoffset = "0.6.5"
 tobj = "3.2.2"
 c_str_macro = "1.0.3"
 structopt = "0.3"
+ron = "0.8.0"
+serde = { version = "1", features = ["derive"] }
+once_cell = "1.16.0"

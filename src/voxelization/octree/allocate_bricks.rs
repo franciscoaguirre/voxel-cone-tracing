@@ -1,6 +1,6 @@
 use c_str_macro::c_str;
 
-use crate::constants::{BRICK_POOL_RESOLUTION, WORKING_GROUP_SIZE};
+use crate::config::CONFIG;
 use crate::rendering::shader::Shader;
 
 use super::common::{OCTREE_NODE_POOL, OCTREE_NODE_POOL_BRICK_POINTERS};
@@ -23,7 +23,7 @@ impl AllocateBricksPass {
 
         self.shader.set_uint(
             c_str!("brick_pool_resolution"),
-            BRICK_POOL_RESOLUTION as u32,
+            CONFIG.brick_pool_resolution as u32,
         );
 
         gl::BindImageTexture(
@@ -49,7 +49,7 @@ impl AllocateBricksPass {
         gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, self.next_free_brick_counter);
 
         self.shader
-            .dispatch(all_tiles_allocated / WORKING_GROUP_SIZE + 1);
+            .dispatch(all_tiles_allocated / CONFIG.working_group_size + 1);
         self.shader.wait();
     }
 }

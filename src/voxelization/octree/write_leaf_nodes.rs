@@ -1,10 +1,7 @@
 use c_str_macro::c_str;
 use gl::types::*;
 
-use crate::{
-    constants::{OCTREE_LEVELS, VOXEL_DIMENSION},
-    rendering::shader::Shader,
-};
+use crate::{config::CONFIG, rendering::shader::Shader};
 
 use super::common::{OCTREE_NODE_POOL, OCTREE_NODE_POOL_BRICK_POINTERS};
 
@@ -27,9 +24,11 @@ impl WriteLeafNodesPass {
         self.shader.use_program();
 
         self.shader
-            .set_uint(c_str!("voxel_dimension"), VOXEL_DIMENSION as u32);
-        self.shader
-            .set_int(c_str!("max_octree_level"), (OCTREE_LEVELS - 1) as i32);
+            .set_uint(c_str!("voxel_dimension"), CONFIG.voxel_dimension as u32);
+        self.shader.set_int(
+            c_str!("max_octree_level"),
+            (CONFIG.octree_levels - 1) as i32,
+        );
 
         // Bind images
         gl::BindImageTexture(

@@ -11,7 +11,8 @@ use super::{
     helpers,
 };
 use crate::{
-    constants::{BRICK_POOL_RESOLUTION, NODES_PER_TILE, OCTREE_LEVELS},
+    config::CONFIG,
+    constants::NODES_PER_TILE,
     voxelization::{
         self,
         octree::{
@@ -64,7 +65,7 @@ pub unsafe fn build_octree(
     let mut first_tile_in_level: i32 = 0; // Index of first tile in a given octree level
     let mut first_free_tile: i32 = 1; // Index of first free tile (unallocated) in the octree
 
-    for octree_level in 0..OCTREE_LEVELS {
+    for octree_level in 0..CONFIG.octree_levels {
         if octree_level > 0 {
             neighbour_pointers_pass.run(octree_level);
         }
@@ -100,7 +101,7 @@ pub unsafe fn build_octree(
     // This is the value domme uses, I don't know if it is okay.
     // It could be that we just need VOXEL_DIMENSION * 3.
     // We are still not putting voxels on the corners of nodes.
-    let brick_pool_colors_texture_size_one_dimension = BRICK_POOL_RESOLUTION;
+    let brick_pool_colors_texture_size_one_dimension = CONFIG.brick_pool_resolution;
     let brick_pool_colors_texture =
         voxelization::helpers::generate_3d_texture(brick_pool_colors_texture_size_one_dimension);
     BRICK_POOL_COLORS_TEXTURE = brick_pool_colors_texture;

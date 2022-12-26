@@ -3,7 +3,7 @@ use std::{ffi::c_void, mem::size_of};
 use gl::types::*;
 
 use super::common::OCTREE_NODE_POOL;
-use crate::constants;
+use crate::{config::CONFIG, constants};
 
 pub unsafe fn show_values_per_tile(offset: usize, number_of_tiles: usize) {
     let max_node_pool_size = get_max_node_pool_size();
@@ -25,7 +25,7 @@ pub unsafe fn show_values_per_tile(offset: usize, number_of_tiles: usize) {
 }
 
 pub fn get_max_node_pool_size() -> usize {
-    let number_of_tiles = (0..constants::OCTREE_LEVELS)
+    let number_of_tiles = (0..CONFIG.octree_levels)
         .map(|exponent| (constants::NODES_PER_TILE as usize).pow(exponent))
         .sum::<usize>();
     number_of_tiles * 8

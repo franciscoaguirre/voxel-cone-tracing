@@ -1,7 +1,7 @@
 use c_str_macro::c_str;
 use gl::types::*;
 
-use crate::constants::VOXEL_DIMENSION;
+use crate::config::CONFIG;
 use crate::rendering::shader::Shader;
 
 use super::common::OCTREE_NODE_POOL;
@@ -31,7 +31,7 @@ impl FlagNodesPass {
         self.shader
             .set_int(c_str!("octree_level"), octree_level as i32);
         self.shader
-            .set_int(c_str!("voxel_dimension"), VOXEL_DIMENSION);
+            .set_int(c_str!("voxel_dimension"), CONFIG.voxel_dimension);
 
         gl::BindImageTexture(
             0,

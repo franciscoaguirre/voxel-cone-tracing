@@ -1,10 +1,7 @@
 use c_str_macro::c_str;
 use gl::types::*;
 
-use crate::{
-    constants::VOXEL_DIMENSION, rendering::shader::Shader,
-    voxelization::helpers::bind_image_texture,
-};
+use crate::{config::CONFIG, rendering::shader::Shader, voxelization::helpers::bind_image_texture};
 
 use super::common::{
     OCTREE_NODE_POOL, OCTREE_NODE_POOL_NEIGHBOUR_X, OCTREE_NODE_POOL_NEIGHBOUR_X_NEGATIVE,
@@ -30,7 +27,7 @@ impl NeighbourPointersPass {
 
         // Set uniforms
         self.shader
-            .set_uint(c_str!("voxel_dimension"), VOXEL_DIMENSION as u32);
+            .set_uint(c_str!("voxel_dimension"), CONFIG.voxel_dimension as u32);
         self.shader
             .set_uint(c_str!("current_octree_level"), current_octree_level);
 

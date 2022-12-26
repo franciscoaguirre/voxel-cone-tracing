@@ -1,10 +1,7 @@
 use c_str_macro::c_str;
 use gl::types::*;
 
-use crate::{
-    constants::{OCTREE_LEVELS, VOXEL_DIMENSION},
-    rendering::shader::Shader,
-};
+use crate::{config::CONFIG, rendering::shader::Shader};
 
 use super::common::{OCTREE_NODE_POOL, OCTREE_NODE_POOL_BRICK_POINTERS};
 
@@ -25,8 +22,9 @@ impl SpreadLeafBricksPass {
         self.shader.use_program();
 
         self.shader
-            .set_uint(c_str!("voxel_dimension"), VOXEL_DIMENSION as u32);
-        self.shader.set_uint(c_str!("octree_levels"), OCTREE_LEVELS);
+            .set_uint(c_str!("voxel_dimension"), CONFIG.voxel_dimension as u32);
+        self.shader
+            .set_uint(c_str!("octree_levels"), CONFIG.octree_levels);
 
         gl::BindImageTexture(
             0,

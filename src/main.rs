@@ -13,12 +13,14 @@ use glfw::{Action, Context, Key};
 use structopt::StructOpt;
 
 mod cli_arguments;
+mod config;
 mod constants;
 mod helpers;
 mod rendering;
 mod voxelization;
 
 use cli_arguments::Options;
+use config::CONFIG;
 use helpers::debug::gl_debug_output_callback;
 use rendering::{camera::Camera, common, model::Model, shader::Shader};
 use voxelization::octree::{build_octree, render_octree};
@@ -67,10 +69,10 @@ unsafe fn render_voxel_fragments(
     render_voxel_shader.set_mat4(c_str!("view"), view);
     render_voxel_shader.set_mat4(c_str!("model"), model);
 
-    render_voxel_shader.set_int(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
+    render_voxel_shader.set_int(c_str!("voxel_dimension"), CONFIG.voxel_dimension);
     render_voxel_shader.set_float(
         c_str!("half_dimension"),
-        1.0 / constants::VOXEL_DIMENSION as f32,
+        1.0 / CONFIG.voxel_dimension as f32,
     );
 
     render_voxel_shader.set_int(
@@ -91,8 +93,8 @@ fn main() {
         ..Camera::default()
     };
     let mut first_mouse = true;
-    let mut last_x: f32 = constants::SOURCE_WIDTH as f32 / 2.0;
-    let mut last_y: f32 = constants::SOURCE_HEIGHT as f32 / 2.0;
+    let mut last_x: f32 = CONFIG.viewport_width as f32 / 2.0;
+    let mut last_y: f32 = CONFIG.viewport_height as f32 / 2.0;
 
     // Timing setup
     let mut delta_time: f32;
@@ -109,8 +111,8 @@ fn main() {
     // GLFW: Window creation
     let (mut window, events) = glfw
         .create_window(
-            constants::SOURCE_WIDTH as u32,
-            constants::SOURCE_HEIGHT as u32,
+            CONFIG.viewport_width as u32,
+            CONFIG.viewport_height as u32,
             "Voxel Cone Tracing",
             glfw::WindowMode::Windowed,
         )
@@ -247,7 +249,7 @@ fn main() {
 
             let projection: Matrix4<f32> = perspective(
                 Deg(camera.Zoom),
-                constants::SOURCE_WIDTH as f32 / constants::SOURCE_HEIGHT as f32,
+                CONFIG.viewport_width as f32 / CONFIG.viewport_height as f32,
                 0.1,
                 10000.0,
             );
@@ -310,7 +312,7 @@ fn handle_update_octree_level(
             dbg!(current_octree_level);
         }
         glfw::WindowEvent::Key(Key::Right, _, Action::Press, _) => {
-            *current_octree_level = (*current_octree_level + 1).min(constants::OCTREE_LEVELS);
+            *current_octree_level = (*current_octree_level + 1).min(CONFIG.octree_levels);
             dbg!(current_octree_level);
         }
         glfw::WindowEvent::Key(Key::M, _, Action::Press, _) => {

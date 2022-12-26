@@ -3,7 +3,7 @@ use std::mem::size_of;
 use std::path::Path;
 
 use super::helpers;
-use crate::{constants, rendering::model::Model, rendering::shader::Shader};
+use crate::{config::CONFIG, rendering::model::Model, rendering::shader::Shader};
 use c_str_macro::c_str;
 
 use gl::types::*;
@@ -60,7 +60,7 @@ unsafe fn voxelize_scene(
 ) {
     gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-    gl::Viewport(0, 0, constants::VOXEL_DIMENSION, constants::VOXEL_DIMENSION);
+    gl::Viewport(0, 0, CONFIG.voxel_dimension, CONFIG.voxel_dimension);
 
     // TODO: This should be the aabb of the entire scene
     let scene_aabb = &models[0].aabb;
@@ -78,7 +78,7 @@ unsafe fn voxelize_scene(
         c_str!("model_normalization_matrix"),
         &model_normalization_matrix,
     );
-    voxelization_shader.set_int(c_str!("voxel_dimension"), constants::VOXEL_DIMENSION);
+    voxelization_shader.set_int(c_str!("voxel_dimension"), CONFIG.voxel_dimension);
 
     gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, *atomic_counter);
 
@@ -91,7 +91,7 @@ unsafe fn voxelize_scene(
     gl::Disable(gl::CULL_FACE);
     gl::Disable(gl::DEPTH_TEST);
     gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
-    gl::Viewport(0, 0, constants::SOURCE_WIDTH, constants::SOURCE_HEIGHT);
+    gl::Viewport(0, 0, CONFIG.viewport_width, CONFIG.viewport_height);
 }
 
 pub unsafe fn build_voxel_fragment_list(model_path: &str) -> (u32, u32, u32) {
