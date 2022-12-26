@@ -25,9 +25,9 @@ use crate::{
 };
 
 pub unsafe fn build_octree(
-    voxel_position_texture: GLuint,
+    voxel_positions_texture: GLuint,
     number_of_voxel_fragments: u32,
-    voxel_diffuse_texture: GLuint,
+    voxel_colors_texture: GLuint,
 ) {
     let allocated_tiles_counter = voxelization::helpers::generate_atomic_counter_buffer();
     let next_free_brick_counter: u32 = voxelization::helpers::generate_atomic_counter_buffer();
@@ -53,13 +53,13 @@ pub unsafe fn build_octree(
     OCTREE_NODE_POOL_NEIGHBOUR_Z_NEGATIVE =
         voxelization::helpers::generate_texture_buffer(max_node_pool_size_in_bytes, gl::R32UI);
 
-    let neighbour_pointers_pass = NeighbourPointersPass::init(voxel_position_texture);
-    let flag_nodes_pass = FlagNodesPass::init(number_of_voxel_fragments, voxel_position_texture);
+    let neighbour_pointers_pass = NeighbourPointersPass::init(voxel_positions_texture);
+    let flag_nodes_pass = FlagNodesPass::init(number_of_voxel_fragments, voxel_positions_texture);
     let allocate_nodes_pass = AllocateNodesPass::init(allocated_tiles_counter);
     let allocate_bricks_pass = AllocateBricksPass::init(next_free_brick_counter);
     let write_leaf_nodes_pass =
-        WriteLeafNodesPass::init(voxel_position_texture, voxel_diffuse_texture);
-    // let spread_leaf_bricks_pass = SpreadLeafBricksPass::init(voxel_position_texture);
+        WriteLeafNodesPass::init(voxel_positions_texture, voxel_colors_texture);
+    // let spread_leaf_bricks_pass = SpreadLeafBricksPass::init(voxel_positions_texture);
     // let border_transfer_pass = BorderTransferPass::init();
 
     let mut first_tile_in_level: i32 = 0; // Index of first tile in a given octree level

@@ -1,5 +1,62 @@
+use std::{ptr, sync::mpsc::Receiver};
+
+use glfw::{Action, Context, Glfw, Key, Window, WindowEvent};
+
 use super::camera::{Camera, Camera_Movement};
-use glfw::{Action, Key};
+use crate::{cli_arguments::Options, config::CONFIG, helpers::debug};
+
+pub unsafe fn setup_glfw(options: &Options) -> (Glfw, Window, Receiver<(f64, WindowEvent)>) {
+    // GLFW: Setup
+    let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
+    glfw.window_hint(glfw::WindowHint::ContextVersion(4, 6));
+    glfw.window_hint(glfw::WindowHint::OpenGlProfile(
+        glfw::OpenGlProfileHint::Core,
+    ));
+    glfw.window_hint(glfw::WindowHint::OpenGlDebugContext(options.debug));
+
+    // GLFW: Window creation
+    let (mut window, events) = glfw
+        .create_window(
+            CONFIG.viewport_width as u32,
+            CONFIG.viewport_height as u32,
+            "Voxel Cone Tracing",
+            glfw::WindowMode::Windowed,
+        )
+        .expect("Failed to create GLFW window");
+
+    window.make_current();
+    window.set_key_polling(true);
+    window.set_framebuffer_size_polling(true);
+    window.set_cursor_pos_polling(true);
+    window.set_scroll_polling(true);
+    window.set_cursor_mode(glfw::CursorMode::Disabled);
+
+    // GL: Load all OpenGL function pointers
+    gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
+
+    // Enable OpenGL Debug Context if allowed
+    unsafe {
+        let mut flags = 0;
+        gl::GetIntegerv(gl::CONTEXT_FLAGS, &mut flags);
+        if flags as u32 & gl::CONTEXT_FLAG_DEBUG_BIT != 0 {
+            gl::Enable(gl::DEBUG_OUTPUT);
+            gl::Enable(gl::DEBUG_OUTPUT_SYNCHRONOUS);
+            gl::DebugMessageCallback(Some(debug::gl_debug_output_callback), ptr::null());
+            gl::DebugMessageControl(
+                gl::DONT_CARE,
+                gl::DONT_CARE,
+                gl::DONT_CARE,
+                0,
+                ptr::null(),
+                gl::TRUE,
+            );
+        } else {
+            println!("Debug Context not active");
+        }
+
+        (glfw, window, events)
+    }
+}
 
 pub fn process_events(
     event: &glfw::WindowEvent,
@@ -59,5 +116,48 @@ pub fn process_input(window: &mut glfw::Window, delta_time: f32, camera: &mut Ca
     }
     if window.get_key(Key::LeftShift) == Action::Press {
         camera.ProcessKeyboard(Camera_Movement::Down, delta_time);
+    }
+}
+
+pub fn handle_update_octree_level(
+    event: &glfw::WindowEvent,
+    current_octree_level: &mut u32,
+    show_empty_nodes: &mut bool,
+) {
+    match *event {
+        glfw::WindowEvent::Key(Key::Left, _, Action::Press, _) => {
+            if *current_octree_level != 0 {
+                *current_octree_level -= 1
+            }
+            dbg!(current_octree_level);
+        }
+        glfw::WindowEvent::Key(Key::Right, _, Action::Press, _) => {
+            *current_octree_level = (*current_octree_level + 1).min(CONFIG.octree_levels);
+            dbg!(current_octree_level);
+        }
+        glfw::WindowEvent::Key(Key::M, _, Action::Press, _) => {
+            *show_empty_nodes = !*show_empty_nodes;
+        }
+        _ => {}
+    }
+}
+
+pub fn handle_showing_entities(
+    event: &glfw::WindowEvent,
+    show_model: &mut bool,
+    show_voxel_fragment_list: &mut bool,
+    show_octree: &mut bool,
+) {
+    match *event {
+        glfw::WindowEvent::Key(Key::Num1, _, Action::Press, _) => {
+            *show_model = !*show_model;
+        }
+        glfw::WindowEvent::Key(Key::Num2, _, Action::Press, _) => {
+            *show_voxel_fragment_list = !*show_voxel_fragment_list;
+        }
+        glfw::WindowEvent::Key(Key::Num3, _, Action::Press, _) => {
+            *show_octree = !*show_octree;
+        }
+        _ => {}
     }
 }

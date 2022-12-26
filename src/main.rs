@@ -2,14 +2,12 @@ extern crate c_str_macro;
 
 use std::env;
 use std::path::Path;
-use std::ptr;
 
 use c_str_macro::c_str;
 extern crate gl;
 extern crate glfw;
 use cgmath::{perspective, vec3, Deg, Matrix4, Point3};
-use gl::types::*;
-use glfw::{Action, Context, Key};
+use glfw::Context;
 use structopt::StructOpt;
 
 mod cli_arguments;
@@ -21,68 +19,11 @@ mod voxelization;
 
 use cli_arguments::Options;
 use config::CONFIG;
-use helpers::debug::gl_debug_output_callback;
 use rendering::{camera::Camera, common, model::Model, shader::Shader};
-use voxelization::octree::{build_octree, render_octree};
-
-unsafe fn render_voxel_fragments(
-    voxel_position_texture: GLuint,
-    voxel_diffuse_texture: GLuint,
-    projection: &Matrix4<f32>,
-    view: &Matrix4<f32>,
-    model: &Matrix4<f32>,
-    number_of_voxel_fragments: u32,
-    vao: u32,
-) {
-    gl::Enable(gl::DEPTH_TEST);
-
-    // Set shader program
-    let render_voxel_shader = Shader::with_geometry_shader(
-        "assets/shaders/voxel_fragment/render_voxel.vert.glsl",
-        "assets/shaders/voxel_fragment/render_voxel.frag.glsl",
-        "assets/shaders/voxel_fragment/render_voxel.geom.glsl",
-    );
-
-    render_voxel_shader.use_program();
-
-    gl::BindImageTexture(
-        0,
-        voxel_position_texture,
-        0,
-        gl::TRUE,
-        0,
-        gl::READ_ONLY,
-        gl::RGB10_A2UI,
-    );
-
-    gl::BindImageTexture(
-        1,
-        voxel_diffuse_texture,
-        0,
-        gl::TRUE,
-        0,
-        gl::READ_ONLY,
-        gl::RGBA8,
-    );
-
-    render_voxel_shader.set_mat4(c_str!("projection"), projection);
-    render_voxel_shader.set_mat4(c_str!("view"), view);
-    render_voxel_shader.set_mat4(c_str!("model"), model);
-
-    render_voxel_shader.set_int(c_str!("voxel_dimension"), CONFIG.voxel_dimension);
-    render_voxel_shader.set_float(
-        c_str!("half_dimension"),
-        1.0 / CONFIG.voxel_dimension as f32,
-    );
-
-    render_voxel_shader.set_int(
-        c_str!("voxel_fragment_count"),
-        number_of_voxel_fragments as i32,
-    );
-
-    gl::BindVertexArray(vao);
-    gl::DrawArrays(gl::POINTS, 0, number_of_voxel_fragments as i32);
-}
+use voxelization::{
+    octree::{build_octree, render_octree},
+    render_voxel_fragments,
+};
 
 fn main() {
     let options = Options::from_args();
@@ -100,54 +41,7 @@ fn main() {
     let mut delta_time: f32;
     let mut last_frame: f32 = 0.0;
 
-    // GLFW: Setup
-    let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
-    glfw.window_hint(glfw::WindowHint::ContextVersion(4, 6));
-    glfw.window_hint(glfw::WindowHint::OpenGlProfile(
-        glfw::OpenGlProfileHint::Core,
-    ));
-    glfw.window_hint(glfw::WindowHint::OpenGlDebugContext(options.debug));
-
-    // GLFW: Window creation
-    let (mut window, events) = glfw
-        .create_window(
-            CONFIG.viewport_width as u32,
-            CONFIG.viewport_height as u32,
-            "Voxel Cone Tracing",
-            glfw::WindowMode::Windowed,
-        )
-        .expect("Failed to create GLFW window");
-
-    window.make_current();
-    window.set_key_polling(true);
-    window.set_framebuffer_size_polling(true);
-    window.set_cursor_pos_polling(true);
-    window.set_scroll_polling(true);
-    window.set_cursor_mode(glfw::CursorMode::Disabled);
-
-    // GL: Load all OpenGL function pointers
-    gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
-
-    // Enable OpenGL Debug Context if allowed
-    unsafe {
-        let mut flags = 0;
-        gl::GetIntegerv(gl::CONTEXT_FLAGS, &mut flags);
-        if flags as u32 & gl::CONTEXT_FLAG_DEBUG_BIT != 0 {
-            gl::Enable(gl::DEBUG_OUTPUT);
-            gl::Enable(gl::DEBUG_OUTPUT_SYNCHRONOUS);
-            gl::DebugMessageCallback(Some(gl_debug_output_callback), ptr::null());
-            gl::DebugMessageControl(
-                gl::DONT_CARE,
-                gl::DONT_CARE,
-                gl::DONT_CARE,
-                0,
-                ptr::null(),
-                gl::TRUE,
-            );
-        } else {
-            println!("Debug Context not active");
-        }
-    }
+    let (mut glfw, mut window, events) = unsafe { common::setup_glfw(&options) };
 
     let (render_model_shader, our_model) = unsafe {
         gl::Enable(gl::DEPTH_TEST);
@@ -165,24 +59,23 @@ fn main() {
         (our_shader, our_model)
     };
 
-    let (voxel_position_texture, number_of_voxel_fragments, voxel_diffuse_texture) = unsafe {
-        let (number_of_voxel_fragments, voxel_position_texture, voxel_diffuse_texture) =
+    let (voxel_positions_texture, number_of_voxel_fragments, voxel_colors_texture) = unsafe {
+        let (number_of_voxel_fragments, voxel_positions_texture, voxel_colors_texture) =
             voxelization::build_voxel_fragment_list(&options.model);
         dbg!(number_of_voxel_fragments);
 
-        gl::Enable(gl::PROGRAM_POINT_SIZE);
         (
-            voxel_position_texture,
+            voxel_positions_texture,
             number_of_voxel_fragments,
-            voxel_diffuse_texture,
+            voxel_colors_texture,
         )
     };
 
     unsafe {
         build_octree(
-            voxel_position_texture,
+            voxel_positions_texture,
             number_of_voxel_fragments,
-            voxel_diffuse_texture,
+            voxel_colors_texture,
         );
     }
 
@@ -229,8 +122,12 @@ fn main() {
                 &mut last_y,
                 &mut camera,
             );
-            handle_update_octree_level(&event, &mut current_octree_level, &mut show_empty_nodes);
-            handle_showing_entities(
+            common::handle_update_octree_level(
+                &event,
+                &mut current_octree_level,
+                &mut show_empty_nodes,
+            );
+            common::handle_showing_entities(
                 &event,
                 &mut show_model,
                 &mut show_voxel_fragment_list,
@@ -255,12 +152,12 @@ fn main() {
             );
             let view = camera.GetViewMatrix();
             let mut model = Matrix4::<f32>::from_translation(vec3(0.0, 0.0, 0.0));
-            model = model * Matrix4::from_scale(1.); // i
+            model = model * Matrix4::from_scale(1.);
 
             if show_voxel_fragment_list {
                 render_voxel_fragments(
-                    voxel_position_texture,
-                    voxel_diffuse_texture,
+                    voxel_positions_texture,
+                    voxel_colors_texture,
                     &projection,
                     &view,
                     &model,
@@ -296,48 +193,5 @@ fn main() {
         // GLFW: Swap buffers and poll I/O events
         window.swap_buffers();
         glfw.poll_events();
-    }
-}
-
-fn handle_update_octree_level(
-    event: &glfw::WindowEvent,
-    current_octree_level: &mut u32,
-    show_empty_nodes: &mut bool,
-) {
-    match *event {
-        glfw::WindowEvent::Key(Key::Left, _, Action::Press, _) => {
-            if *current_octree_level != 0 {
-                *current_octree_level -= 1
-            }
-            dbg!(current_octree_level);
-        }
-        glfw::WindowEvent::Key(Key::Right, _, Action::Press, _) => {
-            *current_octree_level = (*current_octree_level + 1).min(CONFIG.octree_levels);
-            dbg!(current_octree_level);
-        }
-        glfw::WindowEvent::Key(Key::M, _, Action::Press, _) => {
-            *show_empty_nodes = !*show_empty_nodes;
-        }
-        _ => {}
-    }
-}
-
-fn handle_showing_entities(
-    event: &glfw::WindowEvent,
-    show_model: &mut bool,
-    show_voxel_fragment_list: &mut bool,
-    show_octree: &mut bool,
-) {
-    match *event {
-        glfw::WindowEvent::Key(Key::Num1, _, Action::Press, _) => {
-            *show_model = !*show_model;
-        }
-        glfw::WindowEvent::Key(Key::Num2, _, Action::Press, _) => {
-            *show_voxel_fragment_list = !*show_voxel_fragment_list;
-        }
-        glfw::WindowEvent::Key(Key::Num3, _, Action::Press, _) => {
-            *show_octree = !*show_octree;
-        }
-        _ => {}
     }
 }
