@@ -1,8 +1,6 @@
 use gl::types::*;
 use std::{ffi::c_void, mem::size_of, ptr};
 
-use crate::{gl_check_error, helpers::debug::gl_check_error_};
-
 pub unsafe fn generate_atomic_counter_buffer() -> GLuint {
     let mut buffer: u32 = 0;
     let initial_value: u32 = 0;
@@ -16,8 +14,6 @@ pub unsafe fn generate_atomic_counter_buffer() -> GLuint {
         gl::STATIC_DRAW,
     );
     gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, 0);
-
-    gl_check_error!();
 
     buffer
 }
