@@ -36,24 +36,48 @@ pub unsafe fn build_octree(
     let max_node_pool_size_in_bytes = size_of::<GLuint>() * max_node_pool_size as usize;
     TILES_PER_LEVEL.push(1);
 
-    OCTREE_NODE_POOL =
-        voxelization::helpers::generate_texture_buffer(max_node_pool_size_in_bytes, gl::R32UI);
-    OCTREE_NODE_POOL_BRICK_POINTERS =
-        voxelization::helpers::generate_texture_buffer(max_node_pool_size_in_bytes, gl::R32UI);
-    OCTREE_NODE_POOL_NEIGHBOUR_X =
-        voxelization::helpers::generate_texture_buffer(max_node_pool_size_in_bytes, gl::R32UI);
-    OCTREE_NODE_POOL_NEIGHBOUR_X_NEGATIVE =
-        voxelization::helpers::generate_texture_buffer(max_node_pool_size_in_bytes, gl::R32UI);
-    OCTREE_NODE_POOL_NEIGHBOUR_Y =
-        voxelization::helpers::generate_texture_buffer(max_node_pool_size_in_bytes, gl::R32UI);
-    OCTREE_NODE_POOL_NEIGHBOUR_Y_NEGATIVE =
-        voxelization::helpers::generate_texture_buffer(max_node_pool_size_in_bytes, gl::R32UI);
-    OCTREE_NODE_POOL_NEIGHBOUR_Z =
-        voxelization::helpers::generate_texture_buffer(max_node_pool_size_in_bytes, gl::R32UI);
-    OCTREE_NODE_POOL_NEIGHBOUR_Z_NEGATIVE =
-        voxelization::helpers::generate_texture_buffer(max_node_pool_size_in_bytes, gl::R32UI);
+    OCTREE_NODE_POOL = voxelization::helpers::generate_texture_buffer(
+        max_node_pool_size_in_bytes,
+        gl::R32UI,
+        0u32,
+    );
+    OCTREE_NODE_POOL_BRICK_POINTERS = voxelization::helpers::generate_texture_buffer(
+        max_node_pool_size_in_bytes,
+        gl::R32UI,
+        0u32,
+    );
+    OCTREE_NODE_POOL_NEIGHBOUR_X = voxelization::helpers::generate_texture_buffer(
+        max_node_pool_size_in_bytes,
+        gl::R32UI,
+        0u32,
+    );
+    OCTREE_NODE_POOL_NEIGHBOUR_X_NEGATIVE = voxelization::helpers::generate_texture_buffer(
+        max_node_pool_size_in_bytes,
+        gl::R32UI,
+        0u32,
+    );
+    OCTREE_NODE_POOL_NEIGHBOUR_Y = voxelization::helpers::generate_texture_buffer(
+        max_node_pool_size_in_bytes,
+        gl::R32UI,
+        0u32,
+    );
+    OCTREE_NODE_POOL_NEIGHBOUR_Y_NEGATIVE = voxelization::helpers::generate_texture_buffer(
+        max_node_pool_size_in_bytes,
+        gl::R32UI,
+        0u32,
+    );
+    OCTREE_NODE_POOL_NEIGHBOUR_Z = voxelization::helpers::generate_texture_buffer(
+        max_node_pool_size_in_bytes,
+        gl::R32UI,
+        0u32,
+    );
+    OCTREE_NODE_POOL_NEIGHBOUR_Z_NEGATIVE = voxelization::helpers::generate_texture_buffer(
+        max_node_pool_size_in_bytes,
+        gl::R32UI,
+        0u32,
+    );
 
-    let neighbour_pointers_pass = NeighbourPointersPass::init(voxel_positions_texture);
+    // let neighbour_pointers_pass = NeighbourPointersPass::init(voxel_positions_texture);
     let flag_nodes_pass = FlagNodesPass::init(number_of_voxel_fragments, voxel_positions_texture);
     let allocate_nodes_pass = AllocateNodesPass::init(allocated_tiles_counter);
     let allocate_bricks_pass = AllocateBricksPass::init(next_free_brick_counter);

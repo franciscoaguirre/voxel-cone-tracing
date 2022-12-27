@@ -10,7 +10,7 @@ use gl::types::*;
 
 static mut VOXEL_POSITIONS: (GLuint, GLuint) = (0, 0);
 static mut VOXEL_COLORS: (GLuint, GLuint) = (0, 0);
-// static mut VOXEL_NORMALS: (GLuint, GLuint) = (0, 0);
+static mut VOXEL_NORMALS: (GLuint, GLuint) = (0, 0);
 
 unsafe fn calculate_voxel_fragment_list_length(
     voxelization_shader: &Shader,
@@ -30,25 +30,9 @@ unsafe fn populate_voxel_fragment_list(
     voxelization_shader.use_program();
     voxelization_shader.set_bool(c_str!("should_store"), true);
 
-    gl::BindImageTexture(
-        0,
-        VOXEL_POSITIONS.0,
-        0,
-        gl::FALSE,
-        0,
-        gl::READ_WRITE,
-        gl::RGB10_A2UI,
-    );
-    gl::BindImageTexture(
-        1,
-        VOXEL_COLORS.0,
-        0,
-        gl::FALSE,
-        0,
-        gl::READ_WRITE,
-        gl::RGBA8,
-    );
-    voxelization_shader.set_int(c_str!("u_voxelPos"), 0);
+    helpers::bind_image_texture(0, VOXEL_POSITIONS.0, gl::WRITE_ONLY, gl::RGB10_A2UI);
+    helpers::bind_image_texture(1, VOXEL_COLORS.0, gl::WRITE_ONLY, gl::RGBA8);
+    helpers::bind_image_texture(2, VOXEL_NORMALS.0, gl::WRITE_ONLY, gl::RGBA8);
 
     voxelize_scene(voxelization_shader, models, atomic_counter);
 }
@@ -131,11 +115,19 @@ pub unsafe fn build_voxel_fragment_list(model_path: &str) -> (u32, u32, u32) {
     VOXEL_POSITIONS = helpers::generate_texture_buffer(
         size_of::<GLuint>() * number_of_voxel_fragments as usize,
         gl::R32UI,
+        0u32,
     );
 
     VOXEL_COLORS = helpers::generate_texture_buffer(
         size_of::<GLuint>() * number_of_voxel_fragments as usize,
         gl::RGBA8,
+        0u32,
+    );
+
+    VOXEL_NORMALS = helpers::generate_texture_buffer(
+        size_of::<GLuint>() * number_of_voxel_fragments as usize,
+        gl::RGBA8,
+        0u32,
     );
 
     *count = 0;

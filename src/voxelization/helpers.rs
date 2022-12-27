@@ -1,5 +1,5 @@
 use gl::types::*;
-use std::{ffi::c_void, mem::size_of, ptr};
+use std::{ffi::c_void, mem::size_of};
 
 pub unsafe fn generate_atomic_counter_buffer() -> GLuint {
     let mut buffer: u32 = 0;
@@ -18,17 +18,18 @@ pub unsafe fn generate_atomic_counter_buffer() -> GLuint {
     buffer
 }
 
-pub unsafe fn generate_texture_buffer(size: usize, format: GLenum) -> (GLuint, GLuint) {
+pub unsafe fn generate_texture_buffer<T>(
+    size: usize,
+    format: GLenum,
+    default_value: T,
+) -> (GLuint, GLuint)
+where
+    T: Clone,
+{
     let mut texture_buffer: GLuint = 0;
     gl::GenBuffers(1, &mut texture_buffer);
 
     gl::BindBuffer(gl::TEXTURE_BUFFER, texture_buffer);
-    gl::BufferData(
-        gl::TEXTURE_BUFFER,
-        size as isize,
-        ptr::null::<c_void>(),
-        gl::STATIC_DRAW,
-    );
 
     let mut texture: GLuint = 0;
 
@@ -37,7 +38,7 @@ pub unsafe fn generate_texture_buffer(size: usize, format: GLenum) -> (GLuint, G
     gl::TexBuffer(gl::TEXTURE_BUFFER, format, texture_buffer);
     gl::BindBuffer(gl::TEXTURE_BUFFER, 0);
 
-    clear_texture_buffer(texture_buffer, size);
+    clear_texture_buffer(texture_buffer, size, default_value);
 
     (texture, texture_buffer)
 }
@@ -106,25 +107,35 @@ pub unsafe fn get_value_from_atomic_counter(counter: u32) -> GLuint {
     value
 }
 
-pub unsafe fn get_values_from_texture_buffer(texture_buffer: GLuint, size: usize) -> Vec<u32> {
-    let values = vec![1u32; size];
+pub unsafe fn get_values_from_texture_buffer<T>(
+    texture_buffer: GLuint,
+    size: usize,
+    default_value: T,
+) -> Vec<T>
+where
+    T: Clone,
+{
+    let values = vec![default_value; size];
     gl::BindBuffer(gl::TEXTURE_BUFFER, texture_buffer);
     gl::GetBufferSubData(
         gl::TEXTURE_BUFFER,
         0,
-        size as isize,
+        (size_of::<T>() * size) as isize,
         values.as_ptr() as *mut c_void,
     );
 
     values
 }
 
-pub unsafe fn clear_texture_buffer(texture_buffer: GLuint, size: usize) {
+pub unsafe fn clear_texture_buffer<T>(texture_buffer: GLuint, size: usize, default_value: T)
+where
+    T: Clone,
+{
     gl::BindBuffer(gl::TEXTURE_BUFFER, texture_buffer);
-    let data = vec![0u32; size];
+    let data = vec![default_value; size];
     gl::BufferData(
         gl::TEXTURE_BUFFER,
-        (size_of::<GLuint>() * size) as isize,
+        (size_of::<T>() * size) as isize,
         data.as_ptr() as *const c_void,
         gl::STATIC_DRAW,
     );
