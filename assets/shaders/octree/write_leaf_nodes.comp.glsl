@@ -44,16 +44,15 @@ void main() {
     // TODO: Load normal from images
     memoryBarrier();
 
+    vec3 normalized_voxel_position = vec3(voxel_position) / float(voxel_dimension);
+
     // We send the voxel position to traverse the octree and find the leaf
     int node_address = traverse_octree(
-        uvec3(voxel_position),
-        int(voxel_dimension),
+        normalized_voxel_position,
         max_octree_level,
         node_pool
     );
-    
-    vec3 normalized_voxel_position = vec3(voxel_position) / vec3(voxel_dimension);
-    
+
     // TODO: We're missing voxel normals here to store in the leaves
     // For some reason we are sending a vec3 instead of a vec4
     store_in_leaf(normalized_voxel_position, node_address, voxel_color);

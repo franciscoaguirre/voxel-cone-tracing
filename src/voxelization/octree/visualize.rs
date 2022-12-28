@@ -1,5 +1,6 @@
 use c_str_macro::c_str;
 use cgmath::Matrix4;
+use gl::types::*;
 
 use super::common::OCTREE_NODE_POOL;
 use crate::config::CONFIG;
@@ -15,6 +16,8 @@ pub unsafe fn render_octree(
     projection: &Matrix4<f32>,
     octree_level: i32,
     show_empty_nodes: bool,
+    voxel_positions_texture: GLuint,
+    number_of_voxel_fragments: u32,
 ) {
     let visualize_octree_shader = Shader::with_geometry_shader(
         "assets/shaders/octree/visualize.vert.glsl",
@@ -40,8 +43,12 @@ pub unsafe fn render_octree(
         gl::READ_WRITE,
         gl::R32UI,
     );
-
     helpers::bind_image_texture(2, BRICK_POOL_COLORS_TEXTURE, gl::READ_WRITE, gl::RGBA8);
+    helpers::bind_image_texture(3, voxel_positions_texture, gl::READ_ONLY, gl::RGB10_A2UI);
+
+    let (debug_texture, debug_texture_buffer) =
+        helpers::generate_texture_buffer(10, gl::R32F, 10.0f32);
+    helpers::bind_image_texture(4, debug_texture, gl::WRITE_ONLY, gl::R32F);
 
     visualize_octree_shader.set_int(c_str!("octree_levels"), octree_level);
     visualize_octree_shader.set_int(c_str!("voxel_dimension"), CONFIG.voxel_dimension);
@@ -60,19 +67,8 @@ pub unsafe fn render_octree(
     gl::GenVertexArrays(1, &mut vao);
     gl::BindVertexArray(vao);
 
-    if octree_level == 8 {
-        // TODO: make this work, having octree_levels uniform at 8 is what makes it fail so console
-        // log the shader errors, it seems to be failing silently
-        for offset in 0..8 {
-            visualize_octree_shader.set_int(c_str!("offset"), 1);
-            visualize_octree_shader.set_int(c_str!("draw_by_parts"), offset);
-            gl::DrawArrays(gl::POINTS, 0, 8u32.pow(7 as u32) as i32);
-        }
-    } else {
-        visualize_octree_shader.set_int(c_str!("offset"), 0);
-        visualize_octree_shader.set_int(c_str!("draw_by_parts"), 0);
-        gl::DrawArrays(gl::POINTS, 0, 8u32.pow(octree_level as u32) as i32);
-    }
+    gl::DrawArrays(gl::POINTS, 0, number_of_voxel_fragments as i32);
 
-    // helpers::show_values_per_tile(0, 2);
+    // let values = helpers::get_values_from_texture_buffer(debug_texture_buffer, 10, 5.0f32);
+    // dbg!(&values);
 }

@@ -35,27 +35,25 @@ pub unsafe fn setup_glfw(options: &Options) -> (Glfw, Window, Receiver<(f64, Win
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
     // Enable OpenGL Debug Context if allowed
-    unsafe {
-        let mut flags = 0;
-        gl::GetIntegerv(gl::CONTEXT_FLAGS, &mut flags);
-        if flags as u32 & gl::CONTEXT_FLAG_DEBUG_BIT != 0 {
-            gl::Enable(gl::DEBUG_OUTPUT);
-            gl::Enable(gl::DEBUG_OUTPUT_SYNCHRONOUS);
-            gl::DebugMessageCallback(Some(debug::gl_debug_output_callback), ptr::null());
-            gl::DebugMessageControl(
-                gl::DONT_CARE,
-                gl::DONT_CARE,
-                gl::DONT_CARE,
-                0,
-                ptr::null(),
-                gl::TRUE,
-            );
-        } else {
-            println!("Debug Context not active");
-        }
-
-        (glfw, window, events)
+    let mut flags = 0;
+    gl::GetIntegerv(gl::CONTEXT_FLAGS, &mut flags);
+    if flags as u32 & gl::CONTEXT_FLAG_DEBUG_BIT != 0 {
+        gl::Enable(gl::DEBUG_OUTPUT);
+        gl::Enable(gl::DEBUG_OUTPUT_SYNCHRONOUS);
+        gl::DebugMessageCallback(Some(debug::gl_debug_output_callback), ptr::null());
+        gl::DebugMessageControl(
+            gl::DONT_CARE,
+            gl::DONT_CARE,
+            gl::DONT_CARE,
+            0,
+            ptr::null(),
+            gl::TRUE,
+        );
+    } else {
+        println!("Debug Context not active");
     }
+
+    (glfw, window, events)
 }
 
 pub fn process_events(
@@ -132,7 +130,7 @@ pub fn handle_update_octree_level(
             dbg!(current_octree_level);
         }
         glfw::WindowEvent::Key(Key::Right, _, Action::Press, _) => {
-            *current_octree_level = (*current_octree_level + 1).min(CONFIG.octree_levels);
+            *current_octree_level = (*current_octree_level + 1).min(CONFIG.octree_levels - 1);
             dbg!(current_octree_level);
         }
         glfw::WindowEvent::Key(Key::M, _, Action::Press, _) => {

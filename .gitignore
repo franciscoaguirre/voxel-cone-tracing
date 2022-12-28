@@ -11,3 +11,6 @@ Cargo.lock
 
 # Editor specific
 .vim
+
+# Local configuration
+config.ron

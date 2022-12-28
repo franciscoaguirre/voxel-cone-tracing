@@ -18,7 +18,7 @@ unsafe fn calculate_voxel_fragment_list_length(
     atomic_counter: &mut u32,
 ) {
     voxelization_shader.use_program();
-    voxelization_shader.set_bool(c_str!("should_store"), false);
+    voxelization_shader.set_bool(c_str!("shouldStore"), false);
     voxelize_scene(voxelization_shader, models, atomic_counter);
 }
 
@@ -28,7 +28,7 @@ unsafe fn populate_voxel_fragment_list(
     atomic_counter: &mut u32,
 ) {
     voxelization_shader.use_program();
-    voxelization_shader.set_bool(c_str!("should_store"), true);
+    voxelization_shader.set_bool(c_str!("shouldStore"), true);
 
     helpers::bind_image_texture(0, VOXEL_POSITIONS.0, gl::WRITE_ONLY, gl::RGB10_A2UI);
     helpers::bind_image_texture(1, VOXEL_COLORS.0, gl::WRITE_ONLY, gl::RGBA8);
@@ -53,20 +53,20 @@ unsafe fn voxelize_scene(
 
     let center_scene_matrix = cgmath::Matrix4::from_translation(-aabb_middle_point);
     // aabb_longer_side is divided by two and we then use the inverse because
-    // NDC coordinates goes from -1 to 1
+    // normal device coordinates go from -1 to 1
     let normalize_size_matrix = cgmath::Matrix4::from_scale(2f32 / aabb_longer_side);
 
     let model_normalization_matrix = normalize_size_matrix * center_scene_matrix;
 
     voxelization_shader.set_mat4(
-        c_str!("model_normalization_matrix"),
+        c_str!("modelNormalizationMatrix"),
         &model_normalization_matrix,
     );
-    voxelization_shader.set_int(c_str!("voxel_dimension"), CONFIG.voxel_dimension);
+    voxelization_shader.set_int(c_str!("voxelDimension"), CONFIG.voxel_dimension);
 
     gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, *atomic_counter);
 
-    voxelization_shader.set_vec3(c_str!("fallback_color"), 1.0, 1.0, 1.0);
+    voxelization_shader.set_vec3(c_str!("fallbackColor"), 1.0, 1.0, 1.0);
     for model in models {
         // TODO: Do we need to set more things in the shader?
         model.draw(voxelization_shader);

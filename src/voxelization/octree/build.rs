@@ -91,7 +91,7 @@ pub unsafe fn build_octree(
 
     for octree_level in 0..CONFIG.octree_levels {
         if octree_level > 0 {
-            neighbour_pointers_pass.run(octree_level);
+            // neighbour_pointers_pass.run(octree_level);
         }
 
         flag_nodes_pass.run(octree_level);
@@ -100,24 +100,22 @@ pub unsafe fn build_octree(
 
         let tiles_allocated =
             voxelization::helpers::get_value_from_atomic_counter(allocated_tiles_counter);
-        // dbg!(tiles_allocated);
+        dbg!(tiles_allocated);
 
         TILES_PER_LEVEL.push(tiles_allocated);
         first_tile_in_level += TILES_PER_LEVEL[octree_level as usize] as i32;
         first_free_tile += tiles_allocated as i32;
     }
 
-    // helpers::show_values_per_tile(0, 8);
-
     let all_tiles_allocated: u32 = TILES_PER_LEVEL.iter().sum();
 
     allocate_bricks_pass.run(all_tiles_allocated);
 
-    let values = voxelization::helpers::get_values_from_texture_buffer(
-        OCTREE_NODE_POOL_BRICK_POINTERS.1,
-        (all_tiles_allocated * NODES_PER_TILE) as usize,
-    );
-    dbg!(&values[..20]);
+    // let values = voxelization::helpers::get_values_from_texture_buffer(
+    //     OCTREE_NODE_POOL_BRICK_POINTERS.1,
+    //     (all_tiles_allocated * NODES_PER_TILE) as usize,
+    // );
+    // dbg!(&values[..20]);
 
     // dbg!(&all_tiles_allocated);
     // dbg!(all_tiles_allocated * NODES_PER_TILE);
@@ -176,4 +174,6 @@ pub unsafe fn build_octree(
     //     max_node_pool_size,
     // );
     // dbg!(&values[..20]);
+
+    // helpers::show_values_per_tile(0, 9);
 }

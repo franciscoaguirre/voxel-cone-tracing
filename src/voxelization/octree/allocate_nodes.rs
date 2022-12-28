@@ -1,5 +1,4 @@
 use c_str_macro::c_str;
-use gl::types::*;
 
 use crate::rendering::shader::Shader;
 

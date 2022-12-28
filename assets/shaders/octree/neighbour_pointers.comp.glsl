@@ -22,18 +22,15 @@ uniform uint voxel_dimension;
 void main() {
     const uint thread_index = gl_GlobalInvocationID.x;
     uvec4 voxel_position = imageLoad(voxel_positions, int(thread_index));
-    vec3 normalized_voxel_position = vec3(voxel_position) / vec3(voxel_dimension);
+    vec3 normalized_voxel_position = vec3(voxel_position) / float(voxel_dimension);
 
 	// In voxel position coordinates, the octree level
 	// defines a different node size, which we need as a step to reach
 	// possible neighbours.
-	// TODO: Normalize, we need to use normalized coordinates in octree traversal
-	// for this.
-    float step = voxel_dimension / float(pow(2.0, float(current_octree_level)));
+    float step = 1.0 / float(pow(2.0, float(current_octree_level)));
 	
 	int node_address = traverse_octree(
-		uvec3(voxel_position),
-		int(voxel_dimension),
+		normalized_voxel_position,
 		int(current_octree_level),
 		node_pool
 	);
@@ -53,8 +50,7 @@ void main() {
 	// the voxel on a brick?
 	if (voxel_position.x + step < voxel_dimension) {
 		neighbour_x = traverse_octree_returning_level(
-			uvec3(voxel_position) + uvec3(step, 0, 0),
-			int(voxel_dimension),
+			normalized_voxel_position + vec3(step, 0, 0),
 			int(current_octree_level),
 			node_pool,
 			neighbour_level
@@ -69,7 +65,7 @@ void main() {
 	
 	if (voxel_position.y + step < voxel_dimension) {
 		neighbour_y = traverse_octree_returning_level(
-			uvec3(voxel_position) + uvec3(0, step, 0),
+			normalized_voxel_position + uvec3(0, step, 0),
 			int(voxel_dimension),
 			int(current_octree_level),
 			node_pool,
@@ -83,7 +79,7 @@ void main() {
 
 	if (voxel_position.z + step < voxel_dimension) {
 		neighbour_z = traverse_octree_returning_level(
-			uvec3(voxel_position) + uvec3(0, 0, step),
+			normalized_voxel_position + uvec3(0, 0, step),
 			int(voxel_dimension),
 			int(current_octree_level),
 			node_pool,
@@ -97,7 +93,7 @@ void main() {
 
 	if (voxel_position.x - step > 0) {
 		neighbour_x_negative = traverse_octree_returning_level(
-			uvec3(voxel_position) - uvec3(step, 0, 0),
+			normalized_voxel_position - uvec3(step, 0, 0),
 			int(voxel_dimension),
 			int(current_octree_level),
 			node_pool,
@@ -111,7 +107,7 @@ void main() {
 
 	if (voxel_position.y - step > 0) {
 		neighbour_y_negative = traverse_octree_returning_level(
-			uvec3(voxel_position) - uvec3(0, step, 0),
+			normalized_voxel_position - uvec3(0, step, 0),
 			int(voxel_dimension),
 			int(current_octree_level),
 			node_pool,
@@ -125,7 +121,7 @@ void main() {
 
 	if (voxel_position.z - step > 0) {
 		neighbour_z_negative = traverse_octree_returning_level(
-			uvec3(voxel_position) - uvec3(0, 0, step),
+			normalized_voxel_position - uvec3(0, 0, step),
 			int(voxel_dimension),
 			int(current_octree_level),
 			node_pool,

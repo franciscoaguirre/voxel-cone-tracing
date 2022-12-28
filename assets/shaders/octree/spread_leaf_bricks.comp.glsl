@@ -35,8 +35,7 @@ void main() {
     uvec4 voxel_position = imageLoad(voxel_positions, int(thread_index));
 
     int node_address = traverse_octree(
-        uvec3(voxel_position),
-        int(voxel_dimension),
+        vec3(voxel_position) / float(voxel_dimension),
         int(octree_levels),
         node_pool
     );

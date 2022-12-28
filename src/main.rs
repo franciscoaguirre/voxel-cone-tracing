@@ -173,16 +173,16 @@ fn main() {
                     &projection,
                     current_octree_level as i32,
                     show_empty_nodes,
+                    voxel_positions_texture,
+                    number_of_voxel_fragments,
                 );
             }
 
             if show_model {
                 render_model_shader.use_program();
-                render_model_shader.use_program();
                 render_model_shader.set_mat4(c_str!("projection"), &projection);
                 render_model_shader.set_mat4(c_str!("view"), &view);
                 render_model_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
-
                 our_model.draw(&render_model_shader);
             }
         }

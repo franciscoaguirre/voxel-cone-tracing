@@ -4,7 +4,7 @@
     viewport_height: 1024,
 
     // Voxel settings
-    voxel_dimension: 256,
+    voxel_dimension: 128, // Has to satisfy: 2^{octree_levels - 1}
     brick_pool_resolution: 210,
 
     // Octree settings

@@ -1,19 +1,19 @@
 #version 460 core
 
-layout (location = 0) in vec3 in_vertex_position;
-layout (location = 1) in vec3 in_normal;
-layout (location = 2) in vec2 in_tex_coordinates;
+layout (location = 0) in vec3 inVertexPosition;
+layout (location = 1) in vec3 inNormal;
+layout (location = 2) in vec2 inTexCoordinates;
 
-out vec3 vertex_position;
-out vec3 normal;
-out vec2 tex_coordinates;
+out vec3 geom_vertexPosition;
+out vec3 geom_normal;
+out vec2 geom_texCoordinates;
 
-uniform mat4 model_normalization_matrix;
+uniform mat4 modelNormalizationMatrix;
 
 void main()
 {
-    normal = in_normal;
-    tex_coordinates = in_tex_coordinates;
-    gl_Position = model_normalization_matrix * vec4(in_vertex_position, 1.0);
-    vertex_position = vec3(gl_Position);
+    geom_normal = inNormal;
+    geom_texCoordinates = inTexCoordinates;
+    gl_Position = modelNormalizationMatrix * vec4(inVertexPosition, 1.0);
+    geom_vertexPosition = vec3(gl_Position);
 }
