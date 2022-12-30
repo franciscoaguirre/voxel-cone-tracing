@@ -50,8 +50,9 @@ pub unsafe fn generate_3d_texture(size_one_dimension: u32) -> GLuint {
 
     let mut texture: GLuint = 0;
 
-    // Apparently powers of two are recommended
-    let size_one_dimension = size_one_dimension.next_power_of_two() as i32;
+    // TODO: Apparently powers of two are recommended, but using the next power of
+    // two understandably makes this really large really fast.
+    // let size_one_dimension = size_one_dimension.next_power_of_two() as i32;
 
     let size = size_one_dimension.pow(3);
 
@@ -65,9 +66,9 @@ pub unsafe fn generate_3d_texture(size_one_dimension: u32) -> GLuint {
         gl::TEXTURE_3D,
         0,
         gl::RGBA8 as i32,
-        size_one_dimension,
-        size_one_dimension,
-        size_one_dimension,
+        size_one_dimension as i32,
+        size_one_dimension as i32,
+        size_one_dimension as i32,
         0,
         gl::RGBA,
         gl::UNSIGNED_BYTE,

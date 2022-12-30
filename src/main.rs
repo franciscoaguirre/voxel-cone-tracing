@@ -28,6 +28,9 @@ use voxelization::{
 fn main() {
     let options = Options::from_args();
 
+    // NOTE: This is true if the binary was compiled in debug mode
+    let debug = cfg!(debug_assertions);
+
     // Camera setup
     let mut camera = Camera {
         Position: Point3::new(0.0, 0.0, -3.0),
@@ -41,7 +44,7 @@ fn main() {
     let mut delta_time: f32;
     let mut last_frame: f32 = 0.0;
 
-    let (mut glfw, mut window, events) = unsafe { common::setup_glfw(&options) };
+    let (mut glfw, mut window, events) = unsafe { common::setup_glfw(debug) };
 
     let (render_model_shader, our_model) = unsafe {
         gl::Enable(gl::DEPTH_TEST);

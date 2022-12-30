@@ -3,16 +3,16 @@ use std::{ptr, sync::mpsc::Receiver};
 use glfw::{Action, Context, Glfw, Key, Window, WindowEvent};
 
 use super::camera::{Camera, Camera_Movement};
-use crate::{cli_arguments::Options, config::CONFIG, helpers::debug};
+use crate::{config::CONFIG, helpers::debug};
 
-pub unsafe fn setup_glfw(options: &Options) -> (Glfw, Window, Receiver<(f64, WindowEvent)>) {
+pub unsafe fn setup_glfw(debug: bool) -> (Glfw, Window, Receiver<(f64, WindowEvent)>) {
     // GLFW: Setup
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
     glfw.window_hint(glfw::WindowHint::ContextVersion(4, 6));
     glfw.window_hint(glfw::WindowHint::OpenGlProfile(
         glfw::OpenGlProfileHint::Core,
     ));
-    glfw.window_hint(glfw::WindowHint::OpenGlDebugContext(options.debug));
+    glfw.window_hint(glfw::WindowHint::OpenGlDebugContext(debug));
 
     // GLFW: Window creation
     let (mut window, events) = glfw

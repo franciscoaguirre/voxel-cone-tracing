@@ -111,18 +111,16 @@ pub unsafe fn build_octree(
 
     allocate_bricks_pass.run(all_tiles_allocated);
 
-    // let values = voxelization::helpers::get_values_from_texture_buffer(
-    //     OCTREE_NODE_POOL_BRICK_POINTERS.1,
-    //     (all_tiles_allocated * NODES_PER_TILE) as usize,
-    // );
-    // dbg!(&values[..20]);
+    let values = voxelization::helpers::get_values_from_texture_buffer(
+        OCTREE_NODE_POOL_BRICK_POINTERS.1,
+        (all_tiles_allocated * NODES_PER_TILE) as usize,
+        0u32,
+    );
+    dbg!(&values[..20]);
 
-    // dbg!(&all_tiles_allocated);
-    // dbg!(all_tiles_allocated * NODES_PER_TILE);
+    dbg!(&all_tiles_allocated);
+    dbg!(all_tiles_allocated * NODES_PER_TILE);
 
-    // This is the value domme uses, I don't know if it is okay.
-    // It could be that we just need VOXEL_DIMENSION * 3.
-    // We are still not putting voxels on the corners of nodes.
     let brick_pool_colors_texture_size_one_dimension = CONFIG.brick_pool_resolution;
     let brick_pool_colors_texture =
         voxelization::helpers::generate_3d_texture(brick_pool_colors_texture_size_one_dimension);

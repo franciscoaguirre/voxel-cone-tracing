@@ -5,6 +5,11 @@
 
     // Voxel settings
     voxel_dimension: 128, // Has to satisfy: 2^{octree_levels - 1}
+
+    // This is the value domme uses, I don't know if it is okay.
+    // It could be that we just need VOXEL_DIMENSION * 3.
+    // We are still not putting voxels on the corners of nodes.
+    // Using VOXEL_DIMENSION * 3 makes starting up really slow, really fast.
     brick_pool_resolution: 210,
 
     // Octree settings

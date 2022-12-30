@@ -21,8 +21,8 @@ void store_in_leaf(vec3 voxel_position, int node_address, vec4 voxel_color) {
     memoryBarrier();
     
     // TODO: Why store the brick coordinates in a texture and not calculate them
-    // each time. Why is it non-deterministic which brick coordinates a node will
-    // get.
+    // each time? Why is it non-deterministic which brick coordinates a node will
+    // get?
     ivec3 brick_coordinates = ivec3(uintXYZ10ToVec3(brick_coordinates_compact));
     uvec3 offset_vector = uvec3(voxel_position);
     uint offset = offset_vector.x + offset_vector.y * 2U + offset_vector.z * 4U;
