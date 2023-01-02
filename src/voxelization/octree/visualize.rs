@@ -43,7 +43,20 @@ pub unsafe fn render_octree(
         gl::READ_WRITE,
         gl::R32UI,
     );
-    helpers::bind_image_texture(2, BRICK_POOL_COLORS_TEXTURE, gl::READ_WRITE, gl::RGBA8);
+
+    // NOTE: We don't use the helper function because 3D texture's are the only case
+    // when `layered` must be set to `gl::TRUE`
+    // TODO: Create a helper function to bind 3D textures only.
+    gl::BindImageTexture(
+        2,
+        BRICK_POOL_COLORS_TEXTURE,
+        0,
+        gl::TRUE,
+        0,
+        gl::READ_ONLY,
+        gl::RGBA8,
+    );
+
     helpers::bind_image_texture(3, voxel_positions_texture, gl::READ_ONLY, gl::RGB10_A2UI);
 
     let (debug_texture, debug_texture_buffer) =

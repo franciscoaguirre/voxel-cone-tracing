@@ -12,7 +12,6 @@ use super::{
 };
 use crate::{
     config::CONFIG,
-    constants::NODES_PER_TILE,
     voxelization::{
         self,
         octree::{
@@ -77,13 +76,14 @@ pub unsafe fn build_octree(
         0u32,
     );
 
-    // let neighbour_pointers_pass = NeighbourPointersPass::init(voxel_positions_texture);
+    let neighbour_pointers_pass = NeighbourPointersPass::init(voxel_positions_texture);
     let flag_nodes_pass = FlagNodesPass::init(number_of_voxel_fragments, voxel_positions_texture);
     let allocate_nodes_pass = AllocateNodesPass::init(allocated_tiles_counter);
     let allocate_bricks_pass = AllocateBricksPass::init(next_free_brick_counter);
     let write_leaf_nodes_pass =
         WriteLeafNodesPass::init(voxel_positions_texture, voxel_colors_texture);
-    // let spread_leaf_bricks_pass = SpreadLeafBricksPass::init(voxel_positions_texture);
+    let spread_leaf_bricks_pass =
+        SpreadLeafBricksPass::init(voxel_positions_texture, number_of_voxel_fragments);
     // let border_transfer_pass = BorderTransferPass::init();
 
     let mut first_tile_in_level: i32 = 0; // Index of first tile in a given octree level
@@ -91,7 +91,7 @@ pub unsafe fn build_octree(
 
     for octree_level in 0..CONFIG.octree_levels {
         if octree_level > 0 {
-            // neighbour_pointers_pass.run(octree_level);
+            neighbour_pointers_pass.run(octree_level);
         }
 
         flag_nodes_pass.run(octree_level);
@@ -111,55 +111,27 @@ pub unsafe fn build_octree(
 
     allocate_bricks_pass.run(all_tiles_allocated);
 
-    let values = voxelization::helpers::get_values_from_texture_buffer(
-        OCTREE_NODE_POOL_BRICK_POINTERS.1,
-        (all_tiles_allocated * NODES_PER_TILE) as usize,
-        0u32,
-    );
-    dbg!(&values[..20]);
-
-    dbg!(&all_tiles_allocated);
-    dbg!(all_tiles_allocated * NODES_PER_TILE);
-
     let brick_pool_colors_texture_size_one_dimension = CONFIG.brick_pool_resolution;
     let brick_pool_colors_texture =
         voxelization::helpers::generate_3d_texture(brick_pool_colors_texture_size_one_dimension);
     BRICK_POOL_COLORS_TEXTURE = brick_pool_colors_texture;
 
-    let size = brick_pool_colors_texture_size_one_dimension
-        .next_power_of_two()
-        .pow(3);
+    // let size = brick_pool_colors_texture_size_one_dimension.pow(3);
 
     write_leaf_nodes_pass.run(brick_pool_colors_texture);
 
-    let bricks = vec![1u32; size as usize];
-    gl::BindTexture(gl::TEXTURE_3D, brick_pool_colors_texture);
-    gl::GetTexImage(
-        gl::TEXTURE_3D,
-        0,
-        gl::RGBA,
-        gl::UNSIGNED_BYTE,
-        bricks.as_ptr() as *mut c_void,
-    );
-    gl::BindTexture(gl::TEXTURE_3D, 0);
+    // let mut bricks = vec![1u32; size as usize];
+    // gl::BindTexture(gl::TEXTURE_3D, brick_pool_colors_texture);
+    // gl::GetTexImage(
+    //     gl::TEXTURE_3D,
+    //     0,
+    //     gl::RGBA,
+    //     gl::UNSIGNED_BYTE,
+    //     bricks.as_mut_ptr() as *mut c_void,
+    // );
+    // gl::BindTexture(gl::TEXTURE_3D, 0);
 
-    // dbg!(&bricks[1 * 256 * 256]);
-    // dbg!(&bricks[..20]);
-
-    let mut already_seen_numbers = Vec::new();
-    bricks
-        .iter()
-        .enumerate()
-        .filter(|(_, &brick)| brick != 0)
-        .for_each(|(index, brick)| {
-            if !already_seen_numbers.contains(brick) {
-                dbg!(index);
-                dbg!(brick);
-                already_seen_numbers.push(*brick);
-            }
-        });
-
-    // spread_leaf_bricks_pass.run(brick_pool_colors_texture);
+    spread_leaf_bricks_pass.run(brick_pool_colors_texture);
 
     // border_transfer_pass.run();
     // border_transfer_pass.run();

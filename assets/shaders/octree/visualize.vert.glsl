@@ -21,14 +21,6 @@ out int non_empty_branch;
 out int keep_on_going;
 out vec4 node_color;
 
-bvec3 number_to_subsection(int number) {
-    bvec3 subsection;
-    subsection.x = bool(number & 1);
-    subsection.y = bool(number & 2);
-    subsection.z = bool(number & 4);
-    return subsection;
-}
-
 void main() {
   int thread_index = gl_VertexID;
 
@@ -63,7 +55,10 @@ void main() {
 
   uint brick_coordinates_compact = imageLoad(node_pool_brick_pointers, node_index).r;
   ivec3 brick_coordinates = ivec3(uintXYZ10ToVec3(brick_coordinates_compact));
-  vec4 center_voxel_color = imageLoad(brick_pool_colors, brick_coordinates);
+
+  // NOTE: Bricks start at (0, 0, 0) and go to (2, 2, 2)
+  ivec3 offset_to_center = ivec3(1, 1, 1);
+  vec4 center_voxel_color = imageLoad(brick_pool_colors, brick_coordinates + offset_to_center);
   node_color = center_voxel_color;
 
   // Normalized device coordinates go from -1.0 to 1.0, our coordinates go from 0.0 to 1.0

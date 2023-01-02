@@ -16,7 +16,7 @@ uniform layout(binding = 4, r32ui) uimageBuffer node_pool;
 uniform uint voxel_dimension;
 uniform int max_octree_level;
 
-void store_in_leaf(vec3 voxel_position, int node_address, vec4 voxel_color) {
+void store_in_leaf(vec3 voxel_position, int node_address, vec4 voxel_color, float half_node_size, vec3 node_coordinates) {
     uint brick_coordinates_compact = imageLoad(node_pool_brick_pointers, node_address).r;
     memoryBarrier();
     
@@ -24,8 +24,11 @@ void store_in_leaf(vec3 voxel_position, int node_address, vec4 voxel_color) {
     // each time? Why is it non-deterministic which brick coordinates a node will
     // get?
     ivec3 brick_coordinates = ivec3(uintXYZ10ToVec3(brick_coordinates_compact));
-    uvec3 offset_vector = uvec3(voxel_position);
-    uint offset = offset_vector.x + offset_vector.y * 2U + offset_vector.z * 4U;
+
+    // NOTE: We find out which subsection the current voxel occupies inside the node
+    // Remember leaves don't have nodes, so leaf bricks effectively have 2x2x2 voxels.
+    bvec3 subsection = calculate_node_subsection(node_coordinates, half_node_size, voxel_position);
+    uint offset = uint(subsection[0]) + uint(subsection[1]) * 2 + uint(subsection[2]) * 4;
 
     imageStore(
         brick_pool_colors,
@@ -46,14 +49,20 @@ void main() {
 
     vec3 normalized_voxel_position = vec3(voxel_position) / float(voxel_dimension);
 
+    uint _tile_index; // Unused
+    float half_node_size;
+    vec3 node_coordinates;
     // We send the voxel position to traverse the octree and find the leaf
-    int node_address = traverse_octree(
+    int node_address = traverse_octree_returning_node_coordinates(
         normalized_voxel_position,
         max_octree_level,
-        node_pool
+        node_pool,
+        half_node_size,
+        node_coordinates,
+        _tile_index
     );
 
     // TODO: We're missing voxel normals here to store in the leaves
     // For some reason we are sending a vec3 instead of a vec4
-    store_in_leaf(normalized_voxel_position, node_address, voxel_color);
+    store_in_leaf(normalized_voxel_position, node_address, voxel_color, half_node_size, node_coordinates);
 }
