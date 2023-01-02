@@ -24,14 +24,13 @@ impl FlagNodesPass {
     pub unsafe fn run(&self, octree_level: u32) {
         self.shader.use_program();
 
-        self.shader.set_int(
+        self.shader.set_uint(
             c_str!("number_of_voxel_fragments"),
-            self.number_of_voxel_fragments as i32,
+            self.number_of_voxel_fragments,
         );
+        self.shader.set_uint(c_str!("octree_level"), octree_level);
         self.shader
-            .set_int(c_str!("octree_level"), octree_level as i32);
-        self.shader
-            .set_int(c_str!("voxel_dimension"), CONFIG.voxel_dimension);
+            .set_uint(c_str!("voxel_dimension"), CONFIG.voxel_dimension);
 
         gl::BindImageTexture(
             0,

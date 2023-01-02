@@ -14,7 +14,7 @@ uniform layout(binding = 3, rgba8) image3D brick_pool_colors;
 uniform layout(binding = 4, r32ui) uimageBuffer node_pool;
 
 uniform uint voxel_dimension;
-uniform int max_octree_level;
+uniform uint max_octree_level;
 
 void store_in_leaf(vec3 voxel_position, int node_address, vec4 voxel_color, float half_node_size, vec3 node_coordinates) {
     uint brick_coordinates_compact = imageLoad(node_pool_brick_pointers, node_address).r;

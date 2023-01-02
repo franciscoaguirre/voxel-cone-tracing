@@ -13,7 +13,7 @@
 // (as long as `max_octree_levels` < OCTREE_LEVELS)
 int traverse_octree(
   vec3 voxel_coordinates, // Should be normalized, i.e. between 0 and 1
-  int max_octree_levels,
+  uint max_octree_levels,
   uimageBuffer node_pool
 ) {
   float current_half_node_size = 0.5; // Node side length normalized is 1, so half of that
@@ -63,7 +63,7 @@ int traverse_octree(
 
 int traverse_octree_returning_node_coordinates(
   vec3 voxel_coordinates, // Should be normalized, i.e. between 0 and 1
-  int max_octree_levels,
+  uint max_octree_levels,
   uimageBuffer node_pool,
   out float half_node_size,
   out vec3 node_coordinates,
@@ -132,7 +132,7 @@ int traverse_octree_returning_node_coordinates(
 
 int traverse_octree_returning_level(
   vec3 voxel_coordinates, // Should be normalized, i.e. between 0 and 1
-  int max_octree_levels,
+  uint max_octree_levels,
   uimageBuffer node_pool,
   out uint found_on_level
 ) {

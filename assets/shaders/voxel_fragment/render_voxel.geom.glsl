@@ -14,7 +14,6 @@ in int vertex_id[];
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-uniform int voxel_dimension;
 uniform float half_dimension; // TODO: Why is this half dimension?
 
 mat4 canonization_matrix = projection * view * model;

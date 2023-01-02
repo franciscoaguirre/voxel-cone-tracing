@@ -49,16 +49,13 @@ pub unsafe fn render_voxel_fragments(
     render_voxel_shader.set_mat4(c_str!("view"), view);
     render_voxel_shader.set_mat4(c_str!("model"), model);
 
-    render_voxel_shader.set_int(c_str!("voxel_dimension"), CONFIG.voxel_dimension);
+    render_voxel_shader.set_uint(c_str!("voxel_dimension"), CONFIG.voxel_dimension);
     render_voxel_shader.set_float(
         c_str!("half_dimension"),
         1.0 / CONFIG.voxel_dimension as f32,
     );
 
-    render_voxel_shader.set_int(
-        c_str!("voxel_fragment_count"),
-        number_of_voxel_fragments as i32,
-    );
+    render_voxel_shader.set_uint(c_str!("voxel_fragment_count"), number_of_voxel_fragments);
 
     gl::BindVertexArray(vao);
     gl::DrawArrays(gl::POINTS, 0, number_of_voxel_fragments as i32);

@@ -41,7 +41,7 @@ void main() {
 
     int node_address = traverse_octree(
         vec3(voxel_position) / float(voxel_dimension),
-        int(octree_levels),
+        octree_levels,
         node_pool
     );
 

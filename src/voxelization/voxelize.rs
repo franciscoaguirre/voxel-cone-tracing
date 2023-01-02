@@ -44,7 +44,12 @@ unsafe fn voxelize_scene(
 ) {
     gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-    gl::Viewport(0, 0, CONFIG.voxel_dimension, CONFIG.voxel_dimension);
+    gl::Viewport(
+        0,
+        0,
+        CONFIG.voxel_dimension as i32,
+        CONFIG.voxel_dimension as i32,
+    );
 
     // TODO: This should be the aabb of the entire scene
     let scene_aabb = &models[0].aabb;
@@ -62,7 +67,7 @@ unsafe fn voxelize_scene(
         c_str!("modelNormalizationMatrix"),
         &model_normalization_matrix,
     );
-    voxelization_shader.set_int(c_str!("voxelDimension"), CONFIG.voxel_dimension);
+    voxelization_shader.set_int(c_str!("voxelDimension"), CONFIG.voxel_dimension as i32);
 
     gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, *atomic_counter);
 
@@ -75,7 +80,12 @@ unsafe fn voxelize_scene(
     gl::Disable(gl::CULL_FACE);
     gl::Disable(gl::DEPTH_TEST);
     gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
-    gl::Viewport(0, 0, CONFIG.viewport_width, CONFIG.viewport_height);
+    gl::Viewport(
+        0,
+        0,
+        CONFIG.viewport_width as i32,
+        CONFIG.viewport_height as i32,
+    );
 }
 
 pub unsafe fn build_voxel_fragment_list(model_path: &str) -> (u32, u32, u32) {

@@ -31,7 +31,7 @@ void main() {
 	
 	int node_address = traverse_octree(
 		normalized_voxel_position,
-		int(current_octree_level),
+		current_octree_level,
 		node_pool
 	);
 	
@@ -51,7 +51,7 @@ void main() {
 	if (voxel_position.x + step < voxel_dimension) {
 		neighbour_x = traverse_octree_returning_level(
 			normalized_voxel_position + vec3(step, 0, 0),
-			int(current_octree_level),
+			current_octree_level,
 			node_pool,
 			neighbour_level
 		);
@@ -66,7 +66,7 @@ void main() {
 	if (voxel_position.y + step < voxel_dimension) {
 		neighbour_y = traverse_octree_returning_level(
 			normalized_voxel_position + uvec3(0, step, 0),
-			int(current_octree_level),
+			current_octree_level,
 			node_pool,
 			neighbour_level
 		);
@@ -79,7 +79,7 @@ void main() {
 	if (voxel_position.z + step < voxel_dimension) {
 		neighbour_z = traverse_octree_returning_level(
 			normalized_voxel_position + uvec3(0, 0, step),
-			int(current_octree_level),
+			current_octree_level,
 			node_pool,
 			neighbour_level
 		);
@@ -92,7 +92,7 @@ void main() {
 	if (voxel_position.x - step > 0) {
 		neighbour_x_negative = traverse_octree_returning_level(
 			normalized_voxel_position - uvec3(step, 0, 0),
-			int(current_octree_level),
+			current_octree_level,
 			node_pool,
 			neighbour_level
 		);
@@ -105,7 +105,7 @@ void main() {
 	if (voxel_position.y - step > 0) {
 		neighbour_y_negative = traverse_octree_returning_level(
 			normalized_voxel_position - uvec3(0, step, 0),
-			int(current_octree_level),
+			current_octree_level,
 			node_pool,
 			neighbour_level
 		);
@@ -118,7 +118,7 @@ void main() {
 	if (voxel_position.z - step > 0) {
 		neighbour_z_negative = traverse_octree_returning_level(
 			normalized_voxel_position - uvec3(0, 0, step),
-			int(current_octree_level),
+			current_octree_level,
 			node_pool,
 			neighbour_level
 		);

@@ -5,9 +5,9 @@
 #include "./_traversal_helpers.glsl"
 #include "./_octree_traversal.glsl"
 
-uniform int octree_levels;
-uniform int show_empty_nodes;
-uniform int voxel_dimension;
+uniform uint octree_levels;
+uniform bool show_empty_nodes;
+uniform uint voxel_dimension;
 
 uniform layout(binding = 0, r32ui) uimageBuffer node_pool;
 uniform layout(binding = 1, r32ui) uimageBuffer node_pool_brick_pointers;

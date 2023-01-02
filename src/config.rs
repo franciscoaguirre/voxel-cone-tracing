@@ -8,14 +8,15 @@ use serde::Deserialize;
 #[serde(default)]
 pub struct Config {
     // Viewport settings
-    pub viewport_width: i32,
-    pub viewport_height: i32,
+    pub viewport_width: u32,
+    pub viewport_height: u32,
 
     // Voxel settings
-    pub voxel_dimension: i32,
+    pub voxel_dimension: u32,
     pub brick_pool_resolution: u32,
 
     // Octree settings
+    #[serde(skip_deserializing)] // Gets calculated based on voxel_dimension
     pub octree_levels: u32, // First level is level 0
 
     // Compute shader settings
@@ -40,6 +41,7 @@ pub static CONFIG: Lazy<Config> = Lazy::new(load_config);
 fn load_config() -> Config {
     let input_path = "config.ron";
     let file = File::open(&input_path).expect("Missing config file!");
-    let config: Config = from_reader(file).expect("Config file malformed!");
+    let mut config: Config = from_reader(file).expect("Config file malformed!");
+    config.octree_levels = config.voxel_dimension.pow(3).log2() / 8_u32.log2();
     config
 }

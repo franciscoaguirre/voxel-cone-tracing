@@ -4,18 +4,17 @@
     viewport_height: 1024,
 
     // Voxel settings
-    // Has to satisfy: 2^{octree_levels} because we use one octree level less (leaves only have bricks to allow interpolation).
-    // If not, it would need to satisfy 2^{octree_levels - 1}.
+    // octree_levels is calculated based on this, given by: log2(voxel_dimension^3) / log2(8).
+    // We use one octree level less than expected so leaves only have bricks (not nodes).
+    // This allows for interpolation inside the bricks.
+    // Bricks admittedly have 2x2x2 voxels here and not 3x3x3 as in the paper.
     voxel_dimension: 256,
 
     // This is the value domme uses, I don't know if it is okay.
-    // It could be that we just need VOXEL_DIMENSION * 3.
+    // It could be that we just need voxel_dimension * 3.
     // We are still not putting voxels on the corners of nodes.
-    // Using VOXEL_DIMENSION * 3 makes starting up really slow, really fast.
+    // Using voxel_dimension * 3 makes starting up really slow, really fast.
     brick_pool_resolution: 210,
-
-    // Octree settings
-    octree_levels: 8,
 
     // Compute shader settings
     working_group_size: 64,

@@ -14,7 +14,7 @@ pub unsafe fn render_octree(
     model: &Matrix4<f32>,
     view: &Matrix4<f32>,
     projection: &Matrix4<f32>,
-    octree_level: i32,
+    octree_level: u32,
     show_empty_nodes: bool,
     voxel_positions_texture: GLuint,
     number_of_voxel_fragments: u32,
@@ -63,8 +63,8 @@ pub unsafe fn render_octree(
         helpers::generate_texture_buffer(10, gl::R32F, 10.0f32);
     helpers::bind_image_texture(4, debug_texture, gl::WRITE_ONLY, gl::R32F);
 
-    visualize_octree_shader.set_int(c_str!("octree_levels"), octree_level);
-    visualize_octree_shader.set_int(c_str!("voxel_dimension"), CONFIG.voxel_dimension);
+    visualize_octree_shader.set_uint(c_str!("octree_levels"), octree_level);
+    visualize_octree_shader.set_uint(c_str!("voxel_dimension"), CONFIG.voxel_dimension);
     visualize_octree_shader.set_bool(c_str!("show_empty_nodes"), show_empty_nodes);
 
     visualize_octree_shader.set_mat4(c_str!("projection"), projection);

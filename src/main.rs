@@ -1,3 +1,6 @@
+// Using unstable feature: integer logarithm
+#![feature(int_log)]
+
 extern crate c_str_macro;
 
 use std::env;
@@ -174,7 +177,7 @@ fn main() {
                     &model,
                     &view,
                     &projection,
-                    current_octree_level as i32,
+                    current_octree_level,
                     show_empty_nodes,
                     voxel_positions_texture,
                     number_of_voxel_fragments,

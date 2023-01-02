@@ -9,10 +9,9 @@ out int vertex_id;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-uniform int voxel_dimension;
+uniform uint voxel_dimension;
 uniform layout(binding = 0, rgb10_a2ui) uimageBuffer voxel_position_texture;
 uniform layout(binding = 1, rgba8) imageBuffer voxel_diffuse_texture;
-uniform int voxel_fragment_count;
 
 void main() {
     /* gl_Position = projection * view * model * voxel_position; */
@@ -22,7 +21,7 @@ void main() {
     voxel_position.xyz = (voxel_position.xyz / voxel_dimension) * 2 - vec3(1.0,1.0,1.0);
 
     // Move point to middle of voxel (instead of bottom right of voxel)
-    float half_pixel = 1.0/voxel_dimension;
+    float half_pixel = 1.0 / voxel_dimension;
     voxel_position.xyz = voxel_position.xyz + vec3(half_pixel, half_pixel, half_pixel);
 
     gl_Position = voxel_position;
