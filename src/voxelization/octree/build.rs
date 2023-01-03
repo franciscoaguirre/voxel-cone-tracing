@@ -14,6 +14,7 @@ use super::{
 };
 use crate::{
     config::CONFIG,
+    constants::{X_AXIS, Y_AXIS, Z_AXIS},
     voxelization::{
         self,
         octree::{
@@ -86,7 +87,7 @@ pub unsafe fn build_octree(
         WriteLeafNodesPass::init(voxel_positions_texture, voxel_colors_texture);
     let spread_leaf_bricks_pass =
         SpreadLeafBricksPass::init(voxel_positions_texture, number_of_voxel_fragments);
-    // let border_transfer_pass = BorderTransferPass::init();
+    let border_transfer_pass = BorderTransferPass::init(voxel_positions_texture);
 
     let mut first_tile_in_level: i32 = 0; // Index of first tile in a given octree level
     let mut first_free_tile: i32 = 1; // Index of first free tile (unallocated) in the octree
@@ -138,9 +139,9 @@ pub unsafe fn build_octree(
 
     spread_leaf_bricks_pass.run(brick_pool_colors_texture);
 
-    // border_transfer_pass.run();
-    // border_transfer_pass.run();
-    // border_transfer_pass.run();
+    border_transfer_pass.run(X_AXIS);
+    border_transfer_pass.run(Y_AXIS);
+    border_transfer_pass.run(Z_AXIS);
 
     // TODO: Mipmap to inner nodes
 }

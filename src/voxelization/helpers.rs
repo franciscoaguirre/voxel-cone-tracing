@@ -145,3 +145,12 @@ pub unsafe fn bind_image_texture(
 ) {
     gl::BindImageTexture(image_index, texture, 0, gl::FALSE, 0, access, format);
 }
+
+pub unsafe fn bind_3d_image_texture(
+    image_index: u32,
+    texture: GLuint,
+    access: GLenum,
+    format: GLenum,
+) {
+    gl::BindImageTexture(image_index, texture, 0, gl::TRUE, 0, access, format);
+}
