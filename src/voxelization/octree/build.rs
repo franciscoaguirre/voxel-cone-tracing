@@ -1,5 +1,7 @@
+use std::mem::size_of;
+
 use gl::types::*;
-use std::{ffi::c_void, mem::size_of};
+use log::info;
 
 use super::{
     common::{
@@ -100,7 +102,10 @@ pub unsafe fn build_octree(
 
         let tiles_allocated =
             voxelization::helpers::get_value_from_atomic_counter(allocated_tiles_counter);
-        dbg!(tiles_allocated);
+        info!(
+            "Tiles allocated in level {}: {}",
+            octree_level, tiles_allocated
+        );
 
         TILES_PER_LEVEL.push(tiles_allocated);
         first_tile_in_level += TILES_PER_LEVEL[octree_level as usize] as i32;
@@ -138,12 +143,4 @@ pub unsafe fn build_octree(
     // border_transfer_pass.run();
 
     // TODO: Mipmap to inner nodes
-
-    // let values = voxelization::helpers::get_values_from_texture_buffer(
-    //     OCTREE_NODE_POOL_BRICK_POINTERS_TEXTURE_BUFFER,
-    //     max_node_pool_size,
-    // );
-    // dbg!(&values[..20]);
-
-    // helpers::show_values_per_tile(0, 9);
 }

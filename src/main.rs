@@ -11,6 +11,7 @@ extern crate gl;
 extern crate glfw;
 use cgmath::{perspective, vec3, Deg, Matrix4, Point3};
 use glfw::Context;
+use log::info;
 use structopt::StructOpt;
 
 mod cli_arguments;
@@ -30,6 +31,7 @@ use voxelization::{
 
 fn main() {
     let options = Options::from_args();
+    simple_logger::init().unwrap();
 
     // NOTE: This is true if the binary was compiled in debug mode
     let debug = cfg!(debug_assertions);
@@ -68,7 +70,7 @@ fn main() {
     let (voxel_positions_texture, number_of_voxel_fragments, voxel_colors_texture) = unsafe {
         let (number_of_voxel_fragments, voxel_positions_texture, voxel_colors_texture) =
             voxelization::build_voxel_fragment_list(&options.model);
-        dbg!(number_of_voxel_fragments);
+        info!("Number of voxel fragments: {}", number_of_voxel_fragments);
 
         (
             voxel_positions_texture,

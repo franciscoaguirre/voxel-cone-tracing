@@ -44,10 +44,6 @@ where
 }
 
 pub unsafe fn generate_3d_texture(size_one_dimension: u32) -> GLuint {
-    // let mut max_3d_texture_size = 0;
-    // gl::GetIntegerv(gl::MAX_3D_TEXTURE_SIZE, &mut max_3d_texture_size);
-    // dbg!(&max_3d_texture_size);
-
     let mut texture: GLuint = 0;
 
     // TODO: Apparently powers of two are recommended, but using the next power of
@@ -55,8 +51,6 @@ pub unsafe fn generate_3d_texture(size_one_dimension: u32) -> GLuint {
     // let size_one_dimension = size_one_dimension.next_power_of_two() as i32;
 
     let size = size_one_dimension.pow(3);
-
-    // dbg!(&size_one_dimension);
 
     let initial_data = vec![0u32; size as usize];
 

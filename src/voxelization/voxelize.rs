@@ -147,17 +147,6 @@ pub unsafe fn build_voxel_fragment_list(model_path: &str) -> (u32, u32, u32) {
 
     populate_voxel_fragment_list(&voxelization_shader, &models, &mut atomic_counter);
 
-    // let values = vec![1u32; number_of_voxel_fragments as usize];
-    // gl::BindBuffer(gl::TEXTURE_BUFFER, VOXEL_POSITION_TEXTURE_BUFFER);
-    // gl::GetBufferSubData(
-    //     gl::TEXTURE_BUFFER,
-    //     0,
-    //     (size_of::<GLuint>() * number_of_voxel_fragments as usize) as isize,
-    //     values.as_ptr() as *mut c_void,
-    // );
-    //
-    // dbg!(&values);
-
     gl::MemoryBarrier(gl::SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
     (number_of_voxel_fragments, VOXEL_POSITIONS.0, VOXEL_COLORS.0)

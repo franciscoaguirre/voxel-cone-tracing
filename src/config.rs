@@ -1,5 +1,6 @@
 use std::fs::File;
 
+use log::info;
 use once_cell::sync::Lazy;
 use ron::de::from_reader;
 use serde::Deserialize;
@@ -43,5 +44,6 @@ fn load_config() -> Config {
     let file = File::open(&input_path).expect("Missing config file!");
     let mut config: Config = from_reader(file).expect("Config file malformed!");
     config.octree_levels = config.voxel_dimension.pow(3).log2() / 8_u32.log2();
+    info!("Configuration used: {:#?}", config);
     config
 }

@@ -1,6 +1,7 @@
 use std::{ptr, sync::mpsc::Receiver};
 
 use glfw::{Action, Context, Glfw, Key, Window, WindowEvent};
+use log::info;
 
 use super::camera::{Camera, Camera_Movement};
 use crate::{config::CONFIG, helpers::debug};
@@ -127,11 +128,19 @@ pub fn handle_update_octree_level(
             if *current_octree_level != 0 {
                 *current_octree_level -= 1
             }
-            dbg!(current_octree_level);
+            info!(
+                "Current octree level: {} of {}",
+                current_octree_level,
+                CONFIG.octree_levels - 1
+            );
         }
         glfw::WindowEvent::Key(Key::Right, _, Action::Press, _) => {
             *current_octree_level = (*current_octree_level + 1).min(CONFIG.octree_levels - 1);
-            dbg!(current_octree_level);
+            info!(
+                "Current octree level: {} of {}",
+                current_octree_level,
+                CONFIG.octree_levels - 1
+            );
         }
         glfw::WindowEvent::Key(Key::M, _, Action::Press, _) => {
             *show_empty_nodes = !*show_empty_nodes;

@@ -81,7 +81,4 @@ pub unsafe fn render_octree(
     gl::BindVertexArray(vao);
 
     gl::DrawArrays(gl::POINTS, 0, number_of_voxel_fragments as i32);
-
-    // let values = helpers::get_values_from_texture_buffer(debug_texture_buffer, 10, 5.0f32);
-    // dbg!(&values);
 }

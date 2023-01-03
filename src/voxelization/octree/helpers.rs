@@ -1,6 +1,7 @@
 use std::{ffi::c_void, mem::size_of};
 
 use gl::types::*;
+use log::info;
 
 use super::common::OCTREE_NODE_POOL;
 use crate::{config::CONFIG, constants};
@@ -20,7 +21,7 @@ pub unsafe fn show_values_per_tile(offset: usize, number_of_tiles: usize) {
     for tile in 0..number_of_tiles {
         let lower_limit: usize = (tile + offset) * constants::NODES_PER_TILE as usize;
         let upper_limit: usize = lower_limit + constants::NODES_PER_TILE as usize;
-        dbg!(&values[lower_limit..upper_limit]);
+        info!("{:?}", &values[lower_limit..upper_limit]);
     }
 }
 
