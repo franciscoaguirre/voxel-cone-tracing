@@ -59,10 +59,6 @@ pub unsafe fn render_octree(
 
     helpers::bind_image_texture(3, voxel_positions_texture, gl::READ_ONLY, gl::RGB10_A2UI);
 
-    let (debug_texture, debug_texture_buffer) =
-        helpers::generate_texture_buffer(10, gl::R32F, 10.0f32);
-    helpers::bind_image_texture(4, debug_texture, gl::WRITE_ONLY, gl::R32F);
-
     visualize_octree_shader.set_uint(c_str!("octree_levels"), octree_level);
     visualize_octree_shader.set_uint(c_str!("voxel_dimension"), CONFIG.voxel_dimension);
     visualize_octree_shader.set_bool(c_str!("show_empty_nodes"), show_empty_nodes);

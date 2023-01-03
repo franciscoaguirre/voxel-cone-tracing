@@ -13,7 +13,6 @@ uniform layout(binding = 0, r32ui) uimageBuffer node_pool;
 uniform layout(binding = 1, r32ui) uimageBuffer node_pool_brick_pointers;
 uniform layout(binding = 2, rgba8) image3D brick_pool_colors;
 uniform layout(binding = 3, rgb10_a2ui) uimageBuffer voxel_positions;
-uniform layout(binding = 4, r32f) imageBuffer debug_buffer;
 
 out vec4 node_position;
 out float geom_half_node_size;
@@ -40,18 +39,6 @@ void main() {
     node_coordinates,
     tile_index
   );
-
-  // Debug statements
-  // imageStore(debug_buffer, 0, vec4(float(node_index), 0, 0, 0));
-  // imageStore(debug_buffer, 1, vec4(float(half_node_size), 0, 0, 0));
-  // imageStore(debug_buffer, 2, vec4(float(node_coordinates.x), 0, 0, 0));
-  // imageStore(debug_buffer, 3, vec4(float(node_coordinates.y), 0, 0, 0));
-  // imageStore(debug_buffer, 4, vec4(float(node_coordinates.z), 0, 0, 0));
-  // imageStore(debug_buffer, 5, vec4(float(octree_levels), 0, 0, 0));
-  // imageStore(debug_buffer, 6, vec4(float(tile_index), 0, 0, 0));
-  // imageStore(debug_buffer, 7, vec4(float(voxel_fragment_position.x), 0, 0, 0));
-  // imageStore(debug_buffer, 8, vec4(float(voxel_fragment_position.y), 0, 0, 0));
-  // imageStore(debug_buffer, 9, vec4(float(voxel_fragment_position.z), 0, 0, 0));
 
   uint brick_coordinates_compact = imageLoad(node_pool_brick_pointers, node_index).r;
   ivec3 brick_coordinates = ivec3(uintXYZ10ToVec3(brick_coordinates_compact));
