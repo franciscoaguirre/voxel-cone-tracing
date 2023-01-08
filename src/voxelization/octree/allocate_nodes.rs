@@ -1,19 +1,21 @@
 use c_str_macro::c_str;
 
-use crate::rendering::shader::Shader;
+use crate::{constants::WORKING_GROUP_SIZE, rendering::shader::Shader};
 
 use super::common::OCTREE_NODE_POOL;
 
 pub struct AllocateNodesPass {
     shader: Shader,
     allocated_tiles_counter: u32,
+    number_of_voxel_fragments: u32,
 }
 
 impl AllocateNodesPass {
-    pub fn init(allocated_tiles_counter: u32) -> Self {
+    pub fn init(allocated_tiles_counter: u32, number_of_voxel_fragments: u32) -> Self {
         Self {
             shader: Shader::new_compute("assets/shaders/octree/allocate_nodes.comp.glsl"),
             allocated_tiles_counter,
+            number_of_voxel_fragments,
         }
     }
 
@@ -35,7 +37,11 @@ impl AllocateNodesPass {
         );
         gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, self.allocated_tiles_counter);
 
-        self.shader.dispatch(65_535); // TODO: Calculate number of groups
+        let groups_count =
+            (self.number_of_voxel_fragments as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
+
+        // TODO: Could still send less threads
+        self.shader.dispatch(groups_count);
         self.shader.wait();
     }
 }

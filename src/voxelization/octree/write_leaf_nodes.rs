@@ -1,26 +1,32 @@
 use c_str_macro::c_str;
 use gl::types::*;
 
-use crate::{config::CONFIG, rendering::shader::Shader};
+use crate::{config::CONFIG, constants::WORKING_GROUP_SIZE, rendering::shader::Shader};
 
-use super::common::{OCTREE_NODE_POOL, OCTREE_NODE_POOL_BRICK_POINTERS};
+use super::common::{BRICK_POOL_COLORS_TEXTURE, OCTREE_NODE_POOL, OCTREE_NODE_POOL_BRICK_POINTERS};
 
 pub struct WriteLeafNodesPass {
     shader: Shader,
     voxel_positions_texture: GLuint,
     voxel_colors_texture: GLuint,
+    number_of_voxel_fragments: u32,
 }
 
 impl WriteLeafNodesPass {
-    pub fn init(voxel_positions_texture: GLuint, voxel_colors_texture: GLuint) -> Self {
+    pub fn init(
+        voxel_positions_texture: GLuint,
+        voxel_colors_texture: GLuint,
+        number_of_voxel_fragments: u32,
+    ) -> Self {
         Self {
             shader: Shader::new_compute("assets/shaders/octree/write_leaf_nodes.comp.glsl"),
             voxel_positions_texture,
             voxel_colors_texture,
+            number_of_voxel_fragments,
         }
     }
 
-    pub unsafe fn run(&self, brick_pool_colors_texture: GLuint) {
+    pub unsafe fn run(&self) {
         self.shader.use_program();
 
         self.shader
@@ -61,7 +67,7 @@ impl WriteLeafNodesPass {
 
         gl::BindImageTexture(
             3,
-            brick_pool_colors_texture,
+            BRICK_POOL_COLORS_TEXTURE,
             0,
             gl::TRUE,
             0,
@@ -79,7 +85,10 @@ impl WriteLeafNodesPass {
             gl::R32UI,
         );
 
-        self.shader.dispatch(65_535); // TODO: Calculate number of groups
+        let groups_count =
+            (self.number_of_voxel_fragments as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
+
+        self.shader.dispatch(groups_count);
         self.shader.wait();
     }
 }

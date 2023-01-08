@@ -18,6 +18,7 @@ pub unsafe fn generate_atomic_counter_buffer() -> GLuint {
     buffer
 }
 
+/// Generates a buffer texture initialized with a default value
 pub unsafe fn generate_texture_buffer<T>(
     size: usize,
     format: GLenum,
@@ -39,6 +40,37 @@ where
     gl::BindBuffer(gl::TEXTURE_BUFFER, 0);
 
     clear_texture_buffer(texture_buffer, size, default_value);
+
+    (texture, texture_buffer)
+}
+
+/// Generates a buffer texture initialized with the data provided
+pub unsafe fn generate_texture_buffer_with_data<T>(
+    size: usize,
+    format: GLenum,
+    data: Vec<T>,
+) -> (GLuint, GLuint)
+where
+    T: Clone,
+{
+    let mut texture_buffer: GLuint = 0;
+    gl::GenBuffers(1, &mut texture_buffer);
+    gl::BindBuffer(gl::TEXTURE_BUFFER, texture_buffer);
+
+    let mut texture: GLuint = 0;
+    gl::GenTextures(1, &mut texture);
+    gl::BindTexture(gl::TEXTURE_BUFFER, texture);
+    gl::TexBuffer(gl::TEXTURE_BUFFER, format, texture_buffer);
+    gl::BindTexture(gl::TEXTURE_BUFFER, 0);
+
+    gl::BufferData(
+        gl::TEXTURE_BUFFER,
+        (size_of::<T>() * size) as isize,
+        data.as_ptr() as *const c_void,
+        gl::STATIC_DRAW,
+    );
+
+    gl::BindBuffer(gl::TEXTURE_BUFFER, 0);
 
     (texture, texture_buffer)
 }

@@ -1,78 +1,58 @@
 use c_str_macro::c_str;
-use gl::types::*;
 
-use crate::{config::CONFIG, rendering::shader::Shader};
+use crate::{
+    config::CONFIG,
+    constants::{NODES_PER_TILE, WORKING_GROUP_SIZE},
+    rendering::shader::Shader,
+    voxelization,
+};
 
-use super::common::{OCTREE_NODE_POOL, OCTREE_NODE_POOL_BRICK_POINTERS};
+use super::common::{
+    BRICK_POOL_COLORS_TEXTURE, OCTREE_LEVEL_START_INDICES, OCTREE_NODE_POOL_BRICK_POINTERS,
+    TILES_PER_LEVEL,
+};
 
 pub struct SpreadLeafBricksPass {
     shader: Shader,
-    voxel_positions_texture: GLuint,
-    number_of_voxel_fragments: GLuint,
 }
 
 impl SpreadLeafBricksPass {
-    pub fn init(voxel_positions_texture: GLuint, number_of_voxel_fragments: u32) -> Self {
+    pub fn init() -> Self {
         Self {
             shader: Shader::new_compute("assets/shaders/octree/spread_leaf_bricks.comp.glsl"),
-            voxel_positions_texture,
-            number_of_voxel_fragments,
         }
     }
 
-    pub unsafe fn run(&self, brick_pool_colors_texture: GLuint) {
+    pub unsafe fn run(&self) {
         self.shader.use_program();
 
-        self.shader
-            .set_uint(c_str!("voxel_dimension"), CONFIG.voxel_dimension as u32);
-        self.shader
-            .set_uint(c_str!("octree_levels"), CONFIG.octree_levels - 1);
-        self.shader.set_uint(
-            c_str!("number_of_voxel_fragments"),
-            self.number_of_voxel_fragments,
-        );
+        let octree_level = CONFIG.octree_levels - 1;
+        self.shader.set_uint(c_str!("octreeLevel"), octree_level);
 
-        gl::BindImageTexture(
+        voxelization::helpers::bind_image_texture(
             0,
             OCTREE_NODE_POOL_BRICK_POINTERS.0,
-            0,
-            gl::FALSE,
-            0,
-            gl::READ_WRITE,
+            gl::READ_ONLY,
             gl::R32UI,
         );
-
-        gl::BindImageTexture(
+        voxelization::helpers::bind_3d_image_texture(
             1,
-            brick_pool_colors_texture,
-            0,
-            gl::TRUE,
-            0,
+            BRICK_POOL_COLORS_TEXTURE,
             gl::READ_WRITE,
             gl::RGBA8,
         );
-
-        gl::BindImageTexture(
+        voxelization::helpers::bind_image_texture(
             2,
-            OCTREE_NODE_POOL.0,
-            0,
-            gl::FALSE,
-            0,
-            gl::READ_WRITE,
+            OCTREE_LEVEL_START_INDICES.0,
+            gl::READ_ONLY,
             gl::R32UI,
         );
 
-        gl::BindImageTexture(
-            3,
-            self.voxel_positions_texture,
-            0,
-            gl::FALSE,
-            0,
-            gl::READ_WRITE,
-            gl::R32UI,
-        );
+        let tiles_in_level = TILES_PER_LEVEL[octree_level as usize];
+        let nodes_in_level = tiles_in_level * NODES_PER_TILE;
+        let groups_count = (nodes_in_level as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
 
-        self.shader.dispatch(65_535); // TODO: Calculate number of groups
+        self.shader.dispatch(groups_count);
         self.shader.wait();
     }
 }

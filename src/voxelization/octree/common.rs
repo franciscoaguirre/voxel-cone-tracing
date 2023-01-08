@@ -9,6 +9,7 @@ pub static mut OCTREE_NODE_POOL_NEIGHBOUR_Y: (GLuint, GLuint) = (0, 0);
 pub static mut OCTREE_NODE_POOL_NEIGHBOUR_Y_NEGATIVE: (GLuint, GLuint) = (0, 0);
 pub static mut OCTREE_NODE_POOL_NEIGHBOUR_Z: (GLuint, GLuint) = (0, 0);
 pub static mut OCTREE_NODE_POOL_NEIGHBOUR_Z_NEGATIVE: (GLuint, GLuint) = (0, 0);
+pub static mut OCTREE_LEVEL_START_INDICES: (GLuint, GLuint) = (0, 0);
 
 pub static mut TILES_PER_LEVEL: Vec<u32> = Vec::new();
 

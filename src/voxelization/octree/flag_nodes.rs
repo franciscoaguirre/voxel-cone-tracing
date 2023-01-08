@@ -2,6 +2,7 @@ use c_str_macro::c_str;
 use gl::types::*;
 
 use crate::config::CONFIG;
+use crate::constants::WORKING_GROUP_SIZE;
 use crate::rendering::shader::Shader;
 
 use super::common::OCTREE_NODE_POOL;
@@ -51,7 +52,10 @@ impl FlagNodesPass {
             gl::R32UI,
         );
 
-        self.shader.dispatch(65_535); // TODO: Calculate number of groups
+        let groups_count =
+            (self.number_of_voxel_fragments as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
+
+        self.shader.dispatch(groups_count);
         self.shader.wait();
     }
 }

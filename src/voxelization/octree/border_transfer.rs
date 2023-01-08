@@ -1,50 +1,46 @@
 use c_str_macro::c_str;
 use gl::types::*;
 
-use crate::{config::CONFIG, rendering::shader::Shader, voxelization::helpers};
+use crate::{
+    config::CONFIG,
+    constants::{NODES_PER_TILE, WORKING_GROUP_SIZE},
+    rendering::shader::Shader,
+    voxelization::helpers,
+};
 
 use super::common::{
-    BRICK_POOL_COLORS_TEXTURE, OCTREE_NODE_POOL, OCTREE_NODE_POOL_BRICK_POINTERS,
-    OCTREE_NODE_POOL_NEIGHBOUR_X, OCTREE_NODE_POOL_NEIGHBOUR_Y, OCTREE_NODE_POOL_NEIGHBOUR_Z,
+    BRICK_POOL_COLORS_TEXTURE, OCTREE_LEVEL_START_INDICES, OCTREE_NODE_POOL,
+    OCTREE_NODE_POOL_BRICK_POINTERS, OCTREE_NODE_POOL_NEIGHBOUR_X, OCTREE_NODE_POOL_NEIGHBOUR_Y,
+    OCTREE_NODE_POOL_NEIGHBOUR_Z, TILES_PER_LEVEL,
 };
 
 pub struct BorderTransferPass {
     shader: Shader,
-    voxel_positions_texture: GLuint,
 }
 
 impl BorderTransferPass {
-    pub fn init(voxel_positions_texture: GLuint) -> Self {
+    pub fn init() -> Self {
         Self {
             shader: Shader::new_compute("assets/shaders/octree/border_transfer.comp.glsl"),
-            voxel_positions_texture,
         }
     }
 
     pub unsafe fn run(&self, axis: u32) {
         self.shader.use_program();
 
-        self.shader
-            .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
         self.shader.set_uint(c_str!("axis"), axis);
-        self.shader
-            .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels - 1);
+
+        let octree_level = CONFIG.octree_levels - 1;
+        self.shader.set_uint(c_str!("octreeLevel"), octree_level);
 
         helpers::bind_image_texture(
             0,
-            self.voxel_positions_texture,
-            gl::READ_ONLY,
-            gl::RGB10_A2UI,
-        );
-        helpers::bind_image_texture(1, OCTREE_NODE_POOL.0, gl::READ_ONLY, gl::R32UI);
-        helpers::bind_image_texture(
-            2,
             OCTREE_NODE_POOL_BRICK_POINTERS.0,
             gl::READ_ONLY,
             gl::R32UI,
         );
         helpers::bind_image_texture(
-            3,
+            1,
             if axis == 0 {
                 OCTREE_NODE_POOL_NEIGHBOUR_X.0
             } else if axis == 1 {
@@ -55,9 +51,14 @@ impl BorderTransferPass {
             gl::READ_ONLY,
             gl::R32UI,
         );
-        helpers::bind_3d_image_texture(4, BRICK_POOL_COLORS_TEXTURE, gl::READ_WRITE, gl::RGBA8);
+        helpers::bind_3d_image_texture(2, BRICK_POOL_COLORS_TEXTURE, gl::READ_WRITE, gl::RGBA8);
+        helpers::bind_image_texture(3, OCTREE_LEVEL_START_INDICES.0, gl::READ_ONLY, gl::R32UI);
 
-        self.shader.dispatch(65_535); // TODO: Calculate number of groups
+        let tiles_in_level = TILES_PER_LEVEL[octree_level as usize];
+        let nodes_in_level = tiles_in_level * NODES_PER_TILE;
+        let groups_count = (nodes_in_level as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
+
+        self.shader.dispatch(groups_count);
         self.shader.wait();
     }
 }

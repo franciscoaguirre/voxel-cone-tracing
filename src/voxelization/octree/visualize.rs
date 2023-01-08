@@ -27,36 +27,14 @@ pub unsafe fn render_octree(
 
     visualize_octree_shader.use_program();
 
-    gl::BindImageTexture(
-        0,
-        OCTREE_NODE_POOL.0,
-        0,
-        gl::TRUE,
-        0,
-        gl::READ_WRITE,
-        gl::R32UI,
-    );
-
+    helpers::bind_image_texture(0, OCTREE_NODE_POOL.0, gl::READ_WRITE, gl::R32UI);
     helpers::bind_image_texture(
         1,
         OCTREE_NODE_POOL_BRICK_POINTERS.0,
         gl::READ_WRITE,
         gl::R32UI,
     );
-
-    // NOTE: We don't use the helper function because 3D texture's are the only case
-    // when `layered` must be set to `gl::TRUE`
-    // TODO: Create a helper function to bind 3D textures only.
-    gl::BindImageTexture(
-        2,
-        BRICK_POOL_COLORS_TEXTURE,
-        0,
-        gl::TRUE,
-        0,
-        gl::READ_ONLY,
-        gl::RGBA8,
-    );
-
+    helpers::bind_3d_image_texture(2, BRICK_POOL_COLORS_TEXTURE, gl::READ_ONLY, gl::RGBA8);
     helpers::bind_image_texture(3, voxel_positions_texture, gl::READ_ONLY, gl::RGB10_A2UI);
 
     visualize_octree_shader.set_uint(c_str!("octree_levels"), octree_level);

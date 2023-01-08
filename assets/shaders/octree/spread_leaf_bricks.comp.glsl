@@ -2,172 +2,161 @@
 
 #include "./_constants.glsl"
 #include "./_helpers.glsl"
-#include "./_traversal_helpers.glsl"
-#include "./_octree_traversal.glsl"
 
 layout (local_size_x = WORKING_GROUP_SIZE, local_size_y = 1, local_size_z = 1) in;
 
-uniform layout(binding = 0, r32ui) readonly uimageBuffer node_pool_brick_pointers;
-uniform layout(binding = 1, rgba8) image3D brick_pool_colors;
-uniform layout(binding = 2, r32ui) uimageBuffer node_pool;
-uniform layout(binding = 3, rgb10_a2ui) readonly uimageBuffer voxel_positions;
+uniform layout(binding = 0, r32ui) readonly uimageBuffer nodePoolBrickPointers;
+uniform layout(binding = 1, rgba8) image3D brickPoolValues;
+uniform layout(binding = 2, r32ui) readonly uimageBuffer levelStartIndices;
 
-uniform uint voxel_dimension;
-uniform uint octree_levels;
-uniform uint number_of_voxel_fragments;
+uniform uint octreeLevel;
 
-vec4[8] load_corner_voxels_values(ivec3 brick_address) {
-    vec4 voxel_values[8];
+#include "./_threadNodeUtil.glsl"
+
+vec4[8] loadCornerVoxelValues(ivec3 brickAddress) {
+    vec4 voxelValues[8];
 
     // Get voxels from the corners of the brick
     for (int i = 0; i < 8; i++) {
-        voxel_values[i] = imageLoad(
-            brick_pool_colors,
-            brick_address + 2 * ivec3(CHILD_OFFSETS[i])
+        voxelValues[i] = imageLoad(
+            brickPoolValues,
+            brickAddress + 2 * ivec3(CHILD_OFFSETS[i])
         );
     }
     
-    return voxel_values;
+    return voxelValues;
 }
 
 void main() {
-    // TODO: Don't traverse the tree, we can just use the node and brick
-    const uint thread_index = gl_GlobalInvocationID.x;
-    uvec4 voxel_position = imageLoad(voxel_positions, int(thread_index));
+    int nodeAddress = getThreadNode();
 
-    if (thread_index > number_of_voxel_fragments) {
+    if (nodeAddress == NODE_NOT_FOUND) {
         return;
     }
 
-    int node_address = traverse_octree(
-        vec3(voxel_position) / float(voxel_dimension),
-        octree_levels,
-        node_pool
-    );
-
-    ivec3 brick_address = ivec3(
+    ivec3 brickAddress = ivec3(
         uintXYZ10ToVec3(
-            imageLoad(node_pool_brick_pointers, int(node_address)).r
+            imageLoad(nodePoolBrickPointers, int(nodeAddress)).r
         )
     ); 
 
-    vec4[] voxel_values = load_corner_voxels_values(brick_address);
+    vec4[] voxelValues = loadCornerVoxelValues(brickAddress);
 
     vec4 accumulator = vec4(0);
 
     // Load center voxel
     for (int i = 0; i < 8; i++) {
-        accumulator += 0.125 * voxel_values[i];
+        accumulator += 0.125 * voxelValues[i];
     }
-    imageStore(brick_pool_colors, brick_address + ivec3(1, 1, 1), accumulator);
+    imageStore(brickPoolValues, brickAddress + ivec3(1, 1, 1), accumulator);
 
     // Face X
     accumulator = vec4(0);
-    accumulator += 0.25 * voxel_values[1];
-    accumulator += 0.25 * voxel_values[3];
-    accumulator += 0.25 * voxel_values[5];
-    accumulator += 0.25 * voxel_values[7];
-    imageStore(brick_pool_colors, brick_address + ivec3(2,1,1), accumulator);
+    accumulator += 0.25 * voxelValues[1];
+    accumulator += 0.25 * voxelValues[3];
+    accumulator += 0.25 * voxelValues[5];
+    accumulator += 0.25 * voxelValues[7];
+    imageStore(brickPoolValues, brickAddress + ivec3(2,1,1), accumulator);
 
     // Face X Neg
     accumulator = vec4(0);
-    accumulator += 0.25 * voxel_values[0];
-    accumulator += 0.25 * voxel_values[2];
-    accumulator += 0.25 * voxel_values[4];
-    accumulator += 0.25 * voxel_values[6];
-    imageStore(brick_pool_colors, brick_address + ivec3(0,1,1), accumulator);
+    accumulator += 0.25 * voxelValues[0];
+    accumulator += 0.25 * voxelValues[2];
+    accumulator += 0.25 * voxelValues[4];
+    accumulator += 0.25 * voxelValues[6];
+    imageStore(brickPoolValues, brickAddress + ivec3(0,1,1), accumulator);
 
     // Face Y
     accumulator = vec4(0);
-    accumulator += 0.25 * voxel_values[2];
-    accumulator += 0.25 * voxel_values[3];
-    accumulator += 0.25 * voxel_values[6];
-    accumulator += 0.25 * voxel_values[7];
-    imageStore(brick_pool_colors, brick_address + ivec3(1,2,1), accumulator);
+    accumulator += 0.25 * voxelValues[2];
+    accumulator += 0.25 * voxelValues[3];
+    accumulator += 0.25 * voxelValues[6];
+    accumulator += 0.25 * voxelValues[7];
+    imageStore(brickPoolValues, brickAddress + ivec3(1,2,1), accumulator);
 
     // Face Y Neg
     accumulator = vec4(0);
-    accumulator += 0.25 * voxel_values[0];
-    accumulator += 0.25 * voxel_values[1];
-    accumulator += 0.25 * voxel_values[4];
-    accumulator += 0.25 * voxel_values[5];
-    imageStore(brick_pool_colors, brick_address + ivec3(1,0,1), accumulator);
+    accumulator += 0.25 * voxelValues[0];
+    accumulator += 0.25 * voxelValues[1];
+    accumulator += 0.25 * voxelValues[4];
+    accumulator += 0.25 * voxelValues[5];
+    imageStore(brickPoolValues, brickAddress + ivec3(1,0,1), accumulator);
 
 
     // Face Z
     accumulator = vec4(0);
-    accumulator += 0.25 * voxel_values[4];
-    accumulator += 0.25 * voxel_values[5];
-    accumulator += 0.25 * voxel_values[6];
-    accumulator += 0.25 * voxel_values[7];
-    imageStore(brick_pool_colors, brick_address + ivec3(1,1,2), accumulator);
+    accumulator += 0.25 * voxelValues[4];
+    accumulator += 0.25 * voxelValues[5];
+    accumulator += 0.25 * voxelValues[6];
+    accumulator += 0.25 * voxelValues[7];
+    imageStore(brickPoolValues, brickAddress + ivec3(1,1,2), accumulator);
 
     // Face Z Neg
     accumulator = vec4(0);
-    accumulator += 0.25 * voxel_values[0];
-    accumulator += 0.25 * voxel_values[1];
-    accumulator += 0.25 * voxel_values[2];
-    accumulator += 0.25 * voxel_values[3];
-    imageStore(brick_pool_colors, brick_address + ivec3(1,1,0), accumulator);
+    accumulator += 0.25 * voxelValues[0];
+    accumulator += 0.25 * voxelValues[1];
+    accumulator += 0.25 * voxelValues[2];
+    accumulator += 0.25 * voxelValues[3];
+    imageStore(brickPoolValues, brickAddress + ivec3(1,1,0), accumulator);
 
     // Edges
     accumulator = vec4(0);
-    accumulator += 0.5 * voxel_values[0];
-    accumulator += 0.5 * voxel_values[1];
-    imageStore(brick_pool_colors, brick_address + ivec3(1,0,0), accumulator);
+    accumulator += 0.5 * voxelValues[0];
+    accumulator += 0.5 * voxelValues[1];
+    imageStore(brickPoolValues, brickAddress + ivec3(1,0,0), accumulator);
 
     accumulator = vec4(0);
-    accumulator += 0.5 * voxel_values[0];
-    accumulator += 0.5 * voxel_values[2];
-    imageStore(brick_pool_colors, brick_address + ivec3(0,1,0), accumulator);
+    accumulator += 0.5 * voxelValues[0];
+    accumulator += 0.5 * voxelValues[2];
+    imageStore(brickPoolValues, brickAddress + ivec3(0,1,0), accumulator);
 
     accumulator = vec4(0);
-    accumulator += 0.5 * voxel_values[2];
-    accumulator += 0.5 * voxel_values[3];
-    imageStore(brick_pool_colors, brick_address + ivec3(1,2,0), accumulator);
+    accumulator += 0.5 * voxelValues[2];
+    accumulator += 0.5 * voxelValues[3];
+    imageStore(brickPoolValues, brickAddress + ivec3(1,2,0), accumulator);
 
     accumulator = vec4(0);
-    accumulator += 0.5 * voxel_values[3];
-    accumulator += 0.5 * voxel_values[1];
-    imageStore(brick_pool_colors, brick_address + ivec3(2,1,0), accumulator);
+    accumulator += 0.5 * voxelValues[3];
+    accumulator += 0.5 * voxelValues[1];
+    imageStore(brickPoolValues, brickAddress + ivec3(2,1,0), accumulator);
 
     accumulator = vec4(0);
-    accumulator += 0.5 * voxel_values[0];
-    accumulator += 0.5 * voxel_values[4];
-    imageStore(brick_pool_colors, brick_address + ivec3(0,0,1), accumulator);
+    accumulator += 0.5 * voxelValues[0];
+    accumulator += 0.5 * voxelValues[4];
+    imageStore(brickPoolValues, brickAddress + ivec3(0,0,1), accumulator);
 
     accumulator = vec4(0);
-    accumulator += 0.5 * voxel_values[2];
-    accumulator += 0.5 * voxel_values[6];
-    imageStore(brick_pool_colors, brick_address + ivec3(0,2,1), accumulator);
+    accumulator += 0.5 * voxelValues[2];
+    accumulator += 0.5 * voxelValues[6];
+    imageStore(brickPoolValues, brickAddress + ivec3(0,2,1), accumulator);
 
     accumulator = vec4(0);
-    accumulator += 0.5 * voxel_values[3];
-    accumulator += 0.5 * voxel_values[7];
-    imageStore(brick_pool_colors, brick_address + ivec3(2,2,1), accumulator);
+    accumulator += 0.5 * voxelValues[3];
+    accumulator += 0.5 * voxelValues[7];
+    imageStore(brickPoolValues, brickAddress + ivec3(2,2,1), accumulator);
 
     accumulator = vec4(0);
-    accumulator += 0.5 * voxel_values[1];
-    accumulator += 0.5 * voxel_values[5];
-    imageStore(brick_pool_colors, brick_address + ivec3(2,0,1), accumulator);
+    accumulator += 0.5 * voxelValues[1];
+    accumulator += 0.5 * voxelValues[5];
+    imageStore(brickPoolValues, brickAddress + ivec3(2,0,1), accumulator);
 
     accumulator = vec4(0);
-    accumulator += 0.5 * voxel_values[4];
-    accumulator += 0.5 * voxel_values[6];
-    imageStore(brick_pool_colors, brick_address + ivec3(0,1,2), accumulator);
+    accumulator += 0.5 * voxelValues[4];
+    accumulator += 0.5 * voxelValues[6];
+    imageStore(brickPoolValues, brickAddress + ivec3(0,1,2), accumulator);
 
     accumulator = vec4(0);
-    accumulator += 0.5 * voxel_values[6];
-    accumulator += 0.5 * voxel_values[7];
-    imageStore(brick_pool_colors, brick_address + ivec3(1,2,2), accumulator);
+    accumulator += 0.5 * voxelValues[6];
+    accumulator += 0.5 * voxelValues[7];
+    imageStore(brickPoolValues, brickAddress + ivec3(1,2,2), accumulator);
 
     accumulator = vec4(0);
-    accumulator += 0.5 * voxel_values[5];
-    accumulator += 0.5 * voxel_values[7];
-    imageStore(brick_pool_colors, brick_address + ivec3(2,1,2), accumulator);
+    accumulator += 0.5 * voxelValues[5];
+    accumulator += 0.5 * voxelValues[7];
+    imageStore(brickPoolValues, brickAddress + ivec3(2,1,2), accumulator);
 
     accumulator = vec4(0);
-    accumulator += 0.5 * voxel_values[4];
-    accumulator += 0.5 * voxel_values[5];
-    imageStore(brick_pool_colors, brick_address + ivec3(1,0,2), accumulator);
+    accumulator += 0.5 * voxelValues[4];
+    accumulator += 0.5 * voxelValues[5];
+    imageStore(brickPoolValues, brickAddress + ivec3(1,0,2), accumulator);
 }

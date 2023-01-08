@@ -2,35 +2,29 @@
 
 #include "./_constants.glsl"
 #include "./_helpers.glsl"
-#include "./_traversal_helpers.glsl"
-#include "./_octree_traversal.glsl"
 
 layout (local_size_x = WORKING_GROUP_SIZE, local_size_y = 1, local_size_z = 1) in;
 
-uniform layout(binding = 0, rgb10_a2ui) uimageBuffer voxelPositions;
-uniform layout(binding = 1, r32ui) uimageBuffer nodePool;
-uniform layout(binding = 2, r32ui) uimageBuffer nodePoolBrickPointers;
-uniform layout(binding = 3, r32ui) uimageBuffer nodePoolNeighbors; // Will have different axis
-uniform layout(binding = 4, rgba8) image3D brickPoolValues;
+uniform layout(binding = 0, r32ui) uimageBuffer nodePoolBrickPointers;
+uniform layout(binding = 1, r32ui) uimageBuffer nodePoolNeighbors; // Will have different axis
+uniform layout(binding = 2, rgba8) image3D brickPoolValues;
+uniform layout(binding = 3, r32ui) uimageBuffer levelStartIndices;
 
-uniform uint voxelDimension;
 uniform uint axis;
-uniform uint maxOctreeLevel;
+uniform uint octreeLevel;
+
+#include "./_threadNodeUtil.glsl"
 
 vec4 getFinalValue(vec4 borderValue, vec4 neighborBorderValue) {
     return 0.5 * (borderValue + neighborBorderValue);
 }
 
 void main() {
-    const uint threadIndex = gl_GlobalInvocationID.x;
-    uvec4 voxelPosition = imageLoad(voxelPositions, int(threadIndex));
-    vec3 normalizedVoxelPosition = vec3(voxelPosition) / float(voxelDimension);
+    int nodeAddress = getThreadNode();
 
-    int nodeAddress = traverse_octree(
-        normalizedVoxelPosition,
-        maxOctreeLevel,
-        nodePool
-    );
+    if (nodeAddress == NODE_NOT_FOUND) {
+        return;
+    }
 
     uint neighborAddress = imageLoad(nodePoolNeighbors, nodeAddress).r;
 

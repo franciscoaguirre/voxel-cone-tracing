@@ -11,3 +11,4 @@ const uvec3 CHILD_OFFSETS[8] = {
     uvec3(0, 1, 1),
     uvec3(1, 1, 1)
 };
+const int NODE_NOT_FOUND = 0xFFFFFFFF;

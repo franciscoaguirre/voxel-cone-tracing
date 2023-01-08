@@ -1,7 +1,10 @@
 use c_str_macro::c_str;
 use gl::types::*;
 
-use crate::{config::CONFIG, rendering::shader::Shader, voxelization::helpers::bind_image_texture};
+use crate::{
+    config::CONFIG, constants::WORKING_GROUP_SIZE, rendering::shader::Shader,
+    voxelization::helpers::bind_image_texture,
+};
 
 use super::common::{
     OCTREE_NODE_POOL, OCTREE_NODE_POOL_NEIGHBOUR_X, OCTREE_NODE_POOL_NEIGHBOUR_X_NEGATIVE,
@@ -12,13 +15,15 @@ use super::common::{
 pub struct NeighbourPointersPass {
     shader: Shader,
     voxel_positions_texture: GLuint,
+    number_of_voxel_fragments: u32,
 }
 
 impl NeighbourPointersPass {
-    pub fn init(voxel_positions_texture: GLuint) -> Self {
+    pub fn init(voxel_positions_texture: GLuint, number_of_voxel_fragments: u32) -> Self {
         Self {
             shader: Shader::new_compute("assets/shaders/octree/neighbour_pointers.comp.glsl"),
             voxel_positions_texture,
+            number_of_voxel_fragments,
         }
     }
 
@@ -57,7 +62,10 @@ impl NeighbourPointersPass {
             gl::R32UI,
         );
 
-        self.shader.dispatch(65_535); // TODO: Calculate number of groups
+        let groups_count =
+            (self.number_of_voxel_fragments as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
+
+        self.shader.dispatch(groups_count);
         self.shader.wait();
     }
 }

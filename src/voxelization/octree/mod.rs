@@ -8,6 +8,7 @@ mod allocate_bricks;
 mod allocate_nodes;
 mod border_transfer;
 mod flag_nodes;
+mod mipmap_center;
 mod neighbour_pointers;
 mod spread_leaf_bricks;
 mod write_leaf_nodes;
