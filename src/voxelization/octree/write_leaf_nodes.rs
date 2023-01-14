@@ -30,9 +30,9 @@ impl WriteLeafNodesPass {
         self.shader.use_program();
 
         self.shader
-            .set_uint(c_str!("voxel_dimension"), CONFIG.voxel_dimension);
+            .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
         self.shader
-            .set_uint(c_str!("max_octree_level"), CONFIG.octree_levels - 1); // Last level
+            .set_uint(c_str!("octreeLevel"), CONFIG.octree_levels - 1); // Last level
 
         // Bind images
         gl::BindImageTexture(

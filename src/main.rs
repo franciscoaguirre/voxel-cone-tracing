@@ -25,7 +25,7 @@ use cli_arguments::Options;
 use config::CONFIG;
 use rendering::{camera::Camera, common, model::Model, shader::Shader};
 use voxelization::{
-    octree::{build_octree, render_octree},
+    octree::{build_octree, render_octree, visualize::ShowBricks},
     render_voxel_fragments,
 };
 
@@ -110,6 +110,7 @@ fn main() {
     let mut current_voxel_fragment_count: u32 = 0;
     let mut current_octree_level: u32 = 0;
     let mut show_empty_nodes = false;
+    let mut show_bricks = ShowBricks::DontShow;
     let mut show_model = false;
     let mut show_voxel_fragment_list = false;
     let mut show_octree = false;
@@ -134,6 +135,7 @@ fn main() {
                 &event,
                 &mut current_octree_level,
                 &mut show_empty_nodes,
+                &mut show_bricks,
             );
             common::handle_showing_entities(
                 &event,
@@ -155,7 +157,7 @@ fn main() {
             let projection: Matrix4<f32> = perspective(
                 Deg(camera.Zoom),
                 CONFIG.viewport_width as f32 / CONFIG.viewport_height as f32,
-                0.1,
+                0.0001,
                 10000.0,
             );
             let view = camera.GetViewMatrix();
@@ -183,6 +185,7 @@ fn main() {
                     show_empty_nodes,
                     voxel_positions_texture,
                     number_of_voxel_fragments,
+                    &show_bricks,
                 );
             }
 

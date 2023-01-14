@@ -1,193 +1,179 @@
 #version 460 core
 
 layout (points) in;
-layout (line_strip, max_vertices = 22) out;
+layout (line_strip, max_vertices = 256) out;
 
-in vec4 node_position[];
-in float geom_half_node_size[];
-in int non_empty_branch[];
-in vec4 node_color[];
+in vec4 nodePosition[];
+in float geom_halfNodeSize[];
+in int nonEmptyBranch[];
+in vec4 nodeColor[];
+in ivec3 geom_brickCoordinates[];
 
-out flat int branch_not_empty;
-out flat vec4 final_color;
+out flat int frag_nonEmptyBranch;
+out flat vec4 frag_nodeColor;
 
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-mat4 canonization_matrix = projection * view * model;
+uniform uint showBricks;
 
-void create_z_positive_face() {
-    vec4 position;
+uniform layout(binding = 2, rgba8) image3D brickPoolColors;
 
-    position = vec4(
-        node_position[0].x - geom_half_node_size[0],
-        node_position[0].y - geom_half_node_size[0],
-        node_position[0].z + geom_half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
+#include "./_drawCube.glsl"
 
-    position = vec4(
-        node_position[0].x - geom_half_node_size[0],
-        node_position[0].y + geom_half_node_size[0],
-        node_position[0].z + geom_half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
-
-    position = vec4(
-        node_position[0].x + geom_half_node_size[0],
-        node_position[0].y + geom_half_node_size[0],
-        node_position[0].z + geom_half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
-
-    position = vec4(
-        node_position[0].x + geom_half_node_size[0],
-        node_position[0].y - geom_half_node_size[0],
-        node_position[0].z + geom_half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
-    position = vec4(
-        node_position[0].x - geom_half_node_size[0],
-        node_position[0].y - geom_half_node_size[0],
-        node_position[0].z + geom_half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
-}
-
-void create_x_negative_face() {
-    vec4 position;
-
-    position = vec4(
-        node_position[0].x - geom_half_node_size[0],
-        node_position[0].y - geom_half_node_size[0],
-        node_position[0].z - geom_half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
-
-    position = vec4(
-        node_position[0].x - geom_half_node_size[0],
-        node_position[0].y + geom_half_node_size[0],
-        node_position[0].z - geom_half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
-
-    position = vec4(
-        node_position[0].x - geom_half_node_size[0],
-        node_position[0].y + geom_half_node_size[0],
-        node_position[0].z + geom_half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
-}
-
-void create_y_positive_face() {
-    vec4 position;
-
-    position = vec4(
-        node_position[0].x + geom_half_node_size[0],
-        node_position[0].y + geom_half_node_size[0],
-        node_position[0].z + geom_half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
-
-    position = vec4(
-        node_position[0].x + geom_half_node_size[0],
-        node_position[0].y + geom_half_node_size[0],
-        node_position[0].z - geom_half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
-
-    position = vec4(
-        node_position[0].x - geom_half_node_size[0],
-        node_position[0].y + geom_half_node_size[0],
-        node_position[0].z - geom_half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
-}
-
-void create_z_negative_face() {
-    vec4 position;
-
-    position = vec4(
-        node_position[0].x - geom_half_node_size[0],
-        node_position[0].y - geom_half_node_size[0],
-        node_position[0].z - geom_half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
-
-    position = vec4(
-        node_position[0].x + geom_half_node_size[0],
-        node_position[0].y - geom_half_node_size[0],
-        node_position[0].z - geom_half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
-
-    position = vec4(
-        node_position[0].x + geom_half_node_size[0],
-        node_position[0].y + geom_half_node_size[0],
-        node_position[0].z - geom_half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
-}
-
-void create_y_negative_face() {
-    vec4 position;
-
-    position = vec4(
-        node_position[0].x + geom_half_node_size[0],
-        node_position[0].y - geom_half_node_size[0],
-        node_position[0].z - geom_half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
-
-    position = vec4(
-        node_position[0].x + geom_half_node_size[0],
-        node_position[0].y - geom_half_node_size[0],
-        node_position[0].z + geom_half_node_size[0],
-        node_position[0].w
-    );
-    gl_Position = canonization_matrix * position;
-    EmitVertex();
-}
+mat4 canonizationMatrix = projection * view * model;
 
 void main() {
-    branch_not_empty = non_empty_branch[0];
-    final_color = node_color[0];
-    create_z_positive_face();
-    create_x_negative_face();
-    create_y_positive_face();
-    create_z_negative_face();
-    create_y_negative_face();
+    frag_nonEmptyBranch = nonEmptyBranch[0];
 
-    EndPrimitive();
+    vec4 cubeCenter = nodePosition[0];
+    drawCube(cubeCenter, geom_halfNodeSize[0], canonizationMatrix, nodeColor[0]);
+
+    float halfBrickSize = geom_halfNodeSize[0] / 2;
+    vec4 cubeColor;
+
+    if (showBricks == 1) {
+        // Show corners
+        
+        // (0, 0, 0)
+        cubeCenter = vec4(nodePosition[0].xyz - geom_halfNodeSize[0], nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0]);
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (0, 0, 2)
+        cubeCenter = vec4(nodePosition[0].xy - geom_halfNodeSize[0], nodePosition[0].z + geom_halfNodeSize[0], nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(0, 0, 2));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (0, 2, 0)
+        cubeCenter = vec4(nodePosition[0].x - geom_halfNodeSize[0], nodePosition[0].y + geom_halfNodeSize[0], nodePosition[0].z - geom_halfNodeSize[0], nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(0, 2, 0));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (2, 0, 0)
+        cubeCenter = vec4(nodePosition[0].x + geom_halfNodeSize[0], nodePosition[0].yz - geom_halfNodeSize[0], nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(2, 0, 0));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (2, 0, 2)
+        cubeCenter = vec4(nodePosition[0].x + geom_halfNodeSize[0], nodePosition[0].y - geom_halfNodeSize[0], nodePosition[0].z + geom_halfNodeSize[0], nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(2, 0, 2));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (2, 2, 0)
+        cubeCenter = vec4(nodePosition[0].xy + geom_halfNodeSize[0], nodePosition[0].z - geom_halfNodeSize[0], nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(2, 2, 0));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (2, 2, 2)
+        cubeCenter = vec4(nodePosition[0].xyz + geom_halfNodeSize[0], nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(2, 2, 2));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (0, 2, 2)
+        cubeCenter = vec4(nodePosition[0].x - geom_halfNodeSize[0], nodePosition[0].yz + geom_halfNodeSize[0], nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(0, 2, 2));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+    } else if (showBricks == 2) {
+        // Show edges
+        
+        // (0, 0, 1)
+        cubeCenter = vec4(nodePosition[0].xy - geom_halfNodeSize[0], nodePosition[0].z, nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(0, 0, 1));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (0, 1, 0)
+        cubeCenter = vec4(nodePosition[0].x - geom_halfNodeSize[0], nodePosition[0].y, nodePosition[0].z - geom_halfNodeSize[0], nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(0, 1, 0));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (0, 1, 2)
+        cubeCenter = vec4(nodePosition[0].x - geom_halfNodeSize[0], nodePosition[0].y, nodePosition[0].z + geom_halfNodeSize[0], nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(0, 1, 2));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (0, 2, 1)
+        cubeCenter = vec4(nodePosition[0].x - geom_halfNodeSize[0], nodePosition[0].y + geom_halfNodeSize[0], nodePosition[0].z, nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(0, 2, 1));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (1, 0, 0)
+        cubeCenter = vec4(nodePosition[0].x, nodePosition[0].yz - geom_halfNodeSize[0], nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(1, 0, 0));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (1, 2, 0)
+        cubeCenter = vec4(nodePosition[0].x, nodePosition[0].y + geom_halfNodeSize[0], nodePosition[0].z - geom_halfNodeSize[0], nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(1, 2, 0));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (1, 2, 2)
+        cubeCenter = vec4(nodePosition[0].x, nodePosition[0].yz + geom_halfNodeSize[0], nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(1, 2, 2));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (2, 0, 1)
+        cubeCenter = vec4(nodePosition[0].x + geom_halfNodeSize[0], nodePosition[0].y - geom_halfNodeSize[0], nodePosition[0].z, nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(2, 0, 1));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (2, 1, 0)
+        cubeCenter = vec4(nodePosition[0].x + geom_halfNodeSize[0], nodePosition[0].y, nodePosition[0].z - geom_halfNodeSize[0], nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(2, 1, 0));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (2, 1, 2)
+        cubeCenter = vec4(nodePosition[0].x + geom_halfNodeSize[0], nodePosition[0].y, nodePosition[0].z + geom_halfNodeSize[0], nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(2, 1, 2));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (2, 2, 1)
+        cubeCenter = vec4(nodePosition[0].xy + geom_halfNodeSize[0], nodePosition[0].z, nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(2, 2, 1));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+    } else if (showBricks == 3) {
+        // Show centers
+        
+        // (0, 1, 1)
+        cubeCenter = vec4(nodePosition[0].x - geom_halfNodeSize[0], nodePosition[0].yz, nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(0, 1, 1));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (1, 0, 1)
+        cubeCenter = vec4(nodePosition[0].x, nodePosition[0].y - geom_halfNodeSize[0], nodePosition[0].z, nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(1, 0, 1));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (1, 0, 2)
+        cubeCenter = vec4(nodePosition[0].x, nodePosition[0].y - geom_halfNodeSize[0], nodePosition[0].z + geom_halfNodeSize[0], nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(1, 0, 2));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (1, 1, 0)
+        cubeCenter = vec4(nodePosition[0].xy, nodePosition[0].z - geom_halfNodeSize[0], nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(1, 1, 0));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (1, 1, 1)
+        cubeCenter = vec4(nodePosition[0].xyz, nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(1, 1, 1));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (1, 1, 2)
+        cubeCenter = vec4(nodePosition[0].xy, nodePosition[0].z + geom_halfNodeSize[0], nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(1, 1, 2));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (1, 2, 1)
+        cubeCenter = vec4(nodePosition[0].x, nodePosition[0].y + geom_halfNodeSize[0], nodePosition[0].z, nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(1, 2, 1));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+
+        // (2, 1, 1)
+        cubeCenter = vec4(nodePosition[0].x + geom_halfNodeSize[0], nodePosition[0].yz, nodePosition[0].w);
+        cubeColor = imageLoad(brickPoolColors, geom_brickCoordinates[0] + ivec3(2, 1, 1));
+        drawCube(cubeCenter, halfBrickSize, canonizationMatrix, cubeColor);
+    }
 }

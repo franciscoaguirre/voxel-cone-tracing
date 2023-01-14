@@ -5,61 +5,62 @@
 #include "./_traversal_helpers.glsl"
 #include "./_octree_traversal.glsl"
 
-uniform uint octree_levels;
-uniform bool show_empty_nodes;
-uniform uint voxel_dimension;
+uniform uint octreeLevels;
+uniform bool showEmptyNodes;
+uniform uint voxelDimension;
 
-uniform layout(binding = 0, r32ui) uimageBuffer node_pool;
-uniform layout(binding = 1, r32ui) uimageBuffer node_pool_brick_pointers;
-uniform layout(binding = 2, rgba8) image3D brick_pool_colors;
-uniform layout(binding = 3, rgb10_a2ui) uimageBuffer voxel_positions;
+uniform layout(binding = 0, r32ui) uimageBuffer nodePool;
+uniform layout(binding = 1, r32ui) uimageBuffer nodePoolBrickPointers;
+uniform layout(binding = 2, rgba8) image3D brickPoolColors;
+uniform layout(binding = 3, rgb10_a2ui) uimageBuffer voxelPositions;
 
-out vec4 node_position;
-out float geom_half_node_size;
-out int non_empty_branch;
-out int keep_on_going;
-out vec4 node_color;
+out vec4 nodePosition;
+out float geom_halfNodeSize;
+out int nonEmptyBranch;
+out vec4 nodeColor;
+out ivec3 geom_brickCoordinates;
 
 void main() {
-  int thread_index = gl_VertexID;
+  int threadIndex = gl_VertexID;
 
   // TODO: Find an efficient way to render both occupied and empty nodes.
   // This approach uses voxel fragment positions and therefore doesn't show
   // empty nodes.
-  vec4 voxel_fragment_position = imageLoad(voxel_positions, thread_index);
+  vec4 voxelFragmentPosition = imageLoad(voxelPositions, threadIndex);
 
-  uint tile_index;
-  float half_node_size;
-  vec3 node_coordinates;
-  int node_index = traverse_octree_returning_node_coordinates(
-    vec3(voxel_fragment_position) / float(voxel_dimension),
-    octree_levels,
-    node_pool,
-    half_node_size,
-    node_coordinates,
-    tile_index
+  uint tileIndex;
+  float halfNodeSize;
+  vec3 nodeCoordinates;
+  int nodeIndex = traverse_octree_returning_node_coordinates(
+    vec3(voxelFragmentPosition) / float(voxelDimension),
+    octreeLevels,
+    nodePool,
+    halfNodeSize,
+    nodeCoordinates,
+    tileIndex
   );
 
-  uint brick_coordinates_compact = imageLoad(node_pool_brick_pointers, node_index).r;
-  ivec3 brick_coordinates = ivec3(uintXYZ10ToVec3(brick_coordinates_compact));
+  uint brickCoordinatesCompact = imageLoad(nodePoolBrickPointers, nodeIndex).r;
+  ivec3 brickCoordinates = ivec3(uintXYZ10ToVec3(brickCoordinatesCompact));
+  geom_brickCoordinates = brickCoordinates;
 
   // NOTE: Bricks start at (0, 0, 0) and go to (2, 2, 2)
-  ivec3 offset_to_center = ivec3(1, 1, 1);
-  vec4 center_voxel_color = imageLoad(brick_pool_colors, brick_coordinates + offset_to_center);
-  node_color = center_voxel_color;
+  ivec3 offsetToCenter = ivec3(1, 1, 1);
+  vec4 centerVoxelColor = imageLoad(brickPoolColors, brickCoordinates + offsetToCenter);
+  nodeColor = centerVoxelColor;
 
   // Normalized device coordinates go from -1.0 to 1.0, our coordinates go from 0.0 to 1.0
-  node_position = vec4((node_coordinates.xyz) * 2.0 - vec3(1.0), 1.0);
-  float normalized_half_node_size = half_node_size * 2.0;
+  nodePosition = vec4((nodeCoordinates.xyz) * 2.0 - vec3(1.0), 1.0);
+  float normalizedHalfNodeSize = halfNodeSize * 2.0;
 
-  node_position.xyz += normalized_half_node_size;
-  gl_Position = node_position;
+  nodePosition.xyz += normalizedHalfNodeSize;
+  gl_Position = nodePosition;
 
-  if (tile_index != 0 || octree_levels == 0) {
-    geom_half_node_size = normalized_half_node_size;
-    non_empty_branch = 1;
+  if (tileIndex != 0 || octreeLevels == 0) {
+    geom_halfNodeSize = normalizedHalfNodeSize;
+    nonEmptyBranch = 1;
   } else {
-    geom_half_node_size = normalized_half_node_size * int(show_empty_nodes);
-    non_empty_branch = 0;
+    geom_halfNodeSize = normalizedHalfNodeSize * int(showEmptyNodes);
+    nonEmptyBranch = 0;
   }
 }
