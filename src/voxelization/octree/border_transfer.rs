@@ -1,5 +1,4 @@
 use c_str_macro::c_str;
-use gl::types::*;
 
 use crate::{
     config::CONFIG,
@@ -9,9 +8,9 @@ use crate::{
 };
 
 use super::common::{
-    BRICK_POOL_COLORS_TEXTURE, OCTREE_LEVEL_START_INDICES, OCTREE_NODE_POOL,
-    OCTREE_NODE_POOL_BRICK_POINTERS, OCTREE_NODE_POOL_NEIGHBOUR_X, OCTREE_NODE_POOL_NEIGHBOUR_Y,
-    OCTREE_NODE_POOL_NEIGHBOUR_Z, TILES_PER_LEVEL,
+    BRICK_POOL_COLORS_TEXTURE, OCTREE_LEVEL_START_INDICES, OCTREE_NODE_POOL_BRICK_POINTERS,
+    OCTREE_NODE_POOL_NEIGHBOUR_X, OCTREE_NODE_POOL_NEIGHBOUR_Y, OCTREE_NODE_POOL_NEIGHBOUR_Z,
+    TILES_PER_LEVEL,
 };
 
 pub struct BorderTransferPass {
@@ -21,7 +20,7 @@ pub struct BorderTransferPass {
 impl BorderTransferPass {
     pub fn init() -> Self {
         Self {
-            shader: Shader::new_compute("assets/shaders/octree/border_transfer.comp.glsl"),
+            shader: Shader::new_compute("assets/shaders/octree/borderTransfer.comp.glsl"),
         }
     }
 

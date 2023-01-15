@@ -13,6 +13,7 @@ use super::{
     },
     helpers,
     mipmap_center::MipmapCenterPass,
+    mipmap_faces::MipmapFacesPass,
 };
 use crate::{
     config::CONFIG,
@@ -53,9 +54,10 @@ pub unsafe fn build_octree(
         voxel_colors_texture,
         number_of_voxel_fragments,
     );
-    let spread_leaf_bricks_pass = SpreadLeafBricksPass::init();
+    // let spread_leaf_bricks_pass = SpreadLeafBricksPass::init();
     let border_transfer_pass = BorderTransferPass::init();
-    let mipmap_center_pass = MipmapCenterPass::init(voxel_positions_texture);
+    // let mipmap_center_pass = MipmapCenterPass::init();
+    // let mipmap_faces_pass = MipmapFacesPass::init();
 
     let mut octree_level_start_indices = Vec::with_capacity(CONFIG.octree_levels as usize);
 
@@ -77,7 +79,8 @@ pub unsafe fn build_octree(
             voxelization::helpers::get_value_from_atomic_counter(allocated_tiles_counter);
         info!(
             "Tiles allocated in level {}: {}",
-            octree_level, tiles_allocated
+            octree_level + 1,
+            tiles_allocated
         );
 
         TILES_PER_LEVEL.push(tiles_allocated);
@@ -116,7 +119,7 @@ pub unsafe fn build_octree(
     // );
     // gl::BindTexture(gl::TEXTURE_3D, 0);
 
-    spread_leaf_bricks_pass.run();
+    // spread_leaf_bricks_pass.run();
 
     border_transfer_pass.run(X_AXIS);
     border_transfer_pass.run(Y_AXIS);
@@ -124,6 +127,7 @@ pub unsafe fn build_octree(
 
     // for level in (0..CONFIG.octree_levels - 1).rev() {
     //     mipmap_center_pass.run(level);
+    //     mipmap_faces_pass.run(level);
     // }
 }
 

@@ -26,6 +26,7 @@ mat4 canonizationMatrix = projection * view * model;
 
 void main() {
     frag_nonEmptyBranch = nonEmptyBranch[0];
+    frag_nodeColor = nodeColor[0];
 
     vec4 cubeCenter = nodePosition[0];
     drawCube(cubeCenter, geom_halfNodeSize[0], canonizationMatrix, nodeColor[0]);

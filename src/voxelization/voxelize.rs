@@ -91,7 +91,7 @@ unsafe fn voxelize_scene(
 pub unsafe fn build_voxel_fragment_list(model_path: &str) -> (u32, u32, u32) {
     let mut atomic_counter: u32 = helpers::generate_atomic_counter_buffer();
 
-    let (voxelization_shader, cow_model) = {
+    let (voxelization_shader, model) = {
         gl::Enable(gl::DEPTH_TEST);
 
         let our_shader = Shader::with_geometry_shader(
@@ -107,7 +107,7 @@ pub unsafe fn build_voxel_fragment_list(model_path: &str) -> (u32, u32, u32) {
 
         (our_shader, our_model)
     };
-    let models = [cow_model];
+    let models = [model];
 
     calculate_voxel_fragment_list_length(&voxelization_shader, &models, &mut atomic_counter);
     gl::MemoryBarrier(gl::ATOMIC_COUNTER_BUFFER);

@@ -32,7 +32,7 @@ void storeInLeaf(vec3 voxelPosition, int nodeAddress, vec4 voxelColor, float hal
 
     imageStore(
         brickPoolColors,
-        brickCoordinates + 2 * ivec3(CHILD_OFFSETS[offset]),
+        brickCoordinates + ivec3(CHILD_OFFSETS[offset]),
         voxelColor
     );
 }

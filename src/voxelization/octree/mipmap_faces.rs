@@ -2,6 +2,7 @@ use c_str_macro::c_str;
 use gl::types::*;
 
 use crate::{
+    config::CONFIG,
     constants::{NODES_PER_TILE, WORKING_GROUP_SIZE},
     rendering::shader::Shader,
     voxelization::helpers,
@@ -12,21 +13,23 @@ use super::common::{
     OCTREE_NODE_POOL_BRICK_POINTERS, TILES_PER_LEVEL,
 };
 
-pub struct MipmapCenterPass {
+pub struct MipmapFacesPass {
     shader: Shader,
 }
 
-impl MipmapCenterPass {
+impl MipmapFacesPass {
     pub fn init() -> Self {
         Self {
-            shader: Shader::new_compute("assets/shaders/octree/mipmap_center.comp.glsl"),
+            shader: Shader::new_compute("assets/shaders/octree/mipmapFaces.comp.glsl"),
         }
     }
 
     pub unsafe fn run(&self, level: u32) {
         self.shader.use_program();
 
-        self.shader.set_uint(c_str!("octreeLevel"), level);
+        self.shader
+            .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
+        self.shader.set_uint(c_str!("maxOctreeLevel"), level);
 
         helpers::bind_image_texture(0, OCTREE_NODE_POOL.0, gl::READ_ONLY, gl::R32UI);
         helpers::bind_image_texture(

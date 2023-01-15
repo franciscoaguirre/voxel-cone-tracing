@@ -76,7 +76,7 @@ impl Mesh {
         let mut num_normal = 0;
         let mut num_height = 0;
         if !self.textures.is_empty() {
-            shader.set_bool(c_str!("has_texture"), true);
+            shader.set_bool(c_str!("hasTexture"), true);
         }
         for (i, texture) in self.textures.iter().enumerate() {
             gl::ActiveTexture(gl::TEXTURE0 + i as u32); // active proper texture unit before binding

@@ -19,7 +19,7 @@ impl WriteLeafNodesPass {
         number_of_voxel_fragments: u32,
     ) -> Self {
         Self {
-            shader: Shader::new_compute("assets/shaders/octree/write_leaf_nodes.comp.glsl"),
+            shader: Shader::new_compute("assets/shaders/octree/writeLeafNodes.comp.glsl"),
             voxel_positions_texture,
             voxel_colors_texture,
             number_of_voxel_fragments,

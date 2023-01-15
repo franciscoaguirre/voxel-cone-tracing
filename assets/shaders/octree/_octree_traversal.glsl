@@ -157,20 +157,22 @@ int traverse_octree_returning_level(
     current_half_node_size
   );
 
-  current_half_node_size /= 2;
+  found_on_level = max_octree_levels;
 
   for (uint i = 0; i < max_octree_levels; i++)
   {
     current_tile_index = imageLoad(node_pool, int(current_node_index)).r;
-
+    
     if (current_tile_index == 0) {
-        found_on_level = i;
-        break;
+      found_on_level = i;
+      break;
     }
 
-    bvec3 subsection = calculate_node_subsection(current_node_coordinates,
-                                                 current_half_node_size,
-                                                 voxel_coordinates.xyz);
+    bvec3 subsection = calculate_node_subsection(
+      current_node_coordinates,
+      current_half_node_size,
+      voxel_coordinates.xyz
+    );
 
     current_node_index = calculate_node_index(current_tile_index, subsection);
 
@@ -182,6 +184,6 @@ int traverse_octree_returning_level(
 
     current_half_node_size /= 2;
   }
-
+  
   return int(current_node_index);
 }

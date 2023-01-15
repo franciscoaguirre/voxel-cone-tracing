@@ -15,10 +15,6 @@ uniform uint octreeLevel;
 
 #include "./_threadNodeUtil.glsl"
 
-vec4 getFinalValue(vec4 borderValue, vec4 neighborBorderValue) {
-    return 0.5 * (borderValue + neighborBorderValue);
-}
-
 void main() {
     int nodeAddress = getThreadNode();
 
@@ -45,9 +41,9 @@ void main() {
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
                 memoryBarrier();
 
-                vec4 finalValue = getFinalValue(borderValue, neighborBorderValue);
-                imageStore(brickPoolValues, brickAddress + offset, finalValue);
-                imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
+                // vec4 finalValue = getFinalValue(borderValue, neighborBorderValue);
+                imageStore(brickPoolValues, brickAddress + offset, neighborBorderValue);
+                // imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
             }
         }
     }
@@ -62,9 +58,9 @@ void main() {
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
                 memoryBarrier();
 
-                vec4 finalValue = getFinalValue(borderValue, neighborBorderValue);
-                imageStore(brickPoolValues, brickAddress + offset, finalValue);
-                imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
+                // vec4 finalValue = getFinalValue(borderValue, neighborBorderValue);
+                imageStore(brickPoolValues, brickAddress + offset, neighborBorderValue);
+                // imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
             }
         }
     }
@@ -79,9 +75,9 @@ void main() {
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
                 memoryBarrier();
 
-                vec4 finalValue = getFinalValue(borderValue, neighborBorderValue);
-                imageStore(brickPoolValues, brickAddress + offset, finalValue);
-                imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
+                // vec4 finalValue = getFinalValue(borderValue, neighborBorderValue);
+                imageStore(brickPoolValues, brickAddress + offset, neighborBorderValue);
+                // imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
             }
         }
     }

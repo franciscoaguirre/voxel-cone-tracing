@@ -30,8 +30,19 @@ void main() {
     uint childAddress = imageLoad(nodePool, int(nodeAddress)).r * NODES_PER_TILE;
     loadChildTile(int(childAddress));
 
-    vec4 color = mipmapIsotropic(ivec3(2, 2, 2));
+    vec4 left = mipmapIsotropic(ivec3(0, 2, 2));
+    vec4 right = mipmapIsotropic(ivec3(4, 2, 2));
+    vec4 bottom = mipmapIsotropic(ivec3(2, 0, 2));
+    vec4 top = mipmapIsotropic(ivec3(2, 4, 2));
+    vec4 near = mipmapIsotropic(ivec3(2, 2, 0));
+    vec4 far = mipmapIsotropic(ivec3(2, 2, 4));
+
     memoryBarrier();
 
-    imageStore(brickPoolValues, brickAddress + ivec3(1, 1, 1), color);
+    imageStore(brickPoolValues, brickAddress + ivec3(0,1,1), left);
+    imageStore(brickPoolValues, brickAddress + ivec3(2,1,1), right);
+    imageStore(brickPoolValues, brickAddress + ivec3(1,0,1), bottom);
+    imageStore(brickPoolValues, brickAddress + ivec3(1,2,1), top);
+    imageStore(brickPoolValues, brickAddress + ivec3(1,1,0), near);
+    imageStore(brickPoolValues, brickAddress + ivec3(1,1,2), far);
 }

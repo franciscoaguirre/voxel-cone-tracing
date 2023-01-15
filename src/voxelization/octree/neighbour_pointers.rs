@@ -1,9 +1,12 @@
 use c_str_macro::c_str;
 use gl::types::*;
+use log::debug;
 
 use crate::{
-    config::CONFIG, constants::WORKING_GROUP_SIZE, rendering::shader::Shader,
-    voxelization::helpers::bind_image_texture,
+    config::CONFIG,
+    constants::WORKING_GROUP_SIZE,
+    rendering::shader::Shader,
+    voxelization::{helpers, octree},
 };
 
 use super::common::{
@@ -32,33 +35,33 @@ impl NeighbourPointersPass {
 
         // Set uniforms
         self.shader
-            .set_uint(c_str!("voxel_dimension"), CONFIG.voxel_dimension as u32);
+            .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension as u32);
         self.shader
-            .set_uint(c_str!("current_octree_level"), current_octree_level);
+            .set_uint(c_str!("octreeLevel"), current_octree_level);
 
         // Bind images
-        bind_image_texture(0, OCTREE_NODE_POOL.0, gl::READ_WRITE, gl::R32UI);
-        bind_image_texture(1, self.voxel_positions_texture, gl::READ_WRITE, gl::R32UI);
+        helpers::bind_image_texture(0, OCTREE_NODE_POOL.0, gl::WRITE_ONLY, gl::R32UI);
+        helpers::bind_image_texture(1, self.voxel_positions_texture, gl::WRITE_ONLY, gl::R32UI);
 
-        bind_image_texture(2, OCTREE_NODE_POOL_NEIGHBOUR_X.0, gl::READ_WRITE, gl::R32UI);
-        bind_image_texture(
+        helpers::bind_image_texture(2, OCTREE_NODE_POOL_NEIGHBOUR_X.0, gl::WRITE_ONLY, gl::R32UI);
+        helpers::bind_image_texture(
             3,
             OCTREE_NODE_POOL_NEIGHBOUR_X_NEGATIVE.0,
-            gl::READ_WRITE,
+            gl::WRITE_ONLY,
             gl::R32UI,
         );
-        bind_image_texture(4, OCTREE_NODE_POOL_NEIGHBOUR_Y.0, gl::READ_WRITE, gl::R32UI);
-        bind_image_texture(
+        helpers::bind_image_texture(4, OCTREE_NODE_POOL_NEIGHBOUR_Y.0, gl::WRITE_ONLY, gl::R32UI);
+        helpers::bind_image_texture(
             5,
             OCTREE_NODE_POOL_NEIGHBOUR_Y_NEGATIVE.0,
-            gl::READ_WRITE,
+            gl::WRITE_ONLY,
             gl::R32UI,
         );
-        bind_image_texture(6, OCTREE_NODE_POOL_NEIGHBOUR_Z.0, gl::READ_WRITE, gl::R32UI);
-        bind_image_texture(
+        helpers::bind_image_texture(6, OCTREE_NODE_POOL_NEIGHBOUR_Z.0, gl::WRITE_ONLY, gl::R32UI);
+        helpers::bind_image_texture(
             7,
             OCTREE_NODE_POOL_NEIGHBOUR_Z_NEGATIVE.0,
-            gl::READ_WRITE,
+            gl::WRITE_ONLY,
             gl::R32UI,
         );
 

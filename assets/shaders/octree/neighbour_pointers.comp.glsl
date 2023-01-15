@@ -16,22 +16,22 @@ uniform layout(binding = 5, r32ui) uimageBuffer node_pool_neighbours_y_negative;
 uniform layout(binding = 6, r32ui) uimageBuffer node_pool_neighbours_z;
 uniform layout(binding = 7, r32ui) uimageBuffer node_pool_neighbours_z_negative;
 
-uniform uint current_octree_level;
-uniform uint voxel_dimension;
+uniform uint octreeLevel;
+uniform uint voxelDimension;
 
 void main() {
     const uint thread_index = gl_GlobalInvocationID.x;
     uvec4 voxel_position = imageLoad(voxel_positions, int(thread_index));
-    vec3 normalized_voxel_position = vec3(voxel_position) / float(voxel_dimension);
+    vec3 normalized_voxel_position = vec3(voxel_position) / float(voxelDimension);
 
 	// In voxel position coordinates, the octree level
 	// defines a different node size, which we need as a step to reach
 	// possible neighbours.
-    float step = 1.0 / float(pow(2.0, float(current_octree_level)));
+    float step = 1.0 / float(pow(2.0, float(octreeLevel)));
 	
 	int node_address = traverse_octree(
 		normalized_voxel_position,
-		current_octree_level,
+		octreeLevel,
 		node_pool
 	);
 	
@@ -42,49 +42,49 @@ void main() {
 	int neighbour_z = 0;
 	int neighbour_z_negative = 0;
 	
-	uint neighbour_level = 0;
+	uint neighborLevel = 0;
 	
 	// TODO: Check if this shouldn't be `<=`
 	// If this is 1, it means that the voxel is at the very edge
 	// of the grid. Is this possible? If it is, do we still represent
 	// the voxel on a brick?
-	if (voxel_position.x + step < voxel_dimension) {
+	if (normalized_voxel_position.x + step < 1) {
 		neighbour_x = traverse_octree_returning_level(
 			normalized_voxel_position + vec3(step, 0, 0),
-			current_octree_level,
+			octreeLevel,
 			node_pool,
-			neighbour_level
+			neighborLevel
 		);
 		
 		// It is possible that the current voxel fragment's neighbour
 		// is on another level, one that ended before the max level.
-		if (neighbour_level != current_octree_level) {
+		if (neighborLevel != octreeLevel) {
 			neighbour_x = 0;
 		}
 	}
 	
-	if (voxel_position.y + step < voxel_dimension) {
+	if (voxel_position.y + step < voxelDimension) {
 		neighbour_y = traverse_octree_returning_level(
 			normalized_voxel_position + uvec3(0, step, 0),
-			current_octree_level,
+			octreeLevel,
 			node_pool,
-			neighbour_level
+			neighborLevel
 		);
 		
-		if (neighbour_level != current_octree_level) {
+		if (neighborLevel != octreeLevel) {
 			neighbour_y = 0;
 		}
 	}
 
-	if (voxel_position.z + step < voxel_dimension) {
+	if (voxel_position.z + step < voxelDimension) {
 		neighbour_z = traverse_octree_returning_level(
 			normalized_voxel_position + uvec3(0, 0, step),
-			current_octree_level,
+			octreeLevel,
 			node_pool,
-			neighbour_level
+			neighborLevel
 		);
 		
-		if (neighbour_level != current_octree_level) {
+		if (neighborLevel != octreeLevel) {
 			neighbour_z = 0;
 		}
 	}
@@ -92,12 +92,12 @@ void main() {
 	if (voxel_position.x - step > 0) {
 		neighbour_x_negative = traverse_octree_returning_level(
 			normalized_voxel_position - uvec3(step, 0, 0),
-			current_octree_level,
+			octreeLevel,
 			node_pool,
-			neighbour_level
+			neighborLevel
 		);
 		
-		if (neighbour_level != current_octree_level) {
+		if (neighborLevel != octreeLevel) {
 			neighbour_x_negative = 0;
 		}
 	}
@@ -105,12 +105,12 @@ void main() {
 	if (voxel_position.y - step > 0) {
 		neighbour_y_negative = traverse_octree_returning_level(
 			normalized_voxel_position - uvec3(0, step, 0),
-			current_octree_level,
+			octreeLevel,
 			node_pool,
-			neighbour_level
+			neighborLevel
 		);
 		
-		if (neighbour_level != current_octree_level) {
+		if (neighborLevel != octreeLevel) {
 			neighbour_y_negative = 0;
 		}
 	}
@@ -118,12 +118,12 @@ void main() {
 	if (voxel_position.z - step > 0) {
 		neighbour_z_negative = traverse_octree_returning_level(
 			normalized_voxel_position - uvec3(0, 0, step),
-			current_octree_level,
+			octreeLevel,
 			node_pool,
-			neighbour_level
+			neighborLevel
 		);
 		
-		if (neighbour_level != current_octree_level) {
+		if (neighborLevel != octreeLevel) {
 			neighbour_z_negative = 0;
 		}
 	}
