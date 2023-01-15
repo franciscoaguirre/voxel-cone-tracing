@@ -27,9 +27,7 @@ impl MipmapFacesPass {
     pub unsafe fn run(&self, level: u32) {
         self.shader.use_program();
 
-        self.shader
-            .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
-        self.shader.set_uint(c_str!("maxOctreeLevel"), level);
+        self.shader.set_uint(c_str!("octreeLevel"), level);
 
         helpers::bind_image_texture(0, OCTREE_NODE_POOL.0, gl::READ_ONLY, gl::R32UI);
         helpers::bind_image_texture(

@@ -12,10 +12,7 @@ uniform layout(binding = 3, r32ui) uimageBuffer levelStartIndices;
 uniform uint octreeLevel;
 
 #include "./_helpers.glsl"
-#include "./_traversalHelpers.glsl"
-#include "./_octreeTraversal.glsl"
 #include "./_mipmapUtil.glsl"
-
 #include "./_threadNodeUtil.glsl"
 
 void main() {

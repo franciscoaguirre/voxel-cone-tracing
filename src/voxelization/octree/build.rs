@@ -13,6 +13,8 @@ use super::{
     },
     helpers,
     mipmap_center::MipmapCenterPass,
+    mipmap_corners::MipmapCornersPass,
+    mipmap_edges::MipmapEdgesPass,
     mipmap_faces::MipmapFacesPass,
 };
 use crate::{
@@ -56,8 +58,10 @@ pub unsafe fn build_octree(
     );
     // let spread_leaf_bricks_pass = SpreadLeafBricksPass::init();
     let border_transfer_pass = BorderTransferPass::init();
-    // let mipmap_center_pass = MipmapCenterPass::init();
-    // let mipmap_faces_pass = MipmapFacesPass::init();
+    let mipmap_center_pass = MipmapCenterPass::init();
+    let mipmap_faces_pass = MipmapFacesPass::init();
+    let mipmap_corners_pass = MipmapCornersPass::init();
+    let mipmap_edges_pass = MipmapEdgesPass::init();
 
     let mut octree_level_start_indices = Vec::with_capacity(CONFIG.octree_levels as usize);
 
@@ -125,10 +129,18 @@ pub unsafe fn build_octree(
     border_transfer_pass.run(Y_AXIS);
     border_transfer_pass.run(Z_AXIS);
 
-    // for level in (0..CONFIG.octree_levels - 1).rev() {
-    //     mipmap_center_pass.run(level);
-    //     mipmap_faces_pass.run(level);
-    // }
+    for level in (0..CONFIG.octree_levels - 1).rev() {
+        mipmap_center_pass.run(level);
+        mipmap_faces_pass.run(level);
+        mipmap_corners_pass.run(level);
+        mipmap_edges_pass.run(level);
+
+        if level > 0 {
+            border_transfer_pass.run(X_AXIS);
+            border_transfer_pass.run(Y_AXIS);
+            border_transfer_pass.run(Z_AXIS);
+        }
+    }
 }
 
 unsafe fn initialize_common_textures(max_node_pool_size_in_bytes: usize) {

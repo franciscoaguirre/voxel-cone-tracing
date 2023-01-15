@@ -96,5 +96,6 @@ pub unsafe fn render_octree(
     gl::GenVertexArrays(1, &mut vao);
     gl::BindVertexArray(vao);
 
-    gl::DrawArrays(gl::POINTS, 0, number_of_voxel_fragments as i32);
+    // gl::DrawArrays(gl::POINTS, 0, number_of_voxel_fragments as i32);
+    gl::DrawArrays(gl::POINTS, 0, 1);
 }

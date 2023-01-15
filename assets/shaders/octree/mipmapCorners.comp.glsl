@@ -12,10 +12,7 @@ uniform layout(binding = 3, r32ui) uimageBuffer levelStartIndices;
 uniform uint octreeLevel;
 
 #include "./_helpers.glsl"
-#include "./_traversalHelpers.glsl"
-#include "./_octreeTraversal.glsl"
 #include "./_mipmapUtil.glsl"
-
 #include "./_threadNodeUtil.glsl"
 
 void main() {
@@ -41,12 +38,12 @@ void main() {
   
     memoryBarrier();
   
-    imageStore(brickPool_value, brickAddress + ivec3(2, 2, 0), nearRightTop);
-    imageStore(brickPool_value, brickAddress + ivec3(2, 0, 0), nearRightBottom);
-    imageStore(brickPool_value, brickAddress + ivec3(0, 2, 0), nearLeftTop);
-    imageStore(brickPool_value, brickAddress + ivec3(0, 0, 0), nearLeftBottom);
-    imageStore(brickPool_value, brickAddress + ivec3(2, 2, 2), farRightTop);
-    imageStore(brickPool_value, brickAddress + ivec3(2, 0, 2), farRightBottom);
-    imageStore(brickPool_value, brickAddress + ivec3(0, 2, 2), farLeftTop);
-    imageStore(brickPool_value, brickAddress + ivec3(0, 0, 2), farLeftBottom);
+    imageStore(brickPoolValues, brickAddress + ivec3(2, 2, 0), nearRightTop);
+    imageStore(brickPoolValues, brickAddress + ivec3(2, 0, 0), nearRightBottom);
+    imageStore(brickPoolValues, brickAddress + ivec3(0, 2, 0), nearLeftTop);
+    imageStore(brickPoolValues, brickAddress + ivec3(0, 0, 0), nearLeftBottom);
+    imageStore(brickPoolValues, brickAddress + ivec3(2, 2, 2), farRightTop);
+    imageStore(brickPoolValues, brickAddress + ivec3(2, 0, 2), farRightBottom);
+    imageStore(brickPoolValues, brickAddress + ivec3(0, 2, 2), farLeftTop);
+    imageStore(brickPoolValues, brickAddress + ivec3(0, 0, 2), farLeftBottom);
 }
