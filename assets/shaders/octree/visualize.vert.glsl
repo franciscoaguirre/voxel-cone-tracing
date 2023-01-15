@@ -2,8 +2,6 @@
 
 #include "./_constants.glsl"
 #include "./_helpers.glsl"
-#include "./_traversal_helpers.glsl"
-#include "./_octree_traversal.glsl"
 
 uniform uint octreeLevels;
 uniform bool showEmptyNodes;
@@ -20,6 +18,9 @@ out int nonEmptyBranch;
 out vec4 nodeColor;
 out ivec3 geom_brickCoordinates;
 
+#include "./_traversalHelpers.glsl"
+#include "./_octreeTraversal.glsl"
+
 void main() {
   int threadIndex = gl_VertexID;
 
@@ -31,10 +32,9 @@ void main() {
   uint tileIndex;
   float halfNodeSize;
   vec3 nodeCoordinates;
-  int nodeIndex = traverse_octree_returning_node_coordinates(
+  int nodeIndex = traverseOctreeReturningNodeCoordinates(
     vec3(voxelFragmentPosition) / float(voxelDimension),
     octreeLevels,
-    nodePool,
     halfNodeSize,
     nodeCoordinates,
     tileIndex

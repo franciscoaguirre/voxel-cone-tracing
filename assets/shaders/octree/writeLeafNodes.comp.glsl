@@ -2,8 +2,6 @@
 
 #include "./_constants.glsl"
 #include "./_helpers.glsl"
-#include "./_traversal_helpers.glsl"
-#include "./_octree_traversal.glsl"
 
 layout (local_size_x = WORKING_GROUP_SIZE, local_size_y = 1, local_size_z = 1) in;
 
@@ -16,6 +14,9 @@ uniform layout(binding = 4, r32ui) uimageBuffer nodePool;
 uniform uint voxelDimension;
 uniform uint octreeLevel;
 
+#include "./_traversalHelpers.glsl"
+#include "./_octreeTraversal.glsl"
+
 void storeInLeaf(vec3 voxelPosition, int nodeAddress, vec4 voxelColor, float halfNodeSize, vec3 nodeCoordinates) {
     uint brickCoordinatesCompact = imageLoad(nodePoolBrickPointers, nodeAddress).r;
     memoryBarrier();
@@ -27,7 +28,7 @@ void storeInLeaf(vec3 voxelPosition, int nodeAddress, vec4 voxelColor, float hal
 
     // NOTE: We find out which subsection the current voxel occupies inside the node
     // Remember leaves don't have nodes, so leaf bricks effectively have 2x2x2 voxels.
-    bvec3 subsection = calculate_node_subsection(nodeCoordinates, halfNodeSize, voxelPosition);
+    bvec3 subsection = calculateNodeSubsection(nodeCoordinates, halfNodeSize, voxelPosition);
     uint offset = uint(subsection[0]) + uint(subsection[1]) * 2 + uint(subsection[2]) * 4;
 
     imageStore(
@@ -53,10 +54,9 @@ void main() {
     float halfNodeSize;
     vec3 nodeCoordinates;
     // We send the voxel position to traverse the octree and find the leaf
-    int nodeAddress = traverse_octree_returning_node_coordinates(
+    int nodeAddress = traverseOctreeReturningNodeCoordinates(
         normalizedVoxelPosition,
         octreeLevel,
-        nodePool,
         halfNodeSize,
         nodeCoordinates,
         _tileIndex

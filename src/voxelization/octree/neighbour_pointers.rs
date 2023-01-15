@@ -24,7 +24,7 @@ pub struct NeighbourPointersPass {
 impl NeighbourPointersPass {
     pub fn init(voxel_positions_texture: GLuint, number_of_voxel_fragments: u32) -> Self {
         Self {
-            shader: Shader::new_compute("assets/shaders/octree/neighbour_pointers.comp.glsl"),
+            shader: Shader::new_compute("assets/shaders/octree/neighborPointers.comp.glsl"),
             voxel_positions_texture,
             number_of_voxel_fragments,
         }

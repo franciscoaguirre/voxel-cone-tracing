@@ -13,7 +13,7 @@ pub struct AllocateNodesPass {
 impl AllocateNodesPass {
     pub fn init(allocated_tiles_counter: u32, number_of_voxel_fragments: u32) -> Self {
         Self {
-            shader: Shader::new_compute("assets/shaders/octree/allocate_nodes.comp.glsl"),
+            shader: Shader::new_compute("assets/shaders/octree/allocateNodes.comp.glsl"),
             allocated_tiles_counter,
             number_of_voxel_fragments,
         }
@@ -23,9 +23,9 @@ impl AllocateNodesPass {
         self.shader.use_program();
 
         self.shader
-            .set_int(c_str!("first_tile_in_level"), first_tile_in_level);
+            .set_int(c_str!("firstTileInLevel"), first_tile_in_level);
         self.shader
-            .set_int(c_str!("first_free_tile"), first_free_tile);
+            .set_int(c_str!("firstFreeTile"), first_free_tile);
         gl::BindImageTexture(
             0,
             OCTREE_NODE_POOL.0,

@@ -13,7 +13,7 @@ pub struct AllocateBricksPass {
 impl AllocateBricksPass {
     pub fn init(next_free_brick_counter: u32) -> Self {
         Self {
-            shader: Shader::new_compute("assets/shaders/octree/allocate_bricks.comp.glsl"),
+            shader: Shader::new_compute("assets/shaders/octree/allocateBricks.comp.glsl"),
             next_free_brick_counter,
         }
     }
@@ -22,7 +22,7 @@ impl AllocateBricksPass {
         self.shader.use_program();
 
         self.shader.set_uint(
-            c_str!("brick_pool_resolution"),
+            c_str!("brickPoolResolution"),
             CONFIG.brick_pool_resolution as u32,
         );
 

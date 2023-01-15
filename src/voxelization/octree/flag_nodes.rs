@@ -16,7 +16,7 @@ pub struct FlagNodesPass {
 impl FlagNodesPass {
     pub fn init(number_of_voxel_fragments: u32, voxel_position_texture: GLuint) -> Self {
         Self {
-            shader: Shader::new_compute("assets/shaders/octree/flag_nodes.comp.glsl"),
+            shader: Shader::new_compute("assets/shaders/octree/flagNodes.comp.glsl"),
             number_of_voxel_fragments,
             voxel_position_texture,
         }
