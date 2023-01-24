@@ -12,8 +12,8 @@ uniform layout(binding = 3, r32ui) uimageBuffer levelStartIndices;
 uniform uint octreeLevel;
 
 #include "./_helpers.glsl"
-#include "./_mipmapUtil.glsl"
 #include "./_threadNodeUtil.glsl"
+#include "./_mipmapUtil.glsl"
 
 void main() {
     int nodeAddress = getThreadNode();
@@ -24,7 +24,6 @@ void main() {
 
     ivec3 brickAddress = ivec3(uintXYZ10ToVec3(imageLoad(nodePoolBrickPointers, int(nodeAddress)).r));
 
-    uint childAddress = imageLoad(nodePool, int(nodeAddress)).r * NODES_PER_TILE;
     loadChildTile(int(childAddress));
 
     vec4 nearRightTop = mipmapIsotropic(ivec3(4, 4, 0));

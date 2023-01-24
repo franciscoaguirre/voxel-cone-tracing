@@ -53,11 +53,18 @@ impl BorderTransferPass {
         helpers::bind_3d_image_texture(2, BRICK_POOL_COLORS_TEXTURE, gl::READ_WRITE, gl::RGBA8);
         helpers::bind_image_texture(3, OCTREE_LEVEL_START_INDICES.0, gl::READ_ONLY, gl::R32UI);
 
+        let (debug_texture, debug_texture_buffer) = helpers::generate_texture_buffer(1, gl::R32F, 10_f32);
+        helpers::bind_image_texture(4, debug_texture, gl::WRITE_ONLY, gl::R32F);
+
         let tiles_in_level = TILES_PER_LEVEL[octree_level as usize];
         let nodes_in_level = tiles_in_level * NODES_PER_TILE;
         let groups_count = (nodes_in_level as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
 
-        self.shader.dispatch(groups_count);
+        // self.shader.dispatch(groups_count);
+        self.shader.dispatch(1);
         self.shader.wait();
+
+        let values = helpers::get_values_from_texture_buffer(debug_texture_buffer, 1, 20_f32);
+        dbg!(&values);
     }
 }

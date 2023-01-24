@@ -43,7 +43,7 @@ fn load_config() -> Config {
     let input_path = "config.ron";
     let file = File::open(&input_path).expect("Missing config file!");
     let mut config: Config = from_reader(file).expect("Config file malformed!");
-    config.octree_levels = config.voxel_dimension.pow(3).log2() / 8_u32.log2();
+    config.octree_levels = config.voxel_dimension.pow(3).ilog2() / 8_u32.ilog2();
     info!("Configuration used: {:#?}", config);
     config
 }

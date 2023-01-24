@@ -12,8 +12,8 @@ uniform layout(binding = 3, r32ui) uimageBuffer levelStartIndices;
 uniform uint octreeLevel;
 
 #include "./_helpers.glsl"
-#include "./_mipmapUtil.glsl"
 #include "./_threadNodeUtil.glsl"
+#include "./_mipmapUtil.glsl"
 
 void main() {
     int nodeAddress = getThreadNode();

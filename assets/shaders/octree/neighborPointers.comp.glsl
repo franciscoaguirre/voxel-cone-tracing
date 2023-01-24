@@ -2,7 +2,7 @@
 
 #include "./_constants.glsl"
 
-layout (local_size_x = WORKING_GROUP_SIZE, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 uniform layout(binding = 0, r32ui) uimageBuffer nodePool;
 uniform layout(binding = 1, rgb10_a2ui) uimageBuffer voxelPositions;
@@ -13,6 +13,7 @@ uniform layout(binding = 4, r32ui) uimageBuffer nodePoolNeighborsY;
 uniform layout(binding = 5, r32ui) uimageBuffer nodePoolNeighborsYNegative;
 uniform layout(binding = 6, r32ui) uimageBuffer nodePoolNeighborsZ;
 uniform layout(binding = 7, r32ui) uimageBuffer nodePoolNeighborsZNegative;
+uniform layout(binding = 8, r32f) imageBuffer debugBuffer;
 
 uniform uint octreeLevel;
 uniform uint voxelDimension;
@@ -28,7 +29,8 @@ void main() {
 	// In voxel position coordinates, the octree level
 	// defines a different node size, which we need as a step to reach
 	// possible neighbours.
-    float step = 1.0 / float(pow(2.0, float(octreeLevel)));
+    float step = (1.0 / float(pow(2.0, float(octreeLevel))));
+	imageStore(debugBuffer, 7, vec4(float(step), 0, 0, 0));
 	
 	int nodeAddress = traverseOctree(
 		normalizedVoxelPosition,
@@ -54,7 +56,7 @@ void main() {
 			octreeLevel,
 			neighborLevel
 		);
-		
+
 		// It is possible that the current voxel fragment's neighbour
 		// is on another level, one that ended before the max level.
 		if (neighborLevel != octreeLevel) {
@@ -62,25 +64,33 @@ void main() {
 		}
 	}
 	
-	if (normalizedVoxelPosition.y + step < voxelDimension) {
+	if (normalizedVoxelPosition.y + step < 1) {
 		neighborY = traverseOctreeReturningLevel(
 			normalizedVoxelPosition + uvec3(0, step, 0),
 			octreeLevel,
 			neighborLevel
 		);
+
+		imageStore(debugBuffer, 0, vec4(float(neighborY), 0, 0, 0));
+		imageStore(debugBuffer, 1, vec4(float(octreeLevel), 0, 0, 0));
+		imageStore(debugBuffer, 2, vec4(float(neighborLevel), 0, 0, 0));
+		imageStore(debugBuffer, 3, vec4(float(nodeAddress), 0, 0, 0));
+		imageStore(debugBuffer, 4, vec4(float(voxelPosition.x), 0, 0, 0));
+		imageStore(debugBuffer, 5, vec4(float(voxelPosition.y), 0, 0, 0));
+		imageStore(debugBuffer, 6, vec4(float(voxelPosition.z), 0, 0, 0));
 		
 		if (neighborLevel != octreeLevel) {
 			neighborY = 0;
 		}
 	}
 
-	if (normalizedVoxelPosition.z + step < voxelDimension) {
+	if (normalizedVoxelPosition.z + step < 1) {
 		neighborZ = traverseOctreeReturningLevel(
 			normalizedVoxelPosition + uvec3(0, 0, step),
 			octreeLevel,
 			neighborLevel
 		);
-		
+
 		if (neighborLevel != octreeLevel) {
 			neighborZ = 0;
 		}

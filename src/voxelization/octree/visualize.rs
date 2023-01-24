@@ -15,18 +15,18 @@ use crate::voxelization::octree::common::{
 #[derive(Debug, Clone, Copy)]
 pub enum ShowBricks {
     DontShow,
-    ShowCorners,
-    ShowEdges,
-    ShowCenters,
+    ShowZ0,
+    ShowZ1,
+    ShowZ2,
 }
 
 impl ShowBricks {
     pub fn next(self) -> Self {
         match self {
-            Self::DontShow => Self::ShowCorners,
-            Self::ShowCorners => Self::ShowEdges,
-            Self::ShowEdges => Self::ShowCenters,
-            Self::ShowCenters => Self::DontShow,
+            Self::DontShow => Self::ShowZ0,
+            Self::ShowZ0 => Self::ShowZ1,
+            Self::ShowZ1 => Self::ShowZ2,
+            Self::ShowZ2 => Self::DontShow,
         }
     }
 }
@@ -35,9 +35,9 @@ impl Into<u32> for ShowBricks {
     fn into(self) -> u32 {
         match self {
             Self::DontShow => 0,
-            Self::ShowCorners => 1,
-            Self::ShowEdges => 2,
-            Self::ShowCenters => 3,
+            Self::ShowZ0 => 1,
+            Self::ShowZ1 => 2,
+            Self::ShowZ2 => 3,
         }
     }
 }
@@ -46,9 +46,9 @@ impl fmt::Display for ShowBricks {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::DontShow => write!(f, "Not showing"),
-            Self::ShowCorners => write!(f, "Showing corners"),
-            Self::ShowEdges => write!(f, "Showing edges"),
-            Self::ShowCenters => write!(f, "Showing centers"),
+            Self::ShowZ0 => write!(f, "Showing z=0"),
+            Self::ShowZ1 => write!(f, "Showing z=1"),
+            Self::ShowZ2 => write!(f, "Showing z=2"),
         }
     }
 }
@@ -96,6 +96,6 @@ pub unsafe fn render_octree(
     gl::GenVertexArrays(1, &mut vao);
     gl::BindVertexArray(vao);
 
-    // gl::DrawArrays(gl::POINTS, 0, number_of_voxel_fragments as i32);
-    gl::DrawArrays(gl::POINTS, 0, 1);
+    gl::DrawArrays(gl::POINTS, 0, number_of_voxel_fragments as i32);
+    // gl::DrawArrays(gl::POINTS, 0, 1);
 }
