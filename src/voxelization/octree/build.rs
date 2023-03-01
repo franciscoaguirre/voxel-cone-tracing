@@ -58,7 +58,7 @@ pub unsafe fn build_octree(
         voxel_colors_texture,
         number_of_voxel_fragments,
     );
-    // let spread_leaf_bricks_pass = SpreadLeafBricksPass::init();
+    let spread_leaf_bricks_pass = SpreadLeafBricksPass::init();
     let border_transfer_pass = BorderTransferPass::init();
     // let mipmap_center_pass = MipmapCenterPass::init();
     // let mipmap_faces_pass = MipmapFacesPass::init();
@@ -72,10 +72,6 @@ pub unsafe fn build_octree(
     octree_level_start_indices.push(first_node_in_level);
 
     for octree_level in 0..CONFIG.octree_levels {
-        if octree_level > 0 {
-            neighbour_pointers_pass.run(octree_level);
-        }
-
         flag_nodes_pass.run(octree_level);
         allocate_nodes_pass.run(first_node_in_level, first_free_node);
 
@@ -99,6 +95,7 @@ pub unsafe fn build_octree(
         store_node_positions_pass.run(octree_level, number_of_voxel_fragments);
     }
 
+    dbg!(&octree_level_start_indices);
     OCTREE_LEVEL_START_INDICES = voxelization::helpers::generate_texture_buffer_with_data(
         (CONFIG.octree_levels + 1) as usize,
         gl::R32UI,
@@ -116,7 +113,7 @@ pub unsafe fn build_octree(
 
     // let size = brick_pool_colors_texture_size_one_dimension.pow(3);
 
-    // write_leaf_nodes_pass.run();
+    write_leaf_nodes_pass.run();
 
     // spread_leaf_bricks_pass.run();
 
@@ -136,6 +133,7 @@ pub unsafe fn build_octree(
     //         // border_transfer_pass.run(Z_AXIS);
     //     }
     // }
+    //spread_leaf_bricks_pass.run();
 }
 
 unsafe fn initialize_common_textures(max_node_pool_size_in_bytes: usize) {
