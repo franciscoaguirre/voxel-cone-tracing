@@ -23,6 +23,7 @@ pub extern "system" fn gl_debug_output_callback(
 
     println!("---------------");
     let message = unsafe { CStr::from_ptr(message).to_str().unwrap() };
+
     println!("Debug message ({}): {}", id, message);
     match source {
         gl::DEBUG_SOURCE_API => println!("Source: API"),

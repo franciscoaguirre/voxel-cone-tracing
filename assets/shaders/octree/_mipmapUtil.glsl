@@ -16,7 +16,7 @@ const uvec3 childOffsets[8] = {
 };
 
 // const float gaussianWeights[4] = { 0.125, 0.0625, 0.03125, 0.015625 };
-const float gaussianWeight[4] = { 0.25, 0.125, 0.0625, 0.03125 };
+const float gaussianWeights[4] = { 0.25, 0.125, 0.0625, 0.03125 };
 
 void loadChildTile(in int tileAddress) {
     for (int i = 0; i < 8; i++) {

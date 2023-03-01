@@ -1,6 +1,7 @@
 extern crate c_str_macro;
 
 use std::env;
+use std::ffi::CStr;
 use std::path::Path;
 
 use c_str_macro::c_str;

@@ -23,6 +23,7 @@ impl Shader {
         let short_vertex_path = &vertex_path[15..];
         info!("Compiling shader in path {short_vertex_path}");
         unsafe {
+            println!("About to compile {vertex_path} and {fragment_path}");
             shader.id = Shader::compile_shaders(&vertex_code, &fragment_code, None);
         }
 
@@ -43,6 +44,7 @@ impl Shader {
         let short_vertex_path = &vertex_path[15..];
         info!("Compiling shader in path {short_vertex_path}");
         unsafe {
+            println!("About to compile {vertex_path}, {geometry_path} and {fragment_path}");
             shader.id = Shader::compile_shaders(&vertex_code, &fragment_code, Some(&geometry_code));
         }
 

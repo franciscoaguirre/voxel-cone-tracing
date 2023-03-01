@@ -1,9 +1,9 @@
 use c_str_macro::c_str;
 use gl::types::*;
 
-use crate::{config::CONFIG, constants::WORKING_GROUP_SIZE, rendering::shader::Shader};
+use crate::{config::CONFIG, constants::{CHILDREN_PER_NODE, WORKING_GROUP_SIZE}, rendering::shader::Shader};
 
-use super::common::{BRICK_POOL_COLORS_TEXTURE, OCTREE_NODE_POOL, OCTREE_NODE_POOL_BRICK_POINTERS};
+use super::common::{BRICK_POOL_COLORS_TEXTURE, OCTREE_NODE_POOL, OCTREE_NODE_POOL_BRICK_POINTERS, NODES_PER_LEVEL};
 
 pub struct WriteLeafNodesPass {
     shader: Shader,
@@ -28,11 +28,14 @@ impl WriteLeafNodesPass {
 
     pub unsafe fn run(&self) {
         self.shader.use_program();
+        let octree_level = CONFIG.octree_levels - 1;
 
         self.shader
             .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
         self.shader
-            .set_uint(c_str!("octreeLevel"), CONFIG.octree_levels - 1); // Last level
+            .set_uint(c_str!("octreeLevel"), octree_level); // Last level
+        self.shader
+            .set_uint(c_str!("number_of_voxel_fragments"), self.number_of_voxel_fragments);
 
         // Bind images
         gl::BindImageTexture(
@@ -85,9 +88,11 @@ impl WriteLeafNodesPass {
             gl::R32UI,
         );
 
-        let groups_count =
-            (self.number_of_voxel_fragments as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
+        let tiles_in_level = NODES_PER_LEVEL[octree_level as usize];
+        let nodes_in_level = tiles_in_level * CHILDREN_PER_NODE;
+        let groups_count = (nodes_in_level as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
 
+        dbg!(groups_count);
         self.shader.dispatch(groups_count);
         self.shader.wait();
     }
