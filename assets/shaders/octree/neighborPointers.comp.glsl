@@ -14,6 +14,7 @@ uniform layout(binding = 5, r32ui) uimageBuffer nodePoolNeighborsYNegative;
 uniform layout(binding = 6, r32ui) uimageBuffer nodePoolNeighborsZ;
 uniform layout(binding = 7, r32ui) uimageBuffer nodePoolNeighborsZNegative;
 uniform layout(binding = 8, r32f) imageBuffer debugBuffer;
+uniform layout(binding = 9, r32ui) readonly uimageBuffer levelStartIndices;
 
 uniform uint octreeLevel;
 uniform uint voxelDimension;
@@ -29,13 +30,21 @@ void main() {
 	// In voxel position coordinates, the octree level
 	// defines a different node size, which we need as a step to reach
 	// possible neighbours.
-    float step = (1.0 / float(pow(2.0, float(octreeLevel))));
-	imageStore(debugBuffer, 7, vec4(float(step), 0, 0, 0));
-	
-	int nodeAddress = traverseOctree(
-		normalizedVoxelPosition,
-		octreeLevel
-	);
+	// The step is halfNodeSize.
+    uint tileIndex;
+    float halfNodeSize;
+    vec3 nodeCoordinates;
+    int nodeAddress = traverseOctreeReturningNodeCoordinates(
+        normalizedVoxelPosition,
+        octreeLevel,
+        halfNodeSize,
+        nodeCoordinates, // Already normalized
+        tileIndex
+    );
+	float normalizedHalfNodeSize = halfNodeSize * 2.0;
+	vec3 nodeCoordinatesToRender = nodeCoordinates * 2.0 - vec3(1.0);
+	nodeCoordinatesToRender += normalizedHalfNodeSize;
+	nodeCoordinates += halfNodeSize;
 	
 	int neighborX = 0;
 	int neighborXNegative = 0;
@@ -50,9 +59,9 @@ void main() {
 	// If this is 1, it means that the voxel is at the very edge
 	// of the grid. Is this possible? If it is, do we still represent
 	// the voxel on a brick?
-	if (normalizedVoxelPosition.x + step < 1) {
+	if (normalizedVoxelPosition.x + halfNodeSize < 1) {
 		neighborX = traverseOctreeReturningLevel(
-			normalizedVoxelPosition + vec3(step, 0, 0),
+			normalizedVoxelPosition + vec3(halfNodeSize, 0, 0),
 			octreeLevel,
 			neighborLevel
 		);
@@ -64,9 +73,9 @@ void main() {
 		}
 	}
 	
-	if (normalizedVoxelPosition.y + step < 1) {
+	if (normalizedVoxelPosition.y + halfNodeSize < 1) {
 		neighborY = traverseOctreeReturningLevel(
-			normalizedVoxelPosition + uvec3(0, step, 0),
+			nodeCoordinates + uvec3(0, halfNodeSize, 0),
 			octreeLevel,
 			neighborLevel
 		);
@@ -75,18 +84,18 @@ void main() {
 		imageStore(debugBuffer, 1, vec4(float(octreeLevel), 0, 0, 0));
 		imageStore(debugBuffer, 2, vec4(float(neighborLevel), 0, 0, 0));
 		imageStore(debugBuffer, 3, vec4(float(nodeAddress), 0, 0, 0));
-		imageStore(debugBuffer, 4, vec4(float(voxelPosition.x), 0, 0, 0));
-		imageStore(debugBuffer, 5, vec4(float(voxelPosition.y), 0, 0, 0));
-		imageStore(debugBuffer, 6, vec4(float(voxelPosition.z), 0, 0, 0));
+		imageStore(debugBuffer, 4, vec4(float(nodeCoordinatesToRender.x), 0, 0, 0));
+		imageStore(debugBuffer, 5, vec4(float(nodeCoordinatesToRender.y), 0, 0, 0));
+		imageStore(debugBuffer, 6, vec4(float(nodeCoordinatesToRender.z), 0, 0, 0));
 		
 		if (neighborLevel != octreeLevel) {
 			neighborY = 0;
 		}
 	}
 
-	if (normalizedVoxelPosition.z + step < 1) {
+	if (normalizedVoxelPosition.z + halfNodeSize < 1) {
 		neighborZ = traverseOctreeReturningLevel(
-			normalizedVoxelPosition + uvec3(0, 0, step),
+			normalizedVoxelPosition + uvec3(0, 0, halfNodeSize),
 			octreeLevel,
 			neighborLevel
 		);
@@ -96,9 +105,9 @@ void main() {
 		}
 	}
 
-	if (normalizedVoxelPosition.x - step > 0) {
+	if (normalizedVoxelPosition.x - halfNodeSize > 0) {
 		neighborXNegative = traverseOctreeReturningLevel(
-			normalizedVoxelPosition - uvec3(step, 0, 0),
+			normalizedVoxelPosition - uvec3(halfNodeSize, 0, 0),
 			octreeLevel,
 			neighborLevel
 		);
@@ -108,9 +117,9 @@ void main() {
 		}
 	}
 
-	if (normalizedVoxelPosition.y - step > 0) {
+	if (normalizedVoxelPosition.y - halfNodeSize > 0) {
 		neighborYNegative = traverseOctreeReturningLevel(
-			normalizedVoxelPosition - uvec3(0, step, 0),
+			normalizedVoxelPosition - uvec3(0, halfNodeSize, 0),
 			octreeLevel,
 			neighborLevel
 		);
@@ -120,9 +129,9 @@ void main() {
 		}
 	}
 
-	if (normalizedVoxelPosition.z - step > 0) {
+	if (normalizedVoxelPosition.z - halfNodeSize > 0) {
 		neighborZNegative = traverseOctreeReturningLevel(
-			normalizedVoxelPosition - uvec3(0, 0, step),
+			normalizedVoxelPosition - uvec3(0, 0, halfNodeSize),
 			octreeLevel,
 			neighborLevel
 		);

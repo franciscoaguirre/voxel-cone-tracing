@@ -8,7 +8,7 @@ use c_str_macro::c_str;
 
 use gl::types::*;
 
-static mut VOXEL_POSITIONS: (GLuint, GLuint) = (0, 0);
+pub static mut VOXEL_POSITIONS: (GLuint, GLuint) = (0, 0);
 static mut VOXEL_COLORS: (GLuint, GLuint) = (0, 0);
 static mut VOXEL_NORMALS: (GLuint, GLuint) = (0, 0);
 

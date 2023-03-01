@@ -14,6 +14,7 @@ mod mipmap_edges;
 mod mipmap_faces;
 mod neighbour_pointers;
 mod spread_leaf_bricks;
+mod store_node_positions;
 mod write_leaf_nodes;
 
 pub use build::build_octree;

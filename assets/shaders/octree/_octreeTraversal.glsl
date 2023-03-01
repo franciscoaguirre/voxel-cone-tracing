@@ -155,8 +155,6 @@ int traverseOctreeReturningLevel(
     currentHalfNodeSize
   );
 
-  found_on_level = octreeLevels;
-
   for (uint i = 0; i < octreeLevels; i++)
   {
     currentTileIndex = imageLoad(nodePool, int(currentNodeIndex)).r;

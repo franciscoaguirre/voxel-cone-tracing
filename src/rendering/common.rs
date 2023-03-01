@@ -1,6 +1,6 @@
-use std::{ptr, sync::mpsc::Receiver};
+use std::{ffi::CStr, ptr, sync::mpsc::Receiver};
 
-use glfw::{Action, Context, Glfw, Key, Window, WindowEvent};
+use egui_glfw_gl::glfw::{self, Action, Context, Glfw, Key, Window, WindowEvent};
 use log::info;
 
 use super::camera::{Camera, Camera_Movement};
@@ -26,11 +26,13 @@ pub unsafe fn setup_glfw(debug: bool) -> (Glfw, Window, Receiver<(f64, WindowEve
         .expect("Failed to create GLFW window");
 
     window.make_current();
+    window.set_char_polling(true);
     window.set_key_polling(true);
-    window.set_framebuffer_size_polling(true);
     window.set_cursor_pos_polling(true);
     window.set_scroll_polling(true);
+    window.set_mouse_button_polling(true);
     window.set_cursor_mode(glfw::CursorMode::Disabled);
+    glfw.set_swap_interval(glfw::SwapInterval::Sync(1));
 
     // GL: Load all OpenGL function pointers
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
@@ -93,11 +95,7 @@ pub fn process_events(
     }
 }
 
-pub fn process_input(window: &mut glfw::Window, delta_time: f32, camera: &mut Camera) {
-    if window.get_key(Key::Escape) == Action::Press {
-        window.set_should_close(true)
-    }
-
+pub fn process_camera_input(window: &mut glfw::Window, delta_time: f32, camera: &mut Camera) {
     if window.get_key(Key::W) == Action::Press {
         camera.ProcessKeyboard(Camera_Movement::Forward, delta_time);
     }
@@ -172,4 +170,22 @@ pub fn handle_showing_entities(
         }
         _ => {}
     }
+}
+
+pub unsafe fn show_device_information() {
+    let vendor = unsafe {
+        CStr::from_ptr(gl::GetString(gl::VENDOR) as *const i8)
+            .to_str()
+            .unwrap()
+    };
+    let renderer = unsafe {
+        CStr::from_ptr(gl::GetString(gl::RENDERER) as *const i8)
+            .to_str()
+            .unwrap()
+    };
+    info!("GPU in use: {vendor}, {renderer}");
+
+    let mut max_3d_texture_size = 0;
+    unsafe { gl::GetIntegerv(gl::MAX_3D_TEXTURE_SIZE, &mut max_3d_texture_size) };
+    info!("Maximum 3D texture size (by dimension): {max_3d_texture_size}");
 }
