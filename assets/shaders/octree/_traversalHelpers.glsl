@@ -1,5 +1,6 @@
 bool withinSecondHalf(float min, float halfNodeSize, float coordinatePosition) {
- return coordinatePosition >= min + halfNodeSize;
+  // TODO: Is this wrong?
+  return coordinatePosition >= min + halfNodeSize;
 }
 
 // Each node is divided into 8 subsections/children, for each coordinate the node is divided in two.

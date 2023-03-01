@@ -6,7 +6,10 @@ use crate::{
     config::CONFIG,
     constants::WORKING_GROUP_SIZE,
     rendering::shader::Shader,
-    voxelization::{helpers, octree},
+    voxelization::{
+        helpers,
+        octree::{self, common::OCTREE_LEVEL_START_INDICES},
+    },
 };
 
 use super::common::{
@@ -65,17 +68,20 @@ impl NeighbourPointersPass {
             gl::R32UI,
         );
 
-        let (debug_texture, debug_texture_buffer) = helpers::generate_texture_buffer(8, gl::R32F, 69_f32);
+        let (debug_texture, debug_texture_buffer) =
+            helpers::generate_texture_buffer(9, gl::R32F, 69_f32);
         helpers::bind_image_texture(8, debug_texture, gl::WRITE_ONLY, gl::R32F);
 
-        let groups_count =
-            (self.number_of_voxel_fragments as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
+        helpers::bind_image_texture(9, OCTREE_LEVEL_START_INDICES.0, gl::READ_ONLY, gl::R32UI);
+
+        // let groups_count =
+        //     (self.number_of_voxel_fragments as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
 
         // self.shader.dispatch(groups_count);
         self.shader.dispatch(1);
         self.shader.wait();
 
-        let values = helpers::get_values_from_texture_buffer(debug_texture_buffer, 8, 420_f32);
+        let values = helpers::get_values_from_texture_buffer(debug_texture_buffer, 9, 420_f32);
         dbg!(&values);
     }
 }

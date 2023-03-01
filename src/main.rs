@@ -1,33 +1,37 @@
-// Using unstable feature: integer logarithm
-#![feature(int_log)]
-
 extern crate c_str_macro;
 
 use std::env;
 use std::path::Path;
 
 use c_str_macro::c_str;
+use egui_glfw_gl::glfw::{self, Context};
 extern crate gl;
-extern crate glfw;
 use cgmath::{perspective, vec3, Deg, Matrix4, Point3};
-use glfw::Context;
 use log::info;
 use structopt::StructOpt;
 
 mod cli_arguments;
 mod config;
 mod constants;
+mod debug;
 mod helpers;
+mod menu;
 mod rendering;
 mod voxelization;
 
 use cli_arguments::Options;
 use config::CONFIG;
+use debug::VisualDebugger;
+use menu::Menu;
 use rendering::{camera::Camera, common, model::Model, shader::Shader};
 use voxelization::{
     octree::{build_octree, render_octree, visualize::ShowBricks},
     render_voxel_fragments,
 };
+
+use crate::voxelization::octree::common::OCTREE_NODE_POSITIONS;
+use crate::voxelization::voxelize::VOXEL_POSITIONS;
+use crate::{debug::r32ui_to_rgb10_a2ui, voxelization::octree::common::OCTREE_NODE_POOL};
 
 fn main() {
     let options = Options::from_args();
@@ -46,10 +50,16 @@ fn main() {
     let mut last_y: f32 = CONFIG.viewport_height as f32 / 2.0;
 
     // Timing setup
-    let mut delta_time: f32;
-    let mut last_frame: f32 = 0.0;
+    let mut delta_time: f64;
+    let mut last_frame: f64 = 0.0;
 
     let (mut glfw, mut window, events) = unsafe { common::setup_glfw(debug) };
+
+    unsafe {
+        common::show_device_information();
+    };
+
+    let mut menu = Menu::new(&mut window);
 
     let (render_model_shader, our_model) = unsafe {
         gl::Enable(gl::DEPTH_TEST);
@@ -79,6 +89,19 @@ fn main() {
         )
     };
 
+    let voxel_fragments = unsafe {
+        voxelization::helpers::get_values_from_texture_buffer(
+            VOXEL_POSITIONS.1,
+            number_of_voxel_fragments as usize,
+            0_u32,
+        )
+    };
+    let voxel_fragments: Vec<String> = voxel_fragments
+        .iter()
+        .map(|&voxel_fragment| r32ui_to_rgb10_a2ui(voxel_fragment))
+        .map(|(x, y, z)| format!("({}, {}, {})", x, y, z))
+        .collect();
+
     unsafe {
         build_octree(
             voxel_positions_texture,
@@ -86,6 +109,37 @@ fn main() {
             voxel_colors_texture,
         );
     }
+
+    let node_pool = unsafe {
+        voxelization::helpers::get_values_from_texture_buffer(
+            OCTREE_NODE_POOL.1,
+            number_of_voxel_fragments as usize,
+            0_u32,
+        )
+    };
+    dbg!(&node_pool[..20]);
+
+    let node_positions = unsafe {
+        voxelization::helpers::get_values_from_texture_buffer(
+            OCTREE_NODE_POSITIONS.1,
+            number_of_voxel_fragments as usize,
+            0_u32,
+        )
+    };
+    dbg!(&node_positions[..20]);
+
+    let node_positions: Vec<String> = node_positions
+        .iter()
+        .enumerate()
+        .map(|(index, node_position)| {
+            if index < 20 {
+                dbg!(*node_position);
+            }
+            r32ui_to_rgb10_a2ui(*node_position)
+        })
+        .map(|(x, y, z)| format!("({}, {}, {})", x, y, z))
+        .collect();
+    dbg!(&node_positions[..20]);
 
     // vao to render voxel fragment list
     let vao = unsafe {
@@ -114,46 +168,83 @@ fn main() {
     let mut show_model = false;
     let mut show_voxel_fragment_list = false;
     let mut show_octree = false;
+    let mut filter_text = String::new();
+    let mut node_filter_text = String::new();
+
+    let visual_debugger = VisualDebugger::init();
+    let mut selected_voxels: Vec<(u32, String)> = Vec::new();
+    let mut selected_nodes: Vec<(u32, String)> = Vec::new();
+    let mut points: Vec<Point3<f32>> = Vec::new();
+    let mut current_point_raw = String::new();
 
     // Render loop
     while !window.should_close() {
-        let current_frame = glfw.get_time() as f32;
+        let current_frame = glfw.get_time();
 
         delta_time = current_frame - last_frame;
         last_frame = current_frame;
 
-        for (_, event) in glfw::flush_messages(&events) {
-            // Events
-            common::process_events(
-                &event,
-                &mut first_mouse,
-                &mut last_x,
-                &mut last_y,
-                &mut camera,
-            );
-            common::handle_update_octree_level(
-                &event,
-                &mut current_octree_level,
-                &mut show_empty_nodes,
-                &mut show_bricks,
-            );
-            common::handle_showing_entities(
-                &event,
-                &mut show_model,
-                &mut show_voxel_fragment_list,
-                &mut show_octree,
-            );
-        }
-
-        // Input
-        common::process_input(&mut window, delta_time, &mut camera);
-
-        // Render
         unsafe {
             gl::ClearColor(0.2, 0.2, 0.2, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
             gl::Enable(gl::DEPTH_TEST);
+        }
 
+        for (_, event) in glfw::flush_messages(&events) {
+            // Events
+            if let glfw::WindowEvent::Key(glfw::Key::Escape, _, glfw::Action::Press, _) = event {
+                menu.toggle_showing(&mut window);
+            };
+            if !menu.is_showing() {
+                common::process_events(
+                    &event,
+                    &mut first_mouse,
+                    &mut last_x,
+                    &mut last_y,
+                    &mut camera,
+                );
+                common::handle_update_octree_level(
+                    &event,
+                    &mut current_octree_level,
+                    &mut show_empty_nodes,
+                    &mut show_bricks,
+                );
+                common::handle_showing_entities(
+                    &event,
+                    &mut show_model,
+                    &mut show_voxel_fragment_list,
+                    &mut show_octree,
+                );
+            }
+            menu.handle_event(event);
+        }
+
+        menu.begin_frame(current_frame);
+
+        // egui render
+        if menu.is_showing() {
+            // menu.create_clickable_list(
+            //     &voxel_fragments,
+            //     &mut selected_voxels,
+            //     "Voxel fragments",
+            //     &mut filter_text,
+            // );
+            menu.create_clickable_list(
+                &node_positions,
+                &mut selected_nodes,
+                "Node positions",
+                &mut node_filter_text,
+            );
+            // menu.show_points_menu(&mut current_point_raw, &mut points);
+        }
+
+        // Input
+        if !menu.is_showing() {
+            common::process_camera_input(&mut window, delta_time as f32, &mut camera);
+        }
+
+        // Render
+        unsafe {
             let projection: Matrix4<f32> = perspective(
                 Deg(camera.Zoom),
                 CONFIG.viewport_width as f32 / CONFIG.viewport_height as f32,
@@ -196,12 +287,27 @@ fn main() {
                 render_model_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
                 our_model.draw(&render_model_shader);
             }
+
+            visual_debugger.run(
+                &selected_voxels.iter().map(|(index, _)| *index).collect(),
+                &selected_nodes.iter().map(|(index, _)| *index).collect(),
+                &points,
+                &projection,
+                &view,
+                &model,
+            );
         }
+
+        unsafe {
+            gl::Disable(gl::DEPTH_TEST);
+        }
+
+        menu.end_frame();
 
         current_voxel_fragment_count =
             (current_voxel_fragment_count + 10000).min(number_of_voxel_fragments);
 
-        // GLFW: Swap buffers and poll I/O events
+        // Swap buffers and poll I/O events
         window.swap_buffers();
         glfw.poll_events();
     }

@@ -5,7 +5,7 @@ use std::{env, ptr, str};
 
 use gl::types::*;
 
-use cgmath::{Matrix, Matrix4};
+use cgmath::{Matrix, Matrix4, Point3};
 
 #[derive(Default)]
 pub struct Shader {
@@ -104,6 +104,24 @@ impl Shader {
             1,
             gl::FALSE,
             mat.as_ptr(),
+        );
+    }
+    pub unsafe fn set_vector(&self, name: &CStr, count: usize, vector: &[u32]) {
+        gl::Uniform1uiv(
+            gl::GetUniformLocation(self.id, name.as_ptr()),
+            count as i32,
+            vector.as_ptr(),
+        );
+    }
+    pub unsafe fn set_point_vector(&self, name: &CStr, count: usize, vector: &[Point3<f32>]) {
+        let expanded_vector: Vec<f32> = vector
+            .iter()
+            .flat_map(|point| [point.x, point.y, point.z])
+            .collect();
+        gl::Uniform3fv(
+            gl::GetUniformLocation(self.id, name.as_ptr()),
+            count as i32,
+            expanded_vector.as_ptr(),
         );
     }
 

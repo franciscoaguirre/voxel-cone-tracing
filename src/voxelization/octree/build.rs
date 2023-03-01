@@ -1,7 +1,7 @@
-use std::mem::size_of;
+use std::{ffi::CStr, mem::size_of};
 
 use gl::types::*;
-use log::info;
+use log::{error, info};
 
 use super::{
     common::{
@@ -9,13 +9,14 @@ use super::{
         OCTREE_NODE_POOL_BRICK_POINTERS, OCTREE_NODE_POOL_NEIGHBOUR_X,
         OCTREE_NODE_POOL_NEIGHBOUR_X_NEGATIVE, OCTREE_NODE_POOL_NEIGHBOUR_Y,
         OCTREE_NODE_POOL_NEIGHBOUR_Y_NEGATIVE, OCTREE_NODE_POOL_NEIGHBOUR_Z,
-        OCTREE_NODE_POOL_NEIGHBOUR_Z_NEGATIVE, TILES_PER_LEVEL,
+        OCTREE_NODE_POOL_NEIGHBOUR_Z_NEGATIVE, OCTREE_NODE_POSITIONS, TILES_PER_LEVEL,
     },
     helpers,
     mipmap_center::MipmapCenterPass,
     mipmap_corners::MipmapCornersPass,
     mipmap_edges::MipmapEdgesPass,
     mipmap_faces::MipmapFacesPass,
+    store_node_positions::StoreNodePositions,
 };
 use crate::{
     config::CONFIG,
@@ -50,6 +51,7 @@ pub unsafe fn build_octree(
     let flag_nodes_pass = FlagNodesPass::init(number_of_voxel_fragments, voxel_positions_texture);
     let allocate_nodes_pass =
         AllocateNodesPass::init(allocated_tiles_counter, number_of_voxel_fragments);
+    let store_node_positions_pass = StoreNodePositions::init();
     let allocate_bricks_pass = AllocateBricksPass::init(next_free_brick_counter);
     let write_leaf_nodes_pass = WriteLeafNodesPass::init(
         voxel_positions_texture,
@@ -94,6 +96,11 @@ pub unsafe fn build_octree(
         octree_level_start_indices.push(first_tile_in_level);
     }
 
+    // TODO: Could maybe be done in the loop above
+    for octree_level in 0..CONFIG.octree_levels {
+        store_node_positions_pass.run(octree_level, number_of_voxel_fragments);
+    }
+
     OCTREE_LEVEL_START_INDICES = voxelization::helpers::generate_texture_buffer_with_data(
         (CONFIG.octree_levels + 1) as usize,
         gl::R32UI,
@@ -101,8 +108,9 @@ pub unsafe fn build_octree(
     );
 
     let all_tiles_allocated: u32 = TILES_PER_LEVEL.iter().sum();
+    error!("All tiles allocated: {:?}", all_tiles_allocated);
 
-    allocate_bricks_pass.run(all_tiles_allocated);
+    // allocate_bricks_pass.run(all_tiles_allocated);
 
     let brick_pool_colors_texture_size_one_dimension = CONFIG.brick_pool_resolution;
     BRICK_POOL_COLORS_TEXTURE =
@@ -110,13 +118,13 @@ pub unsafe fn build_octree(
 
     // let size = brick_pool_colors_texture_size_one_dimension.pow(3);
 
-    write_leaf_nodes_pass.run();
+    // write_leaf_nodes_pass.run();
 
     // spread_leaf_bricks_pass.run();
 
-    border_transfer_pass.run(X_AXIS);
-    border_transfer_pass.run(Y_AXIS);
-    border_transfer_pass.run(Z_AXIS);
+    // border_transfer_pass.run(X_AXIS);
+    // border_transfer_pass.run(Y_AXIS);
+    // border_transfer_pass.run(Z_AXIS);
 
     // for level in (0..CONFIG.octree_levels - 1).rev() {
     //     mipmap_center_pass.run(level);
@@ -139,6 +147,11 @@ unsafe fn initialize_common_textures(max_node_pool_size_in_bytes: usize) {
         0u32,
     );
     OCTREE_NODE_POOL_BRICK_POINTERS = voxelization::helpers::generate_texture_buffer(
+        max_node_pool_size_in_bytes,
+        gl::R32UI,
+        0u32,
+    );
+    OCTREE_NODE_POSITIONS = voxelization::helpers::generate_texture_buffer(
         max_node_pool_size_in_bytes,
         gl::R32UI,
         0u32,
