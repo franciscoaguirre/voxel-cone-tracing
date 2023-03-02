@@ -6,11 +6,11 @@ use cgmath::{Matrix4, Point3};
 
 use crate::config::CONFIG;
 use crate::rendering::shader::Shader;
-use crate::voxelization::helpers;
 use crate::voxelization::octree::common::{
     OCTREE_LEVEL_START_INDICES, OCTREE_NODE_POOL, OCTREE_NODE_POSITIONS,
 };
 use crate::voxelization::voxelize::VOXEL_POSITIONS;
+use crate::voxelization::{helpers, octree};
 
 pub struct VisualDebugger {
     voxel_fragments_shader: Shader,
@@ -68,7 +68,7 @@ impl VisualDebugger {
         self.node_positions_shader
             .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
         self.node_positions_shader
-            .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels - 1);
+            .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels);
 
         self.node_positions_shader
             .set_mat4(c_str!("projection"), &projection);
@@ -188,9 +188,6 @@ impl VisualDebugger {
         gl::EnableVertexAttribArray(0);
 
         gl::DrawArrays(gl::POINTS, 0, voxel_indices.len() as i32);
-
-        // let values = helpers::get_values_from_texture_buffer(debug_texture_buffer, 3, 420_f32);
-        // dbg!(&values);
     }
 }
 

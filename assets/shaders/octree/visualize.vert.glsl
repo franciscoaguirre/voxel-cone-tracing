@@ -29,18 +29,16 @@ void main() {
   // empty nodes.
   vec4 voxelFragmentPosition = imageLoad(voxelPositions, threadIndex);
 
-  uint tileIndex;
   float halfNodeSize;
   vec3 nodeCoordinates;
-  int nodeIndex = traverseOctreeReturningNodeCoordinates(
+  int nodeID = traverseOctree(
     vec3(voxelFragmentPosition) / float(voxelDimension),
     octreeLevels,
-    halfNodeSize,
     nodeCoordinates,
-    tileIndex
+    halfNodeSize
   );
 
-  uint brickCoordinatesCompact = imageLoad(nodePoolBrickPointers, nodeIndex).r;
+  uint brickCoordinatesCompact = imageLoad(nodePoolBrickPointers, nodeID).r;
   ivec3 brickCoordinates = ivec3(uintXYZ10ToVec3(brickCoordinatesCompact));
   geom_brickCoordinates = brickCoordinates;
 

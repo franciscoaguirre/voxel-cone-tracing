@@ -19,7 +19,7 @@ void main()
 {
     uint allocatedTileIndex;
     uint threadIndex = gl_GlobalInvocationID.x;
-    int parentNodeIndex = firstTileInLevel * NODES_PER_TILE + int(threadIndex);
+    int parentNodeIndex = firstTileInLevel * CHILDREN_PER_NODE + int(threadIndex);
     uint parentNode = imageLoad(nodePool, parentNodeIndex).r;
 
     if (isNodeFlagged(parentNode)) {

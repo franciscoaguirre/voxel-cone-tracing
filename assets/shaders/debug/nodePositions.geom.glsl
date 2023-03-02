@@ -20,14 +20,4 @@ void main() {
     vec4 nodeCenter = geom_nodePosition[0];
     vec4 nodeColor = vec4(1.0, 0.0, 0.0, 1.0);
     drawCube(nodeCenter, geom_halfNodeSize[0], canonizationMatrix, nodeColor);
-
-    vec4 nodeOrigin = nodeCenter - vec4(vec3(geom_halfNodeSize[0]), 0.0) + vec4(0.001, 0.0, 0.0, 0.0);
-    gl_Position = canonizationMatrix * nodeOrigin;
-    frag_nodeColor = vec4(0.0, 1.0, 0.0, 1.0);
-    EmitVertex();
-
-    gl_Position = canonizationMatrix * (nodeOrigin + vec4(0.0, geom_halfNodeSize[0], 0.0, 0.0));
-    frag_nodeColor = vec4(0.0, 1.0, 0.0, 1.0);
-    EmitVertex();
-    EndPrimitive();
 }

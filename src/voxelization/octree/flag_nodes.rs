@@ -4,6 +4,7 @@ use gl::types::*;
 use crate::config::CONFIG;
 use crate::constants::WORKING_GROUP_SIZE;
 use crate::rendering::shader::Shader;
+use crate::voxelization::helpers;
 
 use super::common::OCTREE_NODE_POOL;
 
@@ -26,31 +27,15 @@ impl FlagNodesPass {
         self.shader.use_program();
 
         self.shader.set_uint(
-            c_str!("number_of_voxel_fragments"),
+            c_str!("numberOfVoxelFragments"),
             self.number_of_voxel_fragments,
         );
-        self.shader.set_uint(c_str!("octree_level"), octree_level);
+        self.shader.set_uint(c_str!("octreeLevel"), octree_level);
         self.shader
-            .set_uint(c_str!("voxel_dimension"), CONFIG.voxel_dimension);
+            .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
 
-        gl::BindImageTexture(
-            0,
-            self.voxel_position_texture,
-            0,
-            gl::FALSE,
-            0,
-            gl::READ_ONLY,
-            gl::RGB10_A2UI,
-        );
-        gl::BindImageTexture(
-            1,
-            OCTREE_NODE_POOL.0,
-            0,
-            gl::FALSE,
-            0,
-            gl::WRITE_ONLY,
-            gl::R32UI,
-        );
+        helpers::bind_image_texture(0, self.voxel_position_texture, gl::READ_ONLY, gl::RGB10_A2);
+        helpers::bind_image_texture(1, OCTREE_NODE_POOL.0, gl::READ_WRITE, gl::R32UI);
 
         let groups_count =
             (self.number_of_voxel_fragments as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;

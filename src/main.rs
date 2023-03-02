@@ -117,7 +117,7 @@ fn main() {
             0_u32,
         )
     };
-    dbg!(&node_pool[..20]);
+    // dbg!(&node_pool[..20]);
 
     let node_positions = unsafe {
         voxelization::helpers::get_values_from_texture_buffer(
@@ -130,13 +130,7 @@ fn main() {
 
     let node_positions: Vec<String> = node_positions
         .iter()
-        .enumerate()
-        .map(|(index, node_position)| {
-            if index < 20 {
-                dbg!(*node_position);
-            }
-            r32ui_to_rgb10_a2ui(*node_position)
-        })
+        .map(|&node_position| r32ui_to_rgb10_a2ui(node_position))
         .map(|(x, y, z)| format!("({}, {}, {})", x, y, z))
         .collect();
     dbg!(&node_positions[..20]);
@@ -223,19 +217,19 @@ fn main() {
 
         // egui render
         if menu.is_showing() {
-            // menu.create_clickable_list(
-            //     &voxel_fragments,
-            //     &mut selected_voxels,
-            //     "Voxel fragments",
-            //     &mut filter_text,
-            // );
+            menu.create_clickable_list(
+                &voxel_fragments,
+                &mut selected_voxels,
+                "Voxel fragments",
+                &mut filter_text,
+            );
             menu.create_clickable_list(
                 &node_positions,
                 &mut selected_nodes,
                 "Node positions",
                 &mut node_filter_text,
             );
-            // menu.show_points_menu(&mut current_point_raw, &mut points);
+            menu.show_points_menu(&mut current_point_raw, &mut points);
         }
 
         // Input

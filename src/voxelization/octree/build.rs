@@ -1,15 +1,15 @@
-use std::{ffi::CStr, mem::size_of};
+use std::mem::size_of;
 
 use gl::types::*;
 use log::{error, info};
 
 use super::{
     common::{
-        BRICK_POOL_COLORS_TEXTURE, OCTREE_LEVEL_START_INDICES, OCTREE_NODE_POOL,
+        BRICK_POOL_COLORS_TEXTURE, NODES_PER_LEVEL, OCTREE_LEVEL_START_INDICES, OCTREE_NODE_POOL,
         OCTREE_NODE_POOL_BRICK_POINTERS, OCTREE_NODE_POOL_NEIGHBOUR_X,
         OCTREE_NODE_POOL_NEIGHBOUR_X_NEGATIVE, OCTREE_NODE_POOL_NEIGHBOUR_Y,
         OCTREE_NODE_POOL_NEIGHBOUR_Y_NEGATIVE, OCTREE_NODE_POOL_NEIGHBOUR_Z,
-        OCTREE_NODE_POOL_NEIGHBOUR_Z_NEGATIVE, OCTREE_NODE_POSITIONS, TILES_PER_LEVEL,
+        OCTREE_NODE_POOL_NEIGHBOUR_Z_NEGATIVE, OCTREE_NODE_POSITIONS,
     },
     helpers,
     mipmap_center::MipmapCenterPass,
@@ -37,12 +37,12 @@ pub unsafe fn build_octree(
     number_of_voxel_fragments: u32,
     voxel_colors_texture: GLuint,
 ) {
-    let allocated_tiles_counter = voxelization::helpers::generate_atomic_counter_buffer();
+    let allocated_nodes_counter = voxelization::helpers::generate_atomic_counter_buffer();
     let next_free_brick_counter = voxelization::helpers::generate_atomic_counter_buffer();
 
     let max_node_pool_size = helpers::get_max_node_pool_size();
     let max_node_pool_size_in_bytes = size_of::<GLuint>() * max_node_pool_size as usize;
-    TILES_PER_LEVEL.push(1);
+    NODES_PER_LEVEL.push(1);
 
     initialize_common_textures(max_node_pool_size_in_bytes);
 
@@ -50,7 +50,7 @@ pub unsafe fn build_octree(
         NeighbourPointersPass::init(voxel_positions_texture, number_of_voxel_fragments);
     let flag_nodes_pass = FlagNodesPass::init(number_of_voxel_fragments, voxel_positions_texture);
     let allocate_nodes_pass =
-        AllocateNodesPass::init(allocated_tiles_counter, number_of_voxel_fragments);
+        AllocateNodesPass::init(allocated_nodes_counter, number_of_voxel_fragments);
     let store_node_positions_pass = StoreNodePositions::init();
     let allocate_bricks_pass = AllocateBricksPass::init(next_free_brick_counter);
     let write_leaf_nodes_pass = WriteLeafNodesPass::init(
@@ -66,11 +66,10 @@ pub unsafe fn build_octree(
     // let mipmap_edges_pass = MipmapEdgesPass::init();
 
     let mut octree_level_start_indices = Vec::with_capacity(CONFIG.octree_levels as usize);
+    let mut first_node_in_level = 0; // Index of first node in a given octree level
+    let mut first_free_node = 1; // Index of first free node (unallocated) in the octree
 
-    let mut first_tile_in_level = 0; // Index of first tile in a given octree level
-    let mut first_free_tile = 1; // Index of first free tile (unallocated) in the octree
-
-    octree_level_start_indices.push(first_tile_in_level);
+    octree_level_start_indices.push(first_node_in_level);
 
     for octree_level in 0..CONFIG.octree_levels {
         if octree_level > 0 {
@@ -78,25 +77,24 @@ pub unsafe fn build_octree(
         }
 
         flag_nodes_pass.run(octree_level);
+        allocate_nodes_pass.run(first_node_in_level, first_free_node);
 
-        allocate_nodes_pass.run(first_tile_in_level, first_free_tile);
-
-        let tiles_allocated =
-            voxelization::helpers::get_value_from_atomic_counter(allocated_tiles_counter);
+        let nodes_allocated =
+            voxelization::helpers::get_value_from_atomic_counter(allocated_nodes_counter);
         info!(
-            "Tiles allocated for level {}: {}",
+            "Nodes allocated for level {}: {}",
             octree_level + 1,
-            tiles_allocated
+            nodes_allocated
         );
 
-        TILES_PER_LEVEL.push(tiles_allocated);
-        first_tile_in_level += TILES_PER_LEVEL[octree_level as usize] as i32;
-        first_free_tile += tiles_allocated as i32;
+        NODES_PER_LEVEL.push(nodes_allocated);
+        first_node_in_level += NODES_PER_LEVEL[octree_level as usize] as i32;
+        first_free_node += nodes_allocated as i32;
 
-        octree_level_start_indices.push(first_tile_in_level);
+        octree_level_start_indices.push(first_node_in_level);
     }
 
-    // TODO: Could maybe be done in the loop above
+    // // TODO: Could maybe be done in the loop above
     for octree_level in 0..CONFIG.octree_levels {
         store_node_positions_pass.run(octree_level, number_of_voxel_fragments);
     }
@@ -107,14 +105,14 @@ pub unsafe fn build_octree(
         octree_level_start_indices,
     );
 
-    let all_tiles_allocated: u32 = TILES_PER_LEVEL.iter().sum();
-    error!("All tiles allocated: {:?}", all_tiles_allocated);
+    // let all_nodes_allocated: u32 = NODES_PER_LEVEL.iter().sum();
+    // error!("All nodes allocated: {:?}", all_nodes_allocated);
 
-    // allocate_bricks_pass.run(all_tiles_allocated);
+    // // allocate_bricks_pass.run(all_nodes_allocated);
 
-    let brick_pool_colors_texture_size_one_dimension = CONFIG.brick_pool_resolution;
-    BRICK_POOL_COLORS_TEXTURE =
-        voxelization::helpers::generate_3d_texture(brick_pool_colors_texture_size_one_dimension);
+    // let brick_pool_colors_texture_size_one_dimension = CONFIG.brick_pool_resolution;
+    // BRICK_POOL_COLORS_TEXTURE =
+    //     voxelization::helpers::generate_3d_texture(brick_pool_colors_texture_size_one_dimension);
 
     // let size = brick_pool_colors_texture_size_one_dimension.pow(3);
 

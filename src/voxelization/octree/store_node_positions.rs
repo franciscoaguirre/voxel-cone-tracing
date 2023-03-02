@@ -2,12 +2,12 @@ use c_str_macro::c_str;
 
 use crate::{
     config::CONFIG,
-    constants::{NODES_PER_TILE, WORKING_GROUP_SIZE},
+    constants::{CHILDREN_PER_NODE, WORKING_GROUP_SIZE},
     rendering::shader::Shader,
     voxelization::{helpers, octree::common::OCTREE_NODE_POOL, voxelize::VOXEL_POSITIONS},
 };
 
-use super::common::{OCTREE_NODE_POSITIONS, TILES_PER_LEVEL};
+use super::common::{NODES_PER_LEVEL, OCTREE_NODE_POSITIONS};
 
 pub struct StoreNodePositions {
     shader: Shader,
@@ -35,25 +35,12 @@ impl StoreNodePositions {
             helpers::generate_texture_buffer(7, gl::R32F, 69_f32);
         helpers::bind_image_texture(3, debug_texture, gl::WRITE_ONLY, gl::R32F);
 
-        let tiles_in_level = TILES_PER_LEVEL[octree_level as usize];
-        let nodes_in_level = tiles_in_level * NODES_PER_TILE;
-        let groups_count = (nodes_in_level as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
-
-        // self.shader.dispatch(groups_count);
-        self.shader.dispatch(1);
-        // self.shader.dispatch(number_of_voxel_fragments);
+        let groups_count =
+            (number_of_voxel_fragments as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
+        self.shader.dispatch(groups_count);
         self.shader.wait();
 
-        let values = helpers::get_values_from_texture_buffer(debug_texture_buffer, 7, 420_f32);
-        dbg!(&values);
-
-        // let values =
-        //     helpers::get_values_from_texture_buffer(OCTREE_NODE_POSITIONS.1, 10_000, 69_u32);
-
-        // for value in values.iter() {
-        //     if *value != 0 {
-        //         dbg!(value);
-        //     }
-        // }
+        // let values = helpers::get_values_from_texture_buffer(debug_texture_buffer, 7, 420_f32);
+        // dbg!(&values);
     }
 }

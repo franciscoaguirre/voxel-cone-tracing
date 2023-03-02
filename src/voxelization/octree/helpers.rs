@@ -1,12 +1,12 @@
 use std::{ffi::c_void, mem::size_of};
 
 use gl::types::*;
-use log::info;
+use log::debug;
 
 use super::common::OCTREE_NODE_POOL;
 use crate::{config::CONFIG, constants};
 
-pub unsafe fn show_values_per_tile(offset: usize, number_of_tiles: usize) {
+pub unsafe fn show_nodes(offset: usize, number_of_nodes: usize) {
     let max_node_pool_size = get_max_node_pool_size();
 
     let values = vec![1u32; max_node_pool_size];
@@ -18,16 +18,16 @@ pub unsafe fn show_values_per_tile(offset: usize, number_of_tiles: usize) {
         values.as_ptr() as *mut c_void,
     );
 
-    for tile in 0..number_of_tiles {
-        let lower_limit: usize = (tile + offset) * constants::NODES_PER_TILE as usize;
-        let upper_limit: usize = lower_limit + constants::NODES_PER_TILE as usize;
-        info!("{:?}", &values[lower_limit..upper_limit]);
+    for node in 0..number_of_nodes {
+        let lower_limit: usize = (node + offset) * constants::CHILDREN_PER_NODE as usize;
+        let upper_limit: usize = lower_limit + constants::CHILDREN_PER_NODE as usize;
+        debug!("{:?}", &values[lower_limit..upper_limit]);
     }
 }
 
 pub fn get_max_node_pool_size() -> usize {
     let number_of_tiles = (0..CONFIG.octree_levels)
-        .map(|exponent| (constants::NODES_PER_TILE as usize).pow(exponent))
+        .map(|exponent| (constants::CHILDREN_PER_NODE as usize).pow(exponent))
         .sum::<usize>();
     number_of_tiles * 8
 }
