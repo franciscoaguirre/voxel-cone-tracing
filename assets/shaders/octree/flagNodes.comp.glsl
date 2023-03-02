@@ -19,7 +19,7 @@ void main()
     const uint threadIndex = gl_GlobalInvocationID.x;
 
     if (threadIndex >= numberOfVoxelFragments) {
-      return;
+        return;
     }
 
     uvec4 voxelFragmentPosition = imageLoad(voxelPositions, int(threadIndex));

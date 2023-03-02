@@ -7,7 +7,7 @@ use cgmath::{Matrix4, Point3};
 use crate::config::CONFIG;
 use crate::rendering::shader::Shader;
 use crate::voxelization::octree::common::{
-    OCTREE_LEVEL_START_INDICES, OCTREE_NODE_POOL, OCTREE_NODE_POSITIONS,
+    OCTREE_LEVEL_START_INDICES, OCTREE_NODE_POOL, OCTREE_NODE_POSITIONS, OCTREE_NODE_POOL_NEIGHBOUR_X
 };
 use crate::voxelization::voxelize::VOXEL_POSITIONS;
 use crate::voxelization::{helpers, octree};
@@ -78,6 +78,7 @@ impl VisualDebugger {
         helpers::bind_image_texture(0, OCTREE_NODE_POSITIONS.0, gl::READ_ONLY, gl::RGB10_A2UI);
         helpers::bind_image_texture(1, OCTREE_NODE_POOL.0, gl::READ_ONLY, gl::R32UI);
         helpers::bind_image_texture(2, OCTREE_LEVEL_START_INDICES.0, gl::READ_ONLY, gl::R32UI);
+        helpers::bind_image_texture(3, OCTREE_NODE_POOL_NEIGHBOUR_X.0, gl::READ_ONLY, gl::R32UI);
 
         let mut vao = 0;
         gl::GenVertexArrays(1, &mut vao);
