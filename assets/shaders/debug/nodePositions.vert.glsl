@@ -5,14 +5,17 @@ layout (location = 0) in uint nodeID;
 #include "assets/shaders/octree/_constants.glsl"
 
 out vec4 geom_nodePosition;
+out vec4 geom_neighbourPosition;
+out float geom_hasNeighborX;
 out float geom_halfNodeSize;
 
 uniform uint voxelDimension;
 uniform uint maxOctreeLevel;
 
-uniform layout(binding = 0, rgb10_a2ui) uimageBuffer nodePositions;
-uniform layout(binding = 1, r32ui) uimageBuffer nodePool;
+uniform layout(binding = 0, rgb10_a2ui) readonly uimageBuffer nodePositions;
+uniform layout(binding = 1, r32ui) readonly uimageBuffer nodePool;
 uniform layout(binding = 2, r32ui) readonly uimageBuffer levelStartIndices;
+uniform layout(binding = 3, r32ui) readonly uimageBuffer nodePoolNeighborsX;
 
 void main() {
     uint octreeLevel = 0;
@@ -40,4 +43,17 @@ void main() {
     float normalizedHalfNodeSize = halfNodeSize * 2.0;
     geom_nodePosition.xyz += normalizedHalfNodeSize;
     geom_halfNodeSize = normalizedHalfNodeSize;
+
+    uint neighborXNodeID = imageLoad(nodePoolNeighborsX, int(nodeID)).r;
+
+    if (neighborXNodeID != 0) {
+        vec4 neighborXNodePosition = imageLoad(nodePositions, int(neighborXNodeID));
+        vec3 normalizedNeighborXPosition = neighborXNodePosition.xyz / float(voxelDimension);
+
+        geom_neighbourPosition = vec4((normalizedNeighborXPosition.xyz) * 2.0 - vec3(1.0), 1.0);
+        geom_neighbourPosition.xyz += normalizedHalfNodeSize;
+        geom_hasNeighborX = 1.0;
+    } else {
+        geom_hasNeighborX = 0.0;
+    }
 }
