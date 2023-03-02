@@ -17,8 +17,8 @@ uniform uint octreeLevel;
 #include "./_traversalHelpers.glsl"
 #include "./_octreeTraversal.glsl"
 
-void storeInLeaf(vec3 voxelPosition, int nodeAddress, vec4 voxelColor, float halfNodeSize, vec3 nodeCoordinates) {
-    uint brickCoordinatesCompact = imageLoad(nodePoolBrickPointers, nodeAddress).r;
+void storeInLeaf(vec3 voxelPosition, int nodeID, vec4 voxelColor, float halfNodeSize, vec3 nodeCoordinates) {
+    uint brickCoordinatesCompact = imageLoad(nodePoolBrickPointers, nodeID).r;
     memoryBarrier();
     
     // TODO: Why store the brick coordinates in a texture and not calculate them
@@ -28,14 +28,14 @@ void storeInLeaf(vec3 voxelPosition, int nodeAddress, vec4 voxelColor, float hal
 
     // NOTE: We find out which subsection the current voxel occupies inside the node
     // Remember leaves don't have nodes, so leaf bricks effectively have 2x2x2 voxels.
-    bvec3 subsection = calculateNodeSubsection(nodeCoordinates, halfNodeSize, voxelPosition);
-    uint offset = uint(subsection[0]) + uint(subsection[1]) * 2 + uint(subsection[2]) * 4;
+    // bvec3 subsection = calculateNodeSubsection(nodeCoordinates, halfNodeSize, voxelPosition);
+    // uint offset = uint(subsection[0]) + uint(subsection[1]) * 2 + uint(subsection[2]) * 4;
 
-    imageStore(
-        brickPoolColors,
-        brickCoordinates + ivec3(CHILD_OFFSETS[offset]),
-        voxelColor
-    );
+    // imageStore(
+    //     brickPoolColors,
+    //     brickCoordinates + ivec3(CHILD_OFFSETS[offset]),
+    //     voxelColor
+    // );
 }
 
 void main() {
@@ -50,19 +50,17 @@ void main() {
 
     vec3 normalizedVoxelPosition = vec3(voxelPosition) / float(voxelDimension);
 
-    uint _tileIndex; // Unused
     float halfNodeSize;
     vec3 nodeCoordinates;
     // We send the voxel position to traverse the octree and find the leaf
-    int nodeAddress = traverseOctreeReturningNodeCoordinates(
+    int nodeID = traverseOctree(
         normalizedVoxelPosition,
         octreeLevel,
-        halfNodeSize,
         nodeCoordinates,
-        _tileIndex
+        halfNodeSize
     );
 
     // TODO: We're missing voxel normals here to store in the leaves
     // For some reason we are sending a vec3 instead of a vec4
-    storeInLeaf(normalizedVoxelPosition, nodeAddress, voxelColor, halfNodeSize, nodeCoordinates);
+    storeInLeaf(normalizedVoxelPosition, nodeID, voxelColor, halfNodeSize, nodeCoordinates);
 }

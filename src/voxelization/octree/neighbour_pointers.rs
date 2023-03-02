@@ -82,6 +82,6 @@ impl NeighbourPointersPass {
         self.shader.wait();
 
         let values = helpers::get_values_from_texture_buffer(debug_texture_buffer, 9, 420_f32);
-        dbg!(&values);
+        // dbg!(&values);
     }
 }

@@ -26,7 +26,7 @@ void main() {
 
     vec4 finalColor = vec4(0);
 
-    uint childAddress = imageLoad(nodePool, int(nodeAddress)).r * NODES_PER_TILE;
+    uint childAddress = imageLoad(nodePool, int(nodeAddress)).r * CHILDREN_PER_NODE;
 
     uint childBrickPointer = ivec3(uintXYZ10ToVec3(imageLoad(nodePoolBrickPointers, childAddress).r));
     loadChildTile(int(childAddress));

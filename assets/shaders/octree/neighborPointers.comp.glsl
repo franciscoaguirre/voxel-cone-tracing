@@ -31,15 +31,13 @@ void main() {
 	// defines a different node size, which we need as a step to reach
 	// possible neighbours.
 	// The step is halfNodeSize.
-    uint tileIndex;
     float halfNodeSize;
     vec3 nodeCoordinates;
-    int nodeAddress = traverseOctreeReturningNodeCoordinates(
+    int nodeID = traverseOctree(
         normalizedVoxelPosition,
         octreeLevel,
-        halfNodeSize,
         nodeCoordinates, // Already normalized
-        tileIndex
+        halfNodeSize
     );
 	float normalizedHalfNodeSize = halfNodeSize * 2.0;
 	vec3 nodeCoordinatesToRender = nodeCoordinates * 2.0 - vec3(1.0);
@@ -54,97 +52,106 @@ void main() {
 	int neighborZNegative = 0;
 	
 	uint neighborLevel = 0;
+
+	vec3 _nodeCoordinates;
+	float _halfNodeSize;
 	
 	// TODO: Check if this shouldn't be `<=`
 	// If this is 1, it means that the voxel is at the very edge
 	// of the grid. Is this possible? If it is, do we still represent
 	// the voxel on a brick?
 	if (normalizedVoxelPosition.x + halfNodeSize < 1) {
-		neighborX = traverseOctreeReturningLevel(
+		neighborX = traverseOctree(
 			normalizedVoxelPosition + vec3(halfNodeSize, 0, 0),
 			octreeLevel,
-			neighborLevel
+			_nodeCoordinates,
+			_halfNodeSize
 		);
 
 		// It is possible that the current voxel fragment's neighbour
 		// is on another level, one that ended before the max level.
-		if (neighborLevel != octreeLevel) {
+		if (neighborX == NODE_NOT_FOUND) {
 			neighborX = 0;
 		}
 	}
 	
 	if (normalizedVoxelPosition.y + halfNodeSize < 1) {
-		neighborY = traverseOctreeReturningLevel(
+		neighborY = traverseOctree(
 			nodeCoordinates + uvec3(0, halfNodeSize, 0),
 			octreeLevel,
-			neighborLevel
+			_nodeCoordinates,
+			_halfNodeSize
 		);
 
 		imageStore(debugBuffer, 0, vec4(float(neighborY), 0, 0, 0));
 		imageStore(debugBuffer, 1, vec4(float(octreeLevel), 0, 0, 0));
 		imageStore(debugBuffer, 2, vec4(float(neighborLevel), 0, 0, 0));
-		imageStore(debugBuffer, 3, vec4(float(nodeAddress), 0, 0, 0));
+		imageStore(debugBuffer, 3, vec4(float(nodeID), 0, 0, 0));
 		imageStore(debugBuffer, 4, vec4(float(nodeCoordinatesToRender.x), 0, 0, 0));
 		imageStore(debugBuffer, 5, vec4(float(nodeCoordinatesToRender.y), 0, 0, 0));
 		imageStore(debugBuffer, 6, vec4(float(nodeCoordinatesToRender.z), 0, 0, 0));
 		
-		if (neighborLevel != octreeLevel) {
+		if (neighborY == NODE_NOT_FOUND) {
 			neighborY = 0;
 		}
 	}
 
 	if (normalizedVoxelPosition.z + halfNodeSize < 1) {
-		neighborZ = traverseOctreeReturningLevel(
+		neighborZ = traverseOctree(
 			normalizedVoxelPosition + uvec3(0, 0, halfNodeSize),
 			octreeLevel,
-			neighborLevel
+			_nodeCoordinates,
+			_halfNodeSize
 		);
 
-		if (neighborLevel != octreeLevel) {
+		if (neighborZ == NODE_NOT_FOUND) {
 			neighborZ = 0;
 		}
 	}
 
 	if (normalizedVoxelPosition.x - halfNodeSize > 0) {
-		neighborXNegative = traverseOctreeReturningLevel(
+		neighborXNegative = traverseOctree(
 			normalizedVoxelPosition - uvec3(halfNodeSize, 0, 0),
 			octreeLevel,
-			neighborLevel
+			_nodeCoordinates,
+			_halfNodeSize
 		);
 		
-		if (neighborLevel != octreeLevel) {
+		if (neighborXNegative == NODE_NOT_FOUND) {
 			neighborXNegative = 0;
 		}
 	}
 
 	if (normalizedVoxelPosition.y - halfNodeSize > 0) {
-		neighborYNegative = traverseOctreeReturningLevel(
+		neighborYNegative = traverseOctree(
 			normalizedVoxelPosition - uvec3(0, halfNodeSize, 0),
 			octreeLevel,
-			neighborLevel
+			_nodeCoordinates,
+			_halfNodeSize
 		);
 		
-		if (neighborLevel != octreeLevel) {
+		if (neighborYNegative == NODE_NOT_FOUND) {
 			neighborYNegative = 0;
 		}
 	}
 
 	if (normalizedVoxelPosition.z - halfNodeSize > 0) {
-		neighborZNegative = traverseOctreeReturningLevel(
+		neighborZNegative = traverseOctree(
 			normalizedVoxelPosition - uvec3(0, 0, halfNodeSize),
 			octreeLevel,
-			neighborLevel
+			_nodeCoordinates,
+			_halfNodeSize
 		);
 		
-		if (neighborLevel != octreeLevel) {
+		if (neighborZNegative == NODE_NOT_FOUND) {
 			neighborZNegative = 0;
 		}
 	}
 
-	imageStore(nodePoolNeighborsX, nodeAddress, uvec4(neighborX));
-	imageStore(nodePoolNeighborsY, nodeAddress, uvec4(neighborY));
-	imageStore(nodePoolNeighborsZ, nodeAddress, uvec4(neighborZ));
-	imageStore(nodePoolNeighborsXNegative, nodeAddress, uvec4(neighborXNegative));
-	imageStore(nodePoolNeighborsYNegative, nodeAddress, uvec4(neighborYNegative));
-	imageStore(nodePoolNeighborsZNegative, nodeAddress, uvec4(neighborZNegative));
+	imageStore(nodePoolNeighborsX, nodeID, uvec4(neighborX));
+	imageStore(nodePoolNeighborsY, nodeID, uvec4(neighborY));
+	imageStore(nodePoolNeighborsZ, nodeID, uvec4(neighborZ));
+	imageStore(nodePoolNeighborsXNegative, nodeID, uvec4(neighborXNegative));
+	imageStore(nodePoolNeighborsYNegative, nodeID, uvec4(neighborYNegative));
+	imageStore(nodePoolNeighborsZNegative, nodeID, uvec4(neighborZNegative));
 }

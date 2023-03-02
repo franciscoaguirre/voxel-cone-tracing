@@ -2,15 +2,15 @@ use c_str_macro::c_str;
 
 use crate::{
     config::CONFIG,
-    constants::{NODES_PER_TILE, WORKING_GROUP_SIZE},
+    constants::{CHILDREN_PER_NODE, WORKING_GROUP_SIZE},
     rendering::shader::Shader,
     voxelization::helpers,
 };
 
 use super::common::{
-    BRICK_POOL_COLORS_TEXTURE, OCTREE_LEVEL_START_INDICES, OCTREE_NODE_POOL_BRICK_POINTERS,
-    OCTREE_NODE_POOL_NEIGHBOUR_X, OCTREE_NODE_POOL_NEIGHBOUR_Y, OCTREE_NODE_POOL_NEIGHBOUR_Z,
-    TILES_PER_LEVEL,
+    BRICK_POOL_COLORS_TEXTURE, NODES_PER_LEVEL, OCTREE_LEVEL_START_INDICES,
+    OCTREE_NODE_POOL_BRICK_POINTERS, OCTREE_NODE_POOL_NEIGHBOUR_X, OCTREE_NODE_POOL_NEIGHBOUR_Y,
+    OCTREE_NODE_POOL_NEIGHBOUR_Z,
 };
 
 pub struct BorderTransferPass {
@@ -57,8 +57,8 @@ impl BorderTransferPass {
             helpers::generate_texture_buffer(1, gl::R32F, 10_f32);
         helpers::bind_image_texture(4, debug_texture, gl::WRITE_ONLY, gl::R32F);
 
-        let tiles_in_level = TILES_PER_LEVEL[octree_level as usize];
-        let nodes_in_level = tiles_in_level * NODES_PER_TILE;
+        let tiles_in_level = NODES_PER_LEVEL[octree_level as usize];
+        let nodes_in_level = tiles_in_level * CHILDREN_PER_NODE;
         let groups_count = (nodes_in_level as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
 
         // self.shader.dispatch(groups_count);

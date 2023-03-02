@@ -24,7 +24,7 @@ void main() {
 
     ivec3 brickAddress = ivec3(uintXYZ10ToVec3(imageLoad(nodePoolBrickPointers, int(nodeAddress)).r));
 
-    uint childAddress = imageLoad(nodePool, int(nodeAddress)).r * NODES_PER_TILE;
+    uint childAddress = imageLoad(nodePool, int(nodeAddress)).r * CHILDREN_PER_NODE;
     loadChildTile(int(childAddress));
 
     vec4 nearBottom = mipmapIsotropic(ivec3(2, 0, 0));

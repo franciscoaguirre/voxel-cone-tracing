@@ -27,7 +27,7 @@ void allocate_3x3x3_texture_brick(in int nodeAddress) {
 void main() {
     uint tileAddress = gl_GlobalInvocationID.x * 8;
 
-    for (int i = 0; i < NODES_PER_TILE; i++) {
+    for (int i = 0; i < CHILDREN_PER_NODE; i++) {
         int nodeAddress = int(tileAddress + i);
         allocate_3x3x3_texture_brick(nodeAddress);
 

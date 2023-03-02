@@ -6,8 +6,8 @@
 int getThreadNode() {
     uint index;
 
-    int levelStart = int(imageLoad(levelStartIndices, int(octreeLevel)).r) * NODES_PER_TILE;
-    int nextLevelStart = int(imageLoad(levelStartIndices, int(octreeLevel + 1)).r) * NODES_PER_TILE;
+    int levelStart = int(imageLoad(levelStartIndices, int(octreeLevel)).r) * CHILDREN_PER_NODE;
+    int nextLevelStart = int(imageLoad(levelStartIndices, int(octreeLevel + 1)).r) * CHILDREN_PER_NODE;
     memoryBarrier();
 
     index = uint(levelStart) + uint(gl_GlobalInvocationID.x);

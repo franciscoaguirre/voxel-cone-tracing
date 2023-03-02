@@ -3,38 +3,27 @@ bool withinSecondHalf(float min, float halfNodeSize, float coordinatePosition) {
   return coordinatePosition >= min + halfNodeSize;
 }
 
-// Each node is divided into 8 subsections/children, for each coordinate the node is divided in two.
-// Given the borders of the node, for each coordinate we calculate if the fragment is within the first or second
-// half of the node.
-bvec3 calculateNodeSubsection(vec3 nodeCoordinates, float halfNodeSize, vec3 fragment_position) {
-  bvec3 subsection;
-  subsection.x = withinSecondHalf(nodeCoordinates.x, halfNodeSize, fragment_position.x);
-  subsection.y = withinSecondHalf(nodeCoordinates.y, halfNodeSize, fragment_position.y);
-  subsection.z = withinSecondHalf(nodeCoordinates.z, halfNodeSize, fragment_position.z);
-  return subsection;
-}
-
-// As we have one pointer for all 2x2x2 children, we calculate the index of the child this voxel fragment falls into
-uint calculateNodeIndex(uint tileIndex, bvec3 subsection) {
-  return (tileIndex * uint(NODES_PER_TILE)) + 
-         uint(subsection[0]) +
-         uint(subsection[1]) * 2 +
-         uint(subsection[2]) * 4; // binary -> base10, this gives a unique index per subsection. Then add it to the tileIndex
+// Returns child local ID from 0 to 7.
+uint calculateChildLocalID(vec3 nodeCoordinates, float halfNodeSize, vec3 fragment_position) {
+  uint xOffset = uint(withinSecondHalf(nodeCoordinates.x, halfNodeSize, fragment_position.x)); // 0 or 1
+  uint yOffset = uint(withinSecondHalf(nodeCoordinates.y, halfNodeSize, fragment_position.y)); // 0 or 1
+  uint zOffset = uint(withinSecondHalf(nodeCoordinates.z, halfNodeSize, fragment_position.z)); // 0 or 1
+  return xOffset + yOffset * 2 + zOffset * 4;
 }
 
 vec3 updateNodeCoordinates(
   vec3 currentNodeCoordinates,
-  bvec3 subsection,
+  uint childLocalID,
   float currentHalfNodeSize
 ) {
   vec3 ret = currentNodeCoordinates;
-  if (subsection.x) {
+  if (bool(childLocalID & 1)) {
     ret.x += currentHalfNodeSize;
   }
-  if (subsection.y) {
+  if (bool(childLocalID & (1 << 1))) {
     ret.y += currentHalfNodeSize;
   }
-  if (subsection.z) {
+  if (bool(childLocalID & (1 << 2))) {
     ret.z += currentHalfNodeSize;
   }
 

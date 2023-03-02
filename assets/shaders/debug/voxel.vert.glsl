@@ -18,15 +18,13 @@ uniform layout(binding = 1, r32ui) uimageBuffer nodePool;
 void main() {
     vec4 voxelFragmentPosition = imageLoad(voxelPositions, int(voxelIndex));
 
-    uint tileIndex;
     float halfNodeSize;
     vec3 nodeCoordinates;
-    int nodeIndex = traverseOctreeReturningNodeCoordinates(
+    int _nodeID = traverseOctree(
         vec3(voxelFragmentPosition) / float(voxelDimension),
         octreeLevels,
-        halfNodeSize,
         nodeCoordinates,
-        tileIndex
+        halfNodeSize
     );
 
     geom_voxelPosition = vec4((nodeCoordinates.xyz) * 2.0 - vec3(1.0), 1.0);
