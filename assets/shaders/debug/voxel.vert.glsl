@@ -2,6 +2,7 @@
 
 layout (location = 0) in uint voxelIndex;
 
+out vec4 geom_nodePosition;
 out vec4 geom_voxelPosition;
 out float geom_halfNodeSize;
 
@@ -17,18 +18,22 @@ uniform layout(binding = 1, r32ui) uimageBuffer nodePool;
 
 void main() {
     vec4 voxelFragmentPosition = imageLoad(voxelPositions, int(voxelIndex));
+    vec3 normalizedVoxelPosition = vec3(voxelFragmentPosition) / float(voxelDimension);
 
     float halfNodeSize;
     vec3 nodeCoordinates;
     int _nodeID = traverseOctree(
-        vec3(voxelFragmentPosition) / float(voxelDimension),
+        normalizedVoxelPosition,
         octreeLevels,
         nodeCoordinates,
         halfNodeSize
     );
 
-    geom_voxelPosition = vec4((nodeCoordinates.xyz) * 2.0 - vec3(1.0), 1.0);
+    geom_nodePosition = vec4(nodeCoordinates.xyz * 2.0 - vec3(1.0), 1.0);
     float normalizedHalfNodeSize = halfNodeSize * 2.0;
-    geom_voxelPosition.xyz += normalizedHalfNodeSize;
+    geom_nodePosition.xyz += normalizedHalfNodeSize;
     geom_halfNodeSize = normalizedHalfNodeSize;
+
+    geom_voxelPosition = vec4(normalizedVoxelPosition * 2.0 - vec3(1.0), 1.0);
+    geom_voxelPosition.xyz += halfNodeSize;
 }

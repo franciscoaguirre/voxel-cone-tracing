@@ -1,4 +1,4 @@
-use cgmath::Point3;
+use cgmath::{Point3, Vector3};
 use egui_backend::{
     egui::{self, vec2, Color32, Pos2, Rect},
     glfw::{Action, CursorMode, Key, Window, WindowEvent},
@@ -137,9 +137,9 @@ impl Menu {
             if ui.button("Node positions").clicked() {
                 self.is_showing_node_positions_window = !self.is_showing_node_positions_window;
             }
-            // if ui.button("Points").clicked() {
-            //     self.is_showing_points_window = !self.is_showing_points_window;
-            // }
+            if ui.button("Points").clicked() {
+                self.is_showing_points_window = !self.is_showing_points_window;
+            }
             if ui.button("Diagnostics").clicked() {
                 self.is_showing_diagnostics_window = !self.is_showing_diagnostics_window;
             }
@@ -153,16 +153,16 @@ impl Menu {
         });
     }
 
-    pub fn show_points_menu(&self, current_point_raw: &mut String, points: &mut Vec<Point3<f32>>) {
+    pub fn show_points_menu(&self, current_point_raw: &mut String, points: &mut Vec<Vector3<f32>>) {
         egui::Window::new("Points").show(&self.context, |ui| {
             ui.text_edit_singleline(current_point_raw);
             if ui.button("Draw point!").clicked() {
-                let current_point: Point3<f32> = match current_point_raw
+                let current_point: Vector3<f32> = match current_point_raw
                     .split_whitespace()
                     .collect::<Vec<_>>()
                     .as_slice()
                 {
-                    [x, y, z] => Point3 {
+                    [x, y, z] => Vector3 {
                         x: x.parse().unwrap(),
                         y: y.parse().unwrap(),
                         z: z.parse().unwrap(),
