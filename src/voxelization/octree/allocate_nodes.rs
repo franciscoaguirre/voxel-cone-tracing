@@ -6,26 +6,26 @@ use super::common::OCTREE_NODE_POOL;
 
 pub struct AllocateNodesPass {
     shader: Shader,
-    allocated_tiles_counter: u32,
+    allocated_nodes_counter: u32,
     number_of_voxel_fragments: u32,
 }
 
 impl AllocateNodesPass {
-    pub fn init(allocated_tiles_counter: u32, number_of_voxel_fragments: u32) -> Self {
+    pub fn init(allocated_nodes_counter: u32, number_of_voxel_fragments: u32) -> Self {
         Self {
             shader: Shader::new_compute("assets/shaders/octree/allocateNodes.comp.glsl"),
-            allocated_tiles_counter,
+            allocated_nodes_counter,
             number_of_voxel_fragments,
         }
     }
 
-    pub unsafe fn run(&self, first_tile_in_level: i32, first_free_tile: i32) {
+    pub unsafe fn run(&self, first_node_in_level: i32, first_free_node: i32) {
         self.shader.use_program();
 
         self.shader
-            .set_int(c_str!("firstTileInLevel"), first_tile_in_level);
+            .set_int(c_str!("firstNodeInLevel"), first_node_in_level);
         self.shader
-            .set_int(c_str!("firstFreeTile"), first_free_tile);
+            .set_int(c_str!("firstFreeNode"), first_free_node);
         gl::BindImageTexture(
             0,
             OCTREE_NODE_POOL.0,
@@ -35,7 +35,7 @@ impl AllocateNodesPass {
             gl::READ_WRITE,
             gl::R32UI,
         );
-        gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, self.allocated_tiles_counter);
+        gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, self.allocated_nodes_counter);
 
         let groups_count =
             (self.number_of_voxel_fragments as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;

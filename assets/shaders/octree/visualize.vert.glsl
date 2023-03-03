@@ -54,11 +54,5 @@ void main() {
   nodePosition.xyz += normalizedHalfNodeSize;
   gl_Position = nodePosition;
 
-  if (tileIndex != 0 || octreeLevels == 0) {
-    geom_halfNodeSize = normalizedHalfNodeSize;
-    nonEmptyBranch = 1;
-  } else {
-    geom_halfNodeSize = normalizedHalfNodeSize * int(showEmptyNodes);
-    nonEmptyBranch = 0;
-  }
+  geom_halfNodeSize = normalizedHalfNodeSize;
 }

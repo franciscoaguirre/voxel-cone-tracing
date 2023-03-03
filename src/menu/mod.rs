@@ -12,6 +12,10 @@ pub struct Menu {
     input_state: egui_backend::EguiInputState,
     modifier_keys: egui::Modifiers,
     native_pixels_per_point: f32,
+    is_showing_voxel_positions_window: bool,
+    is_showing_node_positions_window: bool,
+    is_showing_points_window: bool,
+    is_showing_diagnostics_window: bool,
 }
 
 impl Menu {
@@ -31,6 +35,22 @@ impl Menu {
 
     pub fn is_showing(&self) -> bool {
         self.is_showing
+    }
+
+    pub fn is_showing_voxel_positions_window(&self) -> bool {
+        self.is_showing_voxel_positions_window
+    }
+
+    pub fn is_showing_node_positions_window(&self) -> bool {
+        self.is_showing_node_positions_window
+    }
+
+    pub fn is_showing_points_window(&self) -> bool {
+        self.is_showing_points_window
+    }
+
+    pub fn is_showing_diagnostics_window(&self) -> bool {
+        self.is_showing_diagnostics_window
     }
 
     pub fn handle_event(&mut self, event: WindowEvent) {
@@ -97,12 +117,40 @@ impl Menu {
 
         Self {
             is_showing: false,
+            is_showing_voxel_positions_window: false,
+            is_showing_node_positions_window: false,
+            is_showing_points_window: false,
+            is_showing_diagnostics_window: false,
             painter,
             context,
             input_state,
             modifier_keys,
             native_pixels_per_point,
         }
+    }
+
+    pub fn show_main_window(&mut self) {
+        egui::Window::new("Menu").show(&self.context, |ui| {
+            if ui.button("Voxel positions").clicked() {
+                self.is_showing_voxel_positions_window = !self.is_showing_voxel_positions_window;
+            }
+            if ui.button("Node positions").clicked() {
+                self.is_showing_node_positions_window = !self.is_showing_node_positions_window;
+            }
+            // if ui.button("Points").clicked() {
+            //     self.is_showing_points_window = !self.is_showing_points_window;
+            // }
+            if ui.button("Diagnostics").clicked() {
+                self.is_showing_diagnostics_window = !self.is_showing_diagnostics_window;
+            }
+        });
+    }
+
+    pub fn create_diagnostics_window(&self, fps: f64) {
+        egui::Window::new("Diagnostics").show(&self.context, |ui| {
+            let fps_text = format!("FPS: {fps:.2}");
+            ui.label(fps_text);
+        });
     }
 
     pub fn show_points_menu(&self, current_point_raw: &mut String, points: &mut Vec<Point3<f32>>) {

@@ -37,8 +37,7 @@ impl MipmapCenterPass {
         helpers::bind_3d_image_texture(2, BRICK_POOL_COLORS_TEXTURE, gl::READ_WRITE, gl::RGBA8);
         helpers::bind_image_texture(3, OCTREE_LEVEL_START_INDICES.0, gl::READ_ONLY, gl::R32UI);
 
-        let tiles_in_level = NODES_PER_LEVEL[level as usize];
-        let nodes_in_level = tiles_in_level * CHILDREN_PER_NODE;
+        let nodes_in_level = NODES_PER_LEVEL[level as usize];
         let groups_count = (nodes_in_level as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
 
         self.shader.dispatch(groups_count);
