@@ -2,7 +2,7 @@ use std::ffi::c_void;
 use std::mem::size_of;
 
 use c_str_macro::c_str;
-use cgmath::{Matrix4, Point3};
+use cgmath::{Matrix4, Point3, Vector3};
 
 use crate::config::CONFIG;
 use crate::rendering::shader::Shader;
@@ -45,14 +45,14 @@ impl VisualDebugger {
         &self,
         voxel_indices: &Vec<u32>,
         node_indices: &Vec<u32>,
-        points: &Vec<Point3<f32>>,
+        points: &Vec<Vector3<f32>>,
         projection: &Matrix4<f32>,
         view: &Matrix4<f32>,
         model: &Matrix4<f32>,
     ) {
         self.run_voxel_fragments_shader(voxel_indices, projection, view, model);
         self.run_node_positions_shader(node_indices, projection, view, model);
-        // self.run_points_shader(points, projection, view, model);
+        self.run_points_shader(points, projection, view, model);
     }
 
     unsafe fn run_node_positions_shader(
@@ -126,7 +126,7 @@ impl VisualDebugger {
 
     unsafe fn run_points_shader(
         &self,
-        points: &Vec<Point3<f32>>,
+        points: &Vec<Vector3<f32>>,
         projection: &Matrix4<f32>,
         view: &Matrix4<f32>,
         model: &Matrix4<f32>,
@@ -151,8 +151,8 @@ impl VisualDebugger {
         gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
         gl::BufferData(
             gl::ARRAY_BUFFER,
-            (points.len() * size_of::<u32>()) as isize,
-            &points[0] as *const Point3<f32> as *const c_void,
+            (points.len() * size_of::<Vector3<f32>>()) as isize,
+            &points[0] as *const Vector3<f32> as *const c_void,
             gl::DYNAMIC_DRAW,
         );
         gl::VertexAttribPointer(
@@ -160,7 +160,7 @@ impl VisualDebugger {
             3,
             gl::FLOAT,
             gl::FALSE,
-            size_of::<Point3<f32>>() as i32,
+            size_of::<Vector3<f32>>() as i32,
             0 as *const c_void,
         );
         gl::EnableVertexAttribArray(0);

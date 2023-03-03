@@ -6,7 +6,7 @@ use std::path::Path;
 use c_str_macro::c_str;
 use egui_glfw_gl::glfw::{self, Context};
 extern crate gl;
-use cgmath::{perspective, vec3, Deg, Matrix4, Point3};
+use cgmath::{perspective, vec3, Deg, Matrix4, Point3, Vector3};
 use log::info;
 use structopt::StructOpt;
 
@@ -166,7 +166,7 @@ fn main() {
     let visual_debugger = VisualDebugger::init();
     let mut selected_voxels: Vec<(u32, String)> = Vec::new();
     let mut selected_nodes: Vec<(u32, String)> = Vec::new();
-    let mut points: Vec<Point3<f32>> = Vec::new();
+    let mut points: Vec<Vector3<f32>> = Vec::new();
     let mut current_point_raw = String::new();
 
     let render_voxel_fragments_shader = RenderVoxelFragmentsShader::init(
@@ -249,9 +249,9 @@ fn main() {
                     &mut node_filter_text,
                 );
             }
-            // if menu.is_showing_points_window() {
-            //     menu.show_points_menu(&mut current_point_raw, &mut points);
-            // }
+            if menu.is_showing_points_window() {
+                menu.show_points_menu(&mut current_point_raw, &mut points);
+            }
             if menu.is_showing_diagnostics_window() {
                 menu.create_diagnostics_window(fps);
             }
