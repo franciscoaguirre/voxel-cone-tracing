@@ -75,13 +75,13 @@ impl NeighbourPointersPass {
         helpers::bind_image_texture(9, OCTREE_LEVEL_START_INDICES.0, gl::READ_ONLY, gl::R32UI);
 
         let groups_count =
-          (self.number_of_voxel_fragments as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
+            (self.number_of_voxel_fragments as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
 
-        //self.shader.dispatch(groups_count);
-        self.shader.dispatch(1);
+        self.shader.dispatch(groups_count);
         self.shader.wait();
 
-        let the_one_true_values = helpers::get_values_from_texture_buffer(debug_texture_buffer, 9, 420_f32);
+        let the_one_true_values =
+            helpers::get_values_from_texture_buffer(debug_texture_buffer, 9, 420_f32);
         dbg!(&the_one_true_values);
     }
 }

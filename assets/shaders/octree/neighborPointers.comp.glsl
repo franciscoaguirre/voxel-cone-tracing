@@ -2,7 +2,7 @@
 
 #include "./_constants.glsl"
 
-layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x = WORKING_GROUP_SIZE, local_size_y = 1, local_size_z = 1) in;
 
 uniform layout(binding = 0, r32ui) uimageBuffer nodePool;
 uniform layout(binding = 1, rgb10_a2ui) uimageBuffer voxelPositions;
@@ -65,7 +65,7 @@ void main() {
     // If this is 1, it means that the voxel is at the very edge
     // of the grid. Is this possible? If it is, do we still represent
     // the voxel on a brick?
-    possibleNeighborPosition = normalizedVoxelPosition + vec3(nodeSize,0,0);
+    possibleNeighborPosition = nodeCoordinates + vec3(nodeSize,0,0);
     if (possibleNeighborPosition.x < 1) {
       neighborX = traverseOctree(
         possibleNeighborPosition,
@@ -81,7 +81,7 @@ void main() {
       }
     }
     
-    possibleNeighborPosition = normalizedVoxelPosition + vec3(0,nodeSize,0);
+    possibleNeighborPosition = nodeCoordinates + vec3(0,nodeSize,0);
     if (possibleNeighborPosition.y < 1) {
       neighborY = traverseOctree(
         possibleNeighborPosition,
@@ -99,7 +99,7 @@ void main() {
       }
     }
 
-    possibleNeighborPosition = normalizedVoxelPosition + vec3(0,0,nodeSize);
+    possibleNeighborPosition = nodeCoordinates + vec3(0,0,nodeSize);
     if (possibleNeighborPosition.z < 1) {
       neighborZ = traverseOctree(
         possibleNeighborPosition,
@@ -113,7 +113,7 @@ void main() {
       }
     }
 
-    possibleNeighborPosition = normalizedVoxelPosition - vec3(nodeSize,0,0);
+    possibleNeighborPosition = nodeCoordinates - vec3(nodeSize,0,0);
     if (possibleNeighborPosition.x > 0) {
       neighborXNegative = traverseOctree(
         possibleNeighborPosition,
@@ -131,7 +131,7 @@ void main() {
       }
     }
 
-    possibleNeighborPosition = normalizedVoxelPosition - vec3(0,nodeSize,0);
+    possibleNeighborPosition = nodeCoordinates - vec3(0,nodeSize,0);
     if (possibleNeighborPosition.y > 0) {
       neighborYNegative = traverseOctree(
         possibleNeighborPosition,
@@ -145,7 +145,7 @@ void main() {
       }
     }
 
-    possibleNeighborPosition = normalizedVoxelPosition - vec3(0,0,nodeSize);
+    possibleNeighborPosition = nodeCoordinates - vec3(0,0,nodeSize);
     if (possibleNeighborPosition.z > 0) {
       neighborZNegative = traverseOctree(
         possibleNeighborPosition,
