@@ -25,8 +25,11 @@ use debug::VisualDebugger;
 use menu::Menu;
 use rendering::{camera::Camera, common, model::Model, shader::Shader};
 use voxelization::{
-    octree::{build_octree, render_octree, visualize::ShowBricks},
-    render_voxel_fragments,
+    octree::{
+        build_octree,
+        visualize::{RenderOctreeShader, ShowBricks},
+    },
+    visualize::RenderVoxelFragmentsShader,
 };
 
 use crate::voxelization::octree::common::OCTREE_NODE_POSITIONS;
@@ -54,6 +57,12 @@ fn main() {
     let mut last_frame: f64 = 0.0;
 
     let (mut glfw, mut window, events) = unsafe { common::setup_glfw(debug) };
+
+    // FPS variables
+    let mut frame_count = 0;
+    let mut starting_time: f64 = glfw.get_time();
+    let mut elapsed_time: f64;
+    let mut fps: f64 = 0.0;
 
     unsafe {
         common::show_device_information();
@@ -117,7 +126,6 @@ fn main() {
             0_u32,
         )
     };
-    // dbg!(&node_pool[..20]);
 
     let node_positions = unsafe {
         voxelization::helpers::get_values_from_texture_buffer(
@@ -126,22 +134,12 @@ fn main() {
             0_u32,
         )
     };
-    dbg!(&node_positions[..20]);
 
     let node_positions: Vec<String> = node_positions
         .iter()
         .map(|&node_position| r32ui_to_rgb10_a2ui(node_position))
         .map(|(x, y, z)| format!("({}, {}, {})", x, y, z))
         .collect();
-    dbg!(&node_positions[..20]);
-
-    // vao to render voxel fragment list
-    let vao = unsafe {
-        let mut vao = 0;
-        gl::GenVertexArrays(1, &mut vao);
-
-        vao
-    };
 
     let scene_aabb = &our_model.aabb;
     let aabb_middle_point = scene_aabb.middle_point();
@@ -171,12 +169,29 @@ fn main() {
     let mut points: Vec<Point3<f32>> = Vec::new();
     let mut current_point_raw = String::new();
 
+    let render_voxel_fragments_shader = RenderVoxelFragmentsShader::init(
+        voxel_positions_texture,
+        voxel_colors_texture,
+        number_of_voxel_fragments,
+    );
+    let render_octree_shader =
+        RenderOctreeShader::init(voxel_positions_texture, number_of_voxel_fragments);
+
     // Render loop
     while !window.should_close() {
         let current_frame = glfw.get_time();
 
+        frame_count += 1;
         delta_time = current_frame - last_frame;
         last_frame = current_frame;
+
+        elapsed_time = current_frame - starting_time;
+
+        if elapsed_time > 1.0 {
+            fps = frame_count as f64 / elapsed_time;
+            frame_count = 0;
+            starting_time = current_frame;
+        }
 
         unsafe {
             gl::ClearColor(0.2, 0.2, 0.2, 1.0);
@@ -217,19 +232,29 @@ fn main() {
 
         // egui render
         if menu.is_showing() {
-            menu.create_clickable_list(
-                &voxel_fragments,
-                &mut selected_voxels,
-                "Voxel fragments",
-                &mut filter_text,
-            );
-            menu.create_clickable_list(
-                &node_positions,
-                &mut selected_nodes,
-                "Node positions",
-                &mut node_filter_text,
-            );
-            menu.show_points_menu(&mut current_point_raw, &mut points);
+            menu.show_main_window();
+            if menu.is_showing_voxel_positions_window() {
+                menu.create_clickable_list(
+                    &voxel_fragments,
+                    &mut selected_voxels,
+                    "Voxel fragments",
+                    &mut filter_text,
+                );
+            }
+            if menu.is_showing_node_positions_window() {
+                menu.create_clickable_list(
+                    &node_positions,
+                    &mut selected_nodes,
+                    "Node positions",
+                    &mut node_filter_text,
+                );
+            }
+            // if menu.is_showing_points_window() {
+            //     menu.show_points_menu(&mut current_point_raw, &mut points);
+            // }
+            if menu.is_showing_diagnostics_window() {
+                menu.create_diagnostics_window(fps);
+            }
         }
 
         // Input
@@ -250,26 +275,15 @@ fn main() {
             model = model * Matrix4::from_scale(1.);
 
             if show_voxel_fragment_list {
-                render_voxel_fragments(
-                    voxel_positions_texture,
-                    voxel_colors_texture,
-                    &projection,
-                    &view,
-                    &model,
-                    current_voxel_fragment_count,
-                    vao,
-                );
+                render_voxel_fragments_shader.run(&projection, &view, &model);
             }
 
             if show_octree {
-                render_octree(
+                render_octree_shader.run(
                     &model,
                     &view,
                     &projection,
                     current_octree_level,
-                    show_empty_nodes,
-                    voxel_positions_texture,
-                    number_of_voxel_fragments,
                     &show_bricks,
                 );
             }

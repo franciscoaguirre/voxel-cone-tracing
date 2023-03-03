@@ -6,6 +6,7 @@ use cgmath::{Matrix4, Point3};
 
 use crate::config::CONFIG;
 use crate::rendering::shader::Shader;
+use crate::voxelization::helpers;
 use crate::voxelization::octree::common::{
     OCTREE_LEVEL_START_INDICES, OCTREE_NODE_POOL, OCTREE_NODE_POOL_NEIGHBOUR_X,
     OCTREE_NODE_POOL_NEIGHBOUR_X_NEGATIVE, OCTREE_NODE_POOL_NEIGHBOUR_Y,
@@ -13,7 +14,6 @@ use crate::voxelization::octree::common::{
     OCTREE_NODE_POOL_NEIGHBOUR_Z_NEGATIVE, OCTREE_NODE_POSITIONS,
 };
 use crate::voxelization::voxelize::VOXEL_POSITIONS;
-use crate::voxelization::{helpers, octree};
 
 pub struct VisualDebugger {
     voxel_fragments_shader: Shader,
@@ -52,7 +52,7 @@ impl VisualDebugger {
     ) {
         self.run_voxel_fragments_shader(voxel_indices, projection, view, model);
         self.run_node_positions_shader(node_indices, projection, view, model);
-        self.run_points_shader(points, projection, view, model);
+        // self.run_points_shader(points, projection, view, model);
     }
 
     unsafe fn run_node_positions_shader(
@@ -131,15 +131,13 @@ impl VisualDebugger {
         view: &Matrix4<f32>,
         model: &Matrix4<f32>,
     ) {
+        if points.is_empty() {
+            return;
+        }
+
         gl::PointSize(10.);
 
         self.points_shader.use_program();
-
-        self.points_shader
-            .set_uint(c_str!("numberOfPoints"), points.len() as u32);
-        self.points_shader
-            .set_point_vector(c_str!("points"), points.len(), points);
-
         self.points_shader
             .set_mat4(c_str!("projection"), &projection);
         self.points_shader.set_mat4(c_str!("view"), &view);
@@ -148,8 +146,26 @@ impl VisualDebugger {
         let mut vao = 0;
         gl::GenVertexArrays(1, &mut vao);
         gl::BindVertexArray(vao);
+        let mut vbo = 0;
+        gl::GenBuffers(1, &mut vbo);
+        gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
+        gl::BufferData(
+            gl::ARRAY_BUFFER,
+            (points.len() * size_of::<u32>()) as isize,
+            &points[0] as *const Point3<f32> as *const c_void,
+            gl::DYNAMIC_DRAW,
+        );
+        gl::VertexAttribPointer(
+            0,
+            3,
+            gl::FLOAT,
+            gl::FALSE,
+            size_of::<Point3<f32>>() as i32,
+            0 as *const c_void,
+        );
+        gl::EnableVertexAttribArray(0);
 
-        gl::DrawArrays(gl::POINTS, 0, 1);
+        gl::DrawArrays(gl::POINTS, 0, points.len() as i32);
 
         gl::PointSize(1.);
     }

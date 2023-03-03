@@ -79,9 +79,5 @@ impl NeighbourPointersPass {
 
         self.shader.dispatch(groups_count);
         self.shader.wait();
-
-        let the_one_true_values =
-            helpers::get_values_from_texture_buffer(debug_texture_buffer, 9, 420_f32);
-        dbg!(&the_one_true_values);
     }
 }

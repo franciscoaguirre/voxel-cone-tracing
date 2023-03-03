@@ -18,7 +18,7 @@ impl AllocateBricksPass {
         }
     }
 
-    pub unsafe fn run(&self, all_tiles_allocated: u32) {
+    pub unsafe fn run(&self, all_nodes_allocated: u32) {
         self.shader.use_program();
 
         self.shader.set_uint(
@@ -49,7 +49,7 @@ impl AllocateBricksPass {
         gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, self.next_free_brick_counter);
 
         self.shader
-            .dispatch(all_tiles_allocated / CONFIG.working_group_size + 1);
+            .dispatch(all_nodes_allocated / CONFIG.working_group_size + 1);
         self.shader.wait();
     }
 }

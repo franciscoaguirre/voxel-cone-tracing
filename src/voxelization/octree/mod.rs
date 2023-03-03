@@ -18,4 +18,3 @@ mod store_node_positions;
 mod write_leaf_nodes;
 
 pub use build::build_octree;
-pub use visualize::render_octree;

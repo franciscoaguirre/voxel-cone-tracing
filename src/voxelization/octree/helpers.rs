@@ -26,8 +26,8 @@ pub unsafe fn show_nodes(offset: usize, number_of_nodes: usize) {
 }
 
 pub fn get_max_node_pool_size() -> usize {
-    let number_of_tiles = (0..CONFIG.octree_levels)
-        .map(|exponent| (constants::CHILDREN_PER_NODE as usize).pow(exponent))
+    let number_of_nodes = (0..CONFIG.octree_levels)
+        .map(|exponent| 8_usize.pow(exponent))
         .sum::<usize>();
-    number_of_tiles * 8
+    number_of_nodes * constants::CHILDREN_PER_NODE as usize
 }

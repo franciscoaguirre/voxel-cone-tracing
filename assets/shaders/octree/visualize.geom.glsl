@@ -5,11 +5,9 @@ layout (line_strip, max_vertices = 256) out;
 
 in vec4 nodePosition[];
 in float geom_halfNodeSize[];
-in int nonEmptyBranch[];
 in vec4 nodeColor[];
 in ivec3 geom_brickCoordinates[];
 
-out flat int frag_nonEmptyBranch;
 out flat vec4 frag_nodeColor;
 
 uniform mat4 model;
@@ -25,7 +23,6 @@ uniform layout(binding = 2, rgba8) image3D brickPoolColors;
 mat4 canonizationMatrix = projection * view * model;
 
 void main() {
-    frag_nonEmptyBranch = nonEmptyBranch[0];
     frag_nodeColor = nodeColor[0];
 
     vec4 cubeCenter = nodePosition[0];

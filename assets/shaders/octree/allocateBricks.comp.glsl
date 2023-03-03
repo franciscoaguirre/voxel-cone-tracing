@@ -11,7 +11,7 @@ uniform layout(binding = 0, offset = 0) atomic_uint nextFreeBrickCounter;
 
 uniform uint brickPoolResolution;
 
-void allocate_3x3x3_texture_brick(in int nodeAddress) {
+void allocate_3x3x3_texture_brick(int nodeID) {
     uint nextFreeBrick = atomicCounterIncrement(nextFreeBrickCounter);
     memoryBarrier();
     uvec3 textureAddress = uvec3(0);
@@ -21,19 +21,10 @@ void allocate_3x3x3_texture_brick(in int nodeAddress) {
     textureAddress.z = nextFreeBrick / (brickPoolResolutionBricks * brickPoolResolutionBricks);
     textureAddress *= 3;
 
-    imageStore(nodePoolBrickPointers, nodeAddress, uvec4(vec3ToUintXYZ10(textureAddress), 0, 0, 0));
+    imageStore(nodePoolBrickPointers, nodeID, uvec4(vec3ToUintXYZ10(textureAddress), 0, 0, 0));
 }
 
 void main() {
-    uint tileAddress = gl_GlobalInvocationID.x * 8;
-
-    for (int i = 0; i < CHILDREN_PER_NODE; i++) {
-        int nodeAddress = int(tileAddress + i);
-        allocate_3x3x3_texture_brick(nodeAddress);
-
-        // TODO: Brick flag?
-        // uint nodeNextU = imageLoad(nodePool_next, address).x;
-        // imageStore(nodePool_next, address,
-        // uvec4(NODE_MASK_BRICK | nodeNextU, 0, 0, 0));
-    }
+    int nodeID = int(gl_GlobalInvocationID.x);
+    allocate_3x3x3_texture_brick(nodeID);
 }

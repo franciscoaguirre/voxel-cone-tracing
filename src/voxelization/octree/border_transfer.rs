@@ -57,8 +57,7 @@ impl BorderTransferPass {
             helpers::generate_texture_buffer(1, gl::R32F, 10_f32);
         helpers::bind_image_texture(4, debug_texture, gl::WRITE_ONLY, gl::R32F);
 
-        let tiles_in_level = NODES_PER_LEVEL[octree_level as usize];
-        let nodes_in_level = tiles_in_level * CHILDREN_PER_NODE;
+        let nodes_in_level = NODES_PER_LEVEL[octree_level as usize];
         let groups_count = (nodes_in_level as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
 
         // self.shader.dispatch(groups_count);
