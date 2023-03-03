@@ -12,3 +12,4 @@ const uvec3 CHILD_OFFSETS[8] = {
     uvec3(1, 1, 1)
 };
 const int NODE_NOT_FOUND = 0xFFFFFFFF;
+const vec4 NO_NEIGHBOR = vec4(-1.0);
