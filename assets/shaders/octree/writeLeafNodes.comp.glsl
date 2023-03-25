@@ -29,7 +29,7 @@ void storeInLeaf(vec3 voxelPosition, int nodeID, vec4 voxelColor, float halfNode
 
     // NOTE: We find out which subsection the current voxel occupies inside the node
     // Remember leaves don't have nodes, so leaf bricks effectively have 2x2x2 voxels.
-    uint offset = calculateChildLocalID(nodeCoordinates, halfNodeSize, voxelPosition) {
+    uint offset = calculateChildLocalID(nodeCoordinates, halfNodeSize, voxelPosition);
 
     imageStore(
         brickPoolColors,

@@ -88,6 +88,8 @@ pub unsafe fn build_octree(
         first_free_node += nodes_allocated as i32;
 
         octree_level_start_indices.push(first_node_in_level);
+
+        neighbour_pointers_pass.run(octree_level + 1);
     }
 
     // // TODO: Could maybe be done in the loop above
@@ -102,20 +104,20 @@ pub unsafe fn build_octree(
         octree_level_start_indices,
     );
 
-    // let all_nodes_allocated: u32 = NODES_PER_LEVEL.iter().sum();
-    // error!("All nodes allocated: {:?}", all_nodes_allocated);
+    let all_nodes_allocated: u32 = NODES_PER_LEVEL.iter().sum();
+    error!("All nodes allocated: {:?}", all_nodes_allocated);
 
-    // // allocate_bricks_pass.run(all_nodes_allocated);
+    allocate_bricks_pass.run(all_nodes_allocated);
 
-    // let brick_pool_colors_texture_size_one_dimension = CONFIG.brick_pool_resolution;
-    // BRICK_POOL_COLORS_TEXTURE =
-    //     voxelization::helpers::generate_3d_texture(brick_pool_colors_texture_size_one_dimension);
+    let brick_pool_colors_texture_size_one_dimension = CONFIG.brick_pool_resolution;
+    BRICK_POOL_COLORS_TEXTURE =
+        voxelization::helpers::generate_3d_texture(brick_pool_colors_texture_size_one_dimension);
 
     // let size = brick_pool_colors_texture_size_one_dimension.pow(3);
 
     write_leaf_nodes_pass.run();
 
-    // spread_leaf_bricks_pass.run();
+    spread_leaf_bricks_pass.run();
 
     // border_transfer_pass.run(X_AXIS);
     // border_transfer_pass.run(Y_AXIS);
