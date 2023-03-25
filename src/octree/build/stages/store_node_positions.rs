@@ -1,13 +1,9 @@
 use c_str_macro::c_str;
 
 use crate::{
-    config::CONFIG,
-    constants::{CHILDREN_PER_NODE, WORKING_GROUP_SIZE},
-    rendering::shader::Shader,
-    voxelization::{helpers, octree::common::OCTREE_NODE_POOL, voxelize::VOXEL_POSITIONS},
+    config::CONFIG, constants::WORKING_GROUP_SIZE, helpers, octree::OctreeTextures,
+    rendering::shader::Shader, voxelization::voxelize::VOXEL_POSITIONS,
 };
-
-use super::common::{NODES_PER_LEVEL, OCTREE_NODE_POSITIONS};
 
 pub struct StoreNodePositions {
     shader: Shader,
@@ -20,7 +16,12 @@ impl StoreNodePositions {
         }
     }
 
-    pub unsafe fn run(&self, octree_level: u32, number_of_voxel_fragments: u32) {
+    pub unsafe fn run(
+        &self,
+        textures: &OctreeTextures,
+        octree_level: u32,
+        number_of_voxel_fragments: u32,
+    ) {
         self.shader.use_program();
 
         self.shader.set_uint(c_str!("octreeLevel"), octree_level);
@@ -28,8 +29,8 @@ impl StoreNodePositions {
             .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
 
         helpers::bind_image_texture(0, VOXEL_POSITIONS.0, gl::READ_ONLY, gl::RGB10_A2UI);
-        helpers::bind_image_texture(1, OCTREE_NODE_POSITIONS.0, gl::WRITE_ONLY, gl::RGB10_A2UI);
-        helpers::bind_image_texture(2, OCTREE_NODE_POOL.0, gl::READ_ONLY, gl::R32UI);
+        helpers::bind_image_texture(1, textures.node_positions.0, gl::WRITE_ONLY, gl::RGB10_A2UI);
+        helpers::bind_image_texture(2, textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
 
         let (debug_texture, debug_texture_buffer) =
             helpers::generate_texture_buffer(7, gl::R32F, 69_f32);

@@ -1,9 +1,9 @@
 use c_str_macro::c_str;
 
 use crate::config::CONFIG;
+use crate::helpers;
+use crate::octree::OctreeTextures;
 use crate::rendering::shader::Shader;
-
-use super::common::{OCTREE_NODE_POOL, OCTREE_NODE_POOL_BRICK_POINTERS};
 
 pub struct AllocateBricksPass {
     shader: Shader,
@@ -18,7 +18,7 @@ impl AllocateBricksPass {
         }
     }
 
-    pub unsafe fn run(&self, all_nodes_allocated: u32) {
+    pub unsafe fn run(&self, textures: &OctreeTextures, all_nodes_allocated: u32) {
         self.shader.use_program();
 
         self.shader.set_uint(
@@ -26,25 +26,8 @@ impl AllocateBricksPass {
             CONFIG.brick_pool_resolution as u32,
         );
 
-        gl::BindImageTexture(
-            0,
-            OCTREE_NODE_POOL.0,
-            0,
-            gl::FALSE,
-            0,
-            gl::READ_ONLY,
-            gl::R32UI,
-        );
-
-        gl::BindImageTexture(
-            1,
-            OCTREE_NODE_POOL_BRICK_POINTERS.0,
-            0,
-            gl::FALSE,
-            0,
-            gl::WRITE_ONLY,
-            gl::R32UI,
-        );
+        helpers::bind_image_texture(0, textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
+        helpers::bind_image_texture(1, textures.brick_pointers.0, gl::WRITE_ONLY, gl::R32UI);
 
         gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, self.next_free_brick_counter);
 

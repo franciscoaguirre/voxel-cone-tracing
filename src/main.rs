@@ -4,7 +4,7 @@ use std::env;
 use std::path::Path;
 
 use c_str_macro::c_str;
-use egui_glfw_gl::glfw::{self, Context};
+use egui_glfw_gl::glfw::{self, Action, Context, Key};
 extern crate gl;
 use cgmath::{perspective, vec3, Deg, Matrix4, Point3, Vector3};
 use log::info;
@@ -16,6 +16,7 @@ mod constants;
 mod debug;
 mod helpers;
 mod menu;
+mod octree;
 mod rendering;
 mod voxelization;
 
@@ -26,17 +27,11 @@ use menu::Menu;
 use rendering::{
     camera::Camera, common, gizmo::RenderGizmo, light::PointLight, model::Model, shader::Shader,
 };
-use voxelization::{
-    octree::{
-        build_octree,
-        visualize::{RenderOctreeShader, ShowBricks},
-    },
-    visualize::RenderVoxelFragmentsShader,
-};
+use voxelization::visualize::RenderVoxelFragmentsShader;
 
-use crate::voxelization::octree::common::OCTREE_NODE_POSITIONS;
+use crate::debug::r32ui_to_rgb10_a2ui;
 use crate::voxelization::voxelize::VOXEL_POSITIONS;
-use crate::{debug::r32ui_to_rgb10_a2ui, voxelization::octree::common::OCTREE_NODE_POOL};
+use octree::Octree;
 
 fn main() {
     let options = Options::from_args();
@@ -101,7 +96,7 @@ fn main() {
     };
 
     let voxel_fragments = unsafe {
-        voxelization::helpers::get_values_from_texture_buffer(
+        helpers::get_values_from_texture_buffer(
             VOXEL_POSITIONS.1,
             number_of_voxel_fragments as usize,
             0_u32,
@@ -113,25 +108,25 @@ fn main() {
         .map(|(x, y, z)| format!("({}, {}, {})", x, y, z))
         .collect();
 
-    unsafe {
-        build_octree(
+    let mut octree = unsafe {
+        Octree::new(
             voxel_positions_texture,
             number_of_voxel_fragments,
             voxel_colors_texture,
-        );
-    }
+        )
+    };
 
-    let node_pool = unsafe {
-        voxelization::helpers::get_values_from_texture_buffer(
-            OCTREE_NODE_POOL.1,
+    let _node_pool = unsafe {
+        helpers::get_values_from_texture_buffer(
+            octree.textures.node_pool.1,
             number_of_voxel_fragments as usize,
             0_u32,
         )
     };
 
     let node_positions = unsafe {
-        voxelization::helpers::get_values_from_texture_buffer(
-            OCTREE_NODE_POSITIONS.1,
+        helpers::get_values_from_texture_buffer(
+            octree.textures.node_positions.1,
             number_of_voxel_fragments as usize,
             0_u32,
         )
@@ -160,7 +155,6 @@ fn main() {
     let mut current_voxel_fragment_count: u32 = 0;
     let mut current_octree_level: u32 = 0;
     let mut show_empty_nodes = false;
-    let mut show_bricks = ShowBricks::DontShow;
     let mut show_model = false;
     let mut show_voxel_fragment_list = false;
     let mut show_octree = false;
@@ -178,8 +172,6 @@ fn main() {
         voxel_colors_texture,
         number_of_voxel_fragments,
     );
-    let render_octree_shader =
-        RenderOctreeShader::init(voxel_positions_texture, number_of_voxel_fragments);
 
     // Render loop
     while !window.should_close() {
@@ -220,7 +212,6 @@ fn main() {
                     &event,
                     &mut current_octree_level,
                     &mut show_empty_nodes,
-                    &mut show_bricks,
                 );
                 common::handle_showing_entities(
                     &event,
@@ -228,6 +219,12 @@ fn main() {
                     &mut show_voxel_fragment_list,
                     &mut show_octree,
                 );
+                match event {
+                    glfw::WindowEvent::Key(Key::B, _, Action::Press, _) => {
+                        octree.toggle_show_bricks();
+                    }
+                    _ => {}
+                }
             }
             menu.handle_event(event);
         }
@@ -283,14 +280,15 @@ fn main() {
             }
 
             if show_octree {
-                render_octree_shader.run(
-                    &model,
-                    &view,
-                    &projection,
-                    current_octree_level,
-                    &show_bricks,
-                );
+                octree.render(&model, &view, &projection, current_octree_level);
             }
+
+            octree.run_node_positions_shader(
+                &selected_nodes.iter().map(|(index, _)| *index).collect(),
+                &projection,
+                &view,
+                &model,
+            );
 
             if show_model {
                 render_model_shader.use_program();
@@ -304,7 +302,6 @@ fn main() {
 
             visual_debugger.run(
                 &selected_voxels.iter().map(|(index, _)| *index).collect(),
-                &selected_nodes.iter().map(|(index, _)| *index).collect(),
                 &points,
                 &projection,
                 &view,
