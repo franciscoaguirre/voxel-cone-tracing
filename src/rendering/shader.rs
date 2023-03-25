@@ -5,9 +5,9 @@ use std::{env, ptr, str};
 
 use cgmath::{Matrix, Matrix4, Point3};
 use gl::types::*;
-use log::info;
+use log::trace;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Shader {
     pub id: u32,
     is_compute: bool,
@@ -21,7 +21,7 @@ impl Shader {
         let fragment_code = Shader::process_shader_file(fragment_path);
 
         let short_vertex_path = &vertex_path[15..];
-        info!("Compiling shader in path {short_vertex_path}");
+        trace!("Compiling shader in path {short_vertex_path}");
         unsafe {
             println!("About to compile {vertex_path} and {fragment_path}");
             shader.id = Shader::compile_shaders(&vertex_code, &fragment_code, None);
@@ -42,7 +42,7 @@ impl Shader {
         let geometry_code = Shader::process_shader_file(geometry_path);
 
         let short_vertex_path = &vertex_path[15..];
-        info!("Compiling shader in path {short_vertex_path}");
+        trace!("Compiling shader in path {short_vertex_path}");
         unsafe {
             println!("About to compile {vertex_path}, {geometry_path} and {fragment_path}");
             shader.id = Shader::compile_shaders(&vertex_code, &fragment_code, Some(&geometry_code));
@@ -60,7 +60,7 @@ impl Shader {
         let shader_code = Shader::process_shader_file(shader_path);
 
         let short_shader_path = &shader_path[15..];
-        info!("Compiling shader in path {short_shader_path}");
+        trace!("Compiling shader in path {short_shader_path}");
         unsafe {
             shader.id = Shader::compile_compute(&shader_code);
         }

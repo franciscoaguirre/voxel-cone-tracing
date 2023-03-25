@@ -1,7 +1,6 @@
 extern crate c_str_macro;
 
 use std::env;
-use std::ffi::CStr;
 use std::path::Path;
 
 use c_str_macro::c_str;
@@ -24,7 +23,9 @@ use cli_arguments::Options;
 use config::CONFIG;
 use debug::VisualDebugger;
 use menu::Menu;
-use rendering::{camera::Camera, common, model::Model, shader::Shader};
+use rendering::{
+    camera::Camera, common, gizmo::RenderGizmo, light::PointLight, model::Model, shader::Shader,
+};
 use voxelization::{
     octree::{
         build_octree,
@@ -152,6 +153,8 @@ fn main() {
     let normalize_size_matrix = cgmath::Matrix4::from_scale(2f32 / aabb_longer_side);
 
     let model_normalization_matrix = normalize_size_matrix * center_scene_matrix;
+
+    let point_light = unsafe { PointLight::new(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0)) };
 
     // Animation variables
     let mut current_voxel_fragment_count: u32 = 0;
@@ -296,6 +299,8 @@ fn main() {
                 render_model_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
                 our_model.draw(&render_model_shader);
             }
+
+            point_light.draw_gizmo(&projection, &view, &model);
 
             visual_debugger.run(
                 &selected_voxels.iter().map(|(index, _)| *index).collect(),
