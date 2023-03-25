@@ -1,25 +1,30 @@
 use c_str_macro::c_str;
 
-use crate::{constants::WORKING_GROUP_SIZE, rendering::shader::Shader};
-
-use super::common::OCTREE_NODE_POOL;
+use crate::{
+    constants::WORKING_GROUP_SIZE,
+    octree::{OctreeTextures, VoxelData},
+    rendering::shader::Shader,
+};
 
 pub struct AllocateNodesPass {
     shader: Shader,
-    allocated_nodes_counter: u32,
-    number_of_voxel_fragments: u32,
 }
 
 impl AllocateNodesPass {
-    pub fn init(allocated_nodes_counter: u32, number_of_voxel_fragments: u32) -> Self {
+    pub fn init() -> Self {
         Self {
             shader: Shader::new_compute("assets/shaders/octree/allocateNodes.comp.glsl"),
-            allocated_nodes_counter,
-            number_of_voxel_fragments,
         }
     }
 
-    pub unsafe fn run(&self, first_node_in_level: i32, first_free_node: i32) {
+    pub unsafe fn run(
+        &self,
+        voxel_data: &VoxelData,
+        textures: &OctreeTextures,
+        allocated_nodes_counter: u32,
+        first_node_in_level: i32,
+        first_free_node: i32,
+    ) {
         self.shader.use_program();
 
         self.shader
@@ -28,19 +33,19 @@ impl AllocateNodesPass {
             .set_int(c_str!("firstFreeNode"), first_free_node);
         gl::BindImageTexture(
             0,
-            OCTREE_NODE_POOL.0,
+            textures.node_pool.0,
             0,
             gl::FALSE,
             0,
             gl::READ_WRITE,
             gl::R32UI,
         );
-        gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, self.allocated_nodes_counter);
+        gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, allocated_nodes_counter);
 
         let groups_count =
-            (self.number_of_voxel_fragments as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
+            (voxel_data.number_of_voxel_fragments as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
 
-        // TODO: Could still send less threads
+        // TODO: Could send even less threads
         self.shader.dispatch(groups_count);
         self.shader.wait();
     }

@@ -4,7 +4,7 @@ use egui_glfw_gl::glfw::{self, Action, Context, Glfw, Key, Window, WindowEvent};
 use log::info;
 
 use super::camera::{Camera, Camera_Movement};
-use crate::{config::CONFIG, helpers::debug, voxelization::octree::visualize::ShowBricks};
+use crate::{config::CONFIG, helpers};
 
 pub unsafe fn setup_glfw(debug: bool) -> (Glfw, Window, Receiver<(f64, WindowEvent)>) {
     // GLFW: Setup
@@ -43,7 +43,7 @@ pub unsafe fn setup_glfw(debug: bool) -> (Glfw, Window, Receiver<(f64, WindowEve
     if flags as u32 & gl::CONTEXT_FLAG_DEBUG_BIT != 0 {
         gl::Enable(gl::DEBUG_OUTPUT);
         gl::Enable(gl::DEBUG_OUTPUT_SYNCHRONOUS);
-        gl::DebugMessageCallback(Some(debug::gl_debug_output_callback), ptr::null());
+        gl::DebugMessageCallback(Some(helpers::gl_debug_output_callback), ptr::null());
         gl::DebugMessageControl(
             gl::DONT_CARE,
             gl::DONT_CARE,
@@ -120,7 +120,6 @@ pub fn handle_update_octree_level(
     event: &glfw::WindowEvent,
     current_octree_level: &mut u32,
     show_empty_nodes: &mut bool,
-    show_bricks: &mut ShowBricks,
 ) {
     match *event {
         glfw::WindowEvent::Key(Key::Left, _, Action::Press, _) => {
@@ -143,10 +142,6 @@ pub fn handle_update_octree_level(
         }
         glfw::WindowEvent::Key(Key::M, _, Action::Press, _) => {
             *show_empty_nodes = !*show_empty_nodes;
-        }
-        glfw::WindowEvent::Key(Key::B, _, Action::Press, _) => {
-            *show_bricks = show_bricks.next();
-            info!("Bricks: {}", *show_bricks);
         }
         _ => {}
     }

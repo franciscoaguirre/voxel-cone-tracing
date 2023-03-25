@@ -1,4 +1,4 @@
-use cgmath::{Point3, Vector3};
+use cgmath::Vector3;
 use egui_backend::{
     egui::{self, vec2, Color32, Pos2, Rect},
     glfw::{Action, CursorMode, Key, Window, WindowEvent},

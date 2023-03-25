@@ -2,8 +2,11 @@ use std::env;
 use std::mem::size_of;
 use std::path::Path;
 
-use super::helpers;
-use crate::{config::CONFIG, rendering::model::Model, rendering::shader::Shader};
+use crate::{
+    config::CONFIG,
+    helpers,
+    rendering::{model::Model, shader::Shader},
+};
 use c_str_macro::c_str;
 
 use gl::types::*;

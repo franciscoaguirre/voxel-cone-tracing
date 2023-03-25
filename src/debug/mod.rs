@@ -2,22 +2,12 @@ use std::ffi::c_void;
 use std::mem::size_of;
 
 use c_str_macro::c_str;
-use cgmath::{Matrix4, Point3, Vector3};
+use cgmath::{Matrix4, Vector3};
 
-use crate::config::CONFIG;
-use crate::rendering::shader::Shader;
-use crate::voxelization::helpers;
-use crate::voxelization::octree::common::{
-    OCTREE_LEVEL_START_INDICES, OCTREE_NODE_POOL, OCTREE_NODE_POOL_NEIGHBOUR_X,
-    OCTREE_NODE_POOL_NEIGHBOUR_X_NEGATIVE, OCTREE_NODE_POOL_NEIGHBOUR_Y,
-    OCTREE_NODE_POOL_NEIGHBOUR_Y_NEGATIVE, OCTREE_NODE_POOL_NEIGHBOUR_Z,
-    OCTREE_NODE_POOL_NEIGHBOUR_Z_NEGATIVE, OCTREE_NODE_POSITIONS,
-};
-use crate::voxelization::voxelize::VOXEL_POSITIONS;
+use crate::{config::CONFIG, rendering::shader::Shader};
 
 pub struct VisualDebugger {
     voxel_fragments_shader: Shader,
-    node_positions_shader: Shader,
     points_shader: Shader,
 }
 
@@ -29,11 +19,6 @@ impl VisualDebugger {
                 "assets/shaders/debug/voxel.frag.glsl",
                 "assets/shaders/debug/voxel.geom.glsl",
             ),
-            node_positions_shader: Shader::with_geometry_shader(
-                "assets/shaders/debug/nodePositions.vert.glsl",
-                "assets/shaders/debug/nodePositions.frag.glsl",
-                "assets/shaders/debug/nodePositions.geom.glsl",
-            ),
             points_shader: Shader::new(
                 "assets/shaders/debug/points.vert.glsl",
                 "assets/shaders/debug/points.frag.glsl",
@@ -44,84 +29,13 @@ impl VisualDebugger {
     pub unsafe fn run(
         &self,
         voxel_indices: &Vec<u32>,
-        node_indices: &Vec<u32>,
         points: &Vec<Vector3<f32>>,
         projection: &Matrix4<f32>,
         view: &Matrix4<f32>,
         model: &Matrix4<f32>,
     ) {
         self.run_voxel_fragments_shader(voxel_indices, projection, view, model);
-        self.run_node_positions_shader(node_indices, projection, view, model);
         self.run_points_shader(points, projection, view, model);
-    }
-
-    unsafe fn run_node_positions_shader(
-        &self,
-        node_indices: &Vec<u32>,
-        projection: &Matrix4<f32>,
-        view: &Matrix4<f32>,
-        model: &Matrix4<f32>,
-    ) {
-        if node_indices.is_empty() {
-            return;
-        }
-
-        self.node_positions_shader.use_program();
-
-        self.node_positions_shader
-            .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
-        self.node_positions_shader
-            .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels);
-
-        self.node_positions_shader
-            .set_mat4(c_str!("projection"), &projection);
-        self.node_positions_shader.set_mat4(c_str!("view"), &view);
-        self.node_positions_shader.set_mat4(c_str!("model"), &model);
-
-        helpers::bind_image_texture(0, OCTREE_NODE_POSITIONS.0, gl::READ_ONLY, gl::RGB10_A2UI);
-        helpers::bind_image_texture(1, OCTREE_NODE_POOL.0, gl::READ_ONLY, gl::R32UI);
-        helpers::bind_image_texture(2, OCTREE_LEVEL_START_INDICES.0, gl::READ_ONLY, gl::R32UI);
-
-        let neighbor_textures = [
-            OCTREE_NODE_POOL_NEIGHBOUR_X,
-            OCTREE_NODE_POOL_NEIGHBOUR_X_NEGATIVE,
-            OCTREE_NODE_POOL_NEIGHBOUR_Y,
-            OCTREE_NODE_POOL_NEIGHBOUR_Y_NEGATIVE,
-            OCTREE_NODE_POOL_NEIGHBOUR_Z,
-            OCTREE_NODE_POOL_NEIGHBOUR_Z_NEGATIVE,
-        ];
-        for texture_offset in 0..6 {
-            helpers::bind_image_texture(
-                3 + texture_offset,
-                neighbor_textures[texture_offset as usize].0,
-                gl::READ_ONLY,
-                gl::R32UI,
-            );
-        }
-
-        let mut vao = 0;
-        gl::GenVertexArrays(1, &mut vao);
-        gl::BindVertexArray(vao);
-
-        let mut vbo = 0;
-        gl::GenBuffers(1, &mut vbo);
-        gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-        gl::BufferData(
-            gl::ARRAY_BUFFER,
-            (node_indices.len() * size_of::<u32>()) as isize,
-            &node_indices[0] as *const u32 as *const c_void,
-            gl::DYNAMIC_DRAW,
-        );
-        gl::VertexAttribIPointer(
-            0,
-            1,
-            gl::UNSIGNED_INT,
-            size_of::<u32>() as i32,
-            0 as *const c_void,
-        );
-        gl::EnableVertexAttribArray(0);
-
-        gl::DrawArrays(gl::POINTS, 0, node_indices.len() as i32);
     }
 
     unsafe fn run_points_shader(
@@ -194,8 +108,9 @@ impl VisualDebugger {
         self.voxel_fragments_shader
             .set_mat4(c_str!("model"), &model);
 
-        helpers::bind_image_texture(0, VOXEL_POSITIONS.0, gl::READ_ONLY, gl::RGB10_A2UI);
-        helpers::bind_image_texture(1, OCTREE_NODE_POOL.0, gl::READ_ONLY, gl::R32UI);
+        // TODO: I think this is not that useful, will probably remove it.
+        // helpers::bind_image_texture(0, VOXEL_POSITIONS.0, gl::READ_ONLY, gl::RGB10_A2UI);
+        // helpers::bind_image_texture(1, OCTREE_NODE_POOL.0, gl::READ_ONLY, gl::R32UI);
 
         // let (debug_texture, debug_texture_buffer) =
         //     helpers::generate_texture_buffer(3, gl::R32F, 69_f32);
