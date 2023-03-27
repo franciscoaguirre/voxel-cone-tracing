@@ -1,4 +1,5 @@
 use gl::types::*;
+use image::{GenericImageView, ImageFormat};
 use std::{
     ffi::{c_void, CStr},
     mem::size_of,
@@ -252,5 +253,38 @@ pub extern "system" fn gl_debug_output_callback(
         gl::DEBUG_SEVERITY_LOW => println!("Severity: low"),
         gl::DEBUG_SEVERITY_NOTIFICATION => println!("Severity: notification"),
         _ => println!("Severity: Unknown enum value"),
+    }
+}
+
+/// Helper function to load a texture.
+/// Used mostly for testing and quick prototyping.
+/// Takes in a PNG.
+#[allow(dead_code)]
+pub fn load_texture(image_path: &str) -> GLuint {
+    let img_data = std::fs::read(image_path).expect("Failed to read image");
+    let img = image::load_from_memory_with_format(&img_data, ImageFormat::Png)
+        .expect("Failed to open image")
+        .flipv();
+    let (width, height) = img.dimensions();
+    let img_data = img.to_rgba8().into_raw();
+
+    unsafe {
+        let mut texture_id = 0;
+        gl::GenTextures(1, &mut texture_id);
+        gl::BindTexture(gl::TEXTURE_2D, texture_id);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as GLint);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as GLint);
+        gl::TexImage2D(
+            gl::TEXTURE_2D,
+            0,
+            gl::RGB as i32,
+            width as GLint,
+            height as GLint,
+            0,
+            gl::RGBA,
+            gl::UNSIGNED_BYTE,
+            img_data.as_ptr() as *const c_void,
+        );
+        texture_id
     }
 }

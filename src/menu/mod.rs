@@ -4,6 +4,9 @@ use egui_backend::{
     glfw::{Action, CursorMode, Key, Window, WindowEvent},
 };
 use egui_glfw_gl as egui_backend;
+use log::info;
+
+use crate::config::CONFIG;
 
 pub struct Menu {
     is_showing: bool,
@@ -101,13 +104,14 @@ impl Menu {
         let painter = egui_backend::Painter::new(window);
         let context = egui::Context::default();
 
-        let (width, height) = window.get_framebuffer_size();
         let native_pixels_per_point = window.get_content_scale().0;
+        info!("Native pixels per point: {native_pixels_per_point}");
 
         let input_state = egui_backend::EguiInputState::new(egui::RawInput {
             screen_rect: Some(Rect::from_min_size(
                 Pos2::new(0_f32, 0_f32),
-                vec2(width as f32, height as f32) / native_pixels_per_point,
+                vec2(CONFIG.viewport_width as f32, CONFIG.viewport_height as f32)
+                    / native_pixels_per_point,
             )),
             pixels_per_point: Some(native_pixels_per_point),
             ..Default::default()
