@@ -23,7 +23,7 @@ impl SpreadLeafBricksPass {
         self.shader.set_uint(c_str!("octreeLevel"), octree_level);
 
         helpers::bind_image_texture(0, textures.brick_pointers.0, gl::READ_ONLY, gl::R32UI);
-        helpers::bind_3d_image_texture(1, textures.brick_pool, gl::READ_WRITE, gl::RGBA8);
+        helpers::bind_3d_image_texture(1, textures.brick_pool_colors, gl::READ_WRITE, gl::RGBA8);
         helpers::bind_image_texture(2, textures.level_start_indices.0, gl::READ_ONLY, gl::R32UI);
 
         let nodes_in_level = nodes_per_level[octree_level as usize];

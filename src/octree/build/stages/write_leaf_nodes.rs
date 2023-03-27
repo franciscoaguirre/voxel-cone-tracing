@@ -44,7 +44,7 @@ impl WriteLeafNodesPass {
         );
         helpers::bind_image_texture(1, voxel_data.voxel_colors, gl::READ_WRITE, gl::RGBA8);
         helpers::bind_image_texture(2, textures.brick_pointers.0, gl::READ_WRITE, gl::R32UI);
-        helpers::bind_3d_image_texture(3, textures.brick_pool, gl::WRITE_ONLY, gl::RGBA8);
+        helpers::bind_3d_image_texture(3, textures.brick_pool_colors, gl::WRITE_ONLY, gl::RGBA8);
         helpers::bind_image_texture(4, textures.node_pool.0, gl::READ_WRITE, gl::R32UI);
 
         let tiles_in_level = nodes_per_level[octree_level as usize];

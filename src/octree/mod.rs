@@ -8,6 +8,7 @@ use crate::{config::CONFIG, constants, helpers, rendering::shader::Shader};
 use self::visualize::ShowBricks;
 
 mod build;
+mod lighting;
 mod visualize;
 
 type Texture = GLuint;
@@ -28,7 +29,7 @@ pub struct OctreeTextures {
     pub node_positions: BufferTexture,
     neighbors: [BufferTexture; 6],
     level_start_indices: BufferTexture,
-    brick_pool: Texture3D,
+    brick_pool_colors: Texture3D,
 }
 
 pub struct VoxelData {
@@ -110,7 +111,7 @@ impl Octree {
                 gl::R32UI,
                 0u32,
             ),
-            brick_pool: helpers::generate_3d_texture(CONFIG.brick_pool_resolution),
+            brick_pool_colors: helpers::generate_3d_texture(CONFIG.brick_pool_resolution),
         }
     }
 

@@ -60,7 +60,12 @@ impl Octree {
 
         helpers::bind_image_texture(0, self.textures.node_pool.0, gl::READ_WRITE, gl::R32UI);
         helpers::bind_image_texture(1, self.textures.brick_pointers.0, gl::READ_WRITE, gl::R32UI);
-        helpers::bind_3d_image_texture(2, self.textures.brick_pool, gl::READ_ONLY, gl::RGBA8);
+        helpers::bind_3d_image_texture(
+            2,
+            self.textures.brick_pool_colors,
+            gl::READ_ONLY,
+            gl::RGBA8,
+        );
         helpers::bind_image_texture(
             3,
             self.voxel_data.voxel_positions,

@@ -8,6 +8,7 @@ use egui_glfw_gl::glfw::{self, Action, Context, Key};
 extern crate gl;
 use cgmath::{perspective, vec3, Deg, Matrix4, Point3, Vector3};
 use log::info;
+use rendering::quad::Quad;
 use structopt::StructOpt;
 
 mod cli_arguments;
@@ -149,7 +150,41 @@ fn main() {
 
     let model_normalization_matrix = normalize_size_matrix * center_scene_matrix;
 
-    let point_light = unsafe { PointLight::new(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0)) };
+    let point_light = unsafe {
+        PointLight::new(
+            Point3 {
+                x: 1.0,
+                y: 0.75,
+                z: -2.0,
+            },
+            Point3 {
+                x: 1.0,
+                y: 1.0,
+                z: 1.0,
+            },
+        )
+    };
+
+    let projection: Matrix4<f32> = perspective(
+        Deg(camera.Zoom),
+        CONFIG.viewport_width as f32 / CONFIG.viewport_height as f32,
+        0.0001,
+        10000.0,
+    );
+    let view = Matrix4::look_at_rh(
+        point_light.position,
+        point_light.position
+            + (Point3 {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            } - point_light.position), // (0, 0, 0) - light.position
+        vec3(0.0, 1.0, 0.0),
+    );
+    let model = Matrix4::<f32>::from_translation(vec3(0.0, 0.0, 0.0));
+
+    let light_view_map = unsafe { octree.inject_light(&[&our_model], &projection, &view, &model) };
+    let quad = unsafe { Quad::new() };
 
     // Animation variables
     let mut current_voxel_fragment_count: u32 = 0;
@@ -307,6 +342,8 @@ fn main() {
                 &view,
                 &model,
             );
+
+            quad.render(light_view_map);
         }
 
         unsafe {

@@ -1,21 +1,21 @@
 use std::{ffi::c_void, mem::size_of};
 
 use c_str_macro::c_str;
-use cgmath::{Matrix4, Vector3};
+use cgmath::{Matrix4, Point3};
 use gl::types::GLuint;
 
 use super::{gizmo::RenderGizmo, shader::Shader};
 
 #[derive(Debug)]
 pub struct PointLight {
-    position: Vector3<f32>,
-    color: Vector3<f32>,
+    pub position: Point3<f32>,
+    color: Point3<f32>,
     shader: Shader,
     vao: GLuint,
 }
 
 impl PointLight {
-    pub unsafe fn new(position: Vector3<f32>, color: Vector3<f32>) -> Self {
+    pub unsafe fn new(position: Point3<f32>, color: Point3<f32>) -> Self {
         let mut light = Self {
             position,
             color,
@@ -36,8 +36,8 @@ impl PointLight {
         gl::GenBuffers(1, &mut vbo);
         gl::BindVertexArray(self.vao);
         gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-        let size = (2 * size_of::<Vector3<f32>>()) as isize;
-        let data = &[self.position, self.color][0] as *const Vector3<f32> as *const c_void;
+        let size = (2 * size_of::<Point3<f32>>()) as isize;
+        let data = &[self.position, self.color][0] as *const Point3<f32> as *const c_void;
         gl::BufferData(gl::ARRAY_BUFFER, size, data, gl::STATIC_DRAW);
         gl::EnableVertexAttribArray(0);
         gl::VertexAttribPointer(
@@ -45,7 +45,7 @@ impl PointLight {
             3,
             gl::FLOAT,
             gl::FALSE,
-            size_of::<Vector3<f32>>() as i32,
+            size_of::<Point3<f32>>() as i32,
             0 as *const c_void,
         );
         gl::EnableVertexAttribArray(1);
@@ -54,8 +54,8 @@ impl PointLight {
             3,
             gl::FLOAT,
             gl::FALSE,
-            size_of::<Vector3<f32>>() as i32,
-            (size_of::<Vector3<f32>>() as isize) as *const c_void,
+            size_of::<Point3<f32>>() as i32,
+            (size_of::<Point3<f32>>() as isize) as *const c_void,
         );
         gl::BindVertexArray(0);
         // TODO: We wanna draw a cube and we already have a GLSL helper for drawing cubes.
