@@ -6,7 +6,7 @@ use std::path::Path;
 use c_str_macro::c_str;
 use egui_glfw_gl::glfw::{self, Action, Context, Key};
 extern crate gl;
-use cgmath::{perspective, vec3, Deg, Matrix4, Point3, Vector3};
+use cgmath::{perspective, vec3, Deg, Matrix4, Point3};
 use log::info;
 use rendering::quad::Quad;
 use structopt::StructOpt;
@@ -14,7 +14,6 @@ use structopt::StructOpt;
 mod cli_arguments;
 mod config;
 mod constants;
-mod debug;
 mod helpers;
 mod menu;
 mod octree;
@@ -23,15 +22,12 @@ mod voxelization;
 
 use cli_arguments::Options;
 use config::CONFIG;
-use debug::VisualDebugger;
 use menu::Menu;
 use rendering::{
     camera::Camera, common, gizmo::RenderGizmo, light::PointLight, model::Model, shader::Shader,
 };
 use voxelization::visualize::RenderVoxelFragmentsShader;
 
-use crate::debug::r32ui_to_rgb10_a2ui;
-use crate::voxelization::voxelize::VOXEL_POSITIONS;
 use octree::Octree;
 
 fn main() {
@@ -96,19 +92,6 @@ fn main() {
         )
     };
 
-    let voxel_fragments = unsafe {
-        helpers::get_values_from_texture_buffer(
-            VOXEL_POSITIONS.1,
-            number_of_voxel_fragments as usize,
-            0_u32,
-        )
-    };
-    let voxel_fragments: Vec<String> = voxel_fragments
-        .iter()
-        .map(|&voxel_fragment| r32ui_to_rgb10_a2ui(voxel_fragment))
-        .map(|(x, y, z)| format!("({}, {}, {})", x, y, z))
-        .collect();
-
     let mut octree = unsafe {
         Octree::new(
             voxel_positions_texture,
@@ -135,7 +118,7 @@ fn main() {
 
     let node_positions: Vec<String> = node_positions
         .iter()
-        .map(|&node_position| r32ui_to_rgb10_a2ui(node_position))
+        .map(|&node_position| helpers::r32ui_to_rgb10_a2ui(node_position))
         .map(|(x, y, z)| format!("({}, {}, {})", x, y, z))
         .collect();
 
@@ -193,14 +176,10 @@ fn main() {
     let mut show_model = false;
     let mut show_voxel_fragment_list = false;
     let mut show_octree = false;
-    let mut filter_text = String::new();
     let mut node_filter_text = String::new();
 
-    let visual_debugger = VisualDebugger::init();
-    let mut selected_voxels: Vec<(u32, String)> = Vec::new();
     let mut selected_nodes: Vec<(u32, String)> = Vec::new();
-    let mut points: Vec<Vector3<f32>> = Vec::new();
-    let mut current_point_raw = String::new();
+    let mut should_show_neighbors = false;
 
     let render_voxel_fragments_shader = RenderVoxelFragmentsShader::init(
         voxel_positions_texture,
@@ -269,24 +248,14 @@ fn main() {
         // egui render
         if menu.is_showing() {
             menu.show_main_window();
-            if menu.is_showing_voxel_positions_window() {
-                menu.create_clickable_list(
-                    &voxel_fragments,
-                    &mut selected_voxels,
-                    "Voxel fragments",
-                    &mut filter_text,
-                );
-            }
             if menu.is_showing_node_positions_window() {
-                menu.create_clickable_list(
+                menu.create_node_positions_window(
                     &node_positions,
                     &mut selected_nodes,
                     "Node positions",
                     &mut node_filter_text,
+                    &mut should_show_neighbors,
                 );
-            }
-            if menu.is_showing_points_window() {
-                menu.show_points_menu(&mut current_point_raw, &mut points);
             }
             if menu.is_showing_diagnostics_window() {
                 menu.create_diagnostics_window(fps);
@@ -325,6 +294,15 @@ fn main() {
                 &model,
             );
 
+            if should_show_neighbors {
+                octree.run_node_neighbors_shader(
+                    &selected_nodes.iter().map(|(index, _)| *index).collect(),
+                    &projection,
+                    &view,
+                    &model,
+                );
+            }
+
             if show_model {
                 render_model_shader.use_program();
                 render_model_shader.set_mat4(c_str!("projection"), &projection);
@@ -335,15 +313,7 @@ fn main() {
 
             point_light.draw_gizmo(&projection, &view, &model);
 
-            visual_debugger.run(
-                &selected_voxels.iter().map(|(index, _)| *index).collect(),
-                &points,
-                &projection,
-                &view,
-                &model,
-            );
-
-            quad.render(light_view_map);
+            // quad.render(light_view_map);
         }
 
         unsafe {

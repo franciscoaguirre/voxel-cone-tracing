@@ -288,3 +288,9 @@ pub fn load_texture(image_path: &str) -> GLuint {
         texture_id
     }
 }
+
+pub fn r32ui_to_rgb10_a2ui(from: u32) -> (u32, u32, u32) {
+    let mask = 0b00000000000000000000001111111111;
+
+    (from & mask, (from >> 10) & mask, (from >> 20) & mask)
+}

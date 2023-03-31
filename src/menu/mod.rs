@@ -1,4 +1,3 @@
-use cgmath::Vector3;
 use egui_backend::{
     egui::{self, vec2, Color32, Pos2, Rect},
     glfw::{Action, CursorMode, Key, Window, WindowEvent},
@@ -15,9 +14,7 @@ pub struct Menu {
     input_state: egui_backend::EguiInputState,
     modifier_keys: egui::Modifiers,
     native_pixels_per_point: f32,
-    is_showing_voxel_positions_window: bool,
     is_showing_node_positions_window: bool,
-    is_showing_points_window: bool,
     is_showing_diagnostics_window: bool,
 }
 
@@ -40,16 +37,8 @@ impl Menu {
         self.is_showing
     }
 
-    pub fn is_showing_voxel_positions_window(&self) -> bool {
-        self.is_showing_voxel_positions_window
-    }
-
     pub fn is_showing_node_positions_window(&self) -> bool {
         self.is_showing_node_positions_window
-    }
-
-    pub fn is_showing_points_window(&self) -> bool {
-        self.is_showing_points_window
     }
 
     pub fn is_showing_diagnostics_window(&self) -> bool {
@@ -121,9 +110,7 @@ impl Menu {
 
         Self {
             is_showing: false,
-            is_showing_voxel_positions_window: false,
             is_showing_node_positions_window: false,
-            is_showing_points_window: false,
             is_showing_diagnostics_window: false,
             painter,
             context,
@@ -135,14 +122,8 @@ impl Menu {
 
     pub fn show_main_window(&mut self) {
         egui::Window::new("Menu").show(&self.context, |ui| {
-            if ui.button("Voxel positions").clicked() {
-                self.is_showing_voxel_positions_window = !self.is_showing_voxel_positions_window;
-            }
             if ui.button("Node positions").clicked() {
                 self.is_showing_node_positions_window = !self.is_showing_node_positions_window;
-            }
-            if ui.button("Points").clicked() {
-                self.is_showing_points_window = !self.is_showing_points_window;
             }
             if ui.button("Diagnostics").clicked() {
                 self.is_showing_diagnostics_window = !self.is_showing_diagnostics_window;
@@ -157,33 +138,13 @@ impl Menu {
         });
     }
 
-    pub fn show_points_menu(&self, current_point_raw: &mut String, points: &mut Vec<Vector3<f32>>) {
-        egui::Window::new("Points").show(&self.context, |ui| {
-            ui.text_edit_singleline(current_point_raw);
-            if ui.button("Draw point!").clicked() {
-                let current_point: Vector3<f32> = match current_point_raw
-                    .split_whitespace()
-                    .collect::<Vec<_>>()
-                    .as_slice()
-                {
-                    [x, y, z] => Vector3 {
-                        x: x.parse().unwrap(),
-                        y: y.parse().unwrap(),
-                        z: z.parse().unwrap(),
-                    },
-                    _ => panic!(),
-                };
-                points.push(current_point);
-            }
-        });
-    }
-
-    pub fn create_clickable_list(
+    pub fn create_node_positions_window(
         &self,
         items: &Vec<String>,
         selected_items: &mut Vec<(u32, String)>,
         window_title: &str,
         filter_text: &mut String,
+        should_show_neighbors: &mut bool,
     ) {
         let pinned_items: Vec<(u32, String)> = items
             .iter()
@@ -201,6 +162,14 @@ impl Menu {
             .resize(|r| r.fixed_size((200., 400.)))
             .show(&self.context, |ui| {
                 ui.vertical(|ui| {
+                    ui.horizontal(|ui| {
+                        if ui.button("Toggle Neighbours").clicked() {
+                            *should_show_neighbors = !*should_show_neighbors;
+                        }
+                        if ui.button("Toggle Bricks").clicked() {
+                            todo!();
+                        }
+                    });
                     ui.text_edit_singleline(filter_text);
                     egui::ScrollArea::vertical()
                         .max_height(200.)
