@@ -42,6 +42,7 @@ struct Renderer {
     shader: Shader,
     show_bricks: ShowBricks,
     node_positions_shader: Shader,
+    node_neighbors_shader: Shader,
 }
 
 impl Octree {
@@ -71,6 +72,11 @@ impl Octree {
                 "assets/shaders/debug/nodePositions.vert.glsl",
                 "assets/shaders/debug/nodePositions.frag.glsl",
                 "assets/shaders/debug/nodePositions.geom.glsl",
+            ),
+            node_neighbors_shader: Shader::with_geometry_shader(
+                "assets/shaders/debug/nodeNeighbors.vert.glsl",
+                "assets/shaders/debug/nodeNeighbors.frag.glsl",
+                "assets/shaders/debug/nodeNeighbors.geom.glsl",
             ),
         };
 

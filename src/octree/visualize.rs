@@ -152,6 +152,75 @@ impl Octree {
             gl::R32UI,
         );
 
+        let mut vao = 0;
+        gl::GenVertexArrays(1, &mut vao);
+        gl::BindVertexArray(vao);
+
+        let mut vbo = 0;
+        gl::GenBuffers(1, &mut vbo);
+        gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
+        gl::BufferData(
+            gl::ARRAY_BUFFER,
+            (node_indices.len() * size_of::<u32>()) as isize,
+            &node_indices[0] as *const u32 as *const c_void,
+            gl::DYNAMIC_DRAW,
+        );
+        gl::VertexAttribIPointer(
+            0,
+            1,
+            gl::UNSIGNED_INT,
+            size_of::<u32>() as i32,
+            0 as *const c_void,
+        );
+        gl::EnableVertexAttribArray(0);
+
+        gl::DrawArrays(gl::POINTS, 0, node_indices.len() as i32);
+    }
+
+    pub unsafe fn run_node_neighbors_shader(
+        &self,
+        node_indices: &Vec<u32>,
+        projection: &Matrix4<f32>,
+        view: &Matrix4<f32>,
+        model: &Matrix4<f32>,
+    ) {
+        if node_indices.is_empty() {
+            return;
+        }
+
+        self.renderer.node_neighbors_shader.use_program();
+
+        self.renderer
+            .node_neighbors_shader
+            .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
+        self.renderer
+            .node_neighbors_shader
+            .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels);
+
+        self.renderer
+            .node_neighbors_shader
+            .set_mat4(c_str!("projection"), &projection);
+        self.renderer
+            .node_neighbors_shader
+            .set_mat4(c_str!("view"), &view);
+        self.renderer
+            .node_neighbors_shader
+            .set_mat4(c_str!("model"), &model);
+
+        helpers::bind_image_texture(
+            0,
+            self.textures.node_positions.0,
+            gl::READ_ONLY,
+            gl::RGB10_A2UI,
+        );
+        helpers::bind_image_texture(1, self.textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
+        helpers::bind_image_texture(
+            2,
+            self.textures.level_start_indices.0,
+            gl::READ_ONLY,
+            gl::R32UI,
+        );
+
         for texture_offset in 0..self.textures.neighbors.len() {
             helpers::bind_image_texture(
                 3 + texture_offset as u32,
