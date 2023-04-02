@@ -17,8 +17,6 @@ uniform mat4 projection;
 
 uniform uint voxelDimension;
 
-uniform layout(binding = 0, rgb10_a2ui) readonly uimageBuffer nodePositions;
-
 mat4 canonizationMatrix = projection * view * model;
 
 void main() {

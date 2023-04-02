@@ -3,7 +3,7 @@ use std::{ffi::CStr, ptr, sync::mpsc::Receiver};
 use egui_glfw_gl::glfw::{self, Action, Context, Glfw, Key, Window, WindowEvent};
 use log::info;
 
-use super::camera::{Camera, Camera_Movement};
+use super::camera::{Camera, CameraMovement};
 use crate::{config::CONFIG, helpers};
 
 pub unsafe fn setup_glfw(debug: bool) -> (Glfw, Window, Receiver<(f64, WindowEvent)>) {
@@ -86,10 +86,10 @@ pub fn process_events(
             *last_x = x_position;
             *last_y = y_position;
 
-            camera.ProcessMouseMovement(x_offset, y_offset, true);
+            camera.process_mouse_movement(x_offset, y_offset, true);
         }
         glfw::WindowEvent::Scroll(_x_offset, y_offset) => {
-            camera.ProcessMouseScroll(y_offset as f32);
+            camera.process_mouse_scroll(y_offset as f32);
         }
         _ => {}
     }
@@ -97,22 +97,22 @@ pub fn process_events(
 
 pub fn process_camera_input(window: &mut glfw::Window, delta_time: f32, camera: &mut Camera) {
     if window.get_key(Key::W) == Action::Press {
-        camera.ProcessKeyboard(Camera_Movement::Forward, delta_time);
+        camera.process_keyboard(CameraMovement::Forward, delta_time);
     }
     if window.get_key(Key::S) == Action::Press {
-        camera.ProcessKeyboard(Camera_Movement::Backward, delta_time);
+        camera.process_keyboard(CameraMovement::Backward, delta_time);
     }
     if window.get_key(Key::A) == Action::Press {
-        camera.ProcessKeyboard(Camera_Movement::Left, delta_time);
+        camera.process_keyboard(CameraMovement::Left, delta_time);
     }
     if window.get_key(Key::D) == Action::Press {
-        camera.ProcessKeyboard(Camera_Movement::Right, delta_time);
+        camera.process_keyboard(CameraMovement::Right, delta_time);
     }
     if window.get_key(Key::Space) == Action::Press {
-        camera.ProcessKeyboard(Camera_Movement::Up, delta_time);
+        camera.process_keyboard(CameraMovement::Up, delta_time);
     }
     if window.get_key(Key::LeftShift) == Action::Press {
-        camera.ProcessKeyboard(Camera_Movement::Down, delta_time);
+        camera.process_keyboard(CameraMovement::Down, delta_time);
     }
 }
 
@@ -167,7 +167,7 @@ pub fn handle_showing_entities(
     }
 }
 
-pub unsafe fn show_device_information() {
+pub unsafe fn log_device_information() {
     let vendor = unsafe {
         CStr::from_ptr(gl::GetString(gl::VENDOR) as *const i8)
             .to_str()
