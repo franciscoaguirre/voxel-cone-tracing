@@ -94,7 +94,6 @@ impl Menu {
         let context = egui::Context::default();
 
         let native_pixels_per_point = window.get_content_scale().0;
-        info!("Native pixels per point: {native_pixels_per_point}");
 
         let input_state = egui_backend::EguiInputState::new(egui::RawInput {
             screen_rect: Some(Rect::from_min_size(

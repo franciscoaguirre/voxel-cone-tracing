@@ -48,36 +48,6 @@ where
     (texture, texture_buffer)
 }
 
-/// Generates a buffer texture initialized with the data provided
-pub unsafe fn generate_texture_buffer_with_data<T>(
-    size: usize,
-    format: GLenum,
-    data: Vec<T>,
-) -> (GLuint, GLuint)
-where
-    T: Clone,
-{
-    let mut texture_buffer: GLuint = 0;
-    gl::GenBuffers(1, &mut texture_buffer);
-    gl::BindBuffer(gl::TEXTURE_BUFFER, texture_buffer);
-
-    let mut texture: GLuint = 0;
-    gl::GenTextures(1, &mut texture);
-    gl::BindTexture(gl::TEXTURE_BUFFER, texture);
-    gl::TexBuffer(gl::TEXTURE_BUFFER, format, texture_buffer);
-
-    gl::BufferData(
-        gl::TEXTURE_BUFFER,
-        (size_of::<T>() * size) as isize,
-        data.as_ptr() as *const c_void,
-        gl::STATIC_DRAW,
-    );
-
-    gl::BindBuffer(gl::TEXTURE_BUFFER, 0);
-
-    (texture, texture_buffer)
-}
-
 pub unsafe fn fill_texture_buffer_with_data<T>(texture_buffer: GLuint, data: &Vec<T>) {
     gl::BindBuffer(gl::TEXTURE_BUFFER, texture_buffer);
     gl::BufferData(
@@ -89,7 +59,25 @@ pub unsafe fn fill_texture_buffer_with_data<T>(texture_buffer: GLuint, data: &Ve
     gl::BindBuffer(gl::TEXTURE_BUFFER, 0);
 }
 
-pub unsafe fn generate_3d_texture(size_one_dimension: u32) -> GLuint {
+pub unsafe fn generate_3d_rgba_texture(size_one_dimension: u32) -> GLuint {
+    generate_3d_texture(size_one_dimension, gl::RGBA8, gl::RGBA, gl::UNSIGNED_BYTE)
+}
+
+pub unsafe fn generate_3d_r32ui_texture(size_one_dimension: u32) -> GLuint {
+    generate_3d_texture(
+        size_one_dimension,
+        gl::R32UI,
+        gl::RED_INTEGER,
+        gl::UNSIGNED_INT,
+    )
+}
+
+unsafe fn generate_3d_texture(
+    size_one_dimension: u32,
+    internal_format: GLenum,
+    format: GLenum,
+    _type: GLenum,
+) -> GLuint {
     let mut texture: GLuint = 0;
 
     // TODO: Apparently powers of two are recommended, but using the next power of
@@ -105,13 +93,13 @@ pub unsafe fn generate_3d_texture(size_one_dimension: u32) -> GLuint {
     gl::TexImage3D(
         gl::TEXTURE_3D,
         0,
-        gl::RGBA8 as i32,
+        internal_format as i32,
         size_one_dimension as i32,
         size_one_dimension as i32,
         size_one_dimension as i32,
         0,
-        gl::RGBA,
-        gl::UNSIGNED_BYTE,
+        format,
+        _type,
         initial_data.as_ptr() as *const c_void,
     );
     gl::BindTexture(gl::TEXTURE_3D, 0);

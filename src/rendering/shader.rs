@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::Read;
 use std::{env, ptr, str};
 
-use cgmath::{Matrix, Matrix4, Point3};
+use cgmath::{vec3, Matrix, Matrix4, Point3, Vector3};
 use gl::types::*;
 use log::trace;
 
@@ -23,7 +23,6 @@ impl Shader {
         let short_vertex_path = &vertex_path[15..];
         trace!("Compiling shader in path {short_vertex_path}");
         unsafe {
-            println!("About to compile {vertex_path} and {fragment_path}");
             shader.id = Shader::compile_shaders(&vertex_code, &fragment_code, None);
         }
 
@@ -44,7 +43,6 @@ impl Shader {
         let short_vertex_path = &vertex_path[15..];
         trace!("Compiling shader in path {short_vertex_path}");
         unsafe {
-            println!("About to compile {vertex_path}, {geometry_path} and {fragment_path}");
             shader.id = Shader::compile_shaders(&vertex_code, &fragment_code, Some(&geometry_code));
         }
 
@@ -73,11 +71,15 @@ impl Shader {
         gl::UseProgram(self.id)
     }
 
-    pub unsafe fn dispatch(&self, number_of_groups: u32) {
+    pub unsafe fn dispatch_xyz(&self, number_of_groups: Vector3<u32>) {
         if !self.is_compute {
             panic!("Can't dispatch a non-compute shader");
         }
-        gl::DispatchCompute(number_of_groups, 1, 1);
+        gl::DispatchCompute(number_of_groups.x, number_of_groups.y, number_of_groups.z);
+    }
+
+    pub unsafe fn dispatch(&self, number_of_groups: u32) {
+        self.dispatch_xyz(vec3(number_of_groups, 1, 1));
     }
 
     pub unsafe fn wait(&self) {

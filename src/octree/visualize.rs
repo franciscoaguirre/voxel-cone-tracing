@@ -74,6 +74,12 @@ impl Octree {
             gl::READ_ONLY,
             gl::RGB10_A2UI,
         );
+        helpers::bind_3d_image_texture(
+            4,
+            self.textures.brick_pool_photons,
+            gl::READ_ONLY,
+            gl::R32UI,
+        );
 
         self.renderer
             .shader

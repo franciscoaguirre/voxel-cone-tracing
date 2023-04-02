@@ -26,9 +26,7 @@ void storeInLeaf(vec3 voxelPosition, int nodeID, vec4 voxelColor, float halfNode
     // each time? Why is it non-deterministic which brick coordinates a node will
     // get?
     ivec3 brickCoordinates = ivec3(uintXYZ10ToVec3(brickCoordinatesCompact));
-
-    // NOTE: We find out which subsection the current voxel occupies inside the node
-    // Remember leaves don't have nodes, so leaf bricks effectively have 2x2x2 voxels.
+    // We find the closest corner in the brick to store the color (we spread it later)
     uint offset = calculateChildLocalID(nodeCoordinates, halfNodeSize, voxelPosition);
 
     imageStore(
