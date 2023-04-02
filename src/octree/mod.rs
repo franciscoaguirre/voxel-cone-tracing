@@ -30,6 +30,7 @@ pub struct OctreeTextures {
     neighbors: [BufferTexture; 6],
     level_start_indices: BufferTexture,
     brick_pool_colors: Texture3D,
+    brick_pool_photons: Texture3D,
 }
 
 pub struct VoxelData {
@@ -127,7 +128,8 @@ impl Octree {
                 gl::R32UI,
                 0u32,
             ),
-            brick_pool_colors: helpers::generate_3d_texture(CONFIG.brick_pool_resolution),
+            brick_pool_colors: helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution),
+            brick_pool_photons: helpers::generate_3d_r32ui_texture(CONFIG.brick_pool_resolution),
         }
     }
 

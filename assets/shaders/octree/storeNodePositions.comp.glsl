@@ -7,7 +7,6 @@ layout (local_size_x = WORKING_GROUP_SIZE, local_size_y = 1, local_size_z = 1) i
 uniform layout(binding = 0, rgb10_a2ui) uimageBuffer voxelPositions;
 uniform layout(binding = 1, rgb10_a2ui) uimageBuffer nodePositions;
 uniform layout(binding = 2, r32ui) uimageBuffer nodePool;
-uniform layout(binding = 3, r32f) imageBuffer debugBuffer;
 
 uniform uint octreeLevel;
 uniform uint voxelDimension;
@@ -28,16 +27,7 @@ void main() {
         halfNodeSize
     );
 
-    imageStore(debugBuffer, 0, vec4(float(nodeID), 0, 0, 0));
-    imageStore(debugBuffer, 1, vec4(float(nodeCoordinates.x), 0, 0, 0));
-    imageStore(debugBuffer, 2, vec4(float(nodeCoordinates.y), 0, 0, 0));
-    imageStore(debugBuffer, 3, vec4(float(nodeCoordinates.z), 0, 0, 0));
-
     uvec3 nodeCoordinatesInteger = uvec3(round(nodeCoordinates * float(voxelDimension)));
-
-    imageStore(debugBuffer, 4, vec4(float(nodeCoordinatesInteger.x), 0, 0, 0));
-    imageStore(debugBuffer, 5, vec4(float(nodeCoordinatesInteger.y), 0, 0, 0));
-    imageStore(debugBuffer, 6, vec4(float(nodeCoordinatesInteger.z), 0, 0, 0));
 
     // TODO: It's overkill to use so many voxel fragments to store this
     // imageStore(nodePositions, nodeID, uvec4(nodeCoordinatesInteger, 1));

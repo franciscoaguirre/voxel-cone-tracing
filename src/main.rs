@@ -142,8 +142,8 @@ fn main() {
             },
         )
     };
-    light.transform.position = point3(0.0, 1.0, -1.0);
-    light.transform.set_rotation_x(-45.0);
+    light.transform.position = point3(0.0, 0.0, -1.0);
+    light.transform.set_rotation_x(0.0);
 
     let projection = light.get_projection_matrix();
     let view = light.transform.get_view_matrix();
