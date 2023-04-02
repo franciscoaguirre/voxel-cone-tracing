@@ -5,7 +5,7 @@ use egui_backend::{
 use egui_glfw_gl as egui_backend;
 use log::info;
 
-use crate::config::CONFIG;
+use crate::{config::CONFIG, octree::BricksToShow};
 
 pub struct Menu {
     is_showing: bool,
@@ -145,6 +145,7 @@ impl Menu {
         window_title: &str,
         filter_text: &mut String,
         should_show_neighbors: &mut bool,
+        bricks_to_show: &mut BricksToShow,
     ) {
         let pinned_items: Vec<(u32, String)> = items
             .iter()
@@ -163,11 +164,37 @@ impl Menu {
             .show(&self.context, |ui| {
                 ui.vertical(|ui| {
                     ui.horizontal(|ui| {
-                        if ui.button("Toggle Neighbours").clicked() {
+                        ui.label("Neighbors: ");
+                        if ui.button("Toggle").clicked() {
                             *should_show_neighbors = !*should_show_neighbors;
                         }
-                        if ui.button("Toggle Bricks").clicked() {
-                            todo!();
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("Bricks: ");
+                        let get_button_text = |text, clicked| {
+                            let mut button_text = egui::RichText::new(text);
+                            if clicked {
+                                button_text = button_text.color(Color32::RED);
+                            }
+                            button_text
+                        };
+                        if ui
+                            .button(get_button_text("Z0", bricks_to_show.z0()))
+                            .clicked()
+                        {
+                            bricks_to_show.toggle_z0();
+                        }
+                        if ui
+                            .button(get_button_text("Z1", bricks_to_show.z1()))
+                            .clicked()
+                        {
+                            bricks_to_show.toggle_z1();
+                        }
+                        if ui
+                            .button(get_button_text("Z2", bricks_to_show.z2()))
+                            .clicked()
+                        {
+                            bricks_to_show.toggle_z2();
                         }
                     });
                     ui.text_edit_singleline(filter_text);

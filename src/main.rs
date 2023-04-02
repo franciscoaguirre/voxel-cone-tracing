@@ -4,9 +4,9 @@ use std::env;
 use std::path::Path;
 
 use c_str_macro::c_str;
-use egui_glfw_gl::glfw::{self, Action, Context, Key};
+use egui_glfw_gl::glfw::{self, Context};
 extern crate gl;
-use cgmath::{perspective, vec3, Deg, Matrix4, Point3};
+use cgmath::{perspective, point3, vec3, Deg, Matrix4, Point3};
 use log::info;
 use rendering::quad::Quad;
 use structopt::StructOpt;
@@ -24,11 +24,11 @@ use cli_arguments::Options;
 use config::CONFIG;
 use menu::Menu;
 use rendering::{
-    camera::Camera, common, gizmo::RenderGizmo, light::PointLight, model::Model, shader::Shader,
+    camera::Camera, common, gizmo::RenderGizmo, light::SpotLight, model::Model, shader::Shader,
 };
 use voxelization::visualize::RenderVoxelFragmentsShader;
 
-use octree::Octree;
+use octree::{BricksToShow, Octree};
 
 fn main() {
     let options = Options::from_args();
@@ -38,10 +38,8 @@ fn main() {
     let debug = cfg!(debug_assertions);
 
     // Camera setup
-    let mut camera = Camera {
-        Position: Point3::new(0.0, 0.0, -3.0),
-        ..Camera::default()
-    };
+    let mut camera = Camera::default();
+    camera.transform.position = point3(0.0, 0.0, -2.0);
     let mut first_mouse = true;
     let mut last_x: f32 = CONFIG.viewport_width as f32 / 2.0;
     let mut last_y: f32 = CONFIG.viewport_height as f32 / 2.0;
@@ -59,7 +57,7 @@ fn main() {
     let mut fps: f64 = 0.0;
 
     unsafe {
-        common::show_device_information();
+        common::log_device_information();
     };
 
     let mut menu = Menu::new(&mut window);
@@ -133,13 +131,10 @@ fn main() {
 
     let model_normalization_matrix = normalize_size_matrix * center_scene_matrix;
 
-    let point_light = unsafe {
-        PointLight::new(
-            Point3 {
-                x: 1.0,
-                y: 0.75,
-                z: -2.0,
-            },
+    let mut light = unsafe {
+        SpotLight::new(
+            2.0,
+            2.0,
             Point3 {
                 x: 1.0,
                 y: 1.0,
@@ -147,26 +142,19 @@ fn main() {
             },
         )
     };
+    light.transform.position = point3(0.0, 1.0, -1.0);
+    light.transform.set_rotation_x(-45.0);
 
-    let projection: Matrix4<f32> = perspective(
-        Deg(camera.Zoom),
-        CONFIG.viewport_width as f32 / CONFIG.viewport_height as f32,
-        0.0001,
-        10000.0,
-    );
-    let view = Matrix4::look_at_rh(
-        point_light.position,
-        point_light.position
-            + (Point3 {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-            } - point_light.position), // (0, 0, 0) - light.position
-        vec3(0.0, 1.0, 0.0),
-    );
-    let model = Matrix4::<f32>::from_translation(vec3(0.0, 0.0, 0.0));
-
-    let light_view_map = unsafe { octree.inject_light(&[&our_model], &projection, &view, &model) };
+    let projection = light.get_projection_matrix();
+    let view = light.transform.get_view_matrix();
+    let light_view_map = unsafe {
+        octree.inject_light(
+            &[&our_model],
+            &projection,
+            &view,
+            &model_normalization_matrix,
+        )
+    };
     let quad = unsafe { Quad::new() };
 
     // Animation variables
@@ -180,6 +168,7 @@ fn main() {
 
     let mut selected_nodes: Vec<(u32, String)> = Vec::new();
     let mut should_show_neighbors = false;
+    let mut bricks_to_show = BricksToShow::default();
 
     let render_voxel_fragments_shader = RenderVoxelFragmentsShader::init(
         voxel_positions_texture,
@@ -233,12 +222,6 @@ fn main() {
                     &mut show_voxel_fragment_list,
                     &mut show_octree,
                 );
-                match event {
-                    glfw::WindowEvent::Key(Key::B, _, Action::Press, _) => {
-                        octree.toggle_show_bricks();
-                    }
-                    _ => {}
-                }
             }
             menu.handle_event(event);
         }
@@ -255,6 +238,7 @@ fn main() {
                     "Node positions",
                     &mut node_filter_text,
                     &mut should_show_neighbors,
+                    &mut bricks_to_show,
                 );
             }
             if menu.is_showing_diagnostics_window() {
@@ -270,12 +254,12 @@ fn main() {
         // Render
         unsafe {
             let projection: Matrix4<f32> = perspective(
-                Deg(camera.Zoom),
+                Deg(camera.zoom),
                 CONFIG.viewport_width as f32 / CONFIG.viewport_height as f32,
                 0.0001,
                 10000.0,
             );
-            let view = camera.GetViewMatrix();
+            let view = camera.transform.get_view_matrix();
             let mut model = Matrix4::<f32>::from_translation(vec3(0.0, 0.0, 0.0));
             model = model * Matrix4::from_scale(1.);
 
@@ -287,20 +271,16 @@ fn main() {
                 octree.render(&model, &view, &projection, current_octree_level);
             }
 
-            octree.run_node_positions_shader(
-                &selected_nodes.iter().map(|(index, _)| *index).collect(),
-                &projection,
-                &view,
-                &model,
-            );
+            octree.set_node_indices(&selected_nodes.iter().map(|(index, _)| *index).collect());
+            octree.run_node_positions_shader(&projection, &view, &model);
+            octree.set_bricks_to_show(bricks_to_show);
 
             if should_show_neighbors {
-                octree.run_node_neighbors_shader(
-                    &selected_nodes.iter().map(|(index, _)| *index).collect(),
-                    &projection,
-                    &view,
-                    &model,
-                );
+                octree.run_node_neighbors_shader(&projection, &view, &model);
+            }
+
+            if bricks_to_show.at_least_one() {
+                octree.run_node_bricks_shader(&projection, &view, &model);
             }
 
             if show_model {
@@ -311,9 +291,8 @@ fn main() {
                 our_model.draw(&render_model_shader);
             }
 
-            point_light.draw_gizmo(&projection, &view, &model);
-
-            // quad.render(light_view_map);
+            light.draw_gizmo(&projection, &view);
+            quad.render(light_view_map);
         }
 
         unsafe {

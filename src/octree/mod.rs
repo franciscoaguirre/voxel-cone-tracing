@@ -5,11 +5,11 @@ use log::debug;
 
 use crate::{config::CONFIG, constants, helpers, rendering::shader::Shader};
 
-use self::visualize::ShowBricks;
-
 mod build;
 mod lighting;
 mod visualize;
+
+pub use visualize::BricksToShow;
 
 type Texture = GLuint;
 type Texture3D = GLuint;
@@ -39,10 +39,13 @@ pub struct VoxelData {
 }
 
 struct Renderer {
+    vao: GLuint,
+    node_count: u32,
     shader: Shader,
-    show_bricks: ShowBricks,
+    bricks_to_show: BricksToShow,
     node_positions_shader: Shader,
     node_neighbors_shader: Shader,
+    node_bricks_shader: Shader,
 }
 
 impl Octree {
@@ -62,12 +65,14 @@ impl Octree {
             number_of_voxel_fragments,
         };
         let renderer = Renderer {
+            vao: 0,
+            node_count: 0,
             shader: Shader::with_geometry_shader(
                 "assets/shaders/octree/visualize.vert.glsl",
                 "assets/shaders/octree/visualize.frag.glsl",
                 "assets/shaders/octree/visualize.geom.glsl",
             ),
-            show_bricks: ShowBricks::DontShow,
+            bricks_to_show: BricksToShow::default(),
             node_positions_shader: Shader::with_geometry_shader(
                 "assets/shaders/debug/nodePositions.vert.glsl",
                 "assets/shaders/debug/nodePositions.frag.glsl",
@@ -77,6 +82,11 @@ impl Octree {
                 "assets/shaders/debug/nodeNeighbors.vert.glsl",
                 "assets/shaders/debug/nodeNeighbors.frag.glsl",
                 "assets/shaders/debug/nodeNeighbors.geom.glsl",
+            ),
+            node_bricks_shader: Shader::with_geometry_shader(
+                "assets/shaders/debug/nodeBricks.vert.glsl",
+                "assets/shaders/debug/nodeBricks.frag.glsl",
+                "assets/shaders/debug/nodeBricks.geom.glsl",
             ),
         };
 

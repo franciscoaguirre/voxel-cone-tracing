@@ -76,11 +76,7 @@ impl Octree {
         let all_nodes_allocated: u32 = self.nodes_per_level.iter().sum();
 
         allocate_bricks_pass.run(&self.textures, all_nodes_allocated);
-
-        // let size = brick_pool_colors_texture_size_one_dimension.pow(3);
-
         write_leaf_nodes_pass.run(&self.voxel_data, &self.textures, &self.nodes_per_level);
-
         spread_leaf_bricks_pass.run(&self.textures, &self.nodes_per_level);
 
         // border_transfer_pass.run(&self.textures, &self.nodes_per_level, X_AXIS);

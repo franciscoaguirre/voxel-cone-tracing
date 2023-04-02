@@ -30,3 +30,7 @@ uint findOctreeLevel(uint nodeID, readonly uimageBuffer levelStartIndices, uint 
 
     return octreeLevel;
 }
+
+float calculateHalfNodeSize(uint octreeLevel) {
+    return 0.5 / float(pow(2.0, float(octreeLevel)));
+}
