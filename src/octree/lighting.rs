@@ -22,6 +22,7 @@ impl Octree {
             "assets/shaders/octree/lightViewMap.frag.glsl",
         );
 
+        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         shader.use_program();
         shader.set_mat4(c_str!("projection"), &projection);
         shader.set_mat4(c_str!("view"), &view);
@@ -52,14 +53,6 @@ impl Octree {
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
         gl::BindTexture(gl::TEXTURE_2D, 0);
 
-        gl::FramebufferTexture2D(
-            gl::FRAMEBUFFER,
-            gl::COLOR_ATTACHMENT0,
-            gl::TEXTURE_2D,
-            texture,
-            0,
-        );
-
         let mut rbo = 0;
         gl::GenRenderbuffers(1, &mut rbo);
         gl::BindRenderbuffer(gl::RENDERBUFFER, rbo);
@@ -69,17 +62,30 @@ impl Octree {
             CONFIG.viewport_width as i32,
             CONFIG.viewport_height as i32,
         );
-        gl::BindRenderbuffer(gl::RENDERBUFFER, 0);
+
         gl::FramebufferRenderbuffer(
             gl::FRAMEBUFFER,
             gl::DEPTH_STENCIL_ATTACHMENT,
             gl::RENDERBUFFER,
             rbo,
         );
+
+        gl::BindRenderbuffer(gl::RENDERBUFFER, 0);
+
+        gl::FramebufferTexture2D(
+            gl::FRAMEBUFFER,
+            gl::COLOR_ATTACHMENT0,
+            gl::TEXTURE_2D,
+            texture,
+            0,
+        );
+
         if gl::CheckFramebufferStatus(gl::FRAMEBUFFER) != gl::FRAMEBUFFER_COMPLETE {
             println!("ERROR::FRAMEBUFFER: Framebuffer is not complete!");
         }
 
+        gl::Enable(gl::DEPTH_TEST);
+        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         for model in models {
             model.draw(&shader);
         }
