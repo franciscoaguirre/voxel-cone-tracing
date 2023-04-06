@@ -14,7 +14,7 @@
     // It could be that we just need voxel_dimension * 3.
     // We are still not putting voxels on the corners of nodes.
     // Using voxel_dimension * 3 makes starting up really slow, really fast.
-    brick_pool_resolution: 210,
+    brick_pool_resolution: 384,
 
     // Compute shader settings
     working_group_size: 64,

@@ -3,7 +3,6 @@ use egui_backend::{
     glfw::{Action, CursorMode, Key, Window, WindowEvent},
 };
 use egui_glfw_gl as egui_backend;
-use log::info;
 
 use crate::{config::CONFIG, octree::BricksToShow};
 

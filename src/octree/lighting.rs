@@ -18,10 +18,11 @@ impl Octree {
         view: &Matrix4<f32>,
         model: &Matrix4<f32>,
     ) -> GLuint {
-        let light_view_map = Self::create_light_view_map(models, projection, view, model);
+        let (light_view_map, light_view_map_view) =
+            Self::create_light_view_map(models, projection, view, model);
         self.store_photons(light_view_map);
 
-        light_view_map
+        light_view_map_view
     }
 
     unsafe fn store_photons(&self, light_view_map: GLuint) {
@@ -30,9 +31,11 @@ impl Octree {
         shader.use_program();
 
         shader.set_uint(c_str!("octreeLevel"), CONFIG.octree_levels - 1);
+        shader.set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
 
         gl::ActiveTexture(gl::TEXTURE0);
         gl::BindTexture(gl::TEXTURE_2D, light_view_map);
+        shader.set_int(c_str!("lightViewMap"), 0);
 
         helpers::bind_image_texture(0, self.textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
         helpers::bind_image_texture(1, self.textures.brick_pointers.0, gl::READ_ONLY, gl::R32UI);
@@ -56,7 +59,7 @@ impl Octree {
         projection: &Matrix4<f32>,
         view: &Matrix4<f32>,
         model: &Matrix4<f32>,
-    ) -> GLuint {
+    ) -> (GLuint, GLuint) {
         // TODO: Compile beforehand once we have dynamic lights/objects
         let shader = Shader::new(
             "assets/shaders/octree/lightViewMap.vert.glsl",
@@ -69,15 +72,31 @@ impl Octree {
         shader.set_mat4(c_str!("view"), &view);
         shader.set_mat4(c_str!("model"), &model);
         shader.set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
-        shader.set_uint(c_str!("octreeLevel"), CONFIG.octree_levels - 1); // Last level
 
         let mut fbo = 0;
         gl::GenFramebuffers(1, &mut fbo);
         gl::BindFramebuffer(gl::FRAMEBUFFER, fbo);
 
-        let mut texture = 0;
-        gl::GenTextures(1, &mut texture);
-        gl::BindTexture(gl::TEXTURE_2D, texture);
+        let mut light_view_map_textures = [0; 2]; // First one is rgb10_a2ui, second rgba8 for viewing
+        gl::GenTextures(2, light_view_map_textures.as_mut_ptr());
+
+        gl::BindTexture(gl::TEXTURE_2D, light_view_map_textures[0]);
+        gl::TexImage2D(
+            gl::TEXTURE_2D,
+            0,
+            gl::RGB10_A2UI as i32,
+            CONFIG.viewport_width as i32,
+            CONFIG.viewport_height as i32,
+            0,
+            gl::RGBA_INTEGER,
+            gl::UNSIGNED_INT_2_10_10_10_REV,
+            std::ptr::null(),
+        );
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+        gl::BindTexture(gl::TEXTURE_2D, 0);
+
+        gl::BindTexture(gl::TEXTURE_2D, light_view_map_textures[1]);
         gl::TexImage2D(
             gl::TEXTURE_2D,
             0,
@@ -102,23 +121,30 @@ impl Octree {
             CONFIG.viewport_width as i32,
             CONFIG.viewport_height as i32,
         );
-
         gl::FramebufferRenderbuffer(
             gl::FRAMEBUFFER,
             gl::DEPTH_STENCIL_ATTACHMENT,
             gl::RENDERBUFFER,
             rbo,
         );
-
         gl::BindRenderbuffer(gl::RENDERBUFFER, 0);
 
         gl::FramebufferTexture2D(
             gl::FRAMEBUFFER,
             gl::COLOR_ATTACHMENT0,
             gl::TEXTURE_2D,
-            texture,
+            light_view_map_textures[0],
             0,
         );
+        gl::FramebufferTexture2D(
+            gl::FRAMEBUFFER,
+            gl::COLOR_ATTACHMENT1,
+            gl::TEXTURE_2D,
+            light_view_map_textures[1],
+            0,
+        );
+
+        gl::DrawBuffers(2, [gl::COLOR_ATTACHMENT0, gl::COLOR_ATTACHMENT1].as_ptr());
 
         if gl::CheckFramebufferStatus(gl::FRAMEBUFFER) != gl::FRAMEBUFFER_COMPLETE {
             println!("ERROR::FRAMEBUFFER: Framebuffer is not complete!");
@@ -132,6 +158,6 @@ impl Octree {
 
         gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
 
-        texture
+        (light_view_map_textures[0], light_view_map_textures[1])
     }
 }
