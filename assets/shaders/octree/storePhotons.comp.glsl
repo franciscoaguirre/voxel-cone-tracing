@@ -8,28 +8,29 @@ uniform layout(binding = 0, r32ui) readonly uimageBuffer nodePool;
 uniform layout(binding = 1, r32ui) readonly uimageBuffer nodePoolBrickPointers;
 uniform layout(binding = 2, r32ui) uimage3D brickPoolPhotons;
 
-uniform sampler2D lightViewMap;
+uniform usampler2D lightViewMap;
 uniform uint octreeLevel;
+uniform uint voxelDimension;
 
 #include "./_helpers.glsl"
 #include "./_traversalHelpers.glsl"
 #include "./_octreeTraversal.glsl"
 
 void main() {
-    vec3 queryCoordinates = texelFetch(
+    uvec4 queryCoordinates = texelFetch(
         lightViewMap,
-        ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y),
+        ivec2(gl_GlobalInvocationID.xy),
         0
-    ).xyz;
+    );
 
-    if (queryCoordinates.xyz == vec3(0)) {
+    if (queryCoordinates.xyz == uvec3(0)) {
         return;
     }
 
     float halfNodeSize;
     vec3 nodeCoordinates;
     int nodeID = traverseOctree(
-        queryCoordinates,
+        vec3(queryCoordinates.xyz / float(voxelDimension)),
         octreeLevel,
         nodeCoordinates,
         halfNodeSize
@@ -41,7 +42,7 @@ void main() {
 
     uint brickCoordinatesCompact = imageLoad(nodePoolBrickPointers, nodeID).r;
     ivec3 brickCoordinates = ivec3(uintXYZ10ToVec3(brickCoordinatesCompact));
-    // uint offset = calculateChildLocalID(nodeCoordinates, halfNodeSize, queryCoordinates);
+    // uvec3 brickOffset = calculateBrickVoxel(nodeCoordinates, halfNodeSize, queryCoordinates);
     imageStore(
         brickPoolPhotons,
         brickCoordinates,
