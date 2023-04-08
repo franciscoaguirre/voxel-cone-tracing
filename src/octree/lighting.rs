@@ -3,6 +3,7 @@ use cgmath::{vec3, Matrix4};
 use gl::types::GLuint;
 
 use crate::{
+    constants::WORKING_GROUP_SIZE,
     config::CONFIG,
     helpers,
     rendering::{model::Model, shader::Shader},
@@ -51,6 +52,7 @@ impl Octree {
             (CONFIG.viewport_height as f32 / 32 as f32).ceil() as u32,
             1,
         ));
+        
         shader.wait();
     }
 
@@ -159,5 +161,56 @@ impl Octree {
         gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
 
         (light_view_map_textures[0], light_view_map_textures[1])
+    }
+
+    pub unsafe fn transfer_light(&self) {
+        // Move compilation of shader out for dynamic lights
+        let shader = Shader::new_compute("assets/shaders/octree/lightTransfer.comp.glsl");
+        shader.use_program();
+
+        let octree_level = CONFIG.octree_levels - 1;
+        shader.set_uint(c_str!("octreeLevel"), octree_level);
+
+        helpers::bind_image_texture(0, self.textures.brick_pointers.0, gl::READ_ONLY, gl::R32UI);
+        helpers::bind_3d_image_texture(
+            2,
+            self.textures.brick_pool_photons,
+            gl::READ_WRITE,
+            gl::R32UI,
+        );
+        helpers::bind_image_texture(3, self.textures.level_start_indices.0, gl::READ_ONLY, gl::R32UI);
+
+        let nodes_in_level = self.nodes_per_level[octree_level as usize];
+        let groups_count = (nodes_in_level as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
+
+        helpers::bind_image_texture(
+            1,
+            self.textures.neighbors[0].0,
+            gl::READ_ONLY,
+            gl::R32UI,
+        );
+        shader.set_uint(c_str!("axis"), 0);
+        shader.dispatch(groups_count);
+        shader.wait();
+
+        helpers::bind_image_texture(
+            1,
+            self.textures.neighbors[2].0,
+            gl::READ_ONLY,
+            gl::R32UI,
+        );
+        shader.set_uint(c_str!("axis"), 1);
+        shader.dispatch(groups_count);
+        shader.wait();
+
+        helpers::bind_image_texture(
+            1,
+            self.textures.neighbors[4].0,
+            gl::READ_ONLY,
+            gl::R32UI,
+        );
+        shader.set_uint(c_str!("axis"), 2);
+        shader.dispatch(groups_count);
+        shader.wait();
     }
 }

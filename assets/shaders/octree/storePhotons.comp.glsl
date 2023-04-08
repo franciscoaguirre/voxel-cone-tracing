@@ -26,11 +26,12 @@ void main() {
     if (queryCoordinates.xyz == uvec3(0)) {
         return;
     }
+    vec3 normalizedQueryCoordinates = vec3(queryCoordinates.xyz / float(voxelDimension));
 
     float halfNodeSize;
     vec3 nodeCoordinates;
     int nodeID = traverseOctree(
-        vec3(queryCoordinates.xyz / float(voxelDimension)),
+        normalizedQueryCoordinates,
         octreeLevel,
         nodeCoordinates,
         halfNodeSize
@@ -42,10 +43,7 @@ void main() {
 
     uint brickCoordinatesCompact = imageLoad(nodePoolBrickPointers, nodeID).r;
     ivec3 brickCoordinates = ivec3(uintXYZ10ToVec3(brickCoordinatesCompact));
-    // uvec3 brickOffset = calculateBrickVoxel(nodeCoordinates, halfNodeSize, queryCoordinates);
-    imageStore(
-        brickPoolPhotons,
-        brickCoordinates,
-        uvec4(1, 0, 0, 0) // TODO: Add photons
-    );
+    ivec3 brickOffset = ivec3(calculateBrickVoxel(nodeCoordinates, halfNodeSize, normalizedQueryCoordinates));
+
+    imageAtomicAdd(brickPoolPhotons, brickCoordinates + brickOffset, uint(1));
 }
