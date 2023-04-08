@@ -116,24 +116,6 @@ impl Shader {
             mat.as_ptr(),
         );
     }
-    pub unsafe fn set_vector(&self, name: &CStr, count: usize, vector: &[u32]) {
-        gl::Uniform1uiv(
-            gl::GetUniformLocation(self.id, name.as_ptr()),
-            count as i32,
-            vector.as_ptr(),
-        );
-    }
-    pub unsafe fn set_point_vector(&self, name: &CStr, count: usize, vector: &[Point3<f32>]) {
-        let expanded_vector: Vec<f32> = vector
-            .iter()
-            .flat_map(|point| [point.x, point.y, point.z])
-            .collect();
-        gl::Uniform3fv(
-            gl::GetUniformLocation(self.id, name.as_ptr()),
-            count as i32,
-            expanded_vector.as_ptr(),
-        );
-    }
 
     fn process_shader_file(file_path: &str) -> CString {
         let mut shader_file =

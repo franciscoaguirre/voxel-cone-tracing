@@ -7,49 +7,6 @@ use crate::{config::CONFIG, helpers};
 
 use super::Octree;
 
-#[derive(Debug, Clone, Copy, Default)]
-pub struct BricksToShow {
-    show_z0: bool,
-    show_z1: bool,
-    show_z2: bool,
-}
-
-impl BricksToShow {
-    pub fn toggle_z0(&mut self) {
-        self.show_z0 = !self.show_z0;
-    }
-
-    pub fn toggle_z1(&mut self) {
-        self.show_z1 = !self.show_z1;
-    }
-
-    pub fn toggle_z2(&mut self) {
-        self.show_z2 = !self.show_z2;
-    }
-
-    pub fn at_least_one(&self) -> bool {
-        self.show_z0 || self.show_z1 || self.show_z2
-    }
-
-    pub fn z0(&self) -> bool {
-        self.show_z0
-    }
-
-    pub fn z1(&self) -> bool {
-        self.show_z1
-    }
-
-    pub fn z2(&self) -> bool {
-        self.show_z2
-    }
-}
-
-impl Into<u32> for BricksToShow {
-    fn into(self) -> u32 {
-        self.show_z0 as u32 | (self.show_z1 as u32) << 1 | (self.show_z2 as u32) << 2 as u32
-    }
-}
-
 impl Octree {
     pub unsafe fn render(
         &self,
@@ -58,6 +15,10 @@ impl Octree {
         projection: &Matrix4<f32>,
         octree_level: u32,
     ) {
+        if self.renderer.bricks_to_show.at_least_one() {
+            self.show_bricks(octree_level, projection, view, model);
+        }
+
         self.renderer.shader.use_program();
 
         helpers::bind_image_texture(0, self.textures.node_pool.0, gl::READ_WRITE, gl::R32UI);
@@ -103,6 +64,98 @@ impl Octree {
             0,
             self.voxel_data.number_of_voxel_fragments as i32,
         );
+    }
+
+    unsafe fn show_bricks(
+        &self,
+        octree_level: u32,
+        projection: &Matrix4<f32>,
+        view: &Matrix4<f32>,
+        model: &Matrix4<f32>,
+    ) {
+        self.renderer.bricks_shader.use_program();
+
+        self.renderer
+            .bricks_shader
+            .set_mat4(c_str!("projection"), projection);
+        self.renderer.bricks_shader.set_mat4(c_str!("view"), view);
+        self.renderer.bricks_shader.set_mat4(c_str!("model"), model);
+
+        self.renderer
+            .bricks_shader
+            .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
+        self.renderer
+            .bricks_shader
+            .set_uint(c_str!("octreeLevels"), octree_level);
+
+        helpers::bind_image_texture(0, self.textures.node_pool.0, gl::READ_WRITE, gl::R32UI);
+        helpers::bind_image_texture(1, self.textures.brick_pointers.0, gl::READ_WRITE, gl::R32UI);
+        helpers::bind_3d_image_texture(
+            2,
+            self.textures.brick_pool_colors,
+            gl::READ_ONLY,
+            gl::RGBA8,
+        );
+        helpers::bind_image_texture(
+            3,
+            self.voxel_data.voxel_positions,
+            gl::READ_ONLY,
+            gl::RGB10_A2UI,
+        );
+        helpers::bind_3d_image_texture(
+            4,
+            self.textures.brick_pool_photons,
+            gl::READ_ONLY,
+            gl::R32UI,
+        );
+        helpers::bind_3d_image_texture(
+            5,
+            self.textures.brick_pool_normals,
+            gl::READ_ONLY,
+            gl::RGBA8,
+        );
+
+        let mut vao = 0;
+        gl::GenVertexArrays(1, &mut vao);
+        gl::BindVertexArray(vao);
+
+        let all_bricks_to_show: u32 = self.renderer.bricks_to_show.into();
+
+        if (all_bricks_to_show & 1) > 0 {
+            self.renderer
+                .bricks_shader
+                .set_uint(c_str!("bricksToShow"), all_bricks_to_show & 1);
+
+            gl::DrawArrays(
+                gl::POINTS,
+                0,
+                self.voxel_data.number_of_voxel_fragments as i32,
+            );
+        }
+
+        if (all_bricks_to_show & 2) > 0 {
+            self.renderer
+                .bricks_shader
+                .set_uint(c_str!("bricksToShow"), all_bricks_to_show & 2);
+
+            gl::DrawArrays(
+                gl::POINTS,
+                0,
+                self.voxel_data.number_of_voxel_fragments as i32,
+            );
+        }
+
+        if (all_bricks_to_show & 4) > 0 {
+            self.renderer
+                .bricks_shader
+                .set_uint(c_str!("bricksToShow"), all_bricks_to_show & 4);
+
+            gl::DrawArrays(
+                gl::POINTS,
+                0,
+                self.voxel_data.number_of_voxel_fragments as i32,
+            );
+        }
     }
 
     pub fn set_bricks_to_show(&mut self, bricks_to_show: BricksToShow) {
@@ -260,9 +313,6 @@ impl Octree {
         self.renderer
             .node_bricks_shader
             .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels);
-        self.renderer
-            .node_bricks_shader
-            .set_uint(c_str!("bricksToShow"), self.renderer.bricks_to_show.into());
 
         self.renderer
             .node_bricks_shader
@@ -293,8 +343,69 @@ impl Octree {
             gl::READ_ONLY,
             gl::RGBA8,
         );
+        helpers::bind_3d_image_texture(
+            4,
+            self.textures.brick_pool_photons,
+            gl::READ_ONLY,
+            gl::R32UI,
+        );
+        helpers::bind_3d_image_texture(
+            5,
+            self.textures.brick_pool_normals,
+            gl::READ_ONLY,
+            gl::RGBA8,
+        );
+
+        // for _ in 0..3 {
+        self.renderer
+            .node_bricks_shader
+            .set_uint(c_str!("bricksToShow"), self.renderer.bricks_to_show.into());
 
         gl::BindVertexArray(self.renderer.vao);
         gl::DrawArrays(gl::POINTS, 0, self.renderer.node_count as i32);
+        // }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct BricksToShow {
+    show_z0: bool,
+    show_z1: bool,
+    show_z2: bool,
+}
+
+impl BricksToShow {
+    pub fn toggle_z0(&mut self) {
+        self.show_z0 = !self.show_z0;
+    }
+
+    pub fn toggle_z1(&mut self) {
+        self.show_z1 = !self.show_z1;
+    }
+
+    pub fn toggle_z2(&mut self) {
+        self.show_z2 = !self.show_z2;
+    }
+
+    pub fn at_least_one(&self) -> bool {
+        self.show_z0 || self.show_z1 || self.show_z2
+    }
+
+    pub fn z0(&self) -> bool {
+        self.show_z0
+    }
+
+    pub fn z1(&self) -> bool {
+        self.show_z1
+    }
+
+    pub fn z2(&self) -> bool {
+        self.show_z2
+    }
+}
+
+impl Into<u32> for BricksToShow {
+    fn into(self) -> u32 {
+        self.show_z0 as u32 | (self.show_z1 as u32) << 1 | (self.show_z2 as u32) << 2 as u32
     }
 }

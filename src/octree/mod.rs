@@ -30,6 +30,7 @@ pub struct OctreeTextures {
     neighbors: [BufferTexture; 6],
     level_start_indices: BufferTexture,
     brick_pool_colors: Texture3D,
+    brick_pool_normals: Texture3D,
     brick_pool_photons: Texture3D,
 }
 
@@ -37,12 +38,14 @@ pub struct VoxelData {
     voxel_positions: Texture,
     number_of_voxel_fragments: u32,
     voxel_colors: Texture,
+    voxel_normals: Texture,
 }
 
 struct Renderer {
     vao: GLuint,
     node_count: u32,
     shader: Shader,
+    bricks_shader: Shader,
     bricks_to_show: BricksToShow,
     node_positions_shader: Shader,
     node_neighbors_shader: Shader,
@@ -55,6 +58,7 @@ impl Octree {
         voxel_positions_texture: GLuint,
         number_of_voxel_fragments: u32,
         voxel_colors_texture: GLuint,
+        voxel_normals_texture: GLuint,
     ) -> Self {
         let max_node_pool_size = Self::get_max_node_pool_size();
         let max_node_pool_size_in_bytes = size_of::<GLuint>() * max_node_pool_size as usize;
@@ -63,6 +67,7 @@ impl Octree {
         let voxel_data = VoxelData {
             voxel_positions: voxel_positions_texture,
             voxel_colors: voxel_colors_texture,
+            voxel_normals: voxel_normals_texture,
             number_of_voxel_fragments,
         };
         let renderer = Renderer {
@@ -72,6 +77,11 @@ impl Octree {
                 "assets/shaders/octree/visualize.vert.glsl",
                 "assets/shaders/octree/visualize.frag.glsl",
                 "assets/shaders/octree/visualize.geom.glsl",
+            ),
+            bricks_shader: Shader::with_geometry_shader(
+                "assets/shaders/octree/visualizeBricks.vert.glsl",
+                "assets/shaders/octree/visualizeBricks.frag.glsl",
+                "assets/shaders/octree/visualizeBricks.geom.glsl",
             ),
             bricks_to_show: BricksToShow::default(),
             node_positions_shader: Shader::with_geometry_shader(
@@ -129,6 +139,7 @@ impl Octree {
                 0u32,
             ),
             brick_pool_colors: helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution),
+            brick_pool_normals: helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution),
             brick_pool_photons: helpers::generate_3d_r32ui_texture(CONFIG.brick_pool_resolution),
         }
     }
