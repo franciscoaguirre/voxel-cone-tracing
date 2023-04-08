@@ -166,6 +166,9 @@ fn main() {
             &model_normalization_matrix,
         )
     };
+    unsafe {
+        octree.transfer_light()
+    };
     let quad = unsafe { Quad::new() };
 
     // Animation variables

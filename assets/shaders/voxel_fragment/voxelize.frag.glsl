@@ -86,6 +86,7 @@ void main() {
     uvec4 voxelCoordinates = calculateVoxelCoordinates();
 
     uint fragmentListIndex = atomicCounterIncrement(voxelFragmentCount);
+    memoryBarrier();
 
     if (shouldStore) {
         storeVoxelFragment(voxelCoordinates, fragmentListIndex);
