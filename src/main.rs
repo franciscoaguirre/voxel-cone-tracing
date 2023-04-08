@@ -78,15 +78,25 @@ fn main() {
         (our_shader, our_model)
     };
 
-    let (voxel_positions_texture, number_of_voxel_fragments, voxel_colors_texture) = unsafe {
-        let (number_of_voxel_fragments, voxel_positions_texture, voxel_colors_texture) =
-            voxelization::build_voxel_fragment_list(&options.model);
+    let (
+        voxel_positions_texture,
+        number_of_voxel_fragments,
+        voxel_colors_texture,
+        voxel_normals_texture,
+    ) = unsafe {
+        let (
+            number_of_voxel_fragments,
+            voxel_positions_texture,
+            voxel_colors_texture,
+            voxel_normals_texture,
+        ) = voxelization::build_voxel_fragment_list(&options.model);
         info!("Number of voxel fragments: {}", number_of_voxel_fragments);
 
         (
             voxel_positions_texture,
             number_of_voxel_fragments,
             voxel_colors_texture,
+            voxel_normals_texture,
         )
     };
 
@@ -95,6 +105,7 @@ fn main() {
             voxel_positions_texture,
             number_of_voxel_fragments,
             voxel_colors_texture,
+            voxel_normals_texture,
         )
     };
 

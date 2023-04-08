@@ -63,6 +63,15 @@ pub unsafe fn generate_3d_rgba_texture(size_one_dimension: u32) -> GLuint {
     generate_3d_texture(size_one_dimension, gl::RGBA8, gl::RGBA, gl::UNSIGNED_BYTE)
 }
 
+pub unsafe fn generate_3d_rgb10_a2ui_texture(size_one_dimension: u32) -> GLuint {
+    generate_3d_texture(
+        size_one_dimension,
+        gl::RGB10_A2,
+        gl::RGBA_INTEGER,
+        gl::UNSIGNED_INT_2_10_10_10_REV,
+    )
+}
+
 pub unsafe fn generate_3d_r32ui_texture(size_one_dimension: u32) -> GLuint {
     generate_3d_texture(
         size_one_dimension,
