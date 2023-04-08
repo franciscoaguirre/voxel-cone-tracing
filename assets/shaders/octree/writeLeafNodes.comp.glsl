@@ -10,15 +10,17 @@ uniform layout(binding = 1, rgba8) imageBuffer voxelColors;
 uniform layout(binding = 2, r32ui) uimageBuffer nodePoolBrickPointers;
 uniform layout(binding = 3, rgba8) image3D brickPoolColors;
 uniform layout(binding = 4, r32ui) uimageBuffer nodePool;
+uniform layout(binding = 5, rgba8) imageBuffer voxelNormals;
+uniform layout(binding = 6, rgba8) image3D brickPoolNormals;
 
 uniform uint voxelDimension;
 uniform uint octreeLevel;
-uniform uint number_of_voxel_fragments;
+uniform uint numberOfVoxelFragments;
 
 #include "./_traversalHelpers.glsl"
 #include "./_octreeTraversal.glsl"
 
-void storeInLeaf(vec3 voxelPosition, int nodeID, vec4 voxelColor, float halfNodeSize, vec3 nodeCoordinates) {
+void storeInLeaf(vec3 voxelPosition, int nodeID, vec4 voxelColor, float halfNodeSize, vec3 nodeCoordinates, vec4 voxelNormal) {
     uint brickCoordinatesCompact = imageLoad(nodePoolBrickPointers, nodeID).r;
     memoryBarrier();
     
@@ -34,33 +36,40 @@ void storeInLeaf(vec3 voxelPosition, int nodeID, vec4 voxelColor, float halfNode
         brickCoordinates + 2 * ivec3(CHILD_OFFSETS[offset]),
         voxelColor
     );
+
+    imageStore(
+        brickPoolNormals,
+        brickCoordinates + 2 * ivec3(CHILD_OFFSETS[offset]),
+        voxelNormal
+    );
 }
 
 void main() {
     // Get voxel attributes from voxel fragment list
     const uint threadIndex = gl_GlobalInvocationID.x;
-    if (threadIndex < number_of_voxel_fragments) {
-      // We need to traverse the tree to get the node because we
-      // need the voxel attributes (color, normal, etc)
-      uvec4 voxelPosition = imageLoad(voxelPositions, int(threadIndex));
-      vec4 voxelColor = imageLoad(voxelColors, int(threadIndex));
-      // TODO: Load normal from images
-      memoryBarrier();
+    if (threadIndex < numberOfVoxelFragments) {
+        // We need to traverse the tree to get the node because we
+        // need the voxel attributes (color, normal, etc)
+        uvec4 voxelPosition = imageLoad(voxelPositions, int(threadIndex));
+        vec4 voxelColor = imageLoad(voxelColors, int(threadIndex));
+        vec4 voxelNormal = imageLoad(voxelNormals, int(threadIndex));
 
-      vec3 normalizedVoxelPosition = vec3(voxelPosition) / float(voxelDimension);
+        memoryBarrier();
 
-      float halfNodeSize;
-      vec3 nodeCoordinates;
-      // We send the voxel position to traverse the octree and find the leaf
-      int nodeID = traverseOctree(
+        vec3 normalizedVoxelPosition = vec3(voxelPosition) / float(voxelDimension);
+
+        float halfNodeSize;
+        vec3 nodeCoordinates;
+        // We send the voxel position to traverse the octree and find the leaf
+        int nodeID = traverseOctree(
           normalizedVoxelPosition,
           octreeLevel,
           nodeCoordinates,
           halfNodeSize
-      );
+        );
 
-      // TODO: We're missing voxel normals here to store in the leaves
-      // For some reason we are sending a vec3 instead of a vec4
-      storeInLeaf(normalizedVoxelPosition, nodeID, voxelColor, halfNodeSize, nodeCoordinates);
-  }
+        // TODO: We're missing voxel normals here to store in the leaves
+        // For some reason we are sending a vec3 instead of a vec4
+        storeInLeaf(normalizedVoxelPosition, nodeID, voxelColor, halfNodeSize, nodeCoordinates, voxelNormal);
+    }
 }

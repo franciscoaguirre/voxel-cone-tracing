@@ -14,7 +14,6 @@ uniform layout(binding = 4, r32ui) uimage3D brickPoolPhotons;
 
 out vec4 geom_nodePosition;
 out float geom_halfNodeSize;
-out vec4 nodeColor;
 out ivec3 geom_brickCoordinates;
 
 #include "./_traversalHelpers.glsl"
@@ -40,18 +39,6 @@ void main() {
   uint brickCoordinatesCompact = imageLoad(nodePoolBrickPointers, nodeID).r;
   ivec3 brickCoordinates = ivec3(uintXYZ10ToVec3(brickCoordinatesCompact));
   geom_brickCoordinates = brickCoordinates;
-
-  // NOTE: Bricks start at (0, 0, 0) and go to (2, 2, 2)
-  ivec3 offsetToCenter = ivec3(1, 1, 1);
-  vec4 centerVoxelColor = imageLoad(brickPoolColors, brickCoordinates + offsetToCenter);
-  // nodeColor = vec4(centerVoxelColor.xyz, 1.0);
-
-  uint photonCount = imageLoad(brickPoolPhotons, brickCoordinates).r;
-  if (photonCount > 0) {
-    nodeColor = vec4(1.0, 1.0, 1.0, 1.0);
-  } else {
-    nodeColor = vec4(0.0, 0.0, 0.0, 1.0);
-  }
 
   // Normalized device coordinates go from -1.0 to 1.0, our coordinates go from 0.0 to 1.0
   geom_nodePosition = vec4((nodeCoordinates.xyz) * 2.0 - vec3(1.0), 1.0);

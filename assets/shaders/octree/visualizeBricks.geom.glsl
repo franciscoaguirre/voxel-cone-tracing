@@ -15,7 +15,7 @@ uniform mat4 projection;
 
 uniform uint bricksToShow;
 
-uniform layout(binding = 3, rgba8) image3D brickPoolColors;
+uniform layout(binding = 2, rgba8) image3D brickPoolColors;
 uniform layout(binding = 4, r32ui) uimage3D brickPoolPhotons;
 uniform layout(binding = 5, rgba8) image3D brickPoolNormals;
 
@@ -212,13 +212,13 @@ void main() {
 }
 
 void drawLine(vec3 start, vec3 end) {
-    frag_nodeColor = vec4(0.0, 1.0, 1.0, 1.0);
+    // frag_nodeColor = vec4(0.0, 1.0, 1.0, 1.0);
 
-    gl_Position = canonizationMatrix * vec4(start, 1.0);
-    EmitVertex();
+    // gl_Position = canonizationMatrix * vec4(start, 1.0);
+    // EmitVertex();
 
-    gl_Position = canonizationMatrix * vec4(end, 1.0);
-    EmitVertex();
+    // gl_Position = canonizationMatrix * vec4(end, 1.0);
+    // EmitVertex();
 
-    EndPrimitive();
+    // EndPrimitive();
 }

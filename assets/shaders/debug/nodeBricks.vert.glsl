@@ -30,4 +30,6 @@ void main() {
     uint brickCoordinatesCompact = imageLoad(nodePoolBrickPointers, int(nodeID)).r;
     ivec3 brickCoordinates = ivec3(uintXYZ10ToVec3(brickCoordinatesCompact));
     geom_brickCoordinates = brickCoordinates;
+
+    geom_nodeID = nodeID;
 }

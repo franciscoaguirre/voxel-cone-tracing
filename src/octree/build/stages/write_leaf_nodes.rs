@@ -32,7 +32,7 @@ impl WriteLeafNodesPass {
             .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
         self.shader.set_uint(c_str!("octreeLevel"), octree_level); // Last level
         self.shader.set_uint(
-            c_str!("number_of_voxel_fragments"),
+            c_str!("numberOfVoxelFragments"),
             voxel_data.number_of_voxel_fragments,
         );
 
@@ -46,6 +46,8 @@ impl WriteLeafNodesPass {
         helpers::bind_image_texture(2, textures.brick_pointers.0, gl::READ_WRITE, gl::R32UI);
         helpers::bind_3d_image_texture(3, textures.brick_pool_colors, gl::WRITE_ONLY, gl::RGBA8);
         helpers::bind_image_texture(4, textures.node_pool.0, gl::READ_WRITE, gl::R32UI);
+        helpers::bind_image_texture(5, voxel_data.voxel_normals, gl::READ_ONLY, gl::RGBA8);
+        helpers::bind_3d_image_texture(6, textures.brick_pool_normals, gl::WRITE_ONLY, gl::RGBA8);
 
         let tiles_in_level = nodes_per_level[octree_level as usize];
         let nodes_in_level = tiles_in_level * CHILDREN_PER_NODE;
