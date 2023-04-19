@@ -3,13 +3,15 @@ use cgmath::{vec3, Matrix4};
 use gl::types::GLuint;
 
 use crate::{
-    constants::WORKING_GROUP_SIZE,
     config::CONFIG,
     helpers,
     rendering::{model::Model, shader::Shader},
 };
 
 use super::Octree;
+
+mod stages;
+use stages::*;
 
 impl Octree {
     pub unsafe fn inject_light(
@@ -22,8 +24,33 @@ impl Octree {
         let (light_view_map, light_view_map_view) =
             Self::create_light_view_map(models, projection, view, model);
         self.store_photons(light_view_map);
+        self.mipmap_photons(light_view_map);
 
         light_view_map_view
+    }
+
+    unsafe fn mipmap_photons(&self, light_view_map: GLuint) {
+        let mipmap_centers = MipmapCentersPass::init(light_view_map);
+        let mipmap_faces = MipmapFacesPass::init(light_view_map);
+        let mipmap_corners = MipmapCornersPass::init(light_view_map);
+        let mipmap_edges = MipmapEdgesPass::init(light_view_map);
+        let border_transfer = BorderTransferPass::init(light_view_map);
+
+        border_transfer.run(&self.textures, CONFIG.octree_levels - 1);
+
+        for level in (0..CONFIG.octree_levels - 1).rev() {
+            mipmap_centers.run(&self.textures, level);
+            mipmap_faces.run(&self.textures, level);
+            mipmap_corners.run(&self.textures, level);
+            mipmap_edges.run(&self.textures, level);
+
+            // TODO: Fix in higher levels
+            if level > 0 {
+                border_transfer.run(&self.textures, level);
+            }
+        }
+
+        // border_transfer.run(&self.textures, 0);
     }
 
     unsafe fn store_photons(&self, light_view_map: GLuint) {
@@ -39,9 +66,8 @@ impl Octree {
         shader.set_int(c_str!("lightViewMap"), 0);
 
         helpers::bind_image_texture(0, self.textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
-        helpers::bind_image_texture(1, self.textures.brick_pointers.0, gl::READ_ONLY, gl::R32UI);
         helpers::bind_3d_image_texture(
-            2,
+            1,
             self.textures.brick_pool_photons,
             gl::READ_WRITE,
             gl::R32UI,
@@ -52,7 +78,6 @@ impl Octree {
             (CONFIG.viewport_height as f32 / 32 as f32).ceil() as u32,
             1,
         ));
-        
         shader.wait();
     }
 
@@ -161,56 +186,5 @@ impl Octree {
         gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
 
         (light_view_map_textures[0], light_view_map_textures[1])
-    }
-
-    pub unsafe fn transfer_light(&self) {
-        // Move compilation of shader out for dynamic lights
-        let shader = Shader::new_compute("assets/shaders/octree/lightTransfer.comp.glsl");
-        shader.use_program();
-
-        let octree_level = CONFIG.octree_levels - 1;
-        shader.set_uint(c_str!("octreeLevel"), octree_level);
-
-        helpers::bind_image_texture(0, self.textures.brick_pointers.0, gl::READ_ONLY, gl::R32UI);
-        helpers::bind_3d_image_texture(
-            2,
-            self.textures.brick_pool_photons,
-            gl::READ_WRITE,
-            gl::R32UI,
-        );
-        helpers::bind_image_texture(3, self.textures.level_start_indices.0, gl::READ_ONLY, gl::R32UI);
-
-        let nodes_in_level = self.nodes_per_level[octree_level as usize];
-        let groups_count = (nodes_in_level as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
-
-        helpers::bind_image_texture(
-            1,
-            self.textures.neighbors[0].0,
-            gl::READ_ONLY,
-            gl::R32UI,
-        );
-        shader.set_uint(c_str!("axis"), 0);
-        shader.dispatch(groups_count);
-        shader.wait();
-
-        helpers::bind_image_texture(
-            1,
-            self.textures.neighbors[2].0,
-            gl::READ_ONLY,
-            gl::R32UI,
-        );
-        shader.set_uint(c_str!("axis"), 1);
-        shader.dispatch(groups_count);
-        shader.wait();
-
-        helpers::bind_image_texture(
-            1,
-            self.textures.neighbors[4].0,
-            gl::READ_ONLY,
-            gl::R32UI,
-        );
-        shader.set_uint(c_str!("axis"), 2);
-        shader.dispatch(groups_count);
-        shader.wait();
     }
 }

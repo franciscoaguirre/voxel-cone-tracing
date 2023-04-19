@@ -336,21 +336,20 @@ impl Octree {
             gl::READ_ONLY,
             gl::R32UI,
         );
-        helpers::bind_image_texture(2, self.textures.brick_pointers.0, gl::READ_WRITE, gl::R32UI);
         helpers::bind_3d_image_texture(
-            3,
+            2,
             self.textures.brick_pool_colors,
             gl::READ_ONLY,
             gl::RGBA8,
         );
         helpers::bind_3d_image_texture(
-            4,
+            3,
             self.textures.brick_pool_photons,
             gl::READ_ONLY,
             gl::R32UI,
         );
         helpers::bind_3d_image_texture(
-            5,
+            4,
             self.textures.brick_pool_normals,
             gl::READ_ONLY,
             gl::RGBA8,

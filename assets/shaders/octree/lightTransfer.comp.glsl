@@ -5,10 +5,9 @@
 
 layout (local_size_x = WORKING_GROUP_SIZE, local_size_y = 1, local_size_z = 1) in;
 
-uniform layout(binding = 0, r32ui) uimageBuffer nodePoolBrickPointers;
-uniform layout(binding = 1, r32ui) uimageBuffer nodePoolNeighbors;
-uniform layout(binding = 2, rgba8) image3D photonValues;
-uniform layout(binding = 3, r32ui) uimageBuffer levelStartIndices;
+uniform layout(binding = 0, r32ui) uimageBuffer nodePoolNeighbors;
+uniform layout(binding = 1, rgba8) image3D photonValues;
+uniform layout(binding = 2, r32ui) uimageBuffer levelStartIndices;
 
 uniform uint axis;
 uniform uint octreeLevel;
@@ -24,14 +23,14 @@ void main() {
         return;
     }
 
-    uint neighborAddress = imageLoad(nodePoolNeighbors, nodeAddress).r;
+    int neighborAddress = int(imageLoad(nodePoolNeighbors, nodeAddress).r);
 
     if (neighborAddress == 0) {
         return;
     }
 
-    ivec3 brickAddress = ivec3(uintXYZ10ToVec3(imageLoad(nodePoolBrickPointers, nodeAddress).r));
-    ivec3 neighborBrickAddress = ivec3(uintXYZ10ToVec3(imageLoad(nodePoolBrickPointers, int(neighborAddress)).r));
+    ivec3 brickAddress = calculateBrickCoordinates(nodeAddress);
+    ivec3 neighborBrickAddress = calculateBrickCoordinates(neighborAddress);
 
     if (axis == 0) {
         for (int y = 0; y <= 2; y++) {

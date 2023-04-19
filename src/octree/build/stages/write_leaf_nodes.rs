@@ -19,12 +19,7 @@ impl WriteLeafNodesPass {
         }
     }
 
-    pub unsafe fn run(
-        &self,
-        voxel_data: &VoxelData,
-        textures: &OctreeTextures,
-        nodes_per_level: &[u32],
-    ) {
+    pub unsafe fn run(&self, voxel_data: &VoxelData, textures: &OctreeTextures) {
         self.shader.use_program();
         let octree_level = CONFIG.octree_levels - 1;
 
@@ -43,17 +38,15 @@ impl WriteLeafNodesPass {
             gl::RGB10_A2UI,
         );
         helpers::bind_image_texture(1, voxel_data.voxel_colors, gl::READ_WRITE, gl::RGBA8);
-        helpers::bind_image_texture(2, textures.brick_pointers.0, gl::READ_WRITE, gl::R32UI);
-        helpers::bind_3d_image_texture(3, textures.brick_pool_colors, gl::WRITE_ONLY, gl::RGBA8);
-        helpers::bind_image_texture(4, textures.node_pool.0, gl::READ_WRITE, gl::R32UI);
-        helpers::bind_image_texture(5, voxel_data.voxel_normals, gl::READ_ONLY, gl::RGBA8);
-        helpers::bind_3d_image_texture(6, textures.brick_pool_normals, gl::WRITE_ONLY, gl::RGBA8);
+        helpers::bind_3d_image_texture(2, textures.brick_pool_colors, gl::WRITE_ONLY, gl::RGBA8);
+        helpers::bind_image_texture(3, textures.node_pool.0, gl::READ_WRITE, gl::R32UI);
+        helpers::bind_image_texture(4, voxel_data.voxel_normals, gl::READ_ONLY, gl::RGBA8);
+        helpers::bind_3d_image_texture(5, textures.brick_pool_normals, gl::WRITE_ONLY, gl::RGBA8);
 
-        let tiles_in_level = nodes_per_level[octree_level as usize];
-        let nodes_in_level = tiles_in_level * CHILDREN_PER_NODE;
-        let groups_count = (nodes_in_level as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
-
-        self.shader.dispatch(groups_count);
+        self.shader.dispatch(
+            (voxel_data.number_of_voxel_fragments as f32 / CONFIG.working_group_size as f32).ceil()
+                as u32,
+        );
         self.shader.wait();
     }
 }

@@ -15,9 +15,9 @@ uniform mat4 projection;
 
 uniform uint bricksToShow;
 
-uniform layout(binding = 3, rgba8) image3D brickPoolColors;
-uniform layout(binding = 4, r32ui) uimage3D brickPoolPhotons;
-uniform layout(binding = 5, rgba8) image3D brickPoolNormals;
+uniform layout(binding = 2, rgba8) image3D brickPoolColors;
+uniform layout(binding = 3, r32ui) uimage3D brickPoolPhotons;
+uniform layout(binding = 4, rgba8) image3D brickPoolNormals;
 
 #include "assets/shaders/octree/_drawCube.glsl"
 

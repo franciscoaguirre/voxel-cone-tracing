@@ -64,3 +64,14 @@ uvec3 calculateBrickVoxel(vec3 nodeCoordinates, float halfNodeSize, vec3 queryCo
     uint zOffset = findQuarter(nodeCoordinates.z, quarterNodeSize, queryCoordinates.z);
     return uvec3(xOffset, yOffset, zOffset);
 }
+
+ivec3 calculateBrickCoordinates(int nodeID) {
+    ivec3 coordinates = ivec3(0);
+    int brickPoolResolution = 384;
+    int brickPoolResolutionBricks = brickPoolResolution / 3;
+    coordinates.x = nodeID % brickPoolResolutionBricks;
+    coordinates.y = (nodeID / brickPoolResolutionBricks) % brickPoolResolutionBricks;
+    coordinates.z = nodeID / (brickPoolResolutionBricks * brickPoolResolutionBricks);
+    coordinates *= 3;
+    return coordinates;
+}

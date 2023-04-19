@@ -4,7 +4,7 @@
 
 layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
-uniform layout(binding = 0, r32ui) readonly uimageBuffer nodePool;
+uniform layout(binding = 0, r32ui) uimageBuffer nodePool;
 uniform layout(binding = 1, r32ui) uimage3D brickPoolPhotons;
 
 uniform usampler2D lightViewMap;
@@ -14,19 +14,18 @@ uniform uint voxelDimension;
 #include "./_helpers.glsl"
 #include "./_traversalHelpers.glsl"
 #include "./_octreeTraversal.glsl"
+#include "./_mipmapUtil.glsl"
 
 void main() {
-    uvec4 queryCoordinates = texelFetch(
+    uvec3 queryCoordinates = texelFetch(
         lightViewMap,
         ivec2(gl_GlobalInvocationID.xy),
         0
-    );
-
-    if (queryCoordinates.xyz == uvec3(0)) {
+    ).xyz;
+    if (queryCoordinates == uvec3(0)) {
         return;
     }
     vec3 normalizedQueryCoordinates = vec3(queryCoordinates.xyz / float(voxelDimension));
-
     float halfNodeSize;
     vec3 nodeCoordinates;
     int nodeID = traverseOctree(
@@ -35,13 +34,15 @@ void main() {
         nodeCoordinates,
         halfNodeSize
     );
-
     if (nodeID == NODE_NOT_FOUND) {
         return;
     }
 
-    ivec3 brickCoordinates = calculateBrickCoordinates(nodeID);
-    ivec3 brickOffset = ivec3(calculateBrickVoxel(nodeCoordinates, halfNodeSize, normalizedQueryCoordinates));
+    loadChildNodeIDs(nodeID, nodePool);
+    uint photonCount = mipmapIsotropic(ivec3(2, 2, 2), brickPoolPhotons);
 
-    imageAtomicAdd(brickPoolPhotons, brickCoordinates + brickOffset, uint(1));
+    memoryBarrier();
+
+    ivec3 brickAddress = calculateBrickCoordinates(nodeID);
+    imageStore(brickPoolPhotons, brickAddress + ivec3(1, 1, 1), uvec4(photonCount, 0, 0, 0));
 }

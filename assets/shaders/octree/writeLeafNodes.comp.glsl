@@ -7,11 +7,10 @@ layout (local_size_x = WORKING_GROUP_SIZE, local_size_y = 1, local_size_z = 1) i
 
 uniform layout(binding = 0, rgb10_a2ui) uimageBuffer voxelPositions;
 uniform layout(binding = 1, rgba8) imageBuffer voxelColors;
-uniform layout(binding = 2, r32ui) uimageBuffer nodePoolBrickPointers;
-uniform layout(binding = 3, rgba8) image3D brickPoolColors;
-uniform layout(binding = 4, r32ui) uimageBuffer nodePool;
-uniform layout(binding = 5, rgba8) imageBuffer voxelNormals;
-uniform layout(binding = 6, rgba8) image3D brickPoolNormals;
+uniform layout(binding = 2, rgba8) image3D brickPoolColors;
+uniform layout(binding = 3, r32ui) uimageBuffer nodePool;
+uniform layout(binding = 4, rgba8) imageBuffer voxelNormals;
+uniform layout(binding = 5, rgba8) image3D brickPoolNormals;
 
 uniform uint voxelDimension;
 uniform uint octreeLevel;
@@ -21,14 +20,7 @@ uniform uint numberOfVoxelFragments;
 #include "./_octreeTraversal.glsl"
 
 void storeInLeaf(vec3 voxelPosition, int nodeID, vec4 voxelColor, float halfNodeSize, vec3 nodeCoordinates, vec4 voxelNormal) {
-    uint brickCoordinatesCompact = imageLoad(nodePoolBrickPointers, nodeID).r;
-    memoryBarrier();
-    
-    // TODO: Why store the brick coordinates in a texture and not calculate them
-    // each time? Why is it non-deterministic which brick coordinates a node will
-    // get?
-    ivec3 brickCoordinates = ivec3(uintXYZ10ToVec3(brickCoordinatesCompact));
-    // We find the closest corner in the brick to store the color (we spread it later)
+    ivec3 brickCoordinates = calculateBrickCoordinates(nodeID);
     uint offset = calculateChildLocalID(nodeCoordinates, halfNodeSize, voxelPosition);
 
     imageStore(
@@ -68,8 +60,6 @@ void main() {
           halfNodeSize
         );
 
-        // TODO: We're missing voxel normals here to store in the leaves
-        // For some reason we are sending a vec3 instead of a vec4
         storeInLeaf(normalizedVoxelPosition, nodeID, voxelColor, halfNodeSize, nodeCoordinates, voxelNormal);
     }
 }
