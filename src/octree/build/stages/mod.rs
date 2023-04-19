@@ -1,6 +1,3 @@
-mod allocate_bricks;
-pub use allocate_bricks::AllocateBricksPass;
-
 mod allocate_nodes;
 pub use allocate_nodes::AllocateNodesPass;
 

@@ -1,26 +1,16 @@
 // Requires:
-// - Uniform nodePool
-// - Uniform nodePoolBrickPointers
+// - _helpers
 // - Uniform brickPoolValues
 
-uint childBrickPointers[] = {0, 0, 0, 0, 0, 0, 0, 0};
-const uvec3 childOffsets[8] = {
-    uvec3(0, 0, 0),
-    uvec3(1, 0, 0),
-    uvec3(0, 1, 0),
-    uvec3(1, 1, 0),
-    uvec3(0, 0, 1),
-    uvec3(1, 0, 1),
-    uvec3(0, 1, 1),
-    uvec3(1, 1, 1),
-};
+int childNodeIDs[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 // const float gaussianWeights[4] = { 0.125, 0.0625, 0.03125, 0.015625 };
 const float gaussianWeights[4] = { 0.25, 0.125, 0.0625, 0.03125 };
 
-void loadChildTile(in int tileAddress) {
+void loadChildNodeIDs(in int nodeID, uimageBuffer nodePool) {
     for (int i = 0; i < 8; i++) {
-        childBrickPointers[i] = imageLoad(nodePoolBrickPointers, tileAddress + i).r;
+        int childNodeID = int(imageLoad(nodePool, nodeID * CHILDREN_PER_NODE + i).r);
+        childNodeIDs[i] = childNodeID;
     }
     memoryBarrier();
 }
@@ -30,7 +20,7 @@ vec4 getColor(in ivec3 position) {
     int childIndex = childOffset.x + childOffset.y * 2 + childOffset.z * 4;
     ivec3 localPositionInChild = position - 2 * childOffset;
 
-    ivec3 childBrickAddress = ivec3(uintXYZ10ToVec3(childBrickPointers[childIndex]));
+    ivec3 childBrickAddress = calculateBrickCoordinates(childNodeIDs[childIndex]);
     return imageLoad(brickPoolValues, childBrickAddress + localPositionInChild);
 }
 

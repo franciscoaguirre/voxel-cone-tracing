@@ -158,17 +158,14 @@ fn main() {
 
     let projection = light.get_projection_matrix();
     let view = light.transform.get_view_matrix();
-    let light_view_map = unsafe {
-        octree.inject_light(
-            &[&our_model],
-            &projection,
-            &view,
-            &model_normalization_matrix,
-        )
-    };
-    unsafe {
-        octree.transfer_light()
-    };
+    // let light_view_map = unsafe {
+    //     octree.inject_light(
+    //         &[&our_model],
+    //         &projection,
+    //         &view,
+    //         &model_normalization_matrix,
+    //     )
+    // };
     let quad = unsafe { Quad::new() };
 
     // Animation variables
@@ -306,7 +303,7 @@ fn main() {
             }
 
             light.draw_gizmo(&projection, &view);
-            quad.render(light_view_map);
+            // quad.render(light_view_map);
         }
 
         unsafe {

@@ -7,7 +7,6 @@ uniform uint octreeLevels;
 uniform uint voxelDimension;
 
 uniform layout(binding = 0, r32ui) uimageBuffer nodePool;
-uniform layout(binding = 1, r32ui) uimageBuffer nodePoolBrickPointers;
 uniform layout(binding = 2, rgba8) image3D brickPoolColors;
 uniform layout(binding = 3, rgb10_a2ui) uimageBuffer voxelPositions;
 uniform layout(binding = 4, r32ui) uimage3D brickPoolPhotons;
@@ -36,8 +35,7 @@ void main() {
     halfNodeSize
   );
 
-  uint brickCoordinatesCompact = imageLoad(nodePoolBrickPointers, nodeID).r;
-  ivec3 brickCoordinates = ivec3(uintXYZ10ToVec3(brickCoordinatesCompact));
+  ivec3 brickCoordinates = calculateBrickCoordinates(nodeID);
   geom_brickCoordinates = brickCoordinates;
 
   // Normalized device coordinates go from -1.0 to 1.0, our coordinates go from 0.0 to 1.0

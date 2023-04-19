@@ -22,5 +22,5 @@ mat4 canonizationMatrix = projection * view * model;
 void main() {
     vec4 nodePosition = geom_nodePosition[0];
     vec4 cubeCenter = nodePosition;
-    // drawCube(cubeCenter, geom_halfNodeSize[0], canonizationMatrix, nodeColor[0]);
+    drawCube(cubeCenter, geom_halfNodeSize[0], canonizationMatrix, nodeColor[0]);
 }

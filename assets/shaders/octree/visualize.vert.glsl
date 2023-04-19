@@ -7,7 +7,6 @@ uniform uint octreeLevels;
 uniform uint voxelDimension;
 
 uniform layout(binding = 0, r32ui) uimageBuffer nodePool;
-uniform layout(binding = 1, r32ui) uimageBuffer nodePoolBrickPointers;
 uniform layout(binding = 2, rgba8) image3D brickPoolColors;
 uniform layout(binding = 3, rgb10_a2ui) uimageBuffer voxelPositions;
 uniform layout(binding = 4, r32ui) uimage3D brickPoolPhotons;
@@ -37,21 +36,20 @@ void main() {
     halfNodeSize
   );
 
-  uint brickCoordinatesCompact = imageLoad(nodePoolBrickPointers, nodeID).r;
-  ivec3 brickCoordinates = ivec3(uintXYZ10ToVec3(brickCoordinatesCompact));
+  ivec3 brickCoordinates = calculateBrickCoordinates(nodeID);
   geom_brickCoordinates = brickCoordinates;
 
   // NOTE: Bricks start at (0, 0, 0) and go to (2, 2, 2)
   ivec3 offsetToCenter = ivec3(1, 1, 1);
   vec4 centerVoxelColor = imageLoad(brickPoolColors, brickCoordinates + offsetToCenter);
-  // nodeColor = vec4(centerVoxelColor.xyz, 1.0);
+  nodeColor = vec4(centerVoxelColor.xyz, 1.0);
 
-  uint photonCount = imageLoad(brickPoolPhotons, brickCoordinates).r;
-  if (photonCount > 0) {
-    nodeColor = vec4(1.0, 1.0, 1.0, 1.0);
-  } else {
-    nodeColor = vec4(0.0, 0.0, 0.0, 1.0);
-  }
+  // uint photonCount = imageLoad(brickPoolPhotons, brickCoordinates).r;
+  // if (photonCount > 0) {
+  //   nodeColor = vec4(1.0, 1.0, 1.0, 1.0);
+  // } else {
+  //   nodeColor = vec4(0.0, 0.0, 0.0, 1.0);
+  // }
 
   // Normalized device coordinates go from -1.0 to 1.0, our coordinates go from 0.0 to 1.0
   geom_nodePosition = vec4((nodeCoordinates.xyz) * 2.0 - vec3(1.0), 1.0);
