@@ -12,7 +12,7 @@ void main() {
         ((frag_position.xyz / frag_position.w) + vec3(1.0)) / 2.0,
         1.0
     );
-    uvec3 unnormalizedGlobalPosition = uvec3(ceil(normalizedGlobalPosition.xyz * float(voxelDimension)));
+    uvec3 unnormalizedGlobalPosition = uvec3(floor(normalizedGlobalPosition.xyz * float(1023)));
     
     lightViewMapViewOutput = normalizedGlobalPosition;
     lightViewMapOutput = unnormalizedGlobalPosition;

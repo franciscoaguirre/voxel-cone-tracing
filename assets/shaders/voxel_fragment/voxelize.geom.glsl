@@ -60,9 +60,9 @@ void main() {
     mat4 projection;
 
     vec4 vertex[3];
-    vertex[0] = gl_in[0].gl_Position;
-    vertex[1] = gl_in[1].gl_Position;
-    vertex[2] = gl_in[2].gl_Position;
+    vertex[0] = vec4(geom_vertexPosition[0], 1.0);
+    vertex[1] = vec4(geom_vertexPosition[1], 1.0);
+    vertex[2] = vec4(geom_vertexPosition[2], 1.0);
     vec3 temp;
 
     // Project triangle to dominant plane
@@ -71,7 +71,7 @@ void main() {
         for (int i = 0; i < gl_in.length(); i++)
         {
             temp.x = vertex[i].z;
-            temp.z = -vertex[i].x; 
+            temp.z = vertex[i].x; 
             
             vertex[i].xz = temp.xz; 
         }
@@ -81,7 +81,7 @@ void main() {
         for (int i = 0; i < gl_in.length(); i++)
         {
             temp.y = vertex[i].z;
-            temp.z = -vertex[i].y;
+            temp.z = vertex[i].y;
             
             vertex[i].yz = temp.yz; 
         }
@@ -98,7 +98,7 @@ void main() {
         vertex[2] = vertex[1];
         vertex[1] = vertexTemp;
     }
-    vec2 halfPixel = vec2(1.0 / voxelDimension, 1.0 / voxelDimension);
+    vec2 halfPixel = vec2(2.0 / voxelDimension, 2.0 / voxelDimension);
 
     vec4 aabb = defineAabb(vertex, halfPixel);
     frag_aabb = aabb;
