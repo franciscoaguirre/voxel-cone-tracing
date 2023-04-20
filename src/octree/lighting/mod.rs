@@ -23,7 +23,7 @@ impl Octree {
     ) -> GLuint {
         let (light_view_map, light_view_map_view) =
             Self::create_light_view_map(models, projection, view, model);
-        self.store_photons(light_view_map);
+        self.store_photons(light_view_map, light_view_map_view);
         self.mipmap_photons(light_view_map);
 
         light_view_map_view
@@ -53,7 +53,7 @@ impl Octree {
         // border_transfer.run(&self.textures, 0);
     }
 
-    unsafe fn store_photons(&self, light_view_map: GLuint) {
+    unsafe fn store_photons(&self, light_view_map: GLuint, light_view_map_view: GLuint) {
         let shader = Shader::new_compute("assets/shaders/octree/storePhotons.comp.glsl");
 
         shader.use_program();
@@ -72,6 +72,7 @@ impl Octree {
             gl::READ_WRITE,
             gl::R32UI,
         );
+        helpers::bind_image_texture(2, light_view_map_view, gl::WRITE_ONLY, gl::RGBA8);
 
         shader.dispatch_xyz(vec3(
             (CONFIG.viewport_width as f32 / 32 as f32).ceil() as u32,
@@ -127,11 +128,11 @@ impl Octree {
         gl::TexImage2D(
             gl::TEXTURE_2D,
             0,
-            gl::RGB as i32,
+            gl::RGBA8 as i32,
             CONFIG.viewport_width as i32,
             CONFIG.viewport_height as i32,
             0,
-            gl::RGB,
+            gl::RGBA,
             gl::UNSIGNED_BYTE,
             std::ptr::null(),
         );

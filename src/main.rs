@@ -65,9 +65,10 @@ fn main() {
     let (render_model_shader, our_model) = unsafe {
         gl::Enable(gl::DEPTH_TEST);
 
-        let our_shader = Shader::new(
+        let our_shader = Shader::with_geometry_shader(
             "assets/shaders/model/model_loading.vert.glsl",
             "assets/shaders/model/model_loading.frag.glsl",
+            "assets/shaders/model/model_loading.geom.glsl",
         );
 
         let previous_current_dir = env::current_dir().unwrap();

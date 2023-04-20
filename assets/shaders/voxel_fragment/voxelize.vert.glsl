@@ -15,5 +15,5 @@ void main()
     geom_normal = inNormal;
     geom_texCoordinates = inTexCoordinates;
     gl_Position = modelNormalizationMatrix * vec4(inVertexPosition, 1.0);
-    geom_vertexPosition = vec3(gl_Position);
+    geom_vertexPosition = gl_Position.xyz / gl_Position.w;
 }

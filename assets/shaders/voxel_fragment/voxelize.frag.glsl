@@ -36,25 +36,25 @@ void discardIfOutsideAabb() {
 // by dividing them by voxelDimension.
 uvec4 calculateVoxelCoordinates() {
     uvec4 temp = uvec4(
-        gl_FragCoord.x,
-        gl_FragCoord.y,
-        voxelDimension * gl_FragCoord.z,
+        floor(gl_FragCoord.x),
+        floor(gl_FragCoord.y),
+        floor(float(voxelDimension) * gl_FragCoord.z),
         0
     );
     uvec4 voxelCoordinates;
 
     if (frag_dominantAxis == 0) {
-        voxelCoordinates.x = voxelDimension - temp.z;
+        voxelCoordinates.x = temp.z;
         voxelCoordinates.y = temp.y;
         voxelCoordinates.z = temp.x;
     } else if (frag_dominantAxis == 1) {
         voxelCoordinates.x = temp.x;
-        voxelCoordinates.y = voxelDimension - temp.z;
+        voxelCoordinates.y = temp.z;
         voxelCoordinates.z = temp.y;
     } else {
         voxelCoordinates.x = temp.x;
         voxelCoordinates.y = temp.y;
-        voxelCoordinates.z = voxelDimension - temp.z;
+        voxelCoordinates.z = temp.z;
     }
 
     return voxelCoordinates;
