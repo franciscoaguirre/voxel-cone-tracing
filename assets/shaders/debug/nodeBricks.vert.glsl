@@ -26,7 +26,7 @@ void main() {
     geom_nodePosition = vec4((normalizedNodePosition.xyz) * 2.0 - vec3(1.0), 1.0);
     geom_nodePosition.xyz += normalizedHalfNodeSize;
 
-    ivec3 brickCoordinates = calculateBrickCoordinates(nodeID);
+    ivec3 brickCoordinates = calculateBrickCoordinates(int(nodeID));
     geom_brickCoordinates = brickCoordinates;
 
     geom_nodeID = nodeID;

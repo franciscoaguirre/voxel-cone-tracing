@@ -22,7 +22,7 @@ void main() {
     }
 
     loadChildNodeIDs(nodeAddress, nodePool);
-    vec4 color = mipmapIsotropic(ivec3(2, 2, 2));
+    vec4 color = mipmapIsotropic(ivec3(2, 2, 2), brickPoolValues);
 
     memoryBarrier();
 

@@ -1,6 +1,4 @@
-use std::env;
 use std::mem::size_of;
-use std::path::Path;
 
 use crate::{
     config::CONFIG,
@@ -17,7 +15,7 @@ static mut VOXEL_NORMALS: (GLuint, GLuint) = (0, 0);
 
 unsafe fn calculate_voxel_fragment_list_length(
     voxelization_shader: &Shader,
-    models: &[Model; 1],
+    models: &[&Model; 1],
     atomic_counter: &mut u32,
 ) {
     voxelization_shader.use_program();
@@ -27,7 +25,7 @@ unsafe fn calculate_voxel_fragment_list_length(
 
 unsafe fn populate_voxel_fragment_list(
     voxelization_shader: &Shader,
-    models: &[Model; 1],
+    models: &[&Model; 1],
     atomic_counter: &mut u32,
 ) {
     voxelization_shader.use_program();
@@ -42,7 +40,7 @@ unsafe fn populate_voxel_fragment_list(
 
 unsafe fn voxelize_scene(
     voxelization_shader: &Shader,
-    models: &[Model; 1], // TODO: More than one?
+    models: &[&Model; 1], // TODO: More than one?
     atomic_counter: &mut u32,
 ) {
     gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
@@ -55,16 +53,10 @@ unsafe fn voxelize_scene(
     );
 
     // TODO: This should be the aabb of the entire scene
+    // We could fix this by preprocessing the `models` array before this function to get
+    // one big aabb that spans the whole scene.
     let scene_aabb = &models[0].aabb;
-    let aabb_middle_point = scene_aabb.middle_point();
-    let aabb_longer_side = scene_aabb.longer_axis_length();
-
-    let center_scene_matrix = cgmath::Matrix4::from_translation(-aabb_middle_point);
-    // aabb_longer_side is divided by two and we then use the inverse because
-    // normal device coordinates go from -1 to 1
-    let normalize_size_matrix = cgmath::Matrix4::from_scale(2f32 / aabb_longer_side);
-
-    let model_normalization_matrix = normalize_size_matrix * center_scene_matrix;
+    let model_normalization_matrix = helpers::get_scene_normalization_matrix(scene_aabb);
 
     voxelization_shader.set_mat4(
         c_str!("modelNormalizationMatrix"),
@@ -91,25 +83,14 @@ unsafe fn voxelize_scene(
     );
 }
 
-pub unsafe fn build_voxel_fragment_list(model_path: &str) -> (u32, u32, u32, u32) {
+pub unsafe fn build_voxel_fragment_list(model: &Model) -> (u32, u32, u32, u32) {
     let mut atomic_counter: u32 = helpers::generate_atomic_counter_buffer();
 
-    let (voxelization_shader, model) = {
-        gl::Enable(gl::DEPTH_TEST);
-
-        let our_shader = Shader::with_geometry_shader(
-            "assets/shaders/voxel_fragment/voxelize.vert.glsl",
-            "assets/shaders/voxel_fragment/voxelize.frag.glsl",
-            "assets/shaders/voxel_fragment/voxelize.geom.glsl",
-        );
-
-        let previous_current_dir = env::current_dir().unwrap();
-        env::set_current_dir(Path::new("assets/models")).unwrap();
-        let our_model = Model::new(model_path);
-        env::set_current_dir(previous_current_dir).unwrap();
-
-        (our_shader, our_model)
-    };
+    let voxelization_shader = Shader::with_geometry_shader(
+        "assets/shaders/voxel_fragment/voxelize.vert.glsl",
+        "assets/shaders/voxel_fragment/voxelize.frag.glsl",
+        "assets/shaders/voxel_fragment/voxelize.geom.glsl",
+    );
     let models = [model];
 
     calculate_voxel_fragment_list_length(&voxelization_shader, &models, &mut atomic_counter);

@@ -88,9 +88,9 @@ impl Octree {
         write_leaf_nodes_pass.run(&self.voxel_data, &self.textures);
         spread_leaf_bricks_pass.run(&self.textures, &self.nodes_per_level);
 
-        // border_transfer_pass.run(&self.textures, &self.nodes_per_level, X_AXIS);
-        // border_transfer_pass.run(&self.textures, &self.nodes_per_level, Y_AXIS);
-        // border_transfer_pass.run(&self.textures, &self.nodes_per_level, Z_AXIS);
+        border_transfer_pass.run(&self.textures, &self.nodes_per_level, X_AXIS);
+        border_transfer_pass.run(&self.textures, &self.nodes_per_level, Y_AXIS);
+        border_transfer_pass.run(&self.textures, &self.nodes_per_level, Z_AXIS);
 
         for level in (0..CONFIG.octree_levels - 1).rev() {
             mipmap_center_pass.run(&self.textures, &self.nodes_per_level, level);

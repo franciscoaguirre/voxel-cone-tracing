@@ -1,9 +1,14 @@
+use cgmath::Matrix4;
 use gl::types::*;
 use image::{GenericImageView, ImageFormat};
 use std::{
+    env,
     ffi::{c_void, CStr},
     mem::size_of,
+    path::Path,
 };
+
+use crate::{rendering::model::Model, voxelization::aabb::Aabb};
 
 pub unsafe fn generate_atomic_counter_buffer() -> GLuint {
     let mut buffer: u32 = 0;
@@ -290,4 +295,27 @@ pub fn r32ui_to_rgb10_a2ui(from: u32) -> (u32, u32, u32) {
     let mask = 0b00000000000000000000001111111111;
 
     (from & mask, (from >> 10) & mask, (from >> 20) & mask)
+}
+
+/// Load a model with a given `name`.
+/// Already goes to "assets/models/" to find it and its textures.
+pub unsafe fn load_model(name: &str) -> Model {
+    let previous_current_dir = env::current_dir().unwrap();
+    env::set_current_dir(Path::new("assets/models")).unwrap();
+    let model = Model::new(name);
+    env::set_current_dir(previous_current_dir).unwrap();
+    model
+}
+
+pub fn get_scene_normalization_matrix(aabb: &Aabb) -> Matrix4<f32> {
+    let aabb_middle_point = aabb.middle_point();
+    let aabb_longer_side = aabb.longer_axis_length();
+
+    let center_scene_matrix = cgmath::Matrix4::from_translation(-aabb_middle_point);
+    // aabb_longer_side is divided by two and we then use the inverse because
+    // normal device coordinates go from -1 to 1
+    let normalize_size_matrix = cgmath::Matrix4::from_scale(2f32 / aabb_longer_side);
+
+    let model_normalization_matrix = normalize_size_matrix * center_scene_matrix;
+    model_normalization_matrix
 }

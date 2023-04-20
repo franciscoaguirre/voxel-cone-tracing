@@ -40,7 +40,6 @@ impl BorderTransferPass {
             (CONFIG.viewport_height as f32 / 32 as f32).ceil() as u32,
             1,
         ));
-        // self.shader.dispatch(1);
         self.shader.wait();
 
         let debug_values = helpers::get_values_from_texture_buffer(buffer, 10, 420_f32);

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use egui_backend::{
     egui::{self, vec2, Color32, Pos2, Rect},
     glfw::{Action, CursorMode, Key, Window, WindowEvent},
@@ -15,6 +17,8 @@ pub struct Menu {
     native_pixels_per_point: f32,
     is_showing_node_positions_window: bool,
     is_showing_diagnostics_window: bool,
+    is_showing_photons_window: bool,
+    is_showing_children_window: bool,
 }
 
 impl Menu {
@@ -42,6 +46,14 @@ impl Menu {
 
     pub fn is_showing_diagnostics_window(&self) -> bool {
         self.is_showing_diagnostics_window
+    }
+
+    pub fn is_showing_photons_window(&self) -> bool {
+        self.is_showing_photons_window
+    }
+
+    pub fn is_showing_children_window(&self) -> bool {
+        self.is_showing_children_window
     }
 
     pub fn handle_event(&mut self, event: WindowEvent) {
@@ -110,6 +122,8 @@ impl Menu {
             is_showing: false,
             is_showing_node_positions_window: false,
             is_showing_diagnostics_window: false,
+            is_showing_photons_window: false,
+            is_showing_children_window: false,
             painter,
             context,
             input_state,
@@ -120,11 +134,17 @@ impl Menu {
 
     pub fn show_main_window(&mut self) {
         egui::Window::new("Menu").show(&self.context, |ui| {
+            if ui.button("Diagnostics").clicked() {
+                self.is_showing_diagnostics_window = !self.is_showing_diagnostics_window;
+            }
             if ui.button("Node positions").clicked() {
                 self.is_showing_node_positions_window = !self.is_showing_node_positions_window;
             }
-            if ui.button("Diagnostics").clicked() {
-                self.is_showing_diagnostics_window = !self.is_showing_diagnostics_window;
+            if ui.button("Photons").clicked() {
+                self.is_showing_photons_window = !self.is_showing_photons_window;
+            }
+            if ui.button("Children").clicked() {
+                self.is_showing_children_window = !self.is_showing_children_window;
             }
         });
     }
@@ -136,26 +156,51 @@ impl Menu {
         });
     }
 
+    pub fn create_photons_window(&self, photons: &[u32]) {
+        egui::Window::new("Photons").show(&self.context, |ui| {
+            if photons.is_empty() {
+                ui.label("No photon data. Pick a node!");
+                return;
+            }
+
+            ui.vertical(|ui| {
+                for (index, photon) in photons.iter().enumerate() {
+                    let x = index % 3;
+                    let y = (index / 3) % 3;
+                    let z = index / (3 * 3);
+                    let label_text = format!("({x}, {y}, {z}): {photon}");
+                    ui.label(label_text);
+                }
+            });
+        });
+    }
+
+    pub fn create_children_window(&self, children: &[u32]) {
+        egui::Window::new("Children").show(&self.context, |ui| {
+            if children.is_empty() {
+                ui.label("No children data. Pick a node!");
+                return;
+            }
+
+            ui.vertical(|ui| {
+                for child in children.iter() {
+                    ui.label(child.to_string());
+                }
+            });
+        });
+    }
+
     pub fn create_node_positions_window(
         &self,
-        items: &Vec<String>,
-        selected_items: &mut Vec<(u32, String)>,
+        items: &Vec<DebugNode>,
+        selected_items: &mut Vec<DebugNode>,
         window_title: &str,
         filter_text: &mut String,
         should_show_neighbors: &mut bool,
         bricks_to_show: &mut BricksToShow,
+        selected_items_updated: &mut bool,
     ) {
-        let pinned_items: Vec<(u32, String)> = items
-            .iter()
-            .enumerate()
-            .filter(|(item_index, _)| {
-                selected_items
-                    .iter()
-                    .find(|(index, _)| *index == *item_index as u32)
-                    .is_some()
-            })
-            .map(|(index, item)| (index as u32, item.clone()))
-            .collect();
+        let pinned_items: Vec<DebugNode> = selected_items.clone();
 
         egui::Window::new(window_title)
             .resize(|r| r.fixed_size((200., 400.)))
@@ -199,56 +244,75 @@ impl Menu {
                     egui::ScrollArea::vertical()
                         .max_height(200.)
                         .show(ui, |ui| {
-                            for (voxel_fragment_index, item) in pinned_items.iter() {
-                                let button_text = format!("{}: {}", voxel_fragment_index, item);
+                            for pinned_node in pinned_items.iter() {
+                                let button_text = format!("{}", pinned_node);
                                 if ui
                                     .button(egui::RichText::new(button_text).color(Color32::RED))
                                     .clicked()
                                 {
                                     let pinned_index = selected_items
                                         .iter()
-                                        .position(|(index, _)| *index == *voxel_fragment_index)
+                                        .position(|node| node.index == pinned_node.index)
                                         .expect("Pinned item was selected");
+                                    *selected_items_updated = true;
                                     selected_items.remove(pinned_index);
                                 }
                             }
                         });
                     ui.separator();
-                    for (item_index, item) in items
+                    for node in items
                         .iter()
-                        .enumerate()
-                        .filter(|(index, item)| {
+                        .filter(|node| {
                             pinned_items
                                 .iter()
-                                .find(|(pinned_index, _)| *pinned_index == *index as u32)
+                                .find(|pinned_node| pinned_node.index == node.index as u32)
                                 .is_none()
-                                && (index.to_string().starts_with(&*filter_text)
-                                    || item.contains(&*filter_text))
+                                && (node.index.to_string().starts_with(&*filter_text)
+                                    || node.text.contains(&*filter_text))
                         })
                         .take(20)
                     {
-                        let button_text = format!("{}: {}", item_index, item);
+                        let button_text = format!("{}", node);
                         let button = ui.button(button_text.clone());
                         if button.clicked() {
                             if !self.input_state.input.modifiers.shift {
                                 selected_items.clear();
-                                selected_items.push((item_index as u32, item.clone()));
+                                selected_items.push(node.clone());
                             } else if selected_items
                                 .iter()
-                                .find(|(index, _)| *index == item_index as u32)
+                                .find(|selected_node| selected_node.index == node.index as u32)
                                 .is_some()
                             {
-                                let index = selected_items
-                                    .iter()
-                                    .position(|(index, _)| *index == item_index as u32)
-                                    .expect("voxel_indices should contain index");
-                                selected_items.remove(index as usize);
+                                selected_items.remove(node.index as usize);
                             } else {
-                                selected_items.push((item_index as u32, item.clone()));
+                                selected_items.push(node.clone());
                             }
+                            *selected_items_updated = true;
                         }
                     }
                 });
             });
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct DebugNode {
+    index: u32,
+    text: String,
+}
+
+impl DebugNode {
+    pub fn new(index: u32, text: String) -> Self {
+        Self { index, text }
+    }
+
+    pub fn index(&self) -> u32 {
+        self.index
+    }
+}
+
+impl Display for DebugNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}: {}", self.index, self.text)
     }
 }

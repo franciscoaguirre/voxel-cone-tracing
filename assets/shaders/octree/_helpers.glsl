@@ -36,7 +36,7 @@ float calculateHalfNodeSize(uint octreeLevel) {
 }
 
 // Returns the node quarter the queryCoordinate is on
-// Goes from 0 to 3
+// Goes from 0 to 2
 uint findQuarter(float min, float quarterNodeSize, float queryCoordinate) {
     bool withinFirstHalf = queryCoordinate < min + quarterNodeSize * 2;
     if (withinFirstHalf) {
