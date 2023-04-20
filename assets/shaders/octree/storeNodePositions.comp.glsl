@@ -27,6 +27,7 @@ void main() {
         halfNodeSize
     );
 
+    // TODO: Check if `floor` or `ceil` are better. We don't have a standard.
     uvec3 nodeCoordinatesInteger = uvec3(round(nodeCoordinates * float(voxelDimension)));
 
     // TODO: It's overkill to use so many voxel fragments to store this

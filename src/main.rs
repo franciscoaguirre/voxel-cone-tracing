@@ -1,8 +1,5 @@
 extern crate c_str_macro;
 
-use std::env;
-use std::path::Path;
-
 use c_str_macro::c_str;
 use egui_glfw_gl::glfw::{self, Context};
 extern crate gl;
@@ -23,12 +20,12 @@ mod voxelization;
 use cli_arguments::Options;
 use config::CONFIG;
 use menu::Menu;
-use rendering::{
-    camera::Camera, common, gizmo::RenderGizmo, light::SpotLight, model::Model, shader::Shader,
-};
+use rendering::{camera::Camera, common, gizmo::RenderGizmo, light::SpotLight, shader::Shader};
 use voxelization::visualize::RenderVoxelFragmentsShader;
 
 use octree::{BricksToShow, Octree};
+
+use crate::menu::DebugNode;
 
 fn main() {
     let options = Options::from_args();
@@ -62,75 +59,12 @@ fn main() {
 
     let mut menu = Menu::new(&mut window);
 
-    let (render_model_shader, our_model) = unsafe {
-        gl::Enable(gl::DEPTH_TEST);
-
-        let our_shader = Shader::with_geometry_shader(
-            "assets/shaders/model/model_loading.vert.glsl",
-            "assets/shaders/model/model_loading.frag.glsl",
-            "assets/shaders/model/model_loading.geom.glsl",
-        );
-
-        let previous_current_dir = env::current_dir().unwrap();
-        env::set_current_dir(Path::new("assets/models")).unwrap();
-        let our_model = Model::new(&options.model);
-        env::set_current_dir(previous_current_dir).unwrap();
-
-        (our_shader, our_model)
-    };
-
-    let (
-        voxel_positions_texture,
-        number_of_voxel_fragments,
-        voxel_colors_texture,
-        voxel_normals_texture,
-    ) = unsafe {
-        let (
-            number_of_voxel_fragments,
-            voxel_positions_texture,
-            voxel_colors_texture,
-            voxel_normals_texture,
-        ) = voxelization::build_voxel_fragment_list(&options.model);
-        info!("Number of voxel fragments: {}", number_of_voxel_fragments);
-
-        (
-            voxel_positions_texture,
-            number_of_voxel_fragments,
-            voxel_colors_texture,
-            voxel_normals_texture,
-        )
-    };
-
-    let mut octree = unsafe {
-        Octree::new(
-            voxel_positions_texture,
-            number_of_voxel_fragments,
-            voxel_colors_texture,
-            voxel_normals_texture,
-        )
-    };
-
-    let _node_pool = unsafe {
-        helpers::get_values_from_texture_buffer(
-            octree.textures.node_pool.1,
-            number_of_voxel_fragments as usize,
-            0_u32,
-        )
-    };
-
-    let node_positions = unsafe {
-        helpers::get_values_from_texture_buffer(
-            octree.textures.node_positions.1,
-            number_of_voxel_fragments as usize,
-            0_u32,
-        )
-    };
-
-    let node_positions: Vec<String> = node_positions
-        .iter()
-        .map(|&node_position| helpers::r32ui_to_rgb10_a2ui(node_position))
-        .map(|(x, y, z)| format!("({}, {}, {})", x, y, z))
-        .collect();
+    let render_model_shader = Shader::with_geometry_shader(
+        "assets/shaders/model/model_loading.vert.glsl",
+        "assets/shaders/model/model_loading.frag.glsl",
+        "assets/shaders/model/model_loading.geom.glsl",
+    );
+    let our_model = unsafe { helpers::load_model(&options.model) };
 
     let scene_aabb = &our_model.aabb;
     let aabb_middle_point = scene_aabb.middle_point();
@@ -142,6 +76,45 @@ fn main() {
     let normalize_size_matrix = cgmath::Matrix4::from_scale(2f32 / aabb_longer_side);
 
     let model_normalization_matrix = normalize_size_matrix * center_scene_matrix;
+
+    let (
+        number_of_voxel_fragments,
+        voxel_positions_texture,
+        voxel_colors_texture,
+        voxel_normals_texture,
+    ) = unsafe { voxelization::build_voxel_fragment_list(&our_model) };
+    info!("Number of voxel fragments: {}", number_of_voxel_fragments);
+
+    let mut octree = unsafe {
+        Octree::new(
+            voxel_positions_texture,
+            number_of_voxel_fragments,
+            voxel_colors_texture,
+            voxel_normals_texture,
+        )
+    };
+
+    let node_positions = unsafe {
+        helpers::get_values_from_texture_buffer(
+            octree.textures.node_positions.1,
+            octree.number_of_nodes(),
+            0_u32,
+        )
+    };
+
+    let debug_nodes: Vec<DebugNode> = node_positions
+        .iter()
+        .enumerate()
+        .map(|(index, &node_position)| {
+            let position = helpers::r32ui_to_rgb10_a2ui(node_position);
+            let text = format!("({}, {}, {})", position.0, position.1, position.2);
+            DebugNode::new(index as u32, text)
+        })
+        .collect();
+    let mut selected_debug_nodes: Vec<DebugNode> = Vec::new();
+    let mut selected_debug_nodes_updated = false;
+    let mut photons: Vec<u32> = Vec::new();
+    let mut children: Vec<u32> = Vec::new();
 
     let mut light = unsafe {
         SpotLight::new(
@@ -156,17 +129,18 @@ fn main() {
     };
     light.transform.position = point3(0.0, 0.0, -1.0);
     light.transform.set_rotation_x(0.0);
+    // light.transform.set_rotation_y(-90.0);
 
     let projection = light.get_projection_matrix();
     let view = light.transform.get_view_matrix();
-    // let light_view_map = unsafe {
-    //     octree.inject_light(
-    //         &[&our_model],
-    //         &projection,
-    //         &view,
-    //         &model_normalization_matrix,
-    //     )
-    // };
+    let light_view_map = unsafe {
+        octree.inject_light(
+            &[&our_model],
+            &projection,
+            &view,
+            &model_normalization_matrix,
+        )
+    };
     let quad = unsafe { Quad::new() };
 
     // Animation variables
@@ -178,7 +152,6 @@ fn main() {
     let mut show_octree = false;
     let mut node_filter_text = String::new();
 
-    let mut selected_nodes: Vec<(u32, String)> = Vec::new();
     let mut should_show_neighbors = false;
     let mut bricks_to_show = BricksToShow::default();
 
@@ -245,16 +218,44 @@ fn main() {
             menu.show_main_window();
             if menu.is_showing_node_positions_window() {
                 menu.create_node_positions_window(
-                    &node_positions,
-                    &mut selected_nodes,
+                    &debug_nodes,
+                    &mut selected_debug_nodes,
                     "Node positions",
                     &mut node_filter_text,
                     &mut should_show_neighbors,
                     &mut bricks_to_show,
+                    &mut selected_debug_nodes_updated,
                 );
             }
             if menu.is_showing_diagnostics_window() {
                 menu.create_diagnostics_window(fps);
+            }
+            if menu.is_showing_photons_window() {
+                menu.create_photons_window(&photons);
+            }
+            if menu.is_showing_children_window() {
+                menu.create_children_window(&children);
+            }
+        }
+
+        if selected_debug_nodes_updated {
+            selected_debug_nodes_updated = false;
+            let last_debug_node = selected_debug_nodes.last();
+            if let Some(last_debug_node) = last_debug_node {
+                unsafe {
+                    octree.run_get_photons_shader(last_debug_node.index());
+                    photons = helpers::get_values_from_texture_buffer(
+                        octree.textures.photons_buffer.1,
+                        27, // Voxels in a brick
+                        0_u32,
+                    );
+                    octree.run_get_children_shader(last_debug_node.index());
+                    children = helpers::get_values_from_texture_buffer(
+                        octree.textures.children_buffer.1,
+                        8, // Children in a node
+                        0_u32,
+                    );
+                };
             }
         }
 
@@ -283,7 +284,12 @@ fn main() {
                 octree.render(&model, &view, &projection, current_octree_level);
             }
 
-            octree.set_node_indices(&selected_nodes.iter().map(|(index, _)| *index).collect());
+            octree.set_node_indices(
+                &selected_debug_nodes
+                    .iter()
+                    .map(|node| node.index())
+                    .collect(),
+            );
             octree.run_node_positions_shader(&projection, &view, &model);
             octree.set_bricks_to_show(bricks_to_show);
 

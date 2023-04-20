@@ -29,7 +29,7 @@ impl Default for Transform {
 impl Transform {
     pub fn get_model_matrix(&self) -> Matrix4<f32> {
         let mut model = Matrix4::<f32>::from_angle_z(Deg(self.rotation.z))
-            * Matrix4::<f32>::from_angle_y(Deg(-self.rotation.y + 90.0))
+            * Matrix4::<f32>::from_angle_y(Deg(90.0 - self.rotation.y))
             * Matrix4::<f32>::from_angle_x(Deg(-self.rotation.x));
         model =
             Matrix4::<f32>::from_nonuniform_scale(self.scale.x, self.scale.y, self.scale.z) * model;

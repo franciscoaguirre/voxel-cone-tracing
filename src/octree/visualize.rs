@@ -295,6 +295,44 @@ impl Octree {
         gl::DrawArrays(gl::POINTS, 0, self.renderer.node_count as i32);
     }
 
+    pub unsafe fn run_get_photons_shader(&self, node_index: u32) {
+        self.renderer.get_photons_shader.use_program();
+
+        self.renderer
+            .get_photons_shader
+            .set_uint(c_str!("nodeID"), node_index);
+
+        helpers::bind_image_texture(0, self.textures.photons_buffer.0, gl::WRITE_ONLY, gl::R32UI);
+        helpers::bind_3d_image_texture(
+            1,
+            self.textures.brick_pool_photons,
+            gl::READ_ONLY,
+            gl::R32UI,
+        );
+
+        self.renderer.get_photons_shader.dispatch(1);
+        self.renderer.get_photons_shader.wait();
+    }
+
+    pub unsafe fn run_get_children_shader(&self, node_index: u32) {
+        self.renderer.get_children_shader.use_program();
+
+        self.renderer
+            .get_children_shader
+            .set_uint(c_str!("nodeID"), node_index);
+
+        helpers::bind_image_texture(
+            0,
+            self.textures.children_buffer.0,
+            gl::WRITE_ONLY,
+            gl::R32UI,
+        );
+        helpers::bind_image_texture(1, self.textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
+
+        self.renderer.get_children_shader.dispatch(1);
+        self.renderer.get_children_shader.wait();
+    }
+
     pub unsafe fn run_node_bricks_shader(
         &self,
         projection: &Matrix4<f32>,

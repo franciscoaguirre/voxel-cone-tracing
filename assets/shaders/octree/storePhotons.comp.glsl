@@ -17,16 +17,16 @@ uniform uint voxelDimension;
 #include "./_octreeTraversal.glsl"
 
 void main() {
-    uvec4 queryCoordinates = texelFetch(
+    uvec3 queryCoordinates = texelFetch(
         lightViewMap,
         ivec2(gl_GlobalInvocationID.xy),
         0
-    );
+    ).xyz;
 
-    if (queryCoordinates.xyz == uvec3(0)) {
+    if (queryCoordinates == uvec3(0)) {
         return;
     }
-    vec3 normalizedQueryCoordinates = vec3(queryCoordinates.xyz / float(1023));
+    vec3 normalizedQueryCoordinates = vec3(queryCoordinates.xyz / (float(voxelDimension) * 1.5));
 
     float halfNodeSize;
     vec3 nodeCoordinates;

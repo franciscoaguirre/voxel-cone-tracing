@@ -31,7 +31,9 @@ pub struct OctreeTextures {
     level_start_indices: BufferTexture,
     brick_pool_colors: Texture3D,
     brick_pool_normals: Texture3D,
-    brick_pool_photons: Texture3D,
+    pub brick_pool_photons: Texture3D,
+    pub photons_buffer: BufferTexture,
+    pub children_buffer: BufferTexture,
 }
 
 pub struct VoxelData {
@@ -50,6 +52,8 @@ struct Renderer {
     node_positions_shader: Shader,
     node_neighbors_shader: Shader,
     node_bricks_shader: Shader,
+    get_photons_shader: Shader,
+    get_children_shader: Shader,
 }
 
 impl Octree {
@@ -99,6 +103,8 @@ impl Octree {
                 "assets/shaders/debug/nodeBricks.frag.glsl",
                 "assets/shaders/debug/nodeBricks.geom.glsl",
             ),
+            get_photons_shader: Shader::new_compute("assets/shaders/debug/getPhotons.comp.glsl"),
+            get_children_shader: Shader::new_compute("assets/shaders/debug/getChildren.comp.glsl"),
         };
 
         let mut octree = Self {
@@ -141,10 +147,15 @@ impl Octree {
             brick_pool_colors: helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution),
             brick_pool_normals: helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution),
             brick_pool_photons: helpers::generate_3d_r32ui_texture(CONFIG.brick_pool_resolution),
+            photons_buffer: helpers::generate_texture_buffer(27, gl::R32UI, 0u32), // 27 voxels in a brick
+            children_buffer: helpers::generate_texture_buffer(8, gl::R32UI, 0_u32), // 8 children in a node
         }
     }
 
-    #[allow(dead_code)]
+    pub fn number_of_nodes(&self) -> usize {
+        self.nodes_per_level.iter().sum::<u32>() as usize
+    }
+
     pub unsafe fn show_nodes(&self, offset: usize, number_of_nodes: usize) {
         let max_node_pool_size = Self::get_max_node_pool_size();
 
