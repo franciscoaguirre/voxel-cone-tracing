@@ -36,7 +36,11 @@ impl Octree {
         let mipmap_edges = MipmapEdgesPass::init(light_view_map);
         let border_transfer = BorderTransferPass::init(light_view_map);
 
-        // border_transfer.run(&self.textures, CONFIG.octree_levels - 1);
+        border_transfer.run(
+            &self.textures,
+            CONFIG.octree_levels - 1,
+            &self.nodes_per_level,
+        );
 
         for level in (0..CONFIG.octree_levels - 1).rev() {
             mipmap_centers.run(&self.textures, level);
@@ -46,7 +50,7 @@ impl Octree {
 
             // TODO: Fix in higher levels
             if level > 0 {
-                // border_transfer.run(&self.textures, level);
+                border_transfer.run(&self.textures, level, &self.nodes_per_level);
             }
         }
     }

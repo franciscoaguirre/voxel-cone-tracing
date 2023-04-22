@@ -86,13 +86,14 @@ uint mipmapIsotropic(in ivec3 position, uimage3D brickPoolValues) {
                     float weight = gaussianWeights[distance];
                     uint value = getValue(lookupPosition, brickPoolValues);
 
-                    finalValue += weight * float(value);
-                    weightSum += weight;
+                    // TODO: Figure out if we want to use the weights
+                    // finalValue += weight * float(value);
+                    finalValue += float(value);
+                    // weightSum += weight;
                 }
             }
         }
     }
 
-    // TODO: We're having an overflow issue here with photons
-    return uint(round(finalValue / weightSum));
+    return uint(finalValue);
 }
