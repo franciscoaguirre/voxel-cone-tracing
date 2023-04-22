@@ -7,9 +7,9 @@ uniform uint octreeLevels;
 uniform uint voxelDimension;
 
 uniform layout(binding = 0, r32ui) uimageBuffer nodePool;
-uniform layout(binding = 2, rgba8) image3D brickPoolColors;
-uniform layout(binding = 3, rgb10_a2ui) uimageBuffer voxelPositions;
-uniform layout(binding = 4, r32ui) uimage3D brickPoolPhotons;
+uniform layout(binding = 1, rgba8) image3D brickPoolColors;
+uniform layout(binding = 2, rgb10_a2ui) uimageBuffer voxelPositions;
+uniform layout(binding = 3, r32ui) uimage3D brickPoolPhotons;
 
 out vec4 geom_nodePosition;
 out float geom_halfNodeSize;
@@ -21,9 +21,6 @@ out ivec3 geom_brickCoordinates;
 void main() {
   int threadIndex = gl_VertexID;
 
-  // TODO: Find an efficient way to render both occupied and empty nodes.
-  // This approach uses voxel fragment positions and therefore doesn't show
-  // empty nodes.
   vec4 voxelFragmentPosition = imageLoad(voxelPositions, threadIndex);
 
   float halfNodeSize;
