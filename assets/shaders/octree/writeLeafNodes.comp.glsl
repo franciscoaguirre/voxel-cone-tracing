@@ -19,7 +19,14 @@ uniform uint numberOfVoxelFragments;
 #include "./_traversalHelpers.glsl"
 #include "./_octreeTraversal.glsl"
 
-void storeInLeaf(vec3 voxelPosition, int nodeID, vec4 voxelColor, float halfNodeSize, vec3 nodeCoordinates, vec4 voxelNormal) {
+void storeInLeaf(
+    vec3 voxelPosition,
+    int nodeID,
+    vec4 voxelColor,
+    float halfNodeSize,
+    vec3 nodeCoordinates,
+    vec4 voxelNormal
+) {
     ivec3 brickCoordinates = calculateBrickCoordinates(nodeID);
     uint offset = calculateChildLocalID(nodeCoordinates, halfNodeSize, voxelPosition);
 

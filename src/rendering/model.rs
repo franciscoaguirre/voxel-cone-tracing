@@ -57,14 +57,14 @@ impl Model {
             // data to fill
             let mut vertices: Vec<Vertex> = Vec::with_capacity(num_vertices);
             let indices: Vec<u32> = mesh.indices.clone();
-            let (p, _n, t) = (&mesh.positions, &mesh.normals, &mesh.texcoords);
+            let (p, n, t) = (&mesh.positions, &mesh.normals, &mesh.texcoords);
             for i in 0..num_vertices {
                 let pos_x = p[i * 3];
                 let pos_y = p[i * 3 + 1];
                 let pos_z = p[i * 3 + 2];
 
-                let normal = if i * 3 + 2 < t.len() {
-                    vec3(t[i * 3], t[i * 3 + 1], t[i * 3 + 2])
+                let normal = if i * 3 + 2 < n.len() {
+                    vec3(n[i * 3], n[i * 3 + 1], n[i * 3 + 2])
                 } else {
                     vec3(0.0, 0.0, 0.0)
                 };

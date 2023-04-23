@@ -30,8 +30,6 @@ impl MipmapCornersPass {
 
         helpers::bind_image_texture(0, textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
         helpers::bind_3d_image_texture(1, textures.brick_pool_photons, gl::READ_WRITE, gl::R32UI);
-        let (debug, buffer) = helpers::generate_texture_buffer(64, gl::R32F, 69_f32);
-        helpers::bind_image_texture(2, debug, gl::WRITE_ONLY, gl::R32F);
 
         self.shader.dispatch_xyz(vec3(
             (CONFIG.viewport_width as f32 / 32 as f32).ceil() as u32,
