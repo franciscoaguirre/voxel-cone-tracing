@@ -98,7 +98,7 @@ void main() {
         vertex[2] = vertex[1];
         vertex[1] = vertexTemp;
     }
-    vec2 halfPixel = vec2(2.0 / voxelDimension, 2.0 / voxelDimension);
+    vec2 halfPixel = vec2(2.0 / voxelDimension);
 
     vec4 aabb = defineAabb(vertex, halfPixel);
     frag_aabb = aabb;

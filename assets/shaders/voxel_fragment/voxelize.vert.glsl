@@ -12,8 +12,8 @@ uniform mat4 modelNormalizationMatrix;
 
 void main()
 {
-    geom_normal = inNormal;
     geom_texCoordinates = inTexCoordinates;
     gl_Position = modelNormalizationMatrix * vec4(inVertexPosition, 1.0);
+    geom_normal = inNormal;
     geom_vertexPosition = gl_Position.xyz / gl_Position.w;
 }

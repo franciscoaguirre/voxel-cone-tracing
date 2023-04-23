@@ -64,6 +64,11 @@ fn main() {
         "assets/shaders/model/model_loading.frag.glsl",
         "assets/shaders/model/model_loading.geom.glsl",
     );
+    let render_normals_shader = Shader::with_geometry_shader(
+        "assets/shaders/model/renderNormals.vert.glsl",
+        "assets/shaders/model/renderNormals.frag.glsl",
+        "assets/shaders/model/renderNormals.geom.glsl",
+    );
     let our_model = unsafe { helpers::load_model(&options.model) };
 
     let scene_aabb = &our_model.aabb;
@@ -307,6 +312,13 @@ fn main() {
                 render_model_shader.set_mat4(c_str!("view"), &view);
                 render_model_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
                 our_model.draw(&render_model_shader);
+
+                // Show normals
+                render_normals_shader.use_program();
+                render_normals_shader.set_mat4(c_str!("projection"), &projection);
+                render_normals_shader.set_mat4(c_str!("view"), &view);
+                render_normals_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
+                our_model.draw(&render_normals_shader);
             }
 
             light.draw_gizmo(&projection, &view);

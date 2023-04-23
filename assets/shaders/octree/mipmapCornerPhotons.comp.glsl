@@ -6,7 +6,6 @@ layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
 uniform layout(binding = 0, r32ui) uimageBuffer nodePool;
 uniform layout(binding = 1, r32ui) uimage3D brickPoolPhotons;
-uniform layout(binding = 2, r32f) imageBuffer debug;
 
 uniform usampler2D lightViewMap;
 uniform uint octreeLevel;

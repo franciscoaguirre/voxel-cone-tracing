@@ -1,7 +1,7 @@
 use c_str_macro::c_str;
 
 use crate::{
-    constants::WORKING_GROUP_SIZE,
+    config::CONFIG,
     octree::{OctreeTextures, VoxelData},
     rendering::shader::Shader,
 };
@@ -42,8 +42,9 @@ impl AllocateNodesPass {
         );
         gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, allocated_nodes_counter);
 
-        let groups_count =
-            (voxel_data.number_of_voxel_fragments as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
+        let groups_count = (voxel_data.number_of_voxel_fragments as f32
+            / CONFIG.working_group_size as f32)
+            .ceil() as u32;
 
         // TODO: Could send even less threads
         self.shader.dispatch(groups_count);

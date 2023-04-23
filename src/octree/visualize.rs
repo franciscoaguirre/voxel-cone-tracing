@@ -89,27 +89,26 @@ impl Octree {
             .set_uint(c_str!("octreeLevels"), octree_level);
 
         helpers::bind_image_texture(0, self.textures.node_pool.0, gl::READ_WRITE, gl::R32UI);
-        helpers::bind_image_texture(1, self.textures.brick_pointers.0, gl::READ_WRITE, gl::R32UI);
         helpers::bind_3d_image_texture(
-            2,
+            1,
             self.textures.brick_pool_colors,
             gl::READ_ONLY,
             gl::RGBA8,
         );
         helpers::bind_image_texture(
-            3,
+            2,
             self.voxel_data.voxel_positions,
             gl::READ_ONLY,
             gl::RGB10_A2UI,
         );
         helpers::bind_3d_image_texture(
-            4,
+            3,
             self.textures.brick_pool_photons,
             gl::READ_ONLY,
             gl::R32UI,
         );
         helpers::bind_3d_image_texture(
-            5,
+            4,
             self.textures.brick_pool_normals,
             gl::READ_ONLY,
             gl::RGBA8,

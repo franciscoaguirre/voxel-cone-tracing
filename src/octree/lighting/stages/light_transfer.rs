@@ -2,10 +2,7 @@ use c_str_macro::c_str;
 use cgmath::vec3;
 use gl::types::GLuint;
 
-use crate::{
-    config::CONFIG, constants::WORKING_GROUP_SIZE, helpers, octree::OctreeTextures,
-    rendering::shader::Shader,
-};
+use crate::{config::CONFIG, helpers, octree::OctreeTextures, rendering::shader::Shader};
 
 pub struct BorderTransferPass {
     shader: Shader,

@@ -2,7 +2,6 @@ use c_str_macro::c_str;
 
 use crate::{
     config::CONFIG,
-    constants::{CHILDREN_PER_NODE, WORKING_GROUP_SIZE},
     helpers,
     octree::{OctreeTextures, VoxelData},
     rendering::shader::Shader,

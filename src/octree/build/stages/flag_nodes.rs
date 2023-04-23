@@ -1,7 +1,7 @@
 use c_str_macro::c_str;
 
 use super::super::super::{OctreeTextures, VoxelData};
-use crate::{config::CONFIG, constants::WORKING_GROUP_SIZE, helpers, rendering::shader::Shader};
+use crate::{config::CONFIG, helpers, rendering::shader::Shader};
 
 pub struct FlagNodesPass {
     shader: Shader,
@@ -28,8 +28,9 @@ impl FlagNodesPass {
         helpers::bind_image_texture(0, voxel_data.voxel_positions, gl::READ_ONLY, gl::RGB10_A2);
         helpers::bind_image_texture(1, textures.node_pool.0, gl::READ_WRITE, gl::R32UI);
 
-        let groups_count =
-            (voxel_data.number_of_voxel_fragments as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
+        let groups_count = (voxel_data.number_of_voxel_fragments as f32
+            / CONFIG.working_group_size as f32)
+            .ceil() as u32;
 
         self.shader.dispatch(groups_count);
         self.shader.wait();

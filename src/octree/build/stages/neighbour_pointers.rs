@@ -1,7 +1,7 @@
 use c_str_macro::c_str;
 
 use super::super::super::{OctreeTextures, VoxelData};
-use crate::{config::CONFIG, constants::WORKING_GROUP_SIZE, helpers, rendering::shader::Shader};
+use crate::{config::CONFIG, helpers, rendering::shader::Shader};
 
 pub struct NeighbourPointersPass {
     shader: Shader,
@@ -45,8 +45,9 @@ impl NeighbourPointersPass {
 
         helpers::bind_image_texture(9, textures.level_start_indices.0, gl::READ_ONLY, gl::R32UI);
 
-        let groups_count =
-            (voxel_data.number_of_voxel_fragments as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
+        let groups_count = (voxel_data.number_of_voxel_fragments as f32
+            / CONFIG.working_group_size as f32)
+            .ceil() as u32;
 
         self.shader.dispatch(groups_count);
         self.shader.wait();

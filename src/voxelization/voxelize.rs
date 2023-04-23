@@ -20,6 +20,7 @@ unsafe fn calculate_voxel_fragment_list_length(
 ) {
     voxelization_shader.use_program();
     voxelization_shader.set_bool(c_str!("shouldStore"), false);
+    voxelization_shader.set_bool(c_str!("hasBump"), false);
     voxelize_scene(voxelization_shader, models, atomic_counter);
 }
 
@@ -30,6 +31,7 @@ unsafe fn populate_voxel_fragment_list(
 ) {
     voxelization_shader.use_program();
     voxelization_shader.set_bool(c_str!("shouldStore"), true);
+    voxelization_shader.set_bool(c_str!("hasBump"), false);
 
     helpers::bind_image_texture(0, VOXEL_POSITIONS.0, gl::WRITE_ONLY, gl::RGB10_A2UI);
     helpers::bind_image_texture(1, VOXEL_COLORS.0, gl::WRITE_ONLY, gl::RGBA8);

@@ -1,8 +1,8 @@
 use c_str_macro::c_str;
 
 use crate::{
-    config::CONFIG, constants::WORKING_GROUP_SIZE, helpers, octree::OctreeTextures,
-    rendering::shader::Shader, voxelization::voxelize::VOXEL_POSITIONS,
+    config::CONFIG, helpers, octree::OctreeTextures, rendering::shader::Shader,
+    voxelization::voxelize::VOXEL_POSITIONS,
 };
 
 pub struct StoreNodePositions {
@@ -33,7 +33,7 @@ impl StoreNodePositions {
         helpers::bind_image_texture(2, textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
 
         let groups_count =
-            (number_of_voxel_fragments as f32 / WORKING_GROUP_SIZE as f32).ceil() as u32;
+            (number_of_voxel_fragments as f32 / CONFIG.working_group_size as f32).ceil() as u32;
         self.shader.dispatch(groups_count);
         self.shader.wait();
     }

@@ -1,20 +1,20 @@
 use log::{debug, info};
 
 use super::Octree;
-use crate::{
-    config::CONFIG,
-    constants::{X_AXIS, Y_AXIS, Z_AXIS},
-    helpers,
-};
+use crate::{config::CONFIG, helpers};
 
 mod stages;
 
 use stages::*;
 
+pub enum BrickPoolValues {
+    Colors,
+    Normals,
+}
+
 impl Octree {
     pub unsafe fn build(&mut self) {
         let allocated_nodes_counter = helpers::generate_atomic_counter_buffer();
-        // let next_free_brick_counter = helpers::generate_atomic_counter_buffer();
 
         self.nodes_per_level.push(1);
 
@@ -86,23 +86,92 @@ impl Octree {
         // let all_nodes_allocated: u32 = self.nodes_per_level.iter().sum();
 
         write_leaf_nodes_pass.run(&self.voxel_data, &self.textures);
-        spread_leaf_bricks_pass.run(&self.textures, &self.nodes_per_level);
+        spread_leaf_bricks_pass.run(
+            &self.textures,
+            &self.nodes_per_level,
+            BrickPoolValues::Colors,
+        );
+        spread_leaf_bricks_pass.run(
+            &self.textures,
+            &self.nodes_per_level,
+            BrickPoolValues::Normals,
+        );
 
-        border_transfer_pass.run(&self.textures, &self.nodes_per_level, X_AXIS);
-        border_transfer_pass.run(&self.textures, &self.nodes_per_level, Y_AXIS);
-        border_transfer_pass.run(&self.textures, &self.nodes_per_level, Z_AXIS);
+        border_transfer_pass.run(
+            &self.textures,
+            &self.nodes_per_level,
+            BrickPoolValues::Colors,
+        );
+
+        border_transfer_pass.run(
+            &self.textures,
+            &self.nodes_per_level,
+            BrickPoolValues::Normals,
+        );
 
         for level in (0..CONFIG.octree_levels - 1).rev() {
-            mipmap_center_pass.run(&self.textures, &self.nodes_per_level, level);
-            mipmap_faces_pass.run(&self.textures, &self.nodes_per_level, level);
-            mipmap_corners_pass.run(&self.textures, &self.nodes_per_level, level);
-            mipmap_edges_pass.run(&self.textures, &self.nodes_per_level, level);
+            mipmap_center_pass.run(
+                &self.textures,
+                &self.nodes_per_level,
+                level,
+                BrickPoolValues::Colors,
+            );
+            mipmap_faces_pass.run(
+                &self.textures,
+                &self.nodes_per_level,
+                level,
+                BrickPoolValues::Colors,
+            );
+            mipmap_corners_pass.run(
+                &self.textures,
+                &self.nodes_per_level,
+                level,
+                BrickPoolValues::Colors,
+            );
+            mipmap_edges_pass.run(
+                &self.textures,
+                &self.nodes_per_level,
+                level,
+                BrickPoolValues::Colors,
+            );
 
-            // if level > 0 {
-            //     border_transfer_pass.run(&self.textures, &self.nodes_per_level, X_AXIS);
-            //     border_transfer_pass.run(&self.textures, &self.nodes_per_level, Y_AXIS);
-            //     border_transfer_pass.run(&self.textures, &self.nodes_per_level, Z_AXIS);
-            // }
+            mipmap_center_pass.run(
+                &self.textures,
+                &self.nodes_per_level,
+                level,
+                BrickPoolValues::Normals,
+            );
+            mipmap_faces_pass.run(
+                &self.textures,
+                &self.nodes_per_level,
+                level,
+                BrickPoolValues::Normals,
+            );
+            mipmap_corners_pass.run(
+                &self.textures,
+                &self.nodes_per_level,
+                level,
+                BrickPoolValues::Normals,
+            );
+            mipmap_edges_pass.run(
+                &self.textures,
+                &self.nodes_per_level,
+                level,
+                BrickPoolValues::Normals,
+            );
+
+            if level > 0 {
+                border_transfer_pass.run(
+                    &self.textures,
+                    &self.nodes_per_level,
+                    BrickPoolValues::Colors,
+                );
+                border_transfer_pass.run(
+                    &self.textures,
+                    &self.nodes_per_level,
+                    BrickPoolValues::Normals,
+                );
+            }
         }
     }
 }
