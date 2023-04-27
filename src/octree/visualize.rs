@@ -2,8 +2,13 @@ use std::{ffi::c_void, mem::size_of};
 
 use c_str_macro::c_str;
 use cgmath::Matrix4;
+use gl::types::GLuint;
 
-use crate::{config::CONFIG, helpers};
+use crate::{
+    config::CONFIG,
+    helpers,
+    rendering::{shader::Shader, transform::Transform},
+};
 
 use super::Octree;
 
@@ -400,6 +405,40 @@ impl Octree {
         gl::BindVertexArray(self.renderer.vao);
         gl::DrawArrays(gl::POINTS, 0, self.renderer.node_count as i32);
         // }
+    }
+
+    pub unsafe fn run_eye_ray_shader(
+        &self,
+        projection: &Matrix4<f32>,
+        view: &Matrix4<f32>,
+        eye: &Transform,
+        eye_view_map: GLuint,
+        eye_view_map_normals: GLuint,
+    ) {
+        self.renderer.eye_ray_shader.use_program();
+        self.renderer
+            .eye_ray_shader
+            .set_mat4(c_str!("projection"), &projection);
+        self.renderer.eye_ray_shader.set_mat4(c_str!("view"), &view);
+        self.renderer
+            .eye_ray_shader
+            .set_mat4(c_str!("model"), &eye.get_model_matrix());
+        self.renderer
+            .eye_ray_shader
+            .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
+        gl::ActiveTexture(gl::TEXTURE0);
+        gl::BindTexture(gl::TEXTURE_2D, eye_view_map);
+        self.renderer
+            .eye_ray_shader
+            .set_int(c_str!("eyeViewMap"), 0);
+        gl::ActiveTexture(gl::TEXTURE1);
+        gl::BindTexture(gl::TEXTURE_2D, eye_view_map_normals);
+        self.renderer
+            .eye_ray_shader
+            .set_int(c_str!("eyeViewMapNormals"), 1);
+
+        gl::BindVertexArray(eye.vao);
+        gl::DrawArrays(gl::POINTS, 0, 1);
     }
 }
 

@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::Read;
 use std::{env, ptr, str};
 
-use cgmath::{vec3, Matrix, Matrix4, Point3, Vector3};
+use cgmath::{vec3, Matrix, Matrix4, Vector3};
 use gl::types::*;
 use log::trace;
 
@@ -11,6 +11,12 @@ use log::trace;
 pub struct Shader {
     pub id: u32,
     is_compute: bool,
+}
+
+enum ShaderStage {
+    Vertex,
+    Fragment,
+    Geometry,
 }
 
 impl Shader {
@@ -61,6 +67,23 @@ impl Shader {
         trace!("Compiling shader in path {short_shader_path}");
         unsafe {
             shader.id = Shader::compile_compute(&shader_code);
+        }
+
+        shader
+    }
+
+    pub fn new_single(shader_path: &str) -> Self {
+        let mut shader = Shader::default();
+
+        let shader_code = Shader::process_shader_file(shader_path);
+        let (vertex_code, fragment_code, geometry_code) =
+            Shader::split_shader_file(shader_code.to_str().unwrap().to_string());
+
+        let short_shader_path = &shader_path[15..];
+        trace!("Compiling shader in path {short_shader_path}");
+        unsafe {
+            shader.id =
+                Shader::compile_shaders(&vertex_code, &fragment_code, geometry_code.as_ref());
         }
 
         shader
@@ -223,6 +246,50 @@ impl Shader {
             .join("\n");
 
         processed_shader_code
+    }
+
+    /// Reads a unified shader file and returns the individual shader stages
+    fn split_shader_file(shader_code: String) -> (CString, CString, Option<CString>) {
+        let directive = "#shader ";
+
+        let (vertex_code, fragment_code, geometry_code, _) = shader_code.lines().fold(
+            (
+                String::new(),
+                String::new(),
+                String::new(),
+                ShaderStage::Vertex,
+            ),
+            |(mut vertex, mut fragment, mut geometry, mut shader_stage), line| {
+                if line.contains(directive) {
+                    shader_stage = match &line[directive.len()..line.len()] {
+                        "vertex" => ShaderStage::Vertex,
+                        "fragment" => ShaderStage::Fragment,
+                        "geometry" => ShaderStage::Geometry,
+                        _ => panic!("Shader directive: Unsupported shader stage"),
+                    }
+                } else {
+                    // TODO: This is really inefficient
+                    let line_to_push = format!("{line}\n");
+                    match shader_stage {
+                        ShaderStage::Vertex => vertex.push_str(&line_to_push),
+                        ShaderStage::Fragment => fragment.push_str(&line_to_push),
+                        ShaderStage::Geometry => geometry.push_str(&line_to_push),
+                    }
+                }
+
+                (vertex, fragment, geometry, shader_stage)
+            },
+        );
+
+        (
+            CString::new(vertex_code.as_bytes()).unwrap(),
+            CString::new(fragment_code.as_bytes()).unwrap(),
+            if geometry_code.is_empty() {
+                None
+            } else {
+                Some(CString::new(geometry_code.as_bytes()).unwrap())
+            },
+        )
     }
 
     /// utility function for checking shader compilation/linking errors.
