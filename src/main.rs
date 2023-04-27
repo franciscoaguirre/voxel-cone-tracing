@@ -25,7 +25,7 @@ use voxelization::visualize::RenderVoxelFragmentsShader;
 
 use octree::{BricksToShow, Octree};
 
-use crate::menu::DebugNode;
+use crate::{menu::DebugNode, rendering::transform::Transform};
 
 fn main() {
     let options = Options::from_args();
@@ -34,6 +34,12 @@ fn main() {
     // NOTE: This is true if the binary was compiled in debug mode
     let debug = cfg!(debug_assertions);
 
+    // Timing setup
+    let mut delta_time: f64;
+    let mut last_frame: f64 = 0.0;
+
+    let (mut glfw, mut window, events) = unsafe { common::setup_glfw(debug) };
+
     // Camera setup
     let mut camera = Camera::default();
     camera.transform.position = point3(0.0, 0.0, -2.0);
@@ -41,11 +47,9 @@ fn main() {
     let mut last_x: f32 = CONFIG.viewport_width as f32 / 2.0;
     let mut last_y: f32 = CONFIG.viewport_height as f32 / 2.0;
 
-    // Timing setup
-    let mut delta_time: f64;
-    let mut last_frame: f64 = 0.0;
-
-    let (mut glfw, mut window, events) = unsafe { common::setup_glfw(debug) };
+    // Static eye
+    let mut static_eye = Transform::default();
+    static_eye.position = point3(0.0, 0.0, -2.0);
 
     // FPS variables
     let mut frame_count = 0;
@@ -69,6 +73,7 @@ fn main() {
         "assets/shaders/model/renderNormals.frag.glsl",
         "assets/shaders/model/renderNormals.geom.glsl",
     );
+    let voxel_cone_tracing_shader = Shader::new_single("assets/shaders/octree/coneTracing.glsl");
     let our_model = unsafe { helpers::load_model(&options.model) };
 
     let scene_aabb = &our_model.aabb;
@@ -136,17 +141,17 @@ fn main() {
     light.transform.set_rotation_x(0.0);
     // light.transform.set_rotation_y(-90.0);
 
-    let projection = light.get_projection_matrix();
-    let view = light.transform.get_view_matrix();
-    let light_view_map = unsafe {
-        octree.inject_light(
+    let _light_view_map =
+        unsafe { octree.inject_light(&[&our_model], &light, &model_normalization_matrix) };
+    let quad = unsafe { Quad::new() };
+
+    let (eye_view_map, eye_view_map_view, eye_view_map_normals) = unsafe {
+        static_eye.take_photo(
             &[&our_model],
-            &projection,
-            &view,
+            &light.get_projection_matrix(),
             &model_normalization_matrix,
         )
     };
-    let quad = unsafe { Quad::new() };
 
     // Animation variables
     let mut current_voxel_fragment_count: u32 = 0;
@@ -297,6 +302,13 @@ fn main() {
             );
             octree.run_node_positions_shader(&projection, &view, &model);
             octree.set_bricks_to_show(bricks_to_show);
+            octree.run_eye_ray_shader(
+                &projection,
+                &view,
+                &static_eye,
+                eye_view_map,
+                eye_view_map_normals,
+            );
 
             if should_show_neighbors {
                 octree.run_node_neighbors_shader(&projection, &view, &model);
@@ -307,22 +319,27 @@ fn main() {
             }
 
             if show_model {
-                render_model_shader.use_program();
-                render_model_shader.set_mat4(c_str!("projection"), &projection);
-                render_model_shader.set_mat4(c_str!("view"), &view);
-                render_model_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
-                our_model.draw(&render_model_shader);
+                // render_model_shader.use_program();
+                // render_model_shader.set_mat4(c_str!("projection"), &projection);
+                // render_model_shader.set_mat4(c_str!("view"), &view);
+                // render_model_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
+                voxel_cone_tracing_shader.use_program();
+                voxel_cone_tracing_shader.set_mat4(c_str!("projection"), &projection);
+                voxel_cone_tracing_shader.set_mat4(c_str!("view"), &view);
+                voxel_cone_tracing_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
+                our_model.draw(&voxel_cone_tracing_shader);
 
                 // Show normals
-                render_normals_shader.use_program();
-                render_normals_shader.set_mat4(c_str!("projection"), &projection);
-                render_normals_shader.set_mat4(c_str!("view"), &view);
-                render_normals_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
-                our_model.draw(&render_normals_shader);
+                // render_normals_shader.use_program();
+                // render_normals_shader.set_mat4(c_str!("projection"), &projection);
+                // render_normals_shader.set_mat4(c_str!("view"), &view);
+                // render_normals_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
+                // our_model.draw(&render_normals_shader);
             }
 
+            static_eye.draw_gizmo(&projection, &view);
             light.draw_gizmo(&projection, &view);
-            // quad.render(light_view_map);
+            quad.render(eye_view_map_view);
         }
 
         unsafe {

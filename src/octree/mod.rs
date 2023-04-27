@@ -54,6 +54,7 @@ struct Renderer {
     node_bricks_shader: Shader,
     get_photons_shader: Shader,
     get_children_shader: Shader,
+    eye_ray_shader: Shader,
 }
 
 impl Octree {
@@ -105,6 +106,7 @@ impl Octree {
             ),
             get_photons_shader: Shader::new_compute("assets/shaders/debug/getPhotons.comp.glsl"),
             get_children_shader: Shader::new_compute("assets/shaders/debug/getChildren.comp.glsl"),
+            eye_ray_shader: Shader::new_single("assets/shaders/debug/eyeRay.glsl"),
         };
 
         let mut octree = Self {
