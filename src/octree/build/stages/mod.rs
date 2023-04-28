@@ -19,8 +19,8 @@ pub use mipmap_edges::MipmapEdgesPass;
 mod mipmap_faces;
 pub use mipmap_faces::MipmapFacesPass;
 
-mod neighbour_pointers;
-pub use neighbour_pointers::NeighbourPointersPass;
+mod neighbor_pointers;
+pub use neighbor_pointers::NeighborPointersPass;
 
 mod spread_leaf_bricks;
 pub use spread_leaf_bricks::SpreadLeafBricksPass;

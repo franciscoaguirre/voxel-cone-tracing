@@ -18,7 +18,7 @@ impl Octree {
 
         self.nodes_per_level.push(1);
 
-        let neighbour_pointers_pass = NeighbourPointersPass::init();
+        let neighbor_pointers_pass = NeighborPointersPass::init();
         let flag_nodes_pass = FlagNodesPass::init();
         let allocate_nodes_pass = AllocateNodesPass::init();
         let store_node_positions_pass = StoreNodePositions::init();
@@ -59,7 +59,7 @@ impl Octree {
 
             octree_level_start_indices.push(first_node_in_level);
 
-            neighbour_pointers_pass.run(&self.voxel_data, &self.textures, octree_level + 1);
+            neighbor_pointers_pass.run(&self.voxel_data, &self.textures, octree_level + 1);
         }
 
         // // TODO: Could maybe be done in the loop above

@@ -3,11 +3,11 @@ use c_str_macro::c_str;
 use super::super::super::{OctreeTextures, VoxelData};
 use crate::{config::CONFIG, helpers, rendering::shader::Shader};
 
-pub struct NeighbourPointersPass {
+pub struct NeighborPointersPass {
     shader: Shader,
 }
 
-impl NeighbourPointersPass {
+impl NeighborPointersPass {
     pub fn init() -> Self {
         Self {
             shader: Shader::new_compute("assets/shaders/octree/neighborPointers.comp.glsl"),
