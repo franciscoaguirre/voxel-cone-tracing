@@ -29,7 +29,7 @@ void main() {
 
     // In voxel position coordinates, the octree level
     // defines a different node size, which we need as a step to reach
-    // possible neighbours.
+    // possible neighbors.
     // The step is halfNodeSize.
     float halfNodeSize;
     vec3 nodeCoordinates;
@@ -74,7 +74,7 @@ void main() {
         _halfNodeSize
       );
 
-      // It is possible that the current voxel fragment's neighbour
+      // It is possible that the current voxel fragment's neighbor
       // is on another level, one that ended before the max level.
       if (neighborX == NODE_NOT_FOUND) {
         neighborX = 0;

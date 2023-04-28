@@ -34,7 +34,7 @@ This positions are used
 
 Each node has a brick that's accessed by its index in OCTREE_NODE_POOL_BRICK_POINTERS.
 
-Each node's neighbor is stored in the buffer textures called OCTREE_NODE_POOL_NEIGHBOUR_N,
+Each node's neighbor is stored in the buffer textures called OCTREE_NODE_POOL_NEIGHBOR_N,
 with N being one of (X, X_NEGATIVE, Y, Y_NEGATIVE, Z, Z_NEGATIVE).
 
 `_octreeTraversal.glsl` holds functions to query the SVO with coordinates and get different results back.
