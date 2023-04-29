@@ -87,8 +87,8 @@ uint mipmapIsotropic(in ivec3 position, uimage3D brickPoolValues) {
                     uint value = getValue(lookupPosition, brickPoolValues);
 
                     // TODO: Figure out if we want to use the weights
-                    // finalValue += weight * float(value);
-                    finalValue += float(value);
+                    finalValue += weight * float(value);
+                    // finalValue += float(value);
                     // weightSum += weight;
                 }
             }

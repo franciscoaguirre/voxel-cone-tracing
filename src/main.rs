@@ -49,7 +49,9 @@ fn main() {
 
     // Static eye
     let mut static_eye = Transform::default();
-    static_eye.position = point3(0.0, 0.0, -2.0);
+    static_eye.position = point3(0.0, 0.0, 0.0);
+    static_eye.set_rotation_x(-60.0);
+    static_eye.set_rotation_y(0.0);
 
     // FPS variables
     let mut frame_count = 0;
@@ -64,9 +66,9 @@ fn main() {
     let mut menu = Menu::new(&mut window);
 
     let render_model_shader = Shader::with_geometry_shader(
-        "assets/shaders/model/model_loading.vert.glsl",
-        "assets/shaders/model/model_loading.frag.glsl",
-        "assets/shaders/model/model_loading.geom.glsl",
+        "assets/shaders/model/modelLoading.vert.glsl",
+        "assets/shaders/model/modelLoading.frag.glsl",
+        "assets/shaders/model/modelLoading.geom.glsl",
     );
     let render_normals_shader = Shader::with_geometry_shader(
         "assets/shaders/model/renderNormals.vert.glsl",
@@ -128,8 +130,8 @@ fn main() {
 
     let mut light = unsafe {
         SpotLight::new(
-            2.0,
-            2.0,
+            1.0,
+            1.0,
             Point3 {
                 x: 1.0,
                 y: 1.0,
@@ -137,9 +139,9 @@ fn main() {
             },
         )
     };
-    light.transform.position = point3(0.0, 0.0, -1.0);
-    light.transform.set_rotation_x(0.0);
-    // light.transform.set_rotation_y(-90.0);
+    light.transform.position = point3(0.0, 0.5, -0.5);
+    light.transform.set_rotation_x(-45.0);
+    // light.transform.set_rotation_y(0.0);
 
     let _light_view_map =
         unsafe { octree.inject_light(&[&our_model], &light, &model_normalization_matrix) };
