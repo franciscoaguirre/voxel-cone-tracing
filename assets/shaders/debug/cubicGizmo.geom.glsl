@@ -15,7 +15,7 @@ mat4 canonizationMatrix = projection * view * model;
 
 void main() {
     vec4 center = gl_in[0].gl_Position;
-    float halfNodeSize = 0.1;
+    float halfNodeSize = 0.01;
     vec4 color = vec4(1);
     drawCube(center, halfNodeSize, canonizationMatrix, color);
 }

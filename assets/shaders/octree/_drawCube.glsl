@@ -1,5 +1,5 @@
 /// 5 vertices
-void create_z_positive_face(vec4 center, vec3 dimensions, mat4 canonizationMatrix, vec4 color) {
+void createZPositiveFace(vec4 center, vec3 dimensions, mat4 canonizationMatrix, vec4 color) {
     vec4 position;
     
     position = vec4(
@@ -48,7 +48,7 @@ void create_z_positive_face(vec4 center, vec3 dimensions, mat4 canonizationMatri
 }
 
 /// 3 vertices
-void create_x_negative_face(vec4 center, vec3 dimensions, mat4 canonizationMatrix, vec4 color) {
+void createXNegativeFace(vec4 center, vec3 dimensions, mat4 canonizationMatrix, vec4 color) {
     vec4 position;
 
     position = vec4(
@@ -79,7 +79,7 @@ void create_x_negative_face(vec4 center, vec3 dimensions, mat4 canonizationMatri
     EmitVertex();
 }
 
-void create_y_positive_face(vec4 center, vec3 dimensions, mat4 canonizationMatrix, vec4 color) {
+void createYPositiveFace(vec4 center, vec3 dimensions, mat4 canonizationMatrix, vec4 color) {
     vec4 position;
 
     position = vec4(
@@ -110,7 +110,7 @@ void create_y_positive_face(vec4 center, vec3 dimensions, mat4 canonizationMatri
     EmitVertex();
 }
 
-void create_z_negative_face(vec4 center, vec3 dimensions, mat4 canonizationMatrix, vec4 color) {
+void createZNegativeFace(vec4 center, vec3 dimensions, mat4 canonizationMatrix, vec4 color) {
     vec4 position;
 
     position = vec4(
@@ -141,7 +141,7 @@ void create_z_negative_face(vec4 center, vec3 dimensions, mat4 canonizationMatri
     EmitVertex();
 }
 
-void create_y_negative_face(vec4 center, vec3 dimensions, mat4 canonizationMatrix, vec4 color) {
+void createYNegativeFace(vec4 center, vec3 dimensions, mat4 canonizationMatrix, vec4 color) {
     vec4 position;
 
     position = vec4(
@@ -161,24 +161,18 @@ void create_y_negative_face(vec4 center, vec3 dimensions, mat4 canonizationMatri
     );
     gl_Position = canonizationMatrix * position;
     EmitVertex();
-}
-
-void drawCube(vec4 center, float halfNodeSize, mat4 canonizationMatrix, vec4 color) {
-    frag_nodeColor = color;
-    create_z_positive_face(center, vec3(halfNodeSize), canonizationMatrix, color);
-    create_x_negative_face(center, vec3(halfNodeSize), canonizationMatrix, color);
-    create_y_positive_face(center, vec3(halfNodeSize), canonizationMatrix, color);
-    create_z_negative_face(center, vec3(halfNodeSize), canonizationMatrix, color);
-    create_y_negative_face(center, vec3(halfNodeSize), canonizationMatrix, color);
-    EndPrimitive();
 }
 
 void drawCube(vec4 center, vec3 dimensions, mat4 canonizationMatrix, vec4 color) {
     frag_nodeColor = color;
-    create_z_positive_face(center, dimensions, canonizationMatrix, color);
-    create_x_negative_face(center, dimensions, canonizationMatrix, color);
-    create_y_positive_face(center, dimensions, canonizationMatrix, color);
-    create_z_negative_face(center, dimensions, canonizationMatrix, color);
-    create_y_negative_face(center, dimensions, canonizationMatrix, color);
+    createZPositiveFace(center, dimensions, canonizationMatrix, color);
+    createXNegativeFace(center, dimensions, canonizationMatrix, color);
+    createYPositiveFace(center, dimensions, canonizationMatrix, color);
+    createZNegativeFace(center, dimensions, canonizationMatrix, color);
+    createYNegativeFace(center, dimensions, canonizationMatrix, color);
     EndPrimitive();
+}
+
+void drawCube(vec4 center, float halfNodeSize, mat4 canonizationMatrix, vec4 color) {
+    drawCube(center, vec3(halfNodeSize), canonizationMatrix, color);
 }

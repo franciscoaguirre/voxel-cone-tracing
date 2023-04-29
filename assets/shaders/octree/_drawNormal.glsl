@@ -7,17 +7,17 @@
 const float MAGNITUDE = 0.1;
 
 void drawNormal(vec3 start, vec3 normal) {
-    frag_nodeColor = vec4(0.0, 1.0, 1.0, 1.0);
+    // frag_nodeColor = vec4(0.0, 1.0, 1.0, 1.0);
 
-    vec4 startPosition = view * model * vec4(start, 1.0);
-    mat3 normalMatrix = mat3(transpose(inverse(view * model)));
-    vec3 fixedNormal = normalize(vec3(vec4(normalMatrix * normal, 0.0)));
+    // vec4 startPosition = view * model * vec4(start, 1.0);
+    // mat3 normalMatrix = mat3(transpose(inverse(view * model)));
+    // vec3 fixedNormal = normalize(vec3(vec4(normalMatrix * normal, 0.0)));
 
-    gl_Position = projection * startPosition;
-    EmitVertex();
+    // gl_Position = projection * startPosition;
+    // EmitVertex();
 
-    gl_Position = projection * (startPosition + vec4(fixedNormal, 0.0) * MAGNITUDE);
-    EmitVertex();
+    // gl_Position = projection * (startPosition + vec4(fixedNormal, 0.0) * MAGNITUDE);
+    // EmitVertex();
 
-    EndPrimitive();
+    // EndPrimitive();
 }

@@ -21,9 +21,9 @@ impl RenderVoxelFragmentsShader {
     ) -> Self {
         Self {
             shader: Shader::with_geometry_shader(
-                "assets/shaders/voxel_fragment/render_voxel.vert.glsl",
-                "assets/shaders/voxel_fragment/render_voxel.frag.glsl",
-                "assets/shaders/voxel_fragment/render_voxel.geom.glsl",
+                "assets/shaders/voxel_fragment/renderVoxel.vert.glsl",
+                "assets/shaders/voxel_fragment/renderVoxel.frag.glsl",
+                "assets/shaders/voxel_fragment/renderVoxel.geom.glsl",
             ),
             voxel_positions_texture,
             voxel_colors_texture,
@@ -67,16 +67,9 @@ impl RenderVoxelFragmentsShader {
         self.shader.set_mat4(c_str!("model"), model);
 
         self.shader
-            .set_uint(c_str!("voxel_dimension"), CONFIG.voxel_dimension);
-        self.shader.set_float(
-            c_str!("half_dimension"),
-            1.0 / CONFIG.voxel_dimension as f32,
-        );
-
-        self.shader.set_uint(
-            c_str!("voxel_fragment_count"),
-            self.number_of_voxel_fragments,
-        );
+            .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
+        self.shader
+            .set_float(c_str!("halfDimension"), 1.0 / CONFIG.voxel_dimension as f32);
 
         gl::BindVertexArray(self.vao);
         gl::DrawArrays(gl::POINTS, 0, self.number_of_voxel_fragments as i32);
