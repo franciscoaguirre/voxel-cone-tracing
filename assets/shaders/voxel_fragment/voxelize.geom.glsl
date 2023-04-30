@@ -98,7 +98,8 @@ void main() {
         vertex[2] = vertex[1];
         vertex[1] = vertexTemp;
     }
-    vec2 halfPixel = vec2(2.0 / voxelDimension);
+    // vec2(2.0 / voxelDimension) is the pixel size, as coordinates go from -1 to 1 (length 2), so a half pixel is half of that
+    vec2 halfPixel = vec2(1.0 / voxelDimension);
 
     vec4 aabb = defineAabb(vertex, halfPixel);
     frag_aabb = aabb;

@@ -3,34 +3,34 @@
 #include "./_constants.glsl"
 #include "./_helpers.glsl"
 
-uniform uint octreeLevels;
+uniform uint octreeLevel;
 uniform uint voxelDimension;
+uniform uint maxOctreeLevel;
 
 uniform layout(binding = 0, r32ui) uimageBuffer nodePool;
 uniform layout(binding = 1, rgba8) image3D brickPoolColors;
-uniform layout(binding = 2, rgb10_a2ui) uimageBuffer voxelPositions;
+uniform layout(binding = 2, rgb10_a2ui) uimageBuffer nodePositions;
 uniform layout(binding = 3, r32ui) uimage3D brickPoolPhotons;
+uniform layout(binding = 4, r32ui) readonly uimageBuffer levelStartIndices;
 
 out vec4 geom_nodePosition;
 out float geom_halfNodeSize;
 out ivec3 geom_brickCoordinates;
 
-#include "./_traversalHelpers.glsl"
-#include "./_octreeTraversal.glsl"
-
 void main() {
-  int threadIndex = gl_VertexID;
+  int nodeID = gl_VertexID;
+  int levelStart = int(imageLoad(levelStartIndices, int(octreeLevel)).r);
+  int nextLevelStart = int(imageLoad(levelStartIndices, int(octreeLevel + 1)).r);
+  memoryBarrier();
 
-  vec4 voxelFragmentPosition = imageLoad(voxelPositions, threadIndex);
+  nodeID += levelStart;
+  if (nodeID >= nextLevelStart) {
+      nodeID = levelStart;
+  }
 
-  float halfNodeSize;
-  vec3 nodeCoordinates;
-  int nodeID = traverseOctree(
-    vec3(voxelFragmentPosition) / float(voxelDimension),
-    octreeLevels,
-    nodeCoordinates,
-    halfNodeSize
-  );
+  vec3 nodeCoordinates = imageLoad(nodePositions, nodeID).xyz;
+  nodeCoordinates /= float(voxelDimension);
+  float halfNodeSize = calculateHalfNodeSize(octreeLevel);
 
   ivec3 brickCoordinates = calculateBrickCoordinates(nodeID);
   geom_brickCoordinates = brickCoordinates;

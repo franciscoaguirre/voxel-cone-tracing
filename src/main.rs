@@ -304,13 +304,13 @@ fn main() {
             );
             octree.run_node_positions_shader(&projection, &view, &model);
             octree.set_bricks_to_show(bricks_to_show);
-            octree.run_eye_ray_shader(
-                &projection,
-                &view,
-                &static_eye,
-                eye_view_map,
-                eye_view_map_normals,
-            );
+            //octree.run_eye_ray_shader(
+                //&projection,
+                //&view,
+                //&static_eye,
+                //eye_view_map,
+                //eye_view_map_normals,
+            //);
 
             if should_show_neighbors {
                 octree.run_node_neighbors_shader(&projection, &view, &model);
