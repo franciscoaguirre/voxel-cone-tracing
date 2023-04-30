@@ -49,7 +49,7 @@ impl Octree {
 
         self.renderer
             .shader
-            .set_uint(c_str!("octreeLevels"), octree_level);
+            .set_uint(c_str!("octreeLevel"), octree_level);
         self.renderer
             .shader
             .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
@@ -91,7 +91,10 @@ impl Octree {
             .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
         self.renderer
             .bricks_shader
-            .set_uint(c_str!("octreeLevels"), octree_level);
+            .set_uint(c_str!("octreeLevel"), octree_level);
+        self.renderer
+            .bricks_shader
+            .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels);
 
         helpers::bind_image_texture(0, self.textures.node_pool.0, gl::READ_WRITE, gl::R32UI);
         helpers::bind_3d_image_texture(
@@ -102,7 +105,7 @@ impl Octree {
         );
         helpers::bind_image_texture(
             2,
-            self.voxel_data.voxel_positions,
+            self.textures.node_positions.0,
             gl::READ_ONLY,
             gl::RGB10_A2UI,
         );
@@ -112,11 +115,17 @@ impl Octree {
             gl::READ_ONLY,
             gl::R32UI,
         );
-        helpers::bind_3d_image_texture(
+        //helpers::bind_3d_image_texture(
+            //4,
+            //self.textures.brick_pool_normals,
+            //gl::READ_ONLY,
+            //gl::RGBA8,
+        //);
+        helpers::bind_image_texture(
             4,
-            self.textures.brick_pool_normals,
+            self.textures.level_start_indices.0,
             gl::READ_ONLY,
-            gl::RGBA8,
+            gl::R32UI,
         );
 
         let mut vao = 0;
@@ -133,7 +142,7 @@ impl Octree {
             gl::DrawArrays(
                 gl::POINTS,
                 0,
-                self.voxel_data.number_of_voxel_fragments as i32,
+                self.nodes_per_level[octree_level as usize] as i32,
             );
         }
 
@@ -145,7 +154,7 @@ impl Octree {
             gl::DrawArrays(
                 gl::POINTS,
                 0,
-                self.voxel_data.number_of_voxel_fragments as i32,
+                self.nodes_per_level[octree_level as usize] as i32,
             );
         }
 
@@ -157,7 +166,7 @@ impl Octree {
             gl::DrawArrays(
                 gl::POINTS,
                 0,
-                self.voxel_data.number_of_voxel_fragments as i32,
+                self.nodes_per_level[octree_level as usize] as i32,
             );
         }
     }
