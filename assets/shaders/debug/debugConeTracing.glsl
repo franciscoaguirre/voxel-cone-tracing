@@ -7,7 +7,7 @@ uniform mat4 view;
 
 out vec3 geom_position;
 
-vec3 position = vec3(0.5, 0.5, 0.4);
+vec3 position = vec3(0.5, 0.5, 0.46);
 
 void main() {
     vec3 ndc = position * 2.0 - vec3(1);
