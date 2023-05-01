@@ -60,7 +60,11 @@ void main() {
     // vec4 totalColor = (directDiffuse + indirectDiffuse + specular);
     // FragColor = totalColor * ambientOcclusion;
 
-    float AO = ambientOcclusion(vec3(0.5, 0.5, 0.4), vec3(0, 0, 1), 0.261799, 1.0); // 15deg as rad
+    vec3 position = (frag_position + vec3(1)) / float(2);
+    // mat3 normalMatrix = mat3(transpose(inverse(view * model)));
+    // vec3 normal = normalize(vec3(vec4(normalMatrix * frag_normal, 0)));
+    float AO = ambientOcclusion(position, frag_normal, 0.261799, 1.0); // 15deg as rad
+    // float AO = ambientOcclusion(vec3(0.5, 0.5, 0.46), vec3(0, 0, 1), 0.261799, 1.0); // 15deg as rad
     
-    FragColor = vec4(vec3(AO), 1);
+    FragColor = vec4(texture(texture_diffuse1, frag_textureCoordinates).xyz - vec3(AO), 1);
 }
