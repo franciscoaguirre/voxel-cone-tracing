@@ -151,7 +151,7 @@ void main() {
         // (1, 1, 1)
         cubeCenter = vec4(nodePosition.xyz, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(1, 1, 1), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+       drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
         start = cubeCenter.xyz;
         normal = imageLoad(brickPoolNormals, geom_brickCoordinates[0] + ivec3(1, 1, 1)).xyz;
         drawNormal(start, normal);

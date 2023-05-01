@@ -29,7 +29,7 @@ pub struct OctreeTextures {
     pub node_positions: BufferTexture,
     neighbors: [BufferTexture; 6],
     level_start_indices: BufferTexture,
-    brick_pool_colors: Texture3D,
+    pub brick_pool_colors: Texture3D,
     brick_pool_normals: Texture3D,
     pub brick_pool_photons: Texture3D,
     pub photons_buffer: BufferTexture,

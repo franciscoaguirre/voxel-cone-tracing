@@ -4,11 +4,7 @@ use c_str_macro::c_str;
 use cgmath::Matrix4;
 use gl::types::GLuint;
 
-use crate::{
-    config::CONFIG,
-    helpers,
-    rendering::{shader::Shader, transform::Transform},
-};
+use crate::{config::CONFIG, helpers, rendering::transform::Transform};
 
 use super::Octree;
 
@@ -116,10 +112,10 @@ impl Octree {
             gl::R32UI,
         );
         //helpers::bind_3d_image_texture(
-            //4,
-            //self.textures.brick_pool_normals,
-            //gl::READ_ONLY,
-            //gl::RGBA8,
+        //4,
+        //self.textures.brick_pool_normals,
+        //gl::READ_ONLY,
+        //gl::RGBA8,
         //);
         helpers::bind_image_texture(
             4,
