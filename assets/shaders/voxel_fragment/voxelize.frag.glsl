@@ -61,7 +61,8 @@ uvec4 calculateVoxelCoordinates() {
 }
 
 void storeVoxelFragment(uvec4 voxelCoordinates, uint fragmentListIndex) {
-    vec3 voxelNormal, voxelColor;
+    vec3 voxelNormal;
+    vec4 voxelColor;
 
     if (hasBump) {
        voxelNormal = texture(bumpTex, frag_texCoordinates).rgb;
@@ -70,13 +71,13 @@ void storeVoxelFragment(uvec4 voxelCoordinates, uint fragmentListIndex) {
     }
 
     if (hasTexture) {
-      voxelColor = texture(textureDiffuse1, frag_texCoordinates).rgb;
+      voxelColor = texture(textureDiffuse1, frag_texCoordinates);
     } else {
-      voxelColor = fallbackColor;
+      voxelColor = vec4(fallbackColor, 1);
     }
 
     imageStore(voxelPositions, int(fragmentListIndex), voxelCoordinates);
-    imageStore(voxelColors, int(fragmentListIndex), vec4(voxelColor, 0));
+    imageStore(voxelColors, int(fragmentListIndex), voxelColor);
     imageStore(voxelNormals, int(fragmentListIndex), vec4(voxelNormal, 0));
 }
 

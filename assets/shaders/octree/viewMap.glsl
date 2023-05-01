@@ -38,7 +38,7 @@ void main() {
     );
     uvec3 unnormalizedGlobalPosition = uvec3(round(normalizedGlobalPosition.xyz * float(voxelDimension) * 1.5));
     
-    viewMapViewOutput = vec4(frag_normal, 1.0);
+    viewMapViewOutput = normalizedGlobalPosition;
     viewMapPositions = unnormalizedGlobalPosition;
     viewMapNormals = frag_normal;
 }

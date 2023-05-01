@@ -49,9 +49,9 @@ fn main() {
 
     // Static eye
     let mut static_eye = Transform::default();
-    static_eye.position = point3(0.0, 0.0, 0.0);
-    static_eye.set_rotation_x(-60.0);
-    static_eye.set_rotation_y(0.0);
+    static_eye.position = point3(0.0, 0.0, -2.0);
+    // static_eye.set_rotation_x(-60.0);
+    // static_eye.set_rotation_y(0.0);
 
     // FPS variables
     let mut frame_count = 0;
@@ -76,6 +76,7 @@ fn main() {
         "assets/shaders/model/renderNormals.geom.glsl",
     );
     let voxel_cone_tracing_shader = Shader::new_single("assets/shaders/octree/coneTracing.glsl");
+    let debug_cone_shader = Shader::new_single("assets/shaders/debug/debugConeTracing.glsl");
     let our_model = unsafe { helpers::load_model(&options.model) };
 
     let scene_aabb = &our_model.aabb;
@@ -147,12 +148,18 @@ fn main() {
         unsafe { octree.inject_light(&[&our_model], &light, &model_normalization_matrix) };
     let quad = unsafe { Quad::new() };
 
-    let (eye_view_map, eye_view_map_view, eye_view_map_normals) = unsafe {
-        static_eye.take_photo(
-            &[&our_model],
-            &light.get_projection_matrix(),
-            &model_normalization_matrix,
-        )
+    let projection: Matrix4<f32> = perspective(
+        Deg(camera.zoom),
+        CONFIG.viewport_width as f32 / CONFIG.viewport_height as f32,
+        0.0001,
+        10000.0,
+    );
+    let (eye_view_map, eye_view_map_view, eye_view_map_normals) =
+        unsafe { static_eye.take_photo(&[&our_model], &projection, &model_normalization_matrix) };
+    let (camera_view_map, _, _) = unsafe {
+        camera
+            .transform
+            .take_photo(&[&our_model], &projection, &model_normalization_matrix)
     };
 
     // Animation variables
@@ -193,6 +200,8 @@ fn main() {
             gl::ClearColor(0.2, 0.2, 0.2, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
             gl::Enable(gl::DEPTH_TEST);
+            gl::Enable(gl::BLEND);
+            gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
         }
 
         for (_, event) in glfw::flush_messages(&events) {
@@ -304,13 +313,13 @@ fn main() {
             );
             octree.run_node_positions_shader(&projection, &view, &model);
             octree.set_bricks_to_show(bricks_to_show);
-            //octree.run_eye_ray_shader(
-                //&projection,
-                //&view,
-                //&static_eye,
-                //eye_view_map,
-                //eye_view_map_normals,
-            //);
+            // octree.run_eye_ray_shader(
+            //     &projection,
+            //     &view,
+            //     &static_eye,
+            //     eye_view_map,
+            //     eye_view_map_normals,
+            // );
 
             if should_show_neighbors {
                 octree.run_node_neighbors_shader(&projection, &view, &model);
@@ -329,7 +338,28 @@ fn main() {
                 voxel_cone_tracing_shader.set_mat4(c_str!("projection"), &projection);
                 voxel_cone_tracing_shader.set_mat4(c_str!("view"), &view);
                 voxel_cone_tracing_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
+
+                voxel_cone_tracing_shader
+                    .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
+                voxel_cone_tracing_shader
+                    .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels - 1);
+                helpers::bind_image_texture(
+                    0,
+                    octree.textures.node_pool.0,
+                    gl::READ_ONLY,
+                    gl::R32UI,
+                );
+                helpers::bind_3d_image_texture(
+                    1,
+                    octree.textures.brick_pool_colors,
+                    gl::READ_ONLY,
+                    gl::RGBA8,
+                );
+                let (debug, buffer) = helpers::generate_texture_buffer(100, gl::R32F, 69f32);
+                helpers::bind_image_texture(2, debug, gl::WRITE_ONLY, gl::R32F);
                 our_model.draw(&voxel_cone_tracing_shader);
+                let debug_values = helpers::get_values_from_texture_buffer(buffer, 100, 420f32);
+                dbg!(&debug_values[..20]);
 
                 // Show normals
                 // render_normals_shader.use_program();
@@ -339,9 +369,22 @@ fn main() {
                 // our_model.draw(&render_normals_shader);
             }
 
-            static_eye.draw_gizmo(&projection, &view);
+            {
+                let mut vao = 0;
+                gl::GenVertexArrays(1, &mut vao);
+                gl::BindVertexArray(vao);
+
+                debug_cone_shader.use_program();
+                debug_cone_shader.set_mat4(c_str!("projection"), &projection);
+                debug_cone_shader.set_mat4(c_str!("view"), &view);
+
+                gl::DrawArrays(gl::POINTS, 0, 1);
+                gl::BindVertexArray(0);
+            }
+
+            // static_eye.draw_gizmo(&projection, &view);
             light.draw_gizmo(&projection, &view);
-            quad.render(eye_view_map_view);
+            // quad.render(eye_view_map_view);
         }
 
         unsafe {

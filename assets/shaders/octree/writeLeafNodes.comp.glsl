@@ -29,6 +29,7 @@ void storeInLeaf(
 ) {
     ivec3 brickCoordinates = calculateBrickCoordinates(nodeID);
     uint offset = calculateChildLocalID(nodeCoordinates, halfNodeSize, voxelPosition);
+    voxelColor.rgb = voxelColor.rgb * voxelColor.a;
 
     imageStore(
         brickPoolColors,

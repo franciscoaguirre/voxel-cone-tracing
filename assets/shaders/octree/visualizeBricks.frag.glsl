@@ -8,5 +8,5 @@ void main() {
     if (frag_nodeColor.xyz == vec3(0)) {
         discard;
     }
-    FragColor = vec4(frag_nodeColor.xyz, 1.0);
+    FragColor = frag_nodeColor;
 }
