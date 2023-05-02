@@ -20,7 +20,7 @@ void main() {
 #version 460 core
 
 layout (points) in;
-layout (line_strip, max_vertices = 16) out;
+layout (line_strip, max_vertices = 80) out;
 
 in vec3 geom_position[];
 
@@ -36,6 +36,9 @@ const float PI = 3.14159;
 
 void main() {
     vec3 axis = vec3(0, 0, 1);
+    vec3 helper = axis - vec3(0.1, 0, 0); // Random vector
+    vec3 tangent = normalize(helper - dot(axis, helper) * axis);
+    vec3 bitangent = cross(axis, tangent);
 
     vec4 startPosition = vec4(geom_position[0], 1);
 
@@ -52,6 +55,23 @@ void main() {
     float angleFromAxis = 0.261799;
     float angleFromPlane = (PI / 2) - angleFromAxis;
     drawCone(geom_position[0], axis, angleFromPlane);
+
+    float angle = 1.0472;
+    float sinAngle = sin(angle);
+    float cosAngle = cos(angle);
+    vec3 direction;
+
+    direction = sinAngle * axis + cosAngle * tangent;
+    drawCone(geom_position[0], direction, angleFromPlane);
+
+    direction = sinAngle * axis - cosAngle * tangent;
+    drawCone(geom_position[0], direction, angleFromPlane);
+
+    direction = sinAngle * axis + cosAngle * bitangent;
+    drawCone(geom_position[0], direction, angleFromPlane);
+
+    direction = sinAngle * axis - cosAngle * bitangent;
+    drawCone(geom_position[0], direction, angleFromPlane);
 }
 
 #shader fragment
