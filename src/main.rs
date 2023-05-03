@@ -358,8 +358,8 @@ fn main() {
                 let (debug, buffer) = helpers::generate_texture_buffer(100, gl::R32F, 69f32);
                 helpers::bind_image_texture(2, debug, gl::WRITE_ONLY, gl::R32F);
                 our_model.draw(&voxel_cone_tracing_shader);
-                let debug_values = helpers::get_values_from_texture_buffer(buffer, 100, 420f32);
-                dbg!(&debug_values[..20]);
+                //let debug_values = helpers::get_values_from_texture_buffer(buffer, 100, 420f32);
+                //dbg!(&debug_values[..20]);
 
                 // Show normals
                 // render_normals_shader.use_program();
