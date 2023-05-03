@@ -38,6 +38,7 @@ uniform layout(binding = 2, r32f) writeonly imageBuffer debug;
 uniform uint voxelDimension;
 uniform uint maxOctreeLevel;
 uniform sampler2D texture_diffuse1;
+//uniform sampler3D brickPoolColors;
 
 #include "./_constants.glsl"
 #include "./_helpers.glsl"

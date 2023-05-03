@@ -10,7 +10,7 @@ int traverseOctree(
   out float currentHalfNodeSize
 ) {
   uint currentNodeID = 0; // Start journey in first node
-  currentHalfNodeSize = 0.5; // Node side length normalized is 1, so half of that
+  currentHalfNodeSize = 0.5; // Root node side length normalized is 1, so half of that
   currentNodeCoordinates = vec3(0, 0, 0); // Node coordinates are centered on the corner with lower (x, y, z)
 
   for (uint i = 0; i < octreeLevels; i++)

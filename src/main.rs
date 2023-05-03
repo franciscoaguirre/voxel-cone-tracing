@@ -339,6 +339,10 @@ fn main() {
                 voxel_cone_tracing_shader.set_mat4(c_str!("view"), &view);
                 voxel_cone_tracing_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
 
+                //gl::ActiveTexture(gl::TEXTURE1);
+                //gl::BindTexture(gl::TEXTURE_3D, octree.textures.brick_pool_colors);
+                //voxel_cone_tracing_shader
+                    //.set_int(c_str!("brickPoolColors"), 1);
                 voxel_cone_tracing_shader
                     .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
                 voxel_cone_tracing_shader
@@ -348,6 +352,12 @@ fn main() {
                     octree.textures.node_pool.0,
                     gl::READ_ONLY,
                     gl::R32UI,
+                );
+                helpers::bind_3d_image_texture(
+                    1,
+                    octree.textures.brick_pool_colors,
+                    gl::READ_ONLY,
+                    gl::RGBA8,
                 );
                 helpers::bind_3d_image_texture(
                     1,

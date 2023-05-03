@@ -4,7 +4,8 @@
 // - uniform image3D brickPoolColors
 // - _traversalHelpers
 // - _octreeTraversal
-const float fourThirds = 4.0/3.0;
+const float brickPoolColorsResolution = 384.0;
+const float brickPoolColorsBrickSize = 3.0 / brickPoolColorsResolution;
 
 // Returns values in [0, maxOctreeLevel]
 float calculateLod(float coneDiameter) {
@@ -12,7 +13,18 @@ float calculateLod(float coneDiameter) {
     return maxOctreeLevel - log2(1 + coneDiameter * voxelDimension);
 }
 
-// Brick marching
+//// Brick marching
+//float findVoxelOcclusion(vec3 queryCoordinates, Node node) {
+    //// texture needs a vector with coordinates between 0..1, that maps to 0..384 interpolating intermediate values 
+    //vec3 brickCoordinates = calculateBrickCoordinates(node.id) / brickPoolColorsResolution;
+    //// offset between 0 and 1
+    //vec3 brickOffset = calculateNormalizedBrickVoxel(node.coordinates, node.halfNodeSize, queryCoordinates);
+    //// offset between 0 and brickPoolColors normalized brick size
+    //vec3 brickOffsetColors = brickOffset * brickPoolColorsBrickSize;
+    //vec4 color = texture(brickPoolColors, brickCoordinates + brickOffset);
+    //return color.a;
+//}
+
 float findVoxelOcclusion(vec3 queryCoordinates, Node node) {
     ivec3 brickCoordinates = calculateBrickCoordinates(node.id);
     ivec3 brickOffset = ivec3(calculateBrickVoxel(node.coordinates, node.halfNodeSize, queryCoordinates));
@@ -76,8 +88,8 @@ float ambientOcclusion(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle,
                 continue;
             }
         } else {
-            node = previousNode;
-            parentNode = previousParentNode;
+            //node = previousNode;
+            //parentNode = previousParentNode;
         }
 
         //ivec3 brickCoordinates = calculateBrickCoordinates(node.id);
