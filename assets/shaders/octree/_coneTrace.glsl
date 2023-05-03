@@ -14,6 +14,7 @@ float calculateLod(float coneDiameter) {
 }
 
 //// Brick marching
+//For accesing a uniform
 //float findVoxelOcclusion(vec3 queryCoordinates, Node node) {
     //// texture needs a vector with coordinates between 0..1, that maps to 0..384 interpolating intermediate values 
     //vec3 brickCoordinates = calculateBrickCoordinates(node.id) / brickPoolColorsResolution;
@@ -29,6 +30,8 @@ float findVoxelOcclusion(vec3 queryCoordinates, Node node) {
     ivec3 brickCoordinates = calculateBrickCoordinates(node.id);
     ivec3 brickOffset = ivec3(calculateBrickVoxel(node.coordinates, node.halfNodeSize, queryCoordinates));
     vec4 color = imageLoad(brickPoolColors, brickCoordinates + brickOffset);
+    // To use a sampler "the easy way" without interpolation
+    // vec4 color = texture(brickPoolColors, (brickCoordinates + brickOffset) / (brickPoolColorsResolution - 1.0));
     return color.a;
 }
 
@@ -51,14 +54,16 @@ float ambientOcclusion(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle,
     float totalOcclusion = 0.0;
     uint previousOctreeLevel = maxOctreeLevel;
     float voxelSize = 1.0 / float(voxelDimension);
-    float sampleStep = voxelSize / 3.0;
+    float stepMultiplier = 1.0 / 3.0;
+    float sampleStep = voxelSize / stepMultiplier;
     float coneDiameterCoefficient = 2 * tan(coneHalfAngle);
     float distanceAlongCone = 0.0;
     Node previousNode = Node(0, vec3(0), 0.0);
     Node previousParentNode;
     int steps = 0;
 
-    distanceAlongCone += voxelSize;
+    // Try to get out of the voxel on the first step, making sure you leave the voxel can lead to jumping over a voxel
+    distanceAlongCone += voxelSize * 1.41421356;
     while (distanceAlongCone < maxDistance && totalOcclusion < 1.0) {
         float coneDiameter = coneDiameterCoefficient * distanceAlongCone;
         float lod = calculateLod(coneDiameter);
@@ -106,7 +111,9 @@ float ambientOcclusion(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle,
         float parentOcclusion = findVoxelOcclusion(queryCoordinates, parentNode);
 
         float occlusion = interpolate(childOcclusion, parentOcclusion, childWeight);
-        occlusion = 1.0 - pow((1.0 - occlusion), 0.3333333);
+
+        // Step correction
+        occlusion = 1.0 - pow((1.0 - occlusion), stepMultiplier);
         totalOcclusion += (1 - totalOcclusion) * occlusion;
 
         distanceAlongCone += sampleStep;
