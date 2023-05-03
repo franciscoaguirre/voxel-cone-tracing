@@ -61,17 +61,17 @@ void main() {
     float cosAngle = cos(angle);
     vec3 direction;
 
-    direction = sinAngle * axis + cosAngle * tangent;
-    drawCone(geom_position[0], direction, angleFromPlane);
+    // direction = sinAngle * axis + cosAngle * tangent;
+    // drawCone(geom_position[0], direction, angleFromPlane);
 
-    direction = sinAngle * axis - cosAngle * tangent;
-    drawCone(geom_position[0], direction, angleFromPlane);
+    // direction = sinAngle * axis - cosAngle * tangent;
+    // drawCone(geom_position[0], direction, angleFromPlane);
 
-    direction = sinAngle * axis + cosAngle * bitangent;
-    drawCone(geom_position[0], direction, angleFromPlane);
+    // direction = sinAngle * axis + cosAngle * bitangent;
+    // drawCone(geom_position[0], direction, angleFromPlane);
 
-    direction = sinAngle * axis - cosAngle * bitangent;
-    drawCone(geom_position[0], direction, angleFromPlane);
+    // direction = sinAngle * axis - cosAngle * bitangent;
+    // drawCone(geom_position[0], direction, angleFromPlane);
 }
 
 #shader fragment
