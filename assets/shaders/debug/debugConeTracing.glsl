@@ -7,7 +7,7 @@ uniform mat4 view;
 
 out vec3 geom_position;
 
-vec3 position = vec3(0.5, 0.5, 0.46);
+vec3 position = vec3(0.5, 0.5, 0.48);
 
 void main() {
     vec3 ndc = position * 2.0 - vec3(1);
@@ -61,17 +61,17 @@ void main() {
     float cosAngle = cos(angle);
     vec3 direction;
 
-    direction = sinAngle * axis + cosAngle * tangent;
-    drawCone(geom_position[0], direction, angleFromPlane);
+    //direction = sinAngle * axis + cosAngle * tangent;
+    //drawCone(geom_position[0], direction, angleFromPlane);
 
-    direction = sinAngle * axis - cosAngle * tangent;
-    drawCone(geom_position[0], direction, angleFromPlane);
+    //direction = sinAngle * axis - cosAngle * tangent;
+    //drawCone(geom_position[0], direction, angleFromPlane);
 
-    direction = sinAngle * axis + cosAngle * bitangent;
-    drawCone(geom_position[0], direction, angleFromPlane);
+    //direction = sinAngle * axis + cosAngle * bitangent;
+    //drawCone(geom_position[0], direction, angleFromPlane);
 
-    direction = sinAngle * axis - cosAngle * bitangent;
-    drawCone(geom_position[0], direction, angleFromPlane);
+    //direction = sinAngle * axis - cosAngle * bitangent;
+    //drawCone(geom_position[0], direction, angleFromPlane);
 }
 
 #shader fragment

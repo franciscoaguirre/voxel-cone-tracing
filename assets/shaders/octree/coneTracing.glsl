@@ -60,16 +60,18 @@ void main() {
     // vec4 totalColor = (directDiffuse + indirectDiffuse + specular);
     // FragColor = totalColor * ambientOcclusion;
 
-    vec3 position = (frag_position + vec3(1.0)) / 2.0;
     // mat3 normalMatrix = mat3(transpose(inverse(view * model)));
     // vec3 normal = normalize(vec3(vec4(normalMatrix * frag_normal, 0)));
-    vec3 direction = frag_normal;
+    vec3 position = (frag_position + vec3(1.0)) / 2.0;
+    // Triangle doesn't have normals
+    vec3 direction = normalize(frag_normal);
+    //vec3 direction = vec3(0.0, 0.0, 1.0);
     vec3 helper = direction - vec3(0.1, 0, 0); // Random vector
     vec3 tangent = normalize(helper - dot(direction, helper) * direction);
     vec3 bitangent = cross(direction, tangent);
     float AO = 0.0;
-    //AO += ambientOcclusion(position, direction, 0.261799, 0.1); // 15deg as rad
-    //AO += ambientOcclusion(position, direction, 0.065, 0.001); // 15/4 deg as rad
+    AO += ambientOcclusion(position, direction, 0.261799, 0.01); // 15deg as rad
+    //AO += ambientOcclusion(position, direction, 0.0000000000065, 0.1); // 15/4 deg as rad
 
     //float angle = 1.0472;
     //float sinAngle = sin(angle);
@@ -92,5 +94,8 @@ void main() {
 
     // FragColor = vec4(texture(texture_diffuse1, frag_textureCoordinates).xyz - vec3(AO), 1);
     FragColor = vec4(vec3(1.0) - vec3(AO), 1.0);
+    //imageStore(debug, 0, vec4(direction.x, 0, 0, 0));
+    //imageStore(debug, 1, vec4(direction.y, 0, 0, 0));
+    //imageStore(debug, 2, vec4(direction.z, 0, 0, 0));
      //FragColor = texture(texture_diffuse1, frag_textureCoordinates);
 }

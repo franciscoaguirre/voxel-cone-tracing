@@ -4,6 +4,7 @@
 // - uniform image3D brickPoolColors
 // - _traversalHelpers
 // - _octreeTraversal
+const float fourThirds = 4.0/3.0;
 
 // Returns values in [0, maxOctreeLevel]
 float calculateLod(float coneDiameter) {
@@ -45,7 +46,7 @@ float ambientOcclusion(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle,
     Node previousParentNode;
     int steps = 0;
 
-    distanceAlongCone += sampleStep;
+    distanceAlongCone += voxelSize;
     while (distanceAlongCone < maxDistance && totalOcclusion < 1.0) {
         float coneDiameter = coneDiameterCoefficient * distanceAlongCone;
         float lod = calculateLod(coneDiameter);
@@ -70,7 +71,6 @@ float ambientOcclusion(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle,
                 node,
                 parentNode
             );
-            imageStore(debug, steps * 5, vec4(float(node.id), 0, 0, 0));
             if (node.id == NODE_NOT_FOUND) {
                 distanceAlongCone += sampleStep;
                 continue;
@@ -80,19 +80,21 @@ float ambientOcclusion(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle,
             parentNode = previousParentNode;
         }
 
+        //ivec3 brickCoordinates = calculateBrickCoordinates(node.id);
+        //ivec3 brickOffset = ivec3(calculateBrickVoxel(node.coordinates, node.halfNodeSize, queryCoordinates));
+        //vec4 color = imageLoad(brickPoolColors, brickCoordinates + brickOffset);
+        //float childOcclusion = color.a;
+        //imageStore(debug, steps * 5 + 1, vec4(brickOffset.x, 0, 0, 0));
+        //imageStore(debug, steps * 5 + 2, vec4(brickOffset.y, 0, 0, 0));
+        //imageStore(debug, steps * 5 + 3, vec4(brickOffset.z, 0, 0, 0));
+        //imageStore(debug, steps * 5 + 4, vec4(childOcclusion, 0, 0, 0));
+
         // Brick marching
-        // float childOcclusion = findVoxelOcclusion(queryCoordinates, node);
-        ivec3 brickCoordinates = calculateBrickCoordinates(node.id);
-        ivec3 brickOffset = ivec3(calculateBrickVoxel(node.coordinates, node.halfNodeSize, queryCoordinates));
-        vec4 color = imageLoad(brickPoolColors, brickCoordinates + brickOffset);
-        float childOcclusion = color.a;
-        imageStore(debug, steps * 5 + 1, vec4(brickOffset.x, 0, 0, 0));
-        imageStore(debug, steps * 5 + 2, vec4(brickOffset.y, 0, 0, 0));
-        imageStore(debug, steps * 5 + 3, vec4(brickOffset.z, 0, 0, 0));
-        imageStore(debug, steps * 5 + 4, vec4(childOcclusion, 0, 0, 0));
+        float childOcclusion = findVoxelOcclusion(queryCoordinates, node);
         float parentOcclusion = findVoxelOcclusion(queryCoordinates, parentNode);
 
         float occlusion = interpolate(childOcclusion, parentOcclusion, childWeight);
+        occlusion = 1.0 - pow((1.0 - occlusion), 0.3333333);
         totalOcclusion += (1 - totalOcclusion) * occlusion;
 
         distanceAlongCone += sampleStep;
@@ -105,7 +107,7 @@ float ambientOcclusion(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle,
         previousParentNode = parentNode;
     }
 
-    return 1 - min(totalOcclusion, 1);
+    return min(totalOcclusion, 1);
 }
 
 // vec4 coneTrace(vec3 rayOrigin, vec3 rayDirection, float maxDistance) {
