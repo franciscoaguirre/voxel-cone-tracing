@@ -349,17 +349,19 @@ fn main() {
                     gl::READ_ONLY,
                     gl::R32UI,
                 );
-                helpers::bind_3d_image_texture(
-                    1,
-                    octree.textures.brick_pool_colors,
-                    gl::READ_ONLY,
-                    gl::RGBA8,
-                );
-                let (debug, buffer) = helpers::generate_texture_buffer(100, gl::R32F, 69f32);
-                helpers::bind_image_texture(2, debug, gl::WRITE_ONLY, gl::R32F);
+                gl::ActiveTexture(gl::TEXTURE1);
+                gl::BindTexture(gl::TEXTURE_3D, octree.textures.brick_pool_colors);
+                voxel_cone_tracing_shader.set_int(c_str!("brickPoolColors"), 1);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::REPEAT as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+                // let (debug, buffer) = helpers::generate_texture_buffer(100, gl::R32F, 69f32);
+                // helpers::bind_image_texture(2, debug, gl::WRITE_ONLY, gl::R32F);
                 our_model.draw(&voxel_cone_tracing_shader);
-                let debug_values = helpers::get_values_from_texture_buffer(buffer, 100, 420f32);
-                dbg!(&debug_values[..20]);
+                // let debug_values = helpers::get_values_from_texture_buffer(buffer, 100, 420f32);
+                // dbg!(&debug_values[..20]);
 
                 // Show normals
                 // render_normals_shader.use_program();
