@@ -24,7 +24,7 @@ float calculateLod(float coneDiameter) {
 //}
 
 float findVoxelOcclusion(vec3 queryCoordinates, Node node) {
-    vec3 brickCoordinates = calculateBrickCoordinates(node.id) / brickPoolResolution;
+    vec3 brickCoordinates = calculateBrickCoordinates(node.id) / (brickPoolResolution - 1.0);
     // offset between 0 and 1
     vec3 brickOffset = calculateNormalizedBrickVoxel(node.coordinates, node.halfNodeSize, queryCoordinates);
     // offset between 0 and brickPoolColors normalized brick size

@@ -68,37 +68,10 @@ uvec3 calculateBrickVoxel(vec3 nodeCoordinates, float halfNodeSize, vec3 queryCo
     return uvec3(xOffset, yOffset, zOffset);
 }
 
-float findQuarter2(float min, float halfNodeSize, float queryCoordinate, float voxelCoordinate) {
-    float quarterNodeSize = halfNodeSize / 2.0;
-    bool withinFirstHalf = queryCoordinate < min + halfNodeSize;
-    if (withinFirstHalf) {
-        bool withinFirstQuarter = queryCoordinate < min + quarterNodeSize;
-        if (withinFirstQuarter) {
-            // Maps first quarter to a third of the brick (that is the actual size on the texture)
-            return voxelCoordinate * fourThirds;
-        } else {
-            // Maps second quarter to the first half of the second third of the brick (that is the actual size on the texture)
-            return ((voxelCoordinate - quarterNodeSize) * twoThirds) + quarterNodeSize;
-        }
-    } else {
-        bool withinThirdQuarter = queryCoordinate < min + quarterNodeSize * 3;
-        if (withinThirdQuarter) {
-            // Maps third quarter to the second half of the second third of the brick (that is the actual size on the texture)
-            return ((voxelCoordinate - halfNodeSize) * twoThirds) + halfNodeSize;
-        } else {
-            // Maps last quarter to the last third of the brick (that is the actual size on the texture)
-            return ((voxelCoordinate - (halfNodeSize + quarterNodeSize)) * fourThirds) + halfNodeSize + quarterNodeSize;
-        }
-    }
-}
-
 vec3 calculateNormalizedBrickVoxel(vec3 nodeCoordinates, float halfNodeSize, vec3 queryCoordinates) {
-    vec3 voxelCoordinates = queryCoordinates - nodeCoordinates;
-    vec3 offset;
-    offset.x = findQuarter2(nodeCoordinates.x, halfNodeSize, queryCoordinates.x, voxelCoordinates.x);
-    offset.y = findQuarter2(nodeCoordinates.y, halfNodeSize, queryCoordinates.y, voxelCoordinates.y);
-    offset.z = findQuarter2(nodeCoordinates.z, halfNodeSize, queryCoordinates.z, voxelCoordinates.z);
-    return clamp(offset / (halfNodeSize * 2.0), 0.0, 1.0);
+    vec3 voxelCoordinates = (queryCoordinates - nodeCoordinates) / (halfNodeSize * 2);
+    vec3 offset = voxelCoordinates * (2.0 / 3.0);
+    return offset;
 }
 
 ivec3 calculateBrickCoordinates(int nodeID) {
