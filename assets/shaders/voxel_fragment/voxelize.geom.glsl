@@ -91,12 +91,22 @@ void main() {
 
     vec3 projectedTriangleNormal = normalize(cross(vertex[1].xyz - vertex[0].xyz, vertex[2].xyz - vertex[0].xyz));
 
+    vec3 normals[3];
+    vec2 tex_coordinates[3];
     // Change triangle winding, so normal points to "camera"
     if (dot(projectedTriangleNormal, vec3(0.0, 0.0, 1.0)) < 0.0)
     {
         vec4 vertexTemp = vertex[2];
         vertex[2] = vertex[1];
         vertex[1] = vertexTemp;
+
+        normals[0] = geom_normal[0];
+        normals[1] = geom_normal[2];
+        normals[2] = geom_normal[1];
+
+        tex_coordinates[0] = geom_texCoordinates[0];
+        tex_coordinates[1] = geom_texCoordinates[2];
+        tex_coordinates[2] = geom_texCoordinates[1];
     }
     // vec2(2.0 / voxelDimension) is the pixel size, as coordinates go from -1 to 1 (length 2), so a half pixel is half of that
     vec2 halfPixel = vec2(1.0 / voxelDimension);
@@ -139,8 +149,8 @@ void main() {
       // Calculate the new z-Coordinate derived from a point on a plane
       gl_Position.z = -(trianglePlane.x * intersect[i].x + trianglePlane.y * intersect[i].y + trianglePlane.w) / trianglePlane.z; 
       frag_position = intersect[i].xyz;
-      frag_normal = geom_normal[i];
-      frag_texCoordinates = geom_texCoordinates[i];
+      frag_normal = normals[i];
+      frag_texCoordinates = tex_coordinates[i];
       EmitVertex();
     }
 
