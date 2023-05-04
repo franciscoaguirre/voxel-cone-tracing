@@ -62,7 +62,7 @@ void main() {
     // FragColor = totalColor * ambientOcclusion;
 
     float maxDistance = 0.01;
-    float coneAngle = 0.0872665;
+    float coneAngle = 0.000000001;
     vec3 position = (frag_position + vec3(1.0)) / 2.0;
     // mat3 normalMatrix = mat3(transpose(inverse(view * model)));
     // vec3 normal = normalize(vec3(vec4(normalMatrix * frag_normal, 0)));
@@ -77,20 +77,20 @@ void main() {
     float sinAngle = sin(angle);
     float cosAngle = cos(angle);
 
-    direction = sinAngle * frag_normal + cosAngle * tangent;
-    AO += ambientOcclusion(position, direction, coneAngle, maxDistance);
+    // direction = sinAngle * frag_normal + cosAngle * tangent;
+    // AO += ambientOcclusion(position, direction, coneAngle, maxDistance);
 
-    direction = sinAngle * frag_normal - cosAngle * tangent;
-    AO += ambientOcclusion(position, direction, coneAngle, maxDistance);
+    // direction = sinAngle * frag_normal - cosAngle * tangent;
+    // AO += ambientOcclusion(position, direction, coneAngle, maxDistance);
 
-    direction = sinAngle * frag_normal + cosAngle * bitangent;
-    AO += ambientOcclusion(position, direction, coneAngle, maxDistance);
+    // direction = sinAngle * frag_normal + cosAngle * bitangent;
+    // AO += ambientOcclusion(position, direction, coneAngle, maxDistance);
 
-    direction = sinAngle * frag_normal - cosAngle * bitangent;
-    AO += ambientOcclusion(position, direction, coneAngle, maxDistance);
-    //float AO = ambientOcclusion(vec3(0.5, 0.5, 0.46), vec3(0, 0, 1), 0.261799, maxDistance); // 15deg as rad
+    // direction = sinAngle * frag_normal - cosAngle * bitangent;
+    // AO += ambientOcclusion(position, direction, coneAngle, maxDistance);
+    // //float AO = ambientOcclusion(vec3(0.5, 0.5, 0.46), vec3(0, 0, 1), 0.261799, maxDistance); // 15deg as rad
 
-    AO /= 5;
+    // AO /= 5;
 
     // FragColor = vec4(texture(texture_diffuse1, frag_textureCoordinates).xyz - vec3(AO), 1);
      FragColor = vec4(vec3(AO), 1.0);
