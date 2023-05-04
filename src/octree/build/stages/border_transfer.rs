@@ -23,11 +23,11 @@ impl BorderTransferPass {
         &self,
         textures: &OctreeTextures,
         nodes_per_level: &[u32],
+        octree_level: u32,
         brick_pool_values: BrickPoolValues,
     ) {
         self.shader.use_program();
 
-        let octree_level = CONFIG.octree_levels - 1;
         self.shader.set_uint(c_str!("octreeLevel"), octree_level);
 
         match brick_pool_values {

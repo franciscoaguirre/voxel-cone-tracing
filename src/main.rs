@@ -358,7 +358,7 @@ fn main() {
                 gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
                 gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
                 // let (debug, buffer) = helpers::generate_texture_buffer(100, gl::R32F, 69f32);
-                // helpers::bind_image_texture(2, debug, gl::WRITE_ONLY, gl::R32F);
+                // helpers::bind_image_texture(4, debug, gl::WRITE_ONLY, gl::R32F);
                 our_model.draw(&voxel_cone_tracing_shader);
                 // let debug_values = helpers::get_values_from_texture_buffer(buffer, 100, 420f32);
                 // dbg!(&debug_values[..20]);

@@ -6,6 +6,7 @@
 // - _octreeTraversal
 
 const float brickPoolResolution = 384.0;
+const float brickPoolBrickSize = 3.0 / brickPoolResolution;
 
 // Returns values in [0, maxOctreeLevel]
 float calculateLod(float coneDiameter) {
@@ -14,17 +15,21 @@ float calculateLod(float coneDiameter) {
 }
 
 // Brick marching
-// float findVoxelOcclusion(vec3 queryCoordinates, Node node) {
-//     ivec3 brickCoordinates = calculateBrickCoordinates(node.id);
-//     ivec3 brickOffset = ivec3(calculateBrickVoxel(node.coordinates, node.halfNodeSize, queryCoordinates));
-//     vec4 color = texture(brickPoolColors, (brickCoordinates + brickOffset) / brickPoolColorsResolution);
-//     return color.a;
-// }
+//float findVoxelOcclusion(vec3 queryCoordinates, Node node) {
+   //ivec3 brickCoordinates = calculateBrickCoordinates(node.id);
+   ////ivec3 brickOffset = ivec3(calculateBrickVoxel(node.coordinates, node.halfNodeSize, queryCoordinates));
+   //vec3 brickOffset = (queryCoordinates - node.coordinates) / (2.0 * node.halfNodeSize);
+   //vec4 color = texture(brickPoolColors, (brickCoordinates / brickPoolResolution + brickOffset * brickPoolBrickSize));
+   //return color.a;
+//}
 
 float findVoxelOcclusion(vec3 queryCoordinates, Node node) {
     vec3 brickCoordinates = calculateBrickCoordinates(node.id) / brickPoolResolution;
+    // offset between 0 and 1
     vec3 brickOffset = calculateNormalizedBrickVoxel(node.coordinates, node.halfNodeSize, queryCoordinates);
-    vec4 color = texture(brickPoolColors, brickCoordinates + brickOffset);
+    // offset between 0 and brickPoolColors normalized brick size
+    vec3 brickOffsetColors = brickOffset * brickPoolBrickSize;
+    vec4 color = texture(brickPoolColors, brickCoordinates + brickOffsetColors);
     return color.a;
 }
 
@@ -48,7 +53,7 @@ float ambientOcclusion(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle,
     uint previousOctreeLevel = maxOctreeLevel;
     float voxelSize = 1.0 / float(voxelDimension);
     float stepMultiplier = 1.0 / 3.0;
-    float sampleStep = voxelSize / stepMultiplier;
+    float sampleStep = voxelSize * stepMultiplier;
     float coneDiameterCoefficient = 2 * tan(coneHalfAngle);
     float distanceAlongCone = 0.0;
     Node previousNode = Node(0, vec3(0), 0.0);
@@ -106,7 +111,7 @@ float ambientOcclusion(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle,
         previousParentNode = parentNode;
     }
 
-    return min(totalOcclusion, 1);
+    return max(1.0 - totalOcclusion, 0.0);
 }
 
 // vec4 coneTrace(vec3 rayOrigin, vec3 rayDirection, float maxDistance) {

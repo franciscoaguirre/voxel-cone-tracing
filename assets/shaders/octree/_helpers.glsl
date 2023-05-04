@@ -98,7 +98,7 @@ vec3 calculateNormalizedBrickVoxel(vec3 nodeCoordinates, float halfNodeSize, vec
     offset.x = findQuarter2(nodeCoordinates.x, halfNodeSize, queryCoordinates.x, voxelCoordinates.x);
     offset.y = findQuarter2(nodeCoordinates.y, halfNodeSize, queryCoordinates.y, voxelCoordinates.y);
     offset.z = findQuarter2(nodeCoordinates.z, halfNodeSize, queryCoordinates.z, voxelCoordinates.z);
-    return offset * (halfNodeSize * 2.0);
+    return clamp(offset / (halfNodeSize * 2.0), 0.0, 1.0);
 }
 
 ivec3 calculateBrickCoordinates(int nodeID) {

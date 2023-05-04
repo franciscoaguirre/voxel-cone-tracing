@@ -15,8 +15,9 @@ uniform mat4 view;
 uniform mat4 projection;
 
 void main() {
-    gl_Position = projection * view * model * vec4(position, 1);
-    frag_position = (model * vec4(position, 1)).xyz;
+    gl_Position = projection * view * model * vec4(position, 1.0);
+    vec4 lol = model * vec4(position, 1.0);
+    frag_position = lol.xyz / lol.w;
     frag_normal = normal;
     frag_textureCoordinates = textureCoordinates;
 }
@@ -32,6 +33,7 @@ in vec3 frag_normal;
 in vec2 frag_textureCoordinates;
 
 uniform layout(binding = 0, r32ui) readonly uimageBuffer nodePool;
+//uniform layout(binding = 4, r32f) writeonly imageBuffer debug;
 
 uniform uint voxelDimension;
 uniform uint maxOctreeLevel;
@@ -86,11 +88,12 @@ void main() {
 
     direction = sinAngle * frag_normal - cosAngle * bitangent;
     AO += ambientOcclusion(position, direction, coneAngle, maxDistance);
-    // float AO = ambientOcclusion(vec3(0.5, 0.5, 0.46), vec3(0, 0, 1), 0.261799, maxDistance); // 15deg as rad
+    //float AO = ambientOcclusion(vec3(0.5, 0.5, 0.46), vec3(0, 0, 1), 0.261799, maxDistance); // 15deg as rad
 
     AO /= 5;
 
     // FragColor = vec4(texture(texture_diffuse1, frag_textureCoordinates).xyz - vec3(AO), 1);
-    FragColor = vec4(vec3(1) - vec3(AO), 1.0);
-    // FragColor = texture(texture_diffuse1, frag_textureCoordinates);
+     FragColor = vec4(vec3(AO), 1.0);
+    //vec4 color = texture(texture_diffuse1, frag_textureCoordinates);
+    //FragColor = vec4(color.rgb * AO, color.a);
 }

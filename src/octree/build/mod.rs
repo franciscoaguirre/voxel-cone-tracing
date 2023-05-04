@@ -100,12 +100,14 @@ impl Octree {
         border_transfer_pass.run(
             &self.textures,
             &self.nodes_per_level,
+            CONFIG.octree_levels - 1,
             BrickPoolValues::Colors,
         );
 
         border_transfer_pass.run(
             &self.textures,
             &self.nodes_per_level,
+            CONFIG.octree_levels - 1,
             BrickPoolValues::Normals,
         );
 
@@ -164,11 +166,13 @@ impl Octree {
                 border_transfer_pass.run(
                     &self.textures,
                     &self.nodes_per_level,
+                    level,
                     BrickPoolValues::Colors,
                 );
                 border_transfer_pass.run(
                     &self.textures,
                     &self.nodes_per_level,
+                    level,
                     BrickPoolValues::Normals,
                 );
             }
