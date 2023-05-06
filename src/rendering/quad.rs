@@ -62,16 +62,21 @@ impl Quad {
             (3 * size_of::<f32>()) as *const c_void,
         );
 
-        let shader = Shader::new(
-            "assets/shaders/renderQuad.vert.glsl",
-            "assets/shaders/renderQuad.frag.glsl",
-        );
+        let shader = Shader::new_single("assets/shaders/renderQuad.glsl");
 
         Self {
             vao,
             indices: indices.to_vec(),
             shader,
         }
+    }
+
+    pub unsafe fn get_vao(&self) -> GLuint {
+        self.vao
+    }
+
+    pub unsafe fn get_num_indices(&self) -> usize {
+        self.indices.len()
     }
 
     pub unsafe fn render(&self, texture: GLuint) {

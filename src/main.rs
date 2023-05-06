@@ -276,6 +276,7 @@ fn main() {
                         8, // Children in a node
                         0_u32,
                     );
+                    octree.run_colors_quad_shader(last_debug_node.index());
                 };
             }
         }
@@ -352,11 +353,11 @@ fn main() {
                 gl::ActiveTexture(gl::TEXTURE1);
                 gl::BindTexture(gl::TEXTURE_3D, octree.textures.brick_pool_colors);
                 voxel_cone_tracing_shader.set_int(c_str!("brickPoolColors"), 1);
-                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
-                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
-                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::REPEAT as i32);
-                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
                 // let (debug, buffer) = helpers::generate_texture_buffer(100, gl::R32F, 69f32);
                 // helpers::bind_image_texture(4, debug, gl::WRITE_ONLY, gl::R32F);
                 our_model.draw(&voxel_cone_tracing_shader);
@@ -386,7 +387,7 @@ fn main() {
 
             // static_eye.draw_gizmo(&projection, &view);
             light.draw_gizmo(&projection, &view);
-            // quad.render(eye_view_map_view);
+            quad.render(octree.textures.color_quad_textures[0]);
         }
 
         unsafe {
