@@ -12,6 +12,7 @@ mod visualize;
 pub use visualize::BricksToShow;
 
 type Texture = GLuint;
+type Texture2D = GLuint;
 type Texture3D = GLuint;
 type TextureBuffer = GLuint;
 type BufferTexture = (Texture, TextureBuffer);
@@ -34,6 +35,7 @@ pub struct OctreeTextures {
     pub brick_pool_photons: Texture3D,
     pub photons_buffer: BufferTexture,
     pub children_buffer: BufferTexture,
+    pub color_quad_textures: [Texture2D; 2],
 }
 
 pub struct VoxelData {
@@ -55,6 +57,7 @@ struct Renderer {
     get_photons_shader: Shader,
     get_children_shader: Shader,
     eye_ray_shader: Shader,
+    get_colors_quad_shader: Shader,
 }
 
 impl Octree {
@@ -107,6 +110,9 @@ impl Octree {
             get_photons_shader: Shader::new_compute("assets/shaders/debug/getPhotons.comp.glsl"),
             get_children_shader: Shader::new_compute("assets/shaders/debug/getChildren.comp.glsl"),
             eye_ray_shader: Shader::new_single("assets/shaders/debug/eyeRay.glsl"),
+            get_colors_quad_shader: Shader::new_single(
+                "assets/shaders/debug/debugInterpolation.glsl",
+            ),
         };
 
         let mut octree = Self {
@@ -151,6 +157,44 @@ impl Octree {
             brick_pool_photons: helpers::generate_3d_r32ui_texture(CONFIG.brick_pool_resolution),
             photons_buffer: helpers::generate_texture_buffer(27, gl::R32UI, 0u32), // 27 voxels in a brick
             children_buffer: helpers::generate_texture_buffer(8, gl::R32UI, 0_u32), // 8 children in a node
+            color_quad_textures: {
+                let mut textures = [0; 2];
+
+                gl::GenTextures(2, textures.as_mut_ptr());
+                gl::BindTexture(gl::TEXTURE_2D, textures[0]);
+                gl::TexImage2D(
+                    gl::TEXTURE_2D,
+                    0,
+                    gl::RGBA8 as i32,
+                    CONFIG.viewport_width as i32,
+                    CONFIG.viewport_height as i32,
+                    0,
+                    gl::RGBA,
+                    gl::UNSIGNED_BYTE,
+                    std::ptr::null(),
+                );
+                gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+                gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+                gl::BindTexture(gl::TEXTURE_2D, 0);
+
+                gl::BindTexture(gl::TEXTURE_2D, textures[1]);
+                gl::TexImage2D(
+                    gl::TEXTURE_2D,
+                    0,
+                    gl::RGBA8 as i32,
+                    CONFIG.viewport_width as i32,
+                    CONFIG.viewport_height as i32,
+                    0,
+                    gl::RGBA,
+                    gl::UNSIGNED_BYTE,
+                    std::ptr::null(),
+                );
+                gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+                gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+                gl::BindTexture(gl::TEXTURE_2D, 0);
+
+                textures
+            },
         }
     }
 

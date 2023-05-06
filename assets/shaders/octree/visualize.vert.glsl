@@ -3,7 +3,7 @@
 #include "./_constants.glsl"
 #include "./_helpers.glsl"
 
-uniform uint octreeLevels;
+uniform uint octreeLevel;
 uniform uint voxelDimension;
 
 uniform layout(binding = 0, r32ui) uimageBuffer nodePool;
@@ -31,7 +31,7 @@ void main() {
   vec3 nodeCoordinates;
   int nodeID = traverseOctree(
     vec3(voxelFragmentPosition) / float(voxelDimension),
-    octreeLevels,
+    octreeLevel,
     nodeCoordinates,
     halfNodeSize
   );
@@ -43,7 +43,7 @@ void main() {
   ivec3 offsetToCenter = ivec3(1, 1, 1);
   vec4 centerVoxelColor = imageLoad(brickPoolColors, brickCoordinates + offsetToCenter);
   nodeColor = centerVoxelColor;
-  // nodeColor = vec4(1);
+  nodeColor = vec4(0, 0, 1, 1);
 
   // uint photonCount = imageLoad(brickPoolPhotons, brickCoordinates + offsetToCenter).r;
   // if (photonCount > 0) {

@@ -4,7 +4,11 @@ use c_str_macro::c_str;
 use cgmath::Matrix4;
 use gl::types::GLuint;
 
-use crate::{config::CONFIG, helpers, rendering::transform::Transform};
+use crate::{
+    config::CONFIG,
+    helpers,
+    rendering::{quad::Quad, transform::Transform},
+};
 
 use super::Octree;
 
@@ -410,6 +414,109 @@ impl Octree {
         gl::BindVertexArray(self.renderer.vao);
         gl::DrawArrays(gl::POINTS, 0, self.renderer.node_count as i32);
         // }
+    }
+
+    pub unsafe fn run_colors_quad_shader(&self, node_index: u32) {
+        self.renderer.get_colors_quad_shader.use_program();
+
+        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+        self.renderer
+            .get_colors_quad_shader
+            .set_uint(c_str!("nodeID"), node_index);
+        self.renderer.get_colors_quad_shader.set_float(
+            c_str!("brickPoolResolution"),
+            CONFIG.brick_pool_resolution as f32,
+        );
+
+        let mut fbo = 0;
+        gl::GenFramebuffers(1, &mut fbo);
+        gl::BindFramebuffer(gl::FRAMEBUFFER, fbo);
+
+        let mut rbo = 0;
+        gl::GenRenderbuffers(1, &mut rbo);
+        gl::BindRenderbuffer(gl::RENDERBUFFER, rbo);
+        gl::RenderbufferStorage(
+            gl::RENDERBUFFER,
+            gl::DEPTH24_STENCIL8,
+            CONFIG.viewport_width as i32,
+            CONFIG.viewport_height as i32,
+        );
+        gl::FramebufferRenderbuffer(
+            gl::FRAMEBUFFER,
+            gl::DEPTH_STENCIL_ATTACHMENT,
+            gl::RENDERBUFFER,
+            rbo,
+        );
+        gl::BindRenderbuffer(gl::RENDERBUFFER, 0);
+
+        gl::FramebufferTexture2D(
+            gl::FRAMEBUFFER,
+            gl::COLOR_ATTACHMENT0,
+            gl::TEXTURE_2D,
+            self.textures.color_quad_textures[0],
+            0,
+        );
+
+        gl::FramebufferTexture2D(
+            gl::FRAMEBUFFER,
+            gl::COLOR_ATTACHMENT1,
+            gl::TEXTURE_2D,
+            self.textures.color_quad_textures[1],
+            0,
+        );
+
+        gl::DrawBuffers(2, [gl::COLOR_ATTACHMENT0, gl::COLOR_ATTACHMENT1].as_ptr());
+
+        if gl::CheckFramebufferStatus(gl::FRAMEBUFFER) != gl::FRAMEBUFFER_COMPLETE {
+            println!("ERROR::FRAMEBUFFER: Framebuffer is not complete!");
+        }
+
+        let quad = Quad::new();
+
+        let (debug, buffer) = helpers::generate_texture_buffer(3, gl::R32F, 69f32);
+        helpers::bind_image_texture(0, debug, gl::WRITE_ONLY, gl::R32F);
+
+        gl::ActiveTexture(gl::TEXTURE0);
+        gl::BindTexture(gl::TEXTURE_3D, self.textures.brick_pool_colors);
+        self.renderer
+            .get_colors_quad_shader
+            .set_int(c_str!("brickPoolColors"), 0);
+        gl::BindVertexArray(quad.get_vao());
+
+        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
+        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
+        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::REPEAT as i32);
+        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+
+        gl::Enable(gl::DEPTH_TEST);
+        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+        self.renderer
+            .get_colors_quad_shader
+            .set_bool(c_str!("isNeighbor"), false);
+        gl::DrawElements(
+            gl::TRIANGLES,
+            quad.get_num_indices() as i32,
+            gl::UNSIGNED_INT,
+            std::ptr::null(),
+        );
+
+        let debug_values = helpers::get_values_from_texture_buffer(buffer, 3, 420f32);
+        dbg!(&debug_values);
+
+        self.renderer
+            .get_colors_quad_shader
+            .set_bool(c_str!("isNeighbor"), true);
+        gl::DrawElements(
+            gl::TRIANGLES,
+            quad.get_num_indices() as i32,
+            gl::UNSIGNED_INT,
+            std::ptr::null(),
+        );
+
+        gl::BindVertexArray(0);
+        gl::BindTexture(gl::TEXTURE_3D, 0);
+        gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
     }
 
     pub unsafe fn run_eye_ray_shader(

@@ -35,7 +35,7 @@ float findVoxelOcclusion(vec3 queryCoordinates, Node node) {
 
 // Linearly interpolates a and b with weight applying to a and (1 - weight) to b
 float interpolate(float a, float b, float weight) {
-    return a * weight + b * (1 - weight);
+    return a * (1 - weight) + b * weight;
 }
 
 bool fallsOutsideNode(vec3 queryCoordinates, Node node) {
@@ -60,12 +60,13 @@ float ambientOcclusion(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle,
     Node previousParentNode;
     int steps = 0;
 
-    distanceAlongCone += voxelSize * 1.41421356;
+    distanceAlongCone += voxelSize * 0.1;
     while (distanceAlongCone < maxDistance && totalOcclusion < 1.0) {
         float coneDiameter = coneDiameterCoefficient * distanceAlongCone;
-        float lod = calculateLod(coneDiameter);
+        // float lod = calculateLod(coneDiameter);
+        float lod = 7;
         uint octreeLevel = uint(ceil(lod));
-        float childWeight = octreeLevel - lod; // Non-linear, we should approximate the log with many lines
+        float parentWeight = octreeLevel - lod; // Non-linear, we should approximate the log with many lines
 
         bool changedOctreeLevel = octreeLevel != previousOctreeLevel;
         if (changedOctreeLevel) {
@@ -97,8 +98,8 @@ float ambientOcclusion(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle,
         float childOcclusion = findVoxelOcclusion(queryCoordinates, node);
         float parentOcclusion = findVoxelOcclusion(queryCoordinates, parentNode);
 
-        float occlusion = interpolate(childOcclusion, parentOcclusion, childWeight); // Quadrilinear interpolation
-        occlusion = 1.0 - pow((1.0 - occlusion), stepMultiplier); // Step correction
+        float occlusion = interpolate(childOcclusion, parentOcclusion, parentWeight); // Quadrilinear interpolation
+        // occlusion = 1.0 - pow((1.0 - occlusion), stepMultiplier); // Step correction
         totalOcclusion += (1 - totalOcclusion) * occlusion;
 
         distanceAlongCone += sampleStep;
@@ -109,6 +110,8 @@ float ambientOcclusion(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle,
         previousOctreeLevel = octreeLevel;
         previousNode = node;
         previousParentNode = parentNode;
+
+        break;
     }
 
     return max(1.0 - totalOcclusion, 0.0);
