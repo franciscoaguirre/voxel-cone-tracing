@@ -62,7 +62,7 @@ float ambientOcclusion(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle,
     Node previousParentNode;
     int steps = 0;
 
-    // distanceAlongCone += voxelSize;
+    distanceAlongCone += voxelSize;
     while (distanceAlongCone < maxDistance && totalOcclusion < 1.0) {
         float coneDiameter = coneDiameterCoefficient * distanceAlongCone;
         // float lod = calculateLod(coneDiameter);
@@ -101,7 +101,7 @@ float ambientOcclusion(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle,
         float parentOcclusion = findVoxelOcclusion(queryCoordinates, parentNode);
 
         float occlusion = interpolate(childOcclusion, parentOcclusion, parentWeight); // Quadrilinear interpolation
-        // occlusion = 1.0 - pow((1.0 - occlusion), stepMultiplier); // Step correction
+        occlusion = 1.0 - pow((1.0 - occlusion), stepMultiplier); // Step correction
         totalOcclusion += (1 - totalOcclusion) * occlusion;
 
         distanceAlongCone += sampleStep;
@@ -113,7 +113,7 @@ float ambientOcclusion(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle,
         previousNode = node;
         previousParentNode = parentNode;
 
-        break;
+        // break;
     }
 
     return max(1.0 - totalOcclusion, 0.0);
