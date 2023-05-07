@@ -67,8 +67,8 @@ void main() {
     vec3 position = (frag_position + vec3(1.0)) / 2.0;
     // mat3 normalMatrix = mat3(transpose(inverse(view * model)));
     // vec3 normal = normalize(vec3(vec4(normalMatrix * frag_normal, 0)));
-    // vec3 direction = normalize(frag_normal);
-    vec3 direction = vec3(0, 0, 1);
+    vec3 direction = normalize(frag_normal);
+    // vec3 direction = vec3(0, 0, 1);
     vec3 helper = direction - vec3(0.1, 0, 0); // Random vector
     vec3 tangent = normalize(helper - dot(direction, helper) * direction);
     vec3 bitangent = cross(direction, tangent);
@@ -95,7 +95,7 @@ void main() {
     // AO /= 5;
 
     // FragColor = vec4(texture(texture_diffuse1, frag_textureCoordinates).xyz - vec3(AO), 1);
-     FragColor = vec4(vec3(AO), 1.0);
+    FragColor = vec4(vec3(AO), 1.0);
     //vec4 color = texture(texture_diffuse1, frag_textureCoordinates);
     //FragColor = vec4(color.rgb * AO, color.a);
 }
