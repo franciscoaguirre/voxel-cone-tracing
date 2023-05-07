@@ -70,8 +70,7 @@ uvec3 calculateBrickVoxel(vec3 nodeCoordinates, float halfNodeSize, vec3 queryCo
 
 vec3 calculateNormalizedBrickVoxel(vec3 nodeCoordinates, float halfNodeSize, vec3 queryCoordinates) {
     vec3 voxelCoordinates = (queryCoordinates - nodeCoordinates) / (halfNodeSize * 2);
-    vec3 offset = voxelCoordinates * (2.0 / 3.0) + (1.0 / 6.0);
-    return offset;
+    return voxelCoordinates;
 }
 
 ivec3 calculateBrickCoordinates(int nodeID) {
