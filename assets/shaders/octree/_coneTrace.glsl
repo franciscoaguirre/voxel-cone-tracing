@@ -6,7 +6,6 @@
 // - _octreeTraversal
 
 const float brickPoolResolution = 384.0;
-const float brickPoolBrickSize = 3.0 / brickPoolResolution;
 
 // Returns values in [0, maxOctreeLevel]
 float calculateLod(float coneDiameter) {
@@ -28,7 +27,7 @@ float findVoxelOcclusion(vec3 queryCoordinates, Node node) {
     // offset between 0 and 1
     vec3 brickOffset = calculateNormalizedBrickVoxel(node.coordinates, node.halfNodeSize, queryCoordinates);
     // offset between 0 and brickPoolColors normalized brick size
-    vec3 brickOffsetColors = brickOffset * brickPoolBrickSize;
+    vec3 brickOffsetColors = brickOffset / (brickPoolResolution - 1.0);
     vec4 color = texture(brickPoolColors, brickCoordinates + brickOffsetColors);
     return color.a;
 }
@@ -60,11 +59,11 @@ float ambientOcclusion(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle,
     Node previousParentNode;
     int steps = 0;
 
-    distanceAlongCone += voxelSize * 0.1;
+    distanceAlongCone += voxelSize;
     while (distanceAlongCone < maxDistance && totalOcclusion < 1.0) {
         float coneDiameter = coneDiameterCoefficient * distanceAlongCone;
-        // float lod = calculateLod(coneDiameter);
-        float lod = 7;
+        float lod = calculateLod(coneDiameter);
+        // float lod = 7;
         uint octreeLevel = uint(ceil(lod));
         float parentWeight = octreeLevel - lod; // Non-linear, we should approximate the log with many lines
 
@@ -111,7 +110,7 @@ float ambientOcclusion(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle,
         previousNode = node;
         previousParentNode = parentNode;
 
-        break;
+        // break;
     }
 
     return max(1.0 - totalOcclusion, 0.0);
