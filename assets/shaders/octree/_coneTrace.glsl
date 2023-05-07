@@ -24,12 +24,14 @@ float calculateLod(float coneDiameter) {
 //}
 
 float findVoxelOcclusion(vec3 queryCoordinates, Node node) {
-    vec3 brickCoordinates = calculateBrickCoordinates(node.id) / (brickPoolResolution - 1.0);
     // offset between 0 and 1
-    vec3 brickOffset = calculateNormalizedBrickVoxel(node.coordinates, node.halfNodeSize, queryCoordinates);
-    // offset between 0 and brickPoolColors normalized brick size
-    vec3 brickOffsetColors = brickOffset * brickPoolBrickSize;
-    vec4 color = texture(brickPoolColors, brickCoordinates + brickOffsetColors);
+    vec3 normalizedBrickOffset = calculateNormalizedBrickVoxel(node.coordinates, node.halfNodeSize, queryCoordinates);
+    // offset between 0.5 and 2.5
+    vec3 offset = (normalizedBrickOffset * (2.0 / 3.0) + (1.0 / 6.0)) * 3.0;
+
+    vec3 voxelCoordinates = vec3(calculateBrickCoordinates(node.id)) + offset;
+    vec3 normalizedVoxelCoordinates = voxelCoordinates / brickPoolResolution;
+    vec4 color = texture(brickPoolColors, normalizedVoxelCoordinates);
     return color.a;
 }
 
