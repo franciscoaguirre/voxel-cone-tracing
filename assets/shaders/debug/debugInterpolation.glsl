@@ -32,8 +32,6 @@ uniform float brickPoolResolution;
 
 #include "assets/shaders/octree/_helpers.glsl"
 
-float brickPoolBrickSize = 3.0 / brickPoolResolution;
-
 void main() {
     // FragColor = texture(brickPoolColors, TexCoords);
 
@@ -46,8 +44,8 @@ void main() {
         nodeColor = vec4(
             vec3(texture(
                 brickPoolColors,
-                brickCoordinates + vec3(TexCoords, 0) * (2.0 / 3.0) * brickPoolBrickSize).a
-            ),
+                brickCoordinates + (vec3(TexCoords, 0) * (2.0 / 3.0) + (1.0 / 6.0)) / (brickPoolResolution - 1.0)
+            ).a),
             1
         );
         nodeColor.rgb = vec3(1) - nodeColor.rgb;
