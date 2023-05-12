@@ -38,7 +38,7 @@ impl Octree {
         border_transfer.run(
             &self.textures,
             CONFIG.octree_levels - 1,
-            &self.nodes_per_level,
+            &self.geometry_data.node_data,
         );
 
         for level in (0..CONFIG.octree_levels - 1).rev() {
@@ -47,9 +47,8 @@ impl Octree {
             mipmap_corners.run(&self.textures, level);
             mipmap_edges.run(&self.textures, level);
 
-            // TODO: Fix in higher levels
             if level > 0 {
-                border_transfer.run(&self.textures, level, &self.nodes_per_level);
+                border_transfer.run(&self.textures, level, &self.geometry_data.node_data);
             }
         }
     }

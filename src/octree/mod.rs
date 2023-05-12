@@ -3,7 +3,12 @@ use std::{ffi::c_void, mem::size_of};
 use gl::types::GLuint;
 use log::debug;
 
-use crate::{config::CONFIG, constants, helpers, rendering::shader::Shader};
+use crate::{
+    config::CONFIG,
+    constants, helpers,
+    rendering::shader::Shader,
+    types::{BufferTexture, Texture2D, Texture3D},
+};
 
 mod build;
 mod lighting;
@@ -11,16 +16,10 @@ mod visualize;
 
 pub use visualize::BricksToShow;
 
-type Texture = GLuint;
-type Texture2D = GLuint;
-type Texture3D = GLuint;
-type TextureBuffer = GLuint;
-type BufferTexture = (Texture, TextureBuffer);
-
 pub struct Octree {
-    nodes_per_level: Vec<u32>,
+    geometry_data: OctreeData,
+    border_data: OctreeData,
     pub textures: OctreeTextures,
-    voxel_data: VoxelData,
     renderer: Renderer,
 }
 
@@ -29,7 +28,6 @@ pub struct OctreeTextures {
     brick_pointers: BufferTexture,
     pub node_positions: BufferTexture,
     neighbors: [BufferTexture; 6],
-    level_start_indices: BufferTexture,
     pub brick_pool_colors: Texture3D,
     brick_pool_normals: Texture3D,
     pub brick_pool_photons: Texture3D,
@@ -38,11 +36,39 @@ pub struct OctreeTextures {
     pub color_quad_textures: [Texture2D; 2],
 }
 
+pub struct OctreeData {
+    node_data: NodeData,
+    voxel_data: VoxelData,
+}
+
+#[derive(Debug)]
+pub enum OctreeDataType {
+    Geometry,
+    Border,
+}
+
+impl OctreeData {
+    pub fn number_of_nodes(&self) -> usize {
+        self.node_data.number_of_nodes()
+    }
+}
+
+pub struct NodeData {
+    nodes_per_level: Vec<u32>,
+    level_start_indices: BufferTexture,
+}
+
+impl NodeData {
+    pub fn number_of_nodes(&self) -> usize {
+        self.nodes_per_level.iter().sum::<u32>() as usize
+    }
+}
+
 pub struct VoxelData {
-    voxel_positions: Texture,
+    voxel_positions: BufferTexture,
     number_of_voxel_fragments: u32,
-    voxel_colors: Texture,
-    voxel_normals: Texture,
+    voxel_colors: BufferTexture,
+    voxel_normals: BufferTexture,
 }
 
 struct Renderer {
@@ -63,20 +89,49 @@ struct Renderer {
 impl Octree {
     /// Creates a Sparse Voxel Octree (SVO)
     pub unsafe fn new(
-        voxel_positions_texture: GLuint,
+        voxel_positions: BufferTexture,
         number_of_voxel_fragments: u32,
-        voxel_colors_texture: GLuint,
-        voxel_normals_texture: GLuint,
+        voxel_colors: BufferTexture,
+        voxel_normals: BufferTexture,
     ) -> Self {
         let max_node_pool_size = Self::get_max_node_pool_size();
         let max_node_pool_size_in_bytes = size_of::<GLuint>() * max_node_pool_size as usize;
         let textures = Self::initialize_textures(max_node_pool_size_in_bytes);
-        let nodes_per_level = Vec::new();
-        let voxel_data = VoxelData {
-            voxel_positions: voxel_positions_texture,
-            voxel_colors: voxel_colors_texture,
-            voxel_normals: voxel_normals_texture,
-            number_of_voxel_fragments,
+        let geometry_data = OctreeData {
+            node_data: NodeData {
+                nodes_per_level: Vec::new(),
+                level_start_indices: helpers::generate_texture_buffer(
+                    (CONFIG.octree_levels + 1) as usize,
+                    gl::R32UI,
+                    0u32,
+                ),
+            },
+            voxel_data: VoxelData {
+                voxel_positions,
+                number_of_voxel_fragments,
+                voxel_colors,
+                voxel_normals,
+            },
+        };
+        let border_data = OctreeData {
+            node_data: NodeData {
+                nodes_per_level: Vec::new(),
+                level_start_indices: helpers::generate_texture_buffer(
+                    (CONFIG.octree_levels + 1) as usize,
+                    gl::R32UI,
+                    0u32,
+                ),
+            },
+            voxel_data: VoxelData {
+                voxel_positions: helpers::generate_texture_buffer(
+                    size_of::<GLuint>() * number_of_voxel_fragments as usize, // TODO: Should be smaller
+                    gl::R32UI,
+                    0u32,
+                ),
+                number_of_voxel_fragments: 0, // Will be initialized empty later
+                voxel_colors: (0, 0),         // Will be initialized empty later
+                voxel_normals: (0, 0),        // Will be initialized empty later
+            },
         };
         let renderer = Renderer {
             vao: 0,
@@ -116,9 +171,9 @@ impl Octree {
         };
 
         let mut octree = Self {
+            geometry_data,
+            border_data,
             textures,
-            nodes_per_level,
-            voxel_data,
             renderer,
         };
 
@@ -147,11 +202,6 @@ impl Octree {
                 helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // Z
                 helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // -Z
             ],
-            level_start_indices: helpers::generate_texture_buffer(
-                (CONFIG.octree_levels + 1) as usize,
-                gl::R32UI,
-                0u32,
-            ),
             brick_pool_colors: helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution),
             brick_pool_normals: helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution),
             brick_pool_photons: helpers::generate_3d_r32ui_texture(CONFIG.brick_pool_resolution),
@@ -199,7 +249,7 @@ impl Octree {
     }
 
     pub fn number_of_nodes(&self) -> usize {
-        self.nodes_per_level.iter().sum::<u32>() as usize
+        self.geometry_data.number_of_nodes() + self.border_data.number_of_nodes()
     }
 
     pub unsafe fn show_nodes(&self, offset: usize, number_of_nodes: usize) {

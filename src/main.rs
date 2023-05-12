@@ -15,6 +15,7 @@ mod helpers;
 mod menu;
 mod octree;
 mod rendering;
+mod types;
 mod voxelization;
 
 use cli_arguments::Options;
@@ -90,20 +91,16 @@ fn main() {
 
     let model_normalization_matrix = normalize_size_matrix * center_scene_matrix;
 
-    let (
-        number_of_voxel_fragments,
-        voxel_positions_texture,
-        voxel_colors_texture,
-        voxel_normals_texture,
-    ) = unsafe { voxelization::build_voxel_fragment_list(&our_model) };
+    let (voxel_positions, number_of_voxel_fragments, voxel_colors, voxel_normals) =
+        unsafe { voxelization::build_voxel_fragment_list(&our_model) };
     info!("Number of voxel fragments: {}", number_of_voxel_fragments);
 
     let mut octree = unsafe {
         Octree::new(
-            voxel_positions_texture,
+            voxel_positions,
             number_of_voxel_fragments,
-            voxel_colors_texture,
-            voxel_normals_texture,
+            voxel_colors,
+            voxel_normals,
         )
     };
 
@@ -175,8 +172,8 @@ fn main() {
     let mut bricks_to_show = BricksToShow::default();
 
     let render_voxel_fragments_shader = RenderVoxelFragmentsShader::init(
-        voxel_positions_texture,
-        voxel_colors_texture,
+        voxel_positions.0,
+        voxel_colors.0,
         number_of_voxel_fragments,
     );
 

@@ -36,7 +36,7 @@ impl Octree {
         );
         helpers::bind_image_texture(
             3,
-            self.voxel_data.voxel_positions,
+            self.geometry_data.voxel_data.voxel_positions.0,
             gl::READ_ONLY,
             gl::RGB10_A2UI,
         );
@@ -67,7 +67,7 @@ impl Octree {
         gl::DrawArrays(
             gl::POINTS,
             0,
-            self.voxel_data.number_of_voxel_fragments as i32,
+            self.geometry_data.voxel_data.number_of_voxel_fragments as i32,
         );
     }
 
@@ -123,7 +123,7 @@ impl Octree {
         //);
         helpers::bind_image_texture(
             4,
-            self.textures.level_start_indices.0,
+            self.geometry_data.node_data.level_start_indices.0,
             gl::READ_ONLY,
             gl::R32UI,
         );
@@ -142,7 +142,7 @@ impl Octree {
             gl::DrawArrays(
                 gl::POINTS,
                 0,
-                self.nodes_per_level[octree_level as usize] as i32,
+                self.geometry_data.node_data.nodes_per_level[octree_level as usize] as i32,
             );
         }
 
@@ -154,7 +154,7 @@ impl Octree {
             gl::DrawArrays(
                 gl::POINTS,
                 0,
-                self.nodes_per_level[octree_level as usize] as i32,
+                self.geometry_data.node_data.nodes_per_level[octree_level as usize] as i32,
             );
         }
 
@@ -166,7 +166,7 @@ impl Octree {
             gl::DrawArrays(
                 gl::POINTS,
                 0,
-                self.nodes_per_level[octree_level as usize] as i32,
+                self.geometry_data.node_data.nodes_per_level[octree_level as usize] as i32,
             );
         }
     }
@@ -243,7 +243,13 @@ impl Octree {
         );
         helpers::bind_image_texture(
             1,
-            self.textures.level_start_indices.0,
+            self.geometry_data.node_data.level_start_indices.0,
+            gl::READ_ONLY,
+            gl::R32UI,
+        );
+        helpers::bind_image_texture(
+            2,
+            self.border_data.node_data.level_start_indices.0,
             gl::READ_ONLY,
             gl::R32UI,
         );
@@ -290,7 +296,13 @@ impl Octree {
         helpers::bind_image_texture(1, self.textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
         helpers::bind_image_texture(
             2,
-            self.textures.level_start_indices.0,
+            self.geometry_data.node_data.level_start_indices.0,
+            gl::READ_ONLY,
+            gl::R32UI,
+        );
+        helpers::bind_image_texture(
+            3,
+            self.border_data.node_data.level_start_indices.0,
             gl::READ_ONLY,
             gl::R32UI,
         );
@@ -383,7 +395,7 @@ impl Octree {
         );
         helpers::bind_image_texture(
             1,
-            self.textures.level_start_indices.0,
+            self.geometry_data.node_data.level_start_indices.0,
             gl::READ_ONLY,
             gl::R32UI,
         );
@@ -404,6 +416,12 @@ impl Octree {
             self.textures.brick_pool_normals,
             gl::READ_ONLY,
             gl::RGBA8,
+        );
+        helpers::bind_image_texture(
+            5,
+            self.border_data.node_data.level_start_indices.0,
+            gl::READ_ONLY,
+            gl::R32UI,
         );
 
         // for _ in 0..3 {

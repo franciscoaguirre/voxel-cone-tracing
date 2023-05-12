@@ -4,7 +4,7 @@ use crate::{
     config::CONFIG,
     constants::{X_AXIS, Y_AXIS, Z_AXIS},
     helpers,
-    octree::{build::BrickPoolValues, OctreeTextures},
+    octree::{build::BrickPoolValues, NodeData, OctreeTextures},
     rendering::shader::Shader,
 };
 
@@ -22,7 +22,7 @@ impl BorderTransferPass {
     pub unsafe fn run(
         &self,
         textures: &OctreeTextures,
-        nodes_per_level: &[u32],
+        node_data: &NodeData,
         octree_level: u32,
         brick_pool_values: BrickPoolValues,
     ) {
@@ -44,9 +44,9 @@ impl BorderTransferPass {
                 gl::RGBA8,
             ),
         }
-        helpers::bind_image_texture(2, textures.level_start_indices.0, gl::READ_ONLY, gl::R32UI);
+        helpers::bind_image_texture(2, node_data.level_start_indices.0, gl::READ_ONLY, gl::R32UI);
 
-        let nodes_in_level = nodes_per_level[octree_level as usize];
+        let nodes_in_level = node_data.nodes_per_level[octree_level as usize];
         let groups_count = (nodes_in_level as f32 / CONFIG.working_group_size as f32).ceil() as u32;
 
         self.shader.set_uint(c_str!("axis"), X_AXIS);
