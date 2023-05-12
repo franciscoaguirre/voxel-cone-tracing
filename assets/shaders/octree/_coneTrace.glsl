@@ -23,7 +23,7 @@ float calculateLod(float coneDiameter) {
    //return color.a;
 //}
 
-float findVoxelOcclusion(vec3 queryCoordinates, Node node) {
+vec3 findVoxel(vec3 queryCoordinates, Node node) {
     // offset between 0 and 1
     vec3 normalizedBrickOffset = calculateNormalizedBrickVoxel(node.coordinates, node.halfNodeSize, queryCoordinates);
     // offset between 0.5 and 2.5
@@ -31,8 +31,7 @@ float findVoxelOcclusion(vec3 queryCoordinates, Node node) {
 
     vec3 voxelCoordinates = vec3(calculateBrickCoordinates(node.id)) + offset;
     vec3 normalizedVoxelCoordinates = voxelCoordinates / brickPoolResolution;
-    vec4 color = texture(brickPoolColors, normalizedVoxelCoordinates);
-    return color.a;
+    return normalizedVoxelCoordinates;
 }
 
 // bool fallsOutsideNode(vec3 queryCoordinates, Node node) {
@@ -46,7 +45,7 @@ float findVoxelOcclusion(vec3 queryCoordinates, Node node) {
 // rayOrigin should be between 0 and 1
 // maxDistance should be max 1
 float coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float maxDistance) {
-    float totalOcclusion = 0;
+    vec4 returnColor = vec4(0);
     uint previousOctreeLevel = maxOctreeLevel;
     float voxelSize = 1.0 / float(voxelDimension);
     float stepMultiplier = 1.0 / 3.0;
@@ -58,7 +57,7 @@ float coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float 
     int steps = 0;
 
     distanceAlongCone += voxelSize * 2;
-    while (distanceAlongCone < maxDistance && totalOcclusion < 1.0) {
+    while (distanceAlongCone < maxDistance && returnColor.a < 1.0) {
         float coneDiameter = coneDiameterCoefficient * distanceAlongCone;
         float lod = calculateLod(coneDiameter);
         uint octreeLevel = uint(ceil(lod));
@@ -91,13 +90,15 @@ float coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float 
             parentNode = previousParentNode;
         }
 
-        float childOcclusion = findVoxelOcclusion(queryCoordinates, node);
-        childOcclusion = 1.0 - pow((1.0 - childOcclusion), stepMultiplier); // Step correction
-        float parentOcclusion = findVoxelOcclusion(queryCoordinates, parentNode);
-        parentOcclusion = 1.0 - pow((1.0 - parentOcclusion), stepMultiplier); // Step correction
+        vec3 childVoxelCoordinates = findVoxel(queryCoordinates, node);
+        vec4 childColor = texture(brickPoolColors, childVoxelCoordinates);
+        childColor.a = 1.0 - pow((1.0 - childColor.a), stepMultiplier); // Step correction
+        vec3 parentVoxelCoordinates = findVoxel(queryCoordinates, parentNode);
+        vec4 parentColor = texture(brickPoolColors, parentVoxelCoordinates);
+        parentColor.a = 1.0 - pow((1.0 - parentColor.a), stepMultiplier); // Step correction
 
-        float occlusion = mix(childOcclusion, parentOcclusion, parentWeight); // Quadrilinear interpolation
-        totalOcclusion += (1 - totalOcclusion) * occlusion;
+        vec4 newColor = mix(childColor, parentColor, parentWeight); // Quadrilinear interpolation
+        returnColor += (1 - returnColor.a) * newColor;
 
         distanceAlongCone += sampleStep;
 
@@ -111,7 +112,7 @@ float coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float 
         // break;
     }
 
-    return max(1.0 - totalOcclusion, 0.0);
+    return max(1.0 - returnColor.a, 0.0);
 }
 
 // TODO: For use later with indirect light
