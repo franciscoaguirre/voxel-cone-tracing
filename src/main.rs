@@ -475,6 +475,7 @@ fn main() {
             light.draw_gizmo(&projection, &view);
             // quad.render(octree.textures.color_quad_textures[0]);
             // quad.render(eye_view_map_view);
+            quad.render(light_view_map_view);
         }
 
         unsafe {
