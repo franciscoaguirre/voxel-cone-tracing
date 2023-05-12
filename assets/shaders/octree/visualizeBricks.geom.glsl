@@ -28,13 +28,13 @@ const int BY_PHOTONS = 0;
 const int BY_COLOR = 1;
 
 vec4 showProp(ivec3 coordinates, int type) {
-    if(type == BY_PHOTONS) {
+    if (type == BY_PHOTONS) {
       uint photonCount = imageLoad(brickPoolPhotons, coordinates).r;
       if (photonCount > 0) {
           return vec4(1.0, 1.0, 1.0, 1.0);
       }
       return vec4(0.0, 0.0, 0.0, 1.0);
-    } else if(type == BY_COLOR) {
+    } else if (type == BY_COLOR) {
       return imageLoad(brickPoolColors, coordinates);
     }
 }
