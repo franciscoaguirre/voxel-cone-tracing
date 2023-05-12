@@ -88,6 +88,7 @@ impl Octree {
         shader_passes
             .write_leaf_nodes_pass
             .run(&self.geometry_data.voxel_data, &self.textures);
+
         shader_passes.spread_leaf_bricks_pass.run(
             &self.textures,
             &self.geometry_data.node_data,
@@ -102,6 +103,12 @@ impl Octree {
         shader_passes.border_transfer_pass.run(
             &self.textures,
             &self.geometry_data.node_data,
+            CONFIG.octree_levels - 1,
+            BrickPoolValues::Colors,
+        );
+        shader_passes.border_transfer_pass.run(
+            &self.textures,
+            &self.border_data.node_data,
             CONFIG.octree_levels - 1,
             BrickPoolValues::Colors,
         );
@@ -173,6 +180,12 @@ impl Octree {
                 );
                 shader_passes.border_transfer_pass.run(
                     &self.textures,
+                    &self.border_data.node_data,
+                    level,
+                    BrickPoolValues::Colors,
+                );
+                shader_passes.border_transfer_pass.run(
+                    &self.textures,
                     &self.geometry_data.node_data,
                     level,
                     BrickPoolValues::Normals,
@@ -190,42 +203,50 @@ impl Octree {
     ) {
         log::trace!("Voxels to nodes called for: {:?}", octree_data_type);
 
-        let octree_data = match octree_data_type {
-            OctreeDataType::Geometry => &mut self.geometry_data,
-            OctreeDataType::Border => &mut self.border_data,
-        };
-
         let mut octree_level_start_indices = Vec::with_capacity(CONFIG.octree_levels as usize);
         let mut first_node_in_level = 0; // Index of first node in a given octree level
 
         // First level of nodes only has root.
         // If the octree_data doesn't have root, this should have no meaning.
-        let first_level_start = if octree_data
-            .node_data
-            .nodes_per_level
-            .first()
-            .filter(|&&nodes_on_first_level| nodes_on_first_level > 0)
-            .is_some()
-        {
-            0
-        } else {
-            -1
+        let first_level_start = match octree_data_type {
+            OctreeDataType::Geometry => 0,
+            OctreeDataType::Border => -1,
         };
         octree_level_start_indices.push(first_level_start);
 
+        let voxel_data = match octree_data_type {
+            OctreeDataType::Geometry => &self.geometry_data.voxel_data,
+            OctreeDataType::Border => &self.border_data.voxel_data,
+        };
+
         for octree_level in 0..CONFIG.octree_levels - 1 {
-            shader_passes.flag_nodes_pass.run(
-                &octree_data.voxel_data,
-                &self.textures,
-                octree_level,
-            );
+            shader_passes
+                .flag_nodes_pass
+                .run(&voxel_data, &self.textures, octree_level);
             shader_passes.allocate_nodes_pass.run(
-                &octree_data.voxel_data,
+                &voxel_data,
                 &self.textures,
                 allocated_nodes_counter,
                 first_node_in_level,
                 *first_free_node,
             );
+            if let OctreeDataType::Border = octree_data_type {
+                let geometry_level_start_indices = helpers::get_values_from_texture_buffer(
+                    self.geometry_data.node_data.level_start_indices.1,
+                    (CONFIG.octree_levels + 1) as usize,
+                    0u32,
+                );
+                let geometry_first_node_in_level =
+                    geometry_level_start_indices[octree_level as usize];
+
+                shader_passes.allocate_nodes_pass.run(
+                    &voxel_data,
+                    &self.textures,
+                    allocated_nodes_counter,
+                    geometry_first_node_in_level as i32,
+                    *first_free_node,
+                );
+            }
 
             let nodes_allocated = helpers::get_value_from_atomic_counter(allocated_nodes_counter);
             log::info!(
@@ -234,7 +255,22 @@ impl Octree {
                 nodes_allocated
             );
 
-            octree_data.node_data.nodes_per_level.push(nodes_allocated);
+            // TODO: Separate node_data and voxel_data top-level.
+            // The only mutable thing we need is node_data.
+            // If we had node_data separate from voxel_data we could mutably borrow it and
+            // immutably borrow voxel_data on a per voxel type basis.
+            match octree_data_type {
+                OctreeDataType::Geometry => self
+                    .geometry_data
+                    .node_data
+                    .nodes_per_level
+                    .push(nodes_allocated),
+                OctreeDataType::Border => self
+                    .border_data
+                    .node_data
+                    .nodes_per_level
+                    .push(nodes_allocated),
+            }
             first_node_in_level = *first_free_node;
             // TODO: Corroborar empíricamente
             // first_node_in_level +=
@@ -246,29 +282,41 @@ impl Octree {
 
             octree_level_start_indices.push(first_node_in_level);
 
-            shader_passes.store_node_positions_pass.run(
-                &self.textures,
-                octree_level,
-                &octree_data.voxel_data,
-            );
-            shader_passes.neighbor_pointers_pass.run(
-                &octree_data.voxel_data,
-                &octree_data.node_data,
-                &self.textures,
-                octree_level + 1,
-            );
+            shader_passes
+                .store_node_positions_pass
+                .run(&self.textures, octree_level, &voxel_data);
+
+            match octree_data_type {
+                OctreeDataType::Geometry => shader_passes.neighbor_pointers_pass.run(
+                    &voxel_data,
+                    &self.geometry_data.node_data,
+                    &self.textures,
+                    octree_level + 1,
+                ),
+                OctreeDataType::Border => shader_passes.neighbor_pointers_pass.run(
+                    &voxel_data,
+                    &self.border_data.node_data,
+                    &self.textures,
+                    octree_level + 1,
+                ),
+            }
         }
 
         shader_passes.store_node_positions_pass.run(
             &self.textures,
             CONFIG.octree_levels - 1, // Last level
-            &octree_data.voxel_data,
+            &voxel_data,
         );
 
         // Start of level CONFIG.octree_levels, shouldn't have anything
         // since we go from level 0 to CONFIG.octree_levels - 1.
         // Works as an upper bound to the nodeIDs in CONFIG.octree_levels - 1, the last level.
         octree_level_start_indices.push(*first_free_node);
+
+        let octree_data = match octree_data_type {
+            OctreeDataType::Geometry => &self.geometry_data,
+            OctreeDataType::Border => &self.border_data,
+        };
 
         helpers::fill_texture_buffer_with_data(
             octree_data.node_data.level_start_indices.1,
