@@ -30,7 +30,7 @@ impl Default for Config {
             viewport_width: 1024,
             viewport_height: 1024,
             voxel_dimension: 256,
-            brick_pool_resolution: 70 * 3,
+            brick_pool_resolution: 384,
             octree_levels: 8,
             working_group_size: 64,
         }

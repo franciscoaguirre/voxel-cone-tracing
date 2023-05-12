@@ -223,7 +223,7 @@ impl Octree {
             .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
         self.renderer
             .node_positions_shader
-            .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels);
+            .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels + 1);
 
         self.renderer
             .node_positions_shader
@@ -275,7 +275,7 @@ impl Octree {
             .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
         self.renderer
             .node_neighbors_shader
-            .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels);
+            .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels + 1);
 
         self.renderer
             .node_neighbors_shader
@@ -375,7 +375,7 @@ impl Octree {
             .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
         self.renderer
             .node_bricks_shader
-            .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels);
+            .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels + 1);
 
         self.renderer
             .node_bricks_shader
@@ -424,14 +424,16 @@ impl Octree {
             gl::R32UI,
         );
 
-        // for _ in 0..3 {
-        self.renderer
-            .node_bricks_shader
-            .set_uint(c_str!("bricksToShow"), self.renderer.bricks_to_show.into());
+        for z_layer in 0..3 {
+            let mask = 2u32.pow(z_layer);
+            let brick_layer_to_show: u32 = self.renderer.bricks_to_show.into();
+            self.renderer
+                .node_bricks_shader
+                .set_uint(c_str!("bricksToShow"), brick_layer_to_show & mask);
 
-        gl::BindVertexArray(self.renderer.vao);
-        gl::DrawArrays(gl::POINTS, 0, self.renderer.node_count as i32);
-        // }
+            gl::BindVertexArray(self.renderer.vao);
+            gl::DrawArrays(gl::POINTS, 0, self.renderer.node_count as i32);
+        }
     }
 
     pub unsafe fn run_colors_quad_shader(&self, node_index: u32) {

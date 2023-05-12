@@ -29,7 +29,6 @@ out vec4 frag_color;
 uniform mat4 projection;
 uniform mat4 view;
 
-const float MAGNITUDE = 0.5;
 const float PI = 3.14159;
 
 #include "./_drawCone.glsl"

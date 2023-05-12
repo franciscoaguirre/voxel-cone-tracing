@@ -35,23 +35,18 @@ float findVoxelOcclusion(vec3 queryCoordinates, Node node) {
     return color.a;
 }
 
-// Linearly interpolates a and b with weight applying to a and (1 - weight) to b
-float interpolate(float a, float b, float weight) {
-    return a * (1 - weight) + b * weight;
-}
-
-bool fallsOutsideNode(vec3 queryCoordinates, Node node) {
-    bool fallsOutsideX = (
-        queryCoordinates.x > node.coordinates.x ||
-            queryCoordinates.x < node.coordinates.x
-    );
-    return fallsOutsideX;
-}
+// bool fallsOutsideNode(vec3 queryCoordinates, Node node) {
+//     bool fallsOutsideX = (
+//         queryCoordinates.x > node.coordinates.x ||
+//             queryCoordinates.x < node.coordinates.x
+//     );
+//     return fallsOutsideX;
+// }
 
 // rayOrigin should be between 0 and 1
 // maxDistance should be max 1
-float ambientOcclusion(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float maxDistance) {
-    float totalOcclusion = 0.0;
+float coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float maxDistance) {
+    float totalOcclusion = 0;
     uint previousOctreeLevel = maxOctreeLevel;
     float voxelSize = 1.0 / float(voxelDimension);
     float stepMultiplier = 1.0 / 3.0;
@@ -62,11 +57,10 @@ float ambientOcclusion(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle,
     Node previousParentNode;
     int steps = 0;
 
-    distanceAlongCone += voxelSize;
+    distanceAlongCone += voxelSize * 2;
     while (distanceAlongCone < maxDistance && totalOcclusion < 1.0) {
         float coneDiameter = coneDiameterCoefficient * distanceAlongCone;
-        // float lod = calculateLod(coneDiameter);
-        float lod = 7;
+        float lod = calculateLod(coneDiameter);
         uint octreeLevel = uint(ceil(lod));
         float parentWeight = octreeLevel - lod; // Non-linear, we should approximate the log with many lines
 
@@ -98,10 +92,11 @@ float ambientOcclusion(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle,
         }
 
         float childOcclusion = findVoxelOcclusion(queryCoordinates, node);
+        childOcclusion = 1.0 - pow((1.0 - childOcclusion), stepMultiplier); // Step correction
         float parentOcclusion = findVoxelOcclusion(queryCoordinates, parentNode);
+        parentOcclusion = 1.0 - pow((1.0 - parentOcclusion), stepMultiplier); // Step correction
 
-        float occlusion = interpolate(childOcclusion, parentOcclusion, parentWeight); // Quadrilinear interpolation
-        occlusion = 1.0 - pow((1.0 - occlusion), stepMultiplier); // Step correction
+        float occlusion = mix(childOcclusion, parentOcclusion, parentWeight); // Quadrilinear interpolation
         totalOcclusion += (1 - totalOcclusion) * occlusion;
 
         distanceAlongCone += sampleStep;
@@ -119,29 +114,9 @@ float ambientOcclusion(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle,
     return max(1.0 - totalOcclusion, 0.0);
 }
 
-// vec4 coneTrace(vec3 rayOrigin, vec3 rayDirection, float maxDistance) {
-//     vec4 result = vec4(0);
-//     float coneHalfAngle = PI / 3;
-//     float voxelSize = float(1) / voxelDimension;
-//     float sampleStep = voxelSize / 2; // ???
-//     float sampleFactor = 1; // ??? De a cuanto avanzamos
-//     float t = 0;
-
-//     vec4 totalColor = 0;
-//     float totalAlpha = 0;
-//     for (int i = 0; i < steps && totalAlpha < 1.0; i++) {
-//         // sampleStep = sampleStep * sampleFactor;
-//         float coneDiameter = h(sampleStep);
-//         uint octreeLevel = f(coneDiameter);
-//         int nodeID = traverseOctree(coordinates, octreeLevel);
-//         vec4 color = imageLoad(brickPoolColors, nodeID);
-//         uint photonCount = imageLoad(brickPoolPhotons, nodeID).r;
-//         float occlusion = color.a;
-
-//         // Quick math
-//         totalColor = color * radiance; //something
-//         totalAlpha = (1 - occlusion) + totalAlpha; //something
-//     }
-
-//     return totalColor;
+// TODO: For use later with indirect light
+// void correctAlpha(inout vec4 color, in float alphaCorrection) {
+//   const float oldColA = color.a;
+//   color.a = 1.0 - pow((1.0 - color.a), alphaCorrection);
+//   color.xyz *= color.a / clamp(oldColA, 0.0001, 10000.0);
 // }

@@ -7,7 +7,6 @@
     // octree_levels is calculated based on this, given by: log2(voxel_dimension^3) / log2(8).
     // We use one octree level less than expected so leaves only have bricks (not nodes).
     // This allows for interpolation inside the bricks.
-    // Bricks admittedly have 2x2x2 voxels here and not 3x3x3 as in the paper.
     voxel_dimension: 256,
 
     // This is the value domme uses, I don't know if it is okay.

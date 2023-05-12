@@ -62,8 +62,8 @@ void main() {
     // FragColor = totalColor * ambientOcclusion;
 
     float maxDistance = 0.01;
-    // float coneAngle = 0.261799;
-    float coneAngle = 0.000001;
+    float coneAngle = 0.261799;
+    // float coneAngle = 0.000001;
     vec3 position = (frag_position + vec3(1.0)) / 2.0;
     // mat3 normalMatrix = mat3(transpose(inverse(view * model)));
     // vec3 normal = normalize(vec3(vec4(normalMatrix * frag_normal, 0)));
@@ -73,26 +73,26 @@ void main() {
     vec3 tangent = normalize(helper - dot(direction, helper) * direction);
     vec3 bitangent = cross(direction, tangent);
     float AO = 0.0;
-    AO += ambientOcclusion(position, direction, coneAngle, maxDistance); // 15deg as rad
+    AO += coneTrace(position, direction, coneAngle, maxDistance); // 15deg as rad
 
     float angle = 1.0472;
     float sinAngle = sin(angle);
     float cosAngle = cos(angle);
 
     // direction = sinAngle * frag_normal + cosAngle * tangent;
-    // AO += ambientOcclusion(position, direction, coneAngle, maxDistance);
+    // AO += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
 
     // direction = sinAngle * frag_normal - cosAngle * tangent;
-    // AO += ambientOcclusion(position, direction, coneAngle, maxDistance);
+    // AO += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
 
     // direction = sinAngle * frag_normal + cosAngle * bitangent;
-    // AO += ambientOcclusion(position, direction, coneAngle, maxDistance);
+    // AO += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
 
     // direction = sinAngle * frag_normal - cosAngle * bitangent;
-    // AO += ambientOcclusion(position, direction, coneAngle, maxDistance);
-    // //float AO = ambientOcclusion(vec3(0.5, 0.5, 0.46), vec3(0, 0, 1), 0.261799, maxDistance); // 15deg as rad
+    // AO += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
+    // //float AO = coneTrace(vec3(0.5, 0.5, 0.46), vec3(0, 0, 1), 0.261799, maxDistance); // 15deg as rad
 
-    // AO /= 5;
+    // AO /= 3.828;
 
     // FragColor = vec4(texture(texture_diffuse1, frag_textureCoordinates).xyz - vec3(AO), 1);
     FragColor = vec4(vec3(AO), 1.0);

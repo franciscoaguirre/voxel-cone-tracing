@@ -167,6 +167,7 @@ fn main() {
     let mut show_voxel_fragment_list = false;
     let mut show_octree = false;
     let mut node_filter_text = String::new();
+    let mut sampler_number = 0;
 
     let mut should_show_neighbors = false;
     let mut bricks_to_show = BricksToShow::default();
@@ -225,6 +226,7 @@ fn main() {
                     &mut show_voxel_fragment_list,
                     &mut show_octree,
                 );
+                common::handle_sampler_change(&event, &mut sampler_number);
             }
             menu.handle_event(event);
         }
@@ -353,8 +355,13 @@ fn main() {
                 gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
                 gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
                 gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
-                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+                let sampler = match sampler_number {
+                    0 => gl::LINEAR as i32,
+                    1 => gl::NEAREST as i32,
+                    _ => panic!("Wrong number"),
+                };
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, sampler);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, sampler);
                 // let (debug, buffer) = helpers::generate_texture_buffer(100, gl::R32F, 69f32);
                 // helpers::bind_image_texture(4, debug, gl::WRITE_ONLY, gl::R32F);
                 our_model.draw(&voxel_cone_tracing_shader);
@@ -384,7 +391,7 @@ fn main() {
 
             // static_eye.draw_gizmo(&projection, &view);
             light.draw_gizmo(&projection, &view);
-            quad.render(octree.textures.color_quad_textures[0]);
+            // quad.render(octree.textures.color_quad_textures[0]);
         }
 
         unsafe {
