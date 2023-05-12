@@ -145,7 +145,7 @@ fn main() {
             },
         )
     };
-    light.transform.position = point3(0.0, 0.5, -0.5);
+    light.transform.position = point3(0.6, 0.25, -0.25);
     light.transform.set_rotation_x(-45.0);
     // light.transform.set_rotation_y(0.0);
 
@@ -477,6 +477,7 @@ fn main() {
             light.draw_gizmo(&projection, &view);
             // quad.render(octree.textures.color_quad_textures[0]);
             // quad.render(eye_view_map_view);
+            quad.render(light_view_map_view);
         }
 
         unsafe {
