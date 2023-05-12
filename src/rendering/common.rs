@@ -147,6 +147,15 @@ pub fn handle_update_octree_level(
     }
 }
 
+pub fn handle_sampler_change(event: &glfw::WindowEvent, sampler_number: &mut u32) {
+    match *event {
+        glfw::WindowEvent::Key(Key::L, _, Action::Press, _) => {
+            *sampler_number = if *sampler_number == 0 { 1 } else { 0 }
+        }
+        _ => {}
+    }
+}
+
 pub fn handle_showing_entities(
     event: &glfw::WindowEvent,
     show_model: &mut bool,

@@ -20,7 +20,7 @@ uint findOctreeLevel(
     readonly uimageBuffer borderLevelStartIndices,
     uint maxOctreeLevel
 ) {
-    uint octreeLevel = 0;
+    uint octreeLevel = maxOctreeLevel - 1;
     bool foundLevel = false;
 
     // First try to find it in levelStartIndices
