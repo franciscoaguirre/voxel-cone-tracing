@@ -129,6 +129,7 @@ pub fn get_mutable_pointer(number: &mut u32) -> *mut c_void {
     number as *mut u32 as *mut c_void
 }
 
+/// Gets the value from the atomic counter passed in AND resets it
 pub unsafe fn get_value_from_atomic_counter(counter: u32) -> GLuint {
     let mut value: GLuint = 0;
     let reset: GLuint = 0;

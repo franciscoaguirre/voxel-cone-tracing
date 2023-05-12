@@ -23,6 +23,7 @@ void main()
     }
 
     uvec4 voxelFragmentPosition = imageLoad(voxelPositions, int(threadIndex));
+    
     vec3 normalizedFragmentPosition = vec3(voxelFragmentPosition) / float(voxelDimension);
     
     vec3 nodeCoordinates;
@@ -36,5 +37,9 @@ void main()
     uint childLocalID = calculateChildLocalID(nodeCoordinates, halfNodeSize, normalizedFragmentPosition);
     uint childGlobalID = nodeID * CHILDREN_PER_NODE + childLocalID;
 
-    imageStore(nodePool, int(childGlobalID), uvec4(NODE_FLAG_VALUE, 0, 0, 0));
+    uint nodePoolValue = imageLoad(nodePool, int(childGlobalID)).r;
+
+    if (nodePoolValue == 0) {
+        imageStore(nodePool, int(childGlobalID), uvec4(NODE_FLAG_VALUE, 0, 0, 0));
+    }
 }

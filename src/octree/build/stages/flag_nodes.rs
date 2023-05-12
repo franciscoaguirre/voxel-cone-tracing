@@ -17,6 +17,7 @@ impl FlagNodesPass {
     pub unsafe fn run(&self, voxel_data: &VoxelData, textures: &OctreeTextures, octree_level: u32) {
         self.shader.use_program();
 
+        dbg!(&voxel_data.number_of_voxel_fragments);
         self.shader.set_uint(
             c_str!("numberOfVoxelFragments"),
             voxel_data.number_of_voxel_fragments,
@@ -25,7 +26,7 @@ impl FlagNodesPass {
         self.shader
             .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
 
-        helpers::bind_image_texture(0, voxel_data.voxel_positions, gl::READ_ONLY, gl::RGB10_A2);
+        helpers::bind_image_texture(0, voxel_data.voxel_positions.0, gl::READ_ONLY, gl::RGB10_A2);
         helpers::bind_image_texture(1, textures.node_pool.0, gl::READ_WRITE, gl::R32UI);
 
         let groups_count = (voxel_data.number_of_voxel_fragments as f32
