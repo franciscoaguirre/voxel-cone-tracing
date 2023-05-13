@@ -63,7 +63,6 @@ impl AppendBorderVoxelFragmentsPass {
 
         let number_of_voxel_fragments =
             helpers::get_value_from_atomic_counter(next_voxel_fragment_counter);
-        dbg!(&number_of_voxel_fragments);
         border_data.voxel_data.number_of_voxel_fragments = number_of_voxel_fragments;
 
         self.shader.set_bool(c_str!("shouldStore"), true);
@@ -71,20 +70,5 @@ impl AppendBorderVoxelFragmentsPass {
             (number_of_voxel_fragments as f32 / CONFIG.working_group_size as f32).ceil() as u32,
         );
         self.shader.wait();
-
-        let values = helpers::get_values_from_texture_buffer(
-            border_data.voxel_data.voxel_positions.1,
-            100,
-            420u32,
-        );
-        let values = values
-            .iter()
-            .map(|&position| {
-                let (x, y, z) = helpers::r32ui_to_rgb10_a2ui(position);
-                let text = format!("({x}, {y}, {z})");
-                text
-            })
-            .collect::<Vec<String>>();
-        dbg!(&values[..64]);
     }
 }

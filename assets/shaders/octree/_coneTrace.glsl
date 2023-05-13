@@ -44,7 +44,7 @@ vec3 findVoxel(vec3 queryCoordinates, Node node) {
 
 // rayOrigin should be between 0 and 1
 // maxDistance should be max 1
-float coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float maxDistance) {
+vec4 coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float maxDistance) {
     vec4 returnColor = vec4(0);
     uint previousOctreeLevel = maxOctreeLevel;
     float voxelSize = 1.0 / float(voxelDimension);
@@ -112,7 +112,9 @@ float coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float 
         // break;
     }
 
-    return max(1.0 - returnColor.a, 0.0);
+    returnColor.a = min(returnColor.a, 1.0);
+
+    return returnColor;
 }
 
 // TODO: For use later with indirect light

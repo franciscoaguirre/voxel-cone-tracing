@@ -84,6 +84,7 @@ struct Renderer {
     get_children_shader: Shader,
     eye_ray_shader: Shader,
     get_colors_quad_shader: Shader,
+    light_view_map_shader: Shader,
 }
 
 impl Octree {
@@ -168,6 +169,7 @@ impl Octree {
             get_colors_quad_shader: Shader::new_single(
                 "assets/shaders/debug/debugInterpolation.glsl",
             ),
+            light_view_map_shader: Shader::new_single("assets/shaders/octree/lightViewMap.glsl"),
         };
 
         let mut octree = Self {

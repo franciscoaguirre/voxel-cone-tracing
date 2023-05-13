@@ -1,5 +1,6 @@
 pub mod camera;
 pub mod common;
+pub mod framebuffer;
 pub mod gizmo;
 pub mod light;
 pub mod mesh;

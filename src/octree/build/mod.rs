@@ -277,9 +277,6 @@ impl Octree {
             //     octree_data.node_data.nodes_per_level[octree_level as usize] as i32;
             *first_free_node += nodes_allocated as i32;
 
-            dbg!(&first_node_in_level);
-            dbg!(&first_free_node);
-
             octree_level_start_indices.push(first_node_in_level);
 
             shader_passes
@@ -323,13 +320,13 @@ impl Octree {
             &octree_level_start_indices,
         );
 
-        log::debug!(
-            "{octree_data_type:?} nodes_per_level: {:?}",
-            &octree_data.node_data.nodes_per_level
-        );
-        log::debug!(
-            "{octree_data_type:?} level_start_indices: {:?}",
-            &octree_level_start_indices
-        );
+        // log::debug!(
+        //     "{octree_data_type:?} nodes_per_level: {:?}",
+        //     &octree_data.node_data.nodes_per_level
+        // );
+        // log::debug!(
+        //     "{octree_data_type:?} level_start_indices: {:?}",
+        //     &octree_level_start_indices
+        // );
     }
 }
