@@ -67,8 +67,8 @@ void main() {
     // FragColor = totalColor * ambientOcclusion;
 
     float maxDistance = 0.01;
-    // float coneAngle = 0.261799;
-    float coneAngle = 0.000001;
+    float coneAngle = 0.261799;
+    // float coneAngle = 0.000001;
     vec3 position = texture(gBufferPositions, In.textureCoordinates).xyz * 0.5 + 0.5;
     vec3 normal = texture(gBufferNormals, In.textureCoordinates).xyz;
     // vec3 normal = vec3(0, 1, 0);
