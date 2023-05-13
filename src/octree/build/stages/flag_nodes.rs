@@ -17,7 +17,6 @@ impl FlagNodesPass {
     pub unsafe fn run(&self, voxel_data: &VoxelData, textures: &OctreeTextures, octree_level: u32) {
         self.shader.use_program();
 
-        dbg!(&voxel_data.number_of_voxel_fragments);
         self.shader.set_uint(
             c_str!("numberOfVoxelFragments"),
             voxel_data.number_of_voxel_fragments,

@@ -5,7 +5,7 @@ use gl::types::GLuint;
 use crate::{
     config::CONFIG,
     helpers,
-    rendering::{light::SpotLight, model::Model, shader::Shader},
+    rendering::{framebuffer::Framebuffer, light::SpotLight, model::Model, shader::Shader},
 };
 
 use super::Octree;
@@ -19,9 +19,10 @@ impl Octree {
         models: &[&Model],
         light: &SpotLight,
         model: &Matrix4<f32>,
+        framebuffer: &Framebuffer,
     ) -> GLuint {
         let (light_view_map, light_view_map_view) =
-            Self::create_light_view_map(models, light, model);
+            self.create_light_view_map(models, light, model, framebuffer);
         self.store_photons(light_view_map, light_view_map_view);
         self.mipmap_photons(light_view_map);
 
@@ -83,14 +84,21 @@ impl Octree {
     }
 
     unsafe fn create_light_view_map(
+        &self,
         models: &[&Model],
         light: &SpotLight,
         model: &Matrix4<f32>,
+        framebuffer: &Framebuffer,
     ) -> (GLuint, GLuint) {
         let projection = light.get_projection_matrix();
 
-        let (light_view_map, light_view_map_view, _) =
-            light.transform.take_photo(models, &projection, model);
+        let (light_view_map, light_view_map_view, _, _) = light.transform.take_photo(
+            models,
+            &projection,
+            model,
+            framebuffer,
+            Some(self.renderer.light_view_map_shader),
+        );
 
         (light_view_map, light_view_map_view)
     }

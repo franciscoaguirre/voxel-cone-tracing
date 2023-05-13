@@ -3,42 +3,47 @@
 #version 460 core
 
 layout (location = 0) in vec3 position;
-layout (location = 1) in vec3 normal;
-layout (location = 2) in vec2 textureCoordinates;
 
-out vec3 frag_position;
-out vec3 frag_normal;
-out vec2 frag_textureCoordinates;
+out VertexData {
+    vec2 textureCoordinates;
+} Out;
 
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
 void main() {
-    gl_Position = projection * view * model * vec4(position, 1.0);
-    vec4 lol = model * vec4(position, 1.0);
-    frag_position = lol.xyz / lol.w;
-    frag_normal = normal;
-    frag_textureCoordinates = textureCoordinates;
+    gl_Position = vec4(position, 1.0);
+    Out.textureCoordinates = position.xy * 0.5 + 0.5;
 }
 
 #shader fragment
 
 #version 460 core
 
-layout (location = 0) out vec4 FragColor;
+layout (location = 0) out vec4 outColor;
 
-in vec3 frag_position;
-in vec3 frag_normal;
-in vec2 frag_textureCoordinates;
+in VertexData {
+    vec2 textureCoordinates;
+} In;
 
 uniform layout(binding = 0, r32ui) readonly uimageBuffer nodePool;
-//uniform layout(binding = 4, r32f) writeonly imageBuffer debug;
 
+// Scalar attributes
 uniform uint voxelDimension;
 uniform uint maxOctreeLevel;
-uniform sampler2D texture_diffuse1;
+uniform bool useLighting;
+
+// Brick attributes
 uniform sampler3D brickPoolColors;
+// uniform sampler3D brickPoolNormals; // TODO: Use later
+uniform sampler3D brickPoolPhotons;
+
+// G-buffers
+uniform sampler2D gBufferColors;
+uniform sampler2D gBufferPositions;
+uniform sampler2D gBufferNormals;
+// uniform sampler2D shadowMap; // TODO: Later
 
 #include "./_constants.glsl"
 #include "./_helpers.glsl"
@@ -62,40 +67,49 @@ void main() {
     // FragColor = totalColor * ambientOcclusion;
 
     float maxDistance = 0.01;
-    float coneAngle = 0.261799;
-    // float coneAngle = 0.000001;
-    vec3 position = (frag_position + vec3(1.0)) / 2.0;
-    // mat3 normalMatrix = mat3(transpose(inverse(view * model)));
-    // vec3 normal = normalize(vec3(vec4(normalMatrix * frag_normal, 0)));
-    vec3 direction = normalize(frag_normal);
-    // vec3 direction = vec3(0, 0, 1);
-    vec3 helper = direction - vec3(0.1, 0, 0); // Random vector
-    vec3 tangent = normalize(helper - dot(direction, helper) * direction);
-    vec3 bitangent = cross(direction, tangent);
-    float AO = 0.0;
-    AO += coneTrace(position, direction, coneAngle, maxDistance); // 15deg as rad
+    // float coneAngle = 0.261799;
+    float coneAngle = 0.000001;
+    vec3 position = texture(gBufferPositions, In.textureCoordinates).xyz * 0.5 + 0.5;
+    vec3 normal = texture(gBufferNormals, In.textureCoordinates).xyz;
+    // vec3 normal = vec3(0, 1, 0);
+    vec3 helper = normal - vec3(0.1, 0, 0); // Random vector
+    vec3 tangent = normalize(helper - dot(normal, helper) * normal);
+    vec3 bitangent = cross(normal, tangent);
+
+    vec4 color = texture(gBufferColors, In.textureCoordinates);
+
+    if (color == vec4(0.0)) {
+        discard;
+    }
+
+    vec3 direction = normal;
+    vec4 indirectLight = vec4(0);
+    indirectLight += coneTrace(position, direction, coneAngle, maxDistance); // 15deg as rad
 
     float angle = 1.0472;
     float sinAngle = sin(angle);
     float cosAngle = cos(angle);
 
-    // direction = sinAngle * frag_normal + cosAngle * tangent;
-    // AO += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
+    direction = sinAngle * normal + cosAngle * tangent;
+    indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
 
-    // direction = sinAngle * frag_normal - cosAngle * tangent;
-    // AO += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
+    direction = sinAngle * normal - cosAngle * tangent;
+    indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
 
-    // direction = sinAngle * frag_normal + cosAngle * bitangent;
-    // AO += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
+    direction = sinAngle * normal + cosAngle * bitangent;
+    indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
 
-    // direction = sinAngle * frag_normal - cosAngle * bitangent;
-    // AO += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
-    // //float AO = coneTrace(vec3(0.5, 0.5, 0.46), vec3(0, 0, 1), 0.261799, maxDistance); // 15deg as rad
+    direction = sinAngle * normal - cosAngle * bitangent;
+    indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
 
-    // AO /= 3.828;
+    indirectLight /= 3.828;
 
     // FragColor = vec4(texture(texture_diffuse1, frag_textureCoordinates).xyz - vec3(AO), 1);
-    FragColor = vec4(vec3(AO), 1.0);
+    outColor = vec4(1.0 - indirectLight.aaa, 1.0);
+    // outColor = texture(gBufferColors, In.textureCoordinates);
+    // outColor = vec4(position, 1.0);
+    // outColor = vec4(normal, 1.0);
+    // outColor = vec4(color.aaa, 1.0);
     //vec4 color = texture(texture_diffuse1, frag_textureCoordinates);
     //FragColor = vec4(color.rgb * AO, color.a);
 }

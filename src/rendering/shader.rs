@@ -7,7 +7,7 @@ use cgmath::{vec3, Matrix, Matrix4, Vector3};
 use gl::types::*;
 use log::trace;
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone, Copy)]
 pub struct Shader {
     pub id: u32,
     is_compute: bool,

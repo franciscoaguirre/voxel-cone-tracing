@@ -26,7 +26,10 @@ use voxelization::visualize::RenderVoxelFragmentsShader;
 
 use octree::{BricksToShow, Octree};
 
-use crate::{menu::DebugNode, rendering::transform::Transform};
+use crate::{
+    menu::DebugNode,
+    rendering::{framebuffer::Framebuffer, transform::Transform},
+};
 
 fn main() {
     let options = Options::from_args();
@@ -43,6 +46,7 @@ fn main() {
 
     // Camera setup
     let mut camera = Camera::default();
+    // camera.transform.position = point3(0.0, -0.25, 0.0);
     camera.transform.position = point3(0.0, 0.0, -2.0);
     let mut first_mouse = true;
     let mut last_x: f32 = CONFIG.viewport_width as f32 / 2.0;
@@ -50,6 +54,7 @@ fn main() {
 
     // Static eye
     let mut static_eye = Transform::default();
+    // static_eye.position = point3(0.0, -0.25, 0.0);
     static_eye.position = point3(0.0, 0.0, -2.0);
     // static_eye.set_rotation_x(-60.0);
     // static_eye.set_rotation_y(0.0);
@@ -141,9 +146,17 @@ fn main() {
     light.transform.set_rotation_x(-45.0);
     // light.transform.set_rotation_y(0.0);
 
-    let _light_view_map =
-        unsafe { octree.inject_light(&[&our_model], &light, &model_normalization_matrix) };
+    let light_framebuffer = unsafe { Framebuffer::new_light() };
+    let _light_view_map = unsafe {
+        octree.inject_light(
+            &[&our_model],
+            &light,
+            &model_normalization_matrix,
+            &light_framebuffer,
+        )
+    };
     let quad = unsafe { Quad::new() };
+    let camera_framebuffer = unsafe { Framebuffer::new() };
 
     let projection: Matrix4<f32> = perspective(
         Deg(camera.zoom),
@@ -151,12 +164,14 @@ fn main() {
         0.0001,
         10000.0,
     );
-    let (eye_view_map, eye_view_map_view, eye_view_map_normals) =
-        unsafe { static_eye.take_photo(&[&our_model], &projection, &model_normalization_matrix) };
-    let (camera_view_map, _, _) = unsafe {
-        camera
-            .transform
-            .take_photo(&[&our_model], &projection, &model_normalization_matrix)
+    let (eye_view_map, eye_view_map_view, eye_view_map_normals, eye_view_map_colors) = unsafe {
+        static_eye.take_photo(
+            &[&our_model],
+            &projection,
+            &model_normalization_matrix,
+            &camera_framebuffer,
+            None,
+        )
     };
 
     // Animation variables
@@ -193,6 +208,16 @@ fn main() {
             frame_count = 0;
             starting_time = current_frame;
         }
+
+        let (camera_view_map_positions, _, camera_view_map_normals, camera_view_map_colors) = unsafe {
+            camera.transform.take_photo(
+                &[&our_model],
+                &projection,
+                &model_normalization_matrix,
+                &camera_framebuffer,
+                None,
+            )
+        };
 
         unsafe {
             gl::ClearColor(0.2, 0.2, 0.2, 1.0);
@@ -330,41 +355,95 @@ fn main() {
             }
 
             if show_model {
-                // render_model_shader.use_program();
-                // render_model_shader.set_mat4(c_str!("projection"), &projection);
-                // render_model_shader.set_mat4(c_str!("view"), &view);
-                // render_model_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
+                // Render model normally
+                render_model_shader.use_program();
+                render_model_shader.set_mat4(c_str!("projection"), &projection);
+                render_model_shader.set_mat4(c_str!("view"), &view);
+                render_model_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
+                our_model.draw(&render_model_shader);
+            }
+
+            {
+                // Render illumination image to quad
                 voxel_cone_tracing_shader.use_program();
-                voxel_cone_tracing_shader.set_mat4(c_str!("projection"), &projection);
-                voxel_cone_tracing_shader.set_mat4(c_str!("view"), &view);
-                voxel_cone_tracing_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
 
                 voxel_cone_tracing_shader
                     .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
                 voxel_cone_tracing_shader
                     .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels - 1);
+                voxel_cone_tracing_shader.set_bool(c_str!("useLighting"), false);
                 helpers::bind_image_texture(
                     0,
                     octree.textures.node_pool.0,
                     gl::READ_ONLY,
                     gl::R32UI,
                 );
-                gl::ActiveTexture(gl::TEXTURE1);
-                gl::BindTexture(gl::TEXTURE_3D, octree.textures.brick_pool_colors);
-                voxel_cone_tracing_shader.set_int(c_str!("brickPoolColors"), 1);
-                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
-                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
-                let sampler = match sampler_number {
-                    0 => gl::LINEAR as i32,
-                    1 => gl::NEAREST as i32,
-                    _ => panic!("Wrong number"),
-                };
-                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, sampler);
-                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, sampler);
+
+                let brick_pool_textures = vec![
+                    (c_str!("brickPoolColors"), octree.textures.brick_pool_colors),
+                    (
+                        c_str!("brickPoolPhotons"),
+                        octree.textures.brick_pool_photons,
+                    ),
+                ];
+
+                let mut texture_counter = 0;
+
+                for &(texture_name, texture) in brick_pool_textures.iter() {
+                    gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
+                    gl::BindTexture(gl::TEXTURE_3D, texture);
+                    voxel_cone_tracing_shader.set_int(texture_name, texture_counter as i32);
+                    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
+                    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+                    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
+                    let sampler = match sampler_number {
+                        1 => gl::LINEAR as i32,
+                        0 => gl::NEAREST as i32,
+                        _ => panic!("Wrong number"),
+                    };
+                    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, sampler);
+                    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, sampler);
+                    texture_counter += 1;
+                }
+
+                // let g_buffer_textures = vec![
+                //     (c_str!("gBufferColors"), eye_view_map_colors),
+                //     (c_str!("gBufferPositions"), eye_view_map),
+                //     (c_str!("gBufferNormals"), eye_view_map_normals),
+                // ];
+                let g_buffer_textures = vec![
+                    (c_str!("gBufferColors"), camera_view_map_colors),
+                    (c_str!("gBufferPositions"), camera_view_map_positions),
+                    (c_str!("gBufferNormals"), camera_view_map_normals),
+                ];
+
+                for &(texture_name, texture) in g_buffer_textures.iter() {
+                    gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
+                    gl::BindTexture(gl::TEXTURE_2D, texture);
+                    voxel_cone_tracing_shader.set_int(texture_name, texture_counter as i32);
+                    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
+                    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+                    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+                    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+                    texture_counter += 1;
+                }
+
+                let quad_vao = quad.get_vao();
+
+                if sampler_number == 1 {
+                    gl::BindVertexArray(quad_vao);
+                    gl::DrawElements(
+                        gl::TRIANGLES,
+                        quad.get_num_indices() as i32,
+                        gl::UNSIGNED_INT,
+                        std::ptr::null(),
+                    );
+                    gl::BindVertexArray(0);
+                }
+
                 // let (debug, buffer) = helpers::generate_texture_buffer(100, gl::R32F, 69f32);
                 // helpers::bind_image_texture(4, debug, gl::WRITE_ONLY, gl::R32F);
-                our_model.draw(&voxel_cone_tracing_shader);
+                // our_model.draw(&voxel_cone_tracing_shader);
                 // let debug_values = helpers::get_values_from_texture_buffer(buffer, 100, 420f32);
                 // dbg!(&debug_values[..20]);
 
@@ -389,9 +468,10 @@ fn main() {
                 gl::BindVertexArray(0);
             }
 
-            // static_eye.draw_gizmo(&projection, &view);
+            static_eye.draw_gizmo(&projection, &view);
             light.draw_gizmo(&projection, &view);
             // quad.render(octree.textures.color_quad_textures[0]);
+            // quad.render(eye_view_map_view);
         }
 
         unsafe {

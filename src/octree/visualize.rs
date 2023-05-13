@@ -521,9 +521,6 @@ impl Octree {
             std::ptr::null(),
         );
 
-        let debug_values = helpers::get_values_from_texture_buffer(buffer, 3, 420f32);
-        dbg!(&debug_values);
-
         self.renderer
             .get_colors_quad_shader
             .set_bool(c_str!("isNeighbor"), true);
