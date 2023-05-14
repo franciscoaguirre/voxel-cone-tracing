@@ -139,6 +139,14 @@ impl Shader {
             mat.as_ptr(),
         );
     }
+    pub unsafe fn set_mat4_array(&self, name: &CStr, mats: &[&Matrix4<f32>]) {
+        gl::UniformMatrix4fv(
+            gl::GetUniformLocation(self.id, name.as_ptr()),
+            mats.len() as i32,
+            gl::FALSE,
+            mats[0].as_ptr(),
+        );
+    }
 
     fn process_shader_file(file_path: &str) -> CString {
         let mut shader_file =

@@ -99,13 +99,11 @@ impl Transform {
         self.update_vectors();
     }
 
-    #[allow(dead_code)]
     pub fn set_rotation_y(&mut self, y: f32) {
         self.rotation.y = y;
         self.update_vectors();
     }
 
-    #[allow(dead_code)]
     pub fn set_rotation_z(&mut self, z: f32) {
         self.rotation.z = z;
         self.update_vectors();

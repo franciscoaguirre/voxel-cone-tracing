@@ -47,7 +47,10 @@ fn main() {
     // Camera setup
     let mut camera = Camera::default();
     // camera.transform.position = point3(0.0, -0.25, 0.0);
-    camera.transform.position = point3(0.0, 0.0, -2.0);
+    // camera.transform.position = point3(0.0, 0.0, -2.0);
+    camera.transform.position = point3(0.0, 2.0, 0.0);
+    camera.transform.set_rotation_x(-90.0);
+    camera.transform.set_rotation_y(90.0);
     let mut first_mouse = true;
     let mut last_x: f32 = CONFIG.viewport_width as f32 / 2.0;
     let mut last_y: f32 = CONFIG.viewport_height as f32 / 2.0;
@@ -133,8 +136,8 @@ fn main() {
 
     let mut light = unsafe {
         SpotLight::new(
-            1.0,
-            1.0,
+            2.0,
+            2.0,
             Point3 {
                 x: 1.0,
                 y: 1.0,
@@ -158,6 +161,7 @@ fn main() {
     let quad = unsafe { Quad::new() };
     let camera_framebuffer = unsafe { Framebuffer::new() };
 
+    let ortho = cgmath::ortho(-1.0, 1.0, -1.0, 1.0, 0.0001, 10000.0);
     let projection: Matrix4<f32> = perspective(
         Deg(camera.zoom),
         CONFIG.viewport_width as f32 / CONFIG.viewport_height as f32,
@@ -233,13 +237,13 @@ fn main() {
                 menu.toggle_showing(&mut window);
             };
             if !menu.is_showing() {
-                common::process_events(
-                    &event,
-                    &mut first_mouse,
-                    &mut last_x,
-                    &mut last_y,
-                    &mut camera,
-                );
+                // common::process_events(
+                //     &event,
+                //     &mut first_mouse,
+                //     &mut last_x,
+                //     &mut last_y,
+                //     &mut camera,
+                // );
                 common::handle_update_octree_level(
                     &event,
                     &mut current_octree_level,
@@ -312,12 +316,13 @@ fn main() {
 
         // Render
         unsafe {
-            let projection: Matrix4<f32> = perspective(
-                Deg(camera.zoom),
-                CONFIG.viewport_width as f32 / CONFIG.viewport_height as f32,
-                0.0001,
-                10000.0,
-            );
+            // let projection: Matrix4<f32> = perspective(
+            //     Deg(camera.zoom),
+            //     CONFIG.viewport_width as f32 / CONFIG.viewport_height as f32,
+            //     0.0001,
+            //     10000.0,
+            // );
+            let projection = projection;
             let view = camera.transform.get_view_matrix();
             let mut model = Matrix4::<f32>::from_translation(vec3(0.0, 0.0, 0.0));
             model = model * Matrix4::from_scale(1.);
