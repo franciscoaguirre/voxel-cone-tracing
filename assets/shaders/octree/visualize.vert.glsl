@@ -25,12 +25,12 @@ void main() {
   // TODO: Find an efficient way to render both occupied and empty nodes.
   // This approach uses voxel fragment positions and therefore doesn't show
   // empty nodes.
-  vec4 voxelFragmentPosition = imageLoad(voxelPositions, threadIndex);
+  uvec3 voxelFragmentPosition = imageLoad(voxelPositions, threadIndex).xyz;
 
   float halfNodeSize;
   vec3 nodeCoordinates;
   int nodeID = traverseOctree(
-    vec3(voxelFragmentPosition) / float(voxelDimension),
+    normalizedFromIntCoordinates(voxelFragmentPosition, float(voxelDimension)),
     octreeLevel,
     nodeCoordinates,
     halfNodeSize

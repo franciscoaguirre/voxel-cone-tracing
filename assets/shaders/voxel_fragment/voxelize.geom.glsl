@@ -73,8 +73,33 @@ void main() {
     vertex[2] = vec4(In[2].position, 1.0);
   
     // Project triangle to dominant plane
-    for (int i = 0; i < gl_in.length(); i++) {
-      vertex[i] = axisProjections[dominantAxis] * vertex[i];
+    //for (int i = 0; i < gl_in.length(); i++) {
+      //vertex[i] = axisProjections[dominantAxis] * vertex[i];
+    //}
+    vec3 temp;
+
+    // Project triangle to dominant plane
+    if (dominantAxis == 0) {
+        // x-axis is depth
+        for (int i = 0; i < gl_in.length(); i++)
+        {
+            temp.x = vertex[i].z;
+            temp.z = vertex[i].x; 
+            
+            vertex[i].xz = temp.xz; 
+        }
+    
+    } else if (dominantAxis == 1) {
+        // y-axis is depth
+        for (int i = 0; i < gl_in.length(); i++)
+        {
+            temp.y = vertex[i].z;
+            temp.z = vertex[i].y;
+            
+            vertex[i].yz = temp.yz; 
+        }
+    } else {
+        // z-axis is depth, which is usual case so do nothing
     }
 
     vec3 projectedTriangleNormal = normalize(cross(vertex[1].xyz - vertex[0].xyz, vertex[2].xyz - vertex[0].xyz));
@@ -132,11 +157,16 @@ void main() {
     }
 
     for (int i = 0; i < 3; i++) {
-      gl_Position.xyw = intersect[i];
+      //gl_Position.xyw = intersect[i];
+      gl_Position = vertex[i];
         
       // Calculate the new z-Coordinate derived from a point on a plane
-      gl_Position.z = -(trianglePlane.x * intersect[i].x + trianglePlane.y * intersect[i].y + trianglePlane.w) / trianglePlane.z; 
-      Out.position = intersect[i].xyz;
+      //gl_Position.z = -(trianglePlane.x * intersect[i].x + trianglePlane.y * intersect[i].y + trianglePlane.w) / trianglePlane.z; 
+      //Out.position = intersect[i].xyz;
+      //Out.normal = normals[i];
+      //Out.textureCoordinates = tex_coordinates[i];
+      //gl_Position.z = -(trianglePlane.x * intersect[i].x + trianglePlane.y * intersect[i].y + trianglePlane.w) / trianglePlane.z; 
+      Out.position = vertex[i].xyz;
       Out.normal = normals[i];
       Out.textureCoordinates = tex_coordinates[i];
       EmitVertex();

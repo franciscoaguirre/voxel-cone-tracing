@@ -37,6 +37,7 @@ uniform mat4 projection;
 uniform mat4 view;
 
 #include "./_drawCone.glsl"
+#include "assets/shaders/octree/_helpers.glsl"
 
 void main() {
     frag_color = vec4(1);
@@ -60,7 +61,7 @@ void main() {
         return;
     }
 
-    vec3 normalizedQueryCoordinates = vec3(queryCoordinates / (float(voxelDimension) * 1.5));
+    vec3 normalizedQueryCoordinates = normalizedFromIntCoordinates(queryCoordinates, (float(voxelDimension) * 1.5));
     vec3 ndc = normalizedQueryCoordinates.xyz * 2.0 - 1.0;
 
     gl_Position = projection * view * vec4(ndc, 1.0);

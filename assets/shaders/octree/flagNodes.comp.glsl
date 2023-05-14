@@ -1,6 +1,7 @@
 #version 460 core
 
 #include "./_constants.glsl"
+#include "./_helpers.glsl"
 
 layout (local_size_x = WORKING_GROUP_SIZE, local_size_y = 1, local_size_z = 1) in;
 
@@ -22,9 +23,9 @@ void main()
         return;
     }
 
-    uvec4 voxelFragmentPosition = imageLoad(voxelPositions, int(threadIndex));
+    uvec3 voxelFragmentPosition = imageLoad(voxelPositions, int(threadIndex)).xyz;
     
-    vec3 normalizedFragmentPosition = vec3(voxelFragmentPosition) / float(voxelDimension);
+    vec3 normalizedFragmentPosition = normalizedFromIntCoordinates(voxelFragmentPosition.xyz, float(voxelDimension));
     
     vec3 nodeCoordinates;
     float halfNodeSize;
