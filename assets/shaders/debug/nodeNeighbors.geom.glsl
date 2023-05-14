@@ -15,6 +15,7 @@ uniform mat4 projection;
 uniform uint voxelDimension;
 
 #include "assets/shaders/octree/_constants.glsl"
+#include "assets/shaders/octree/_helpers.glsl"
 
 uniform layout(binding = 0, rgb10_a2ui) readonly uimageBuffer nodePositions;
 uniform layout(binding = 3, r32ui) readonly uimageBuffer nodePoolNeighbors[MAX_NEIGHBORS];
@@ -30,8 +31,8 @@ void main() {
         uint neighborID = imageLoad(nodePoolNeighbors[i], int(geom_nodeID[0])).r;
 
         if (neighborID != 0) {
-            vec4 neighborPosition = imageLoad(nodePositions, int(neighborID));
-            vec3 normalizedNeighborPosition = neighborPosition.xyz / float(voxelDimension);
+            uvec3 neighborPosition = imageLoad(nodePositions, int(neighborID)).xyz;
+            vec3 normalizedNeighborPosition = normalizedFromIntCoordinates(neighborPosition, float(voxelDimension));
             vec4 finalNeighborPosition = vec4((normalizedNeighborPosition.xyz) * 2.0 - vec3(1.0), 1.0);
             finalNeighborPosition.xyz += geom_halfNodeSize[0];
             drawCube(finalNeighborPosition, geom_halfNodeSize[0], canonizationMatrix, neighborColor);

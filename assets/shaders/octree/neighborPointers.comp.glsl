@@ -20,12 +20,13 @@ uniform uint octreeLevel;
 uniform uint voxelDimension;
 
 #include "./_traversalHelpers.glsl"
+#include "./_helpers.glsl"
 #include "./_octreeTraversal.glsl"
 
 void main() {
     const uint threadIndex = gl_GlobalInvocationID.x;
-    uvec4 voxelPosition = imageLoad(voxelPositions, int(threadIndex));
-    vec3 normalizedVoxelPosition = vec3(voxelPosition) / float(voxelDimension);
+    uvec3 voxelPosition = imageLoad(voxelPositions, int(threadIndex)).xyz;
+    vec3 normalizedVoxelPosition = normalizedFromIntCoordinates(voxelPosition, float(voxelDimension));
 
     // In voxel position coordinates, the octree level
     // defines a different node size, which we need as a step to reach

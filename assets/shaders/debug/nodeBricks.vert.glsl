@@ -22,9 +22,9 @@ void main() {
     float normalizedHalfNodeSize = halfNodeSize * 2.0;
     geom_halfNodeSize = normalizedHalfNodeSize;
 
-    vec4 nodePosition = imageLoad(nodePositions, int(nodeID));
-    vec3 normalizedNodePosition = nodePosition.xyz / float(voxelDimension);
-    geom_nodePosition = vec4((normalizedNodePosition.xyz) * 2.0 - vec3(1.0), 1.0);
+    uvec3 nodePosition = imageLoad(nodePositions, int(nodeID)).xyz;
+    vec3 normalizedNodePosition = normalizedFromIntCoordinates(nodePosition, float(voxelDimension));
+    geom_nodePosition = vec4(normalizedNodePosition * 2.0 - vec3(1.0), 1.0);
     geom_nodePosition.xyz += normalizedHalfNodeSize;
 
     ivec3 brickCoordinates = calculateBrickCoordinates(int(nodeID));
