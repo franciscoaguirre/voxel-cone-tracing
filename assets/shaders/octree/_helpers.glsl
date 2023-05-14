@@ -113,3 +113,9 @@ ivec3 calculateBrickCoordinates(int nodeID) {
     coordinates *= 3;
     return coordinates;
 }
+
+vec3 normalizedFromIntCoordinates(uvec3 intCoordinates, float factor) {
+  vec3 centerVoxel = vec3(intCoordinates) + vec3(0.5);
+  return centerVoxel / factor;
+}
+

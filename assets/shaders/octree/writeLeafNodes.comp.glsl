@@ -29,7 +29,7 @@ void storeInLeaf(
 ) {
     ivec3 brickCoordinates = calculateBrickCoordinates(nodeID);
     uint offset = calculateChildLocalID(nodeCoordinates, halfNodeSize, voxelPosition);
-    voxelColor.rgb = voxelColor.rgb * voxelColor.a;
+    voxelColor.rgb *= voxelColor.a;
 
     imageStore(
         brickPoolColors,
@@ -50,13 +50,13 @@ void main() {
     if (threadIndex < numberOfVoxelFragments) {
         // We need to traverse the tree to get the node because we
         // need the voxel attributes (color, normal, etc)
-        uvec4 voxelPosition = imageLoad(voxelPositions, int(threadIndex));
+        uvec3 voxelPosition = imageLoad(voxelPositions, int(threadIndex)).xyz;
         vec4 voxelColor = imageLoad(voxelColors, int(threadIndex));
         vec4 voxelNormal = imageLoad(voxelNormals, int(threadIndex));
 
         memoryBarrier();
 
-        vec3 normalizedVoxelPosition = vec3(voxelPosition) / float(voxelDimension);
+        vec3 normalizedVoxelPosition = normalizedFromIntCoordinates(voxelPosition, float(voxelDimension));
 
         float halfNodeSize;
         vec3 nodeCoordinates;

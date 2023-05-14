@@ -13,12 +13,13 @@ uniform layout(binding = 0, rgb10_a2ui) uimageBuffer voxelPositions;
 uniform layout(binding = 1, r32ui) uimageBuffer nodePool;
 
 #include "assets/shaders/octree/_constants.glsl"
+#include "assets/shaders/octree/_helpers.glsl"
 #include "assets/shaders/octree/_traversalHelpers.glsl"
 #include "assets/shaders/octree/_octreeTraversal.glsl"
 
 void main() {
-    vec4 voxelFragmentPosition = imageLoad(voxelPositions, int(voxelIndex));
-    vec3 normalizedVoxelPosition = vec3(voxelFragmentPosition) / float(voxelDimension);
+    uvec3 voxelFragmentPosition = imageLoad(voxelPositions, int(voxelIndex)).xyz;
+    vec3 normalizedVoxelPosition = normalizedFromIntCoordinates(voxelFragmentPosition, float(voxelDimension));
 
     float halfNodeSize;
     vec3 nodeCoordinates;
