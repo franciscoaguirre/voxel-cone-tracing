@@ -1,7 +1,7 @@
 use std::{ffi::c_void, mem::size_of};
 
 use c_str_macro::c_str;
-use cgmath::{ortho, Matrix4, Point3};
+use cgmath::{Matrix4, Point3};
 use gl::types::GLuint;
 
 use super::{gizmo::RenderGizmo, shader::Shader, transform::Transform};
@@ -35,7 +35,7 @@ impl SpotLight {
     }
 
     pub fn get_projection_matrix(&self) -> Matrix4<f32> {
-        ortho(
+        cgmath::ortho(
             -self.width / 2.0,
             self.width / 2.0,
             -self.height / 2.0,

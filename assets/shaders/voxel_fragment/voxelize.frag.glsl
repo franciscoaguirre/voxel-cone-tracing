@@ -1,15 +1,18 @@
 #version 460 core
 
-in vec3 frag_position;
-in vec3 frag_normal;
-in vec2 frag_texCoordinates;
-flat in int frag_dominantAxis;
-flat in vec4 frag_aabb;
-
-layout (location = 0) out vec4 FragColor;
 layout (pixel_center_integer) in vec4 gl_FragCoord;
+layout (location = 0) out vec4 FragColor;
 
 layout (binding = 0, offset = 0) uniform atomic_uint voxelFragmentCount;
+
+in VoxelData {
+    vec3 position;
+    vec3 normal;
+    vec2 textureCoordinates;
+} In;
+
+flat in int frag_dominantAxis;
+flat in vec4 frag_aabb;
 
 uniform layout(binding = 0, rgb10_a2ui) uimageBuffer voxelPositions;
 uniform layout(binding = 1, rgba8) imageBuffer voxelColors;
@@ -25,7 +28,7 @@ uniform int voxelDimension;
 uniform bool shouldStore;
 
 void discardIfOutsideAabb() {
-    if (frag_position.x < frag_aabb.x || frag_position.y < frag_aabb.y || frag_position.x > frag_aabb.z || frag_position.y > frag_aabb.w) {
+    if (In.position.x < frag_aabb.x || In.position.y < frag_aabb.y || In.position.x > frag_aabb.z || In.position.y > frag_aabb.w) {
         discard;
     }
 }
@@ -65,13 +68,13 @@ void storeVoxelFragment(uvec4 voxelCoordinates, uint fragmentListIndex) {
     vec4 voxelColor;
 
     if (hasBump) {
-       voxelNormal = texture(bumpTex, frag_texCoordinates).rgb;
+       voxelNormal = texture(bumpTex, In.textureCoordinates).rgb;
     } else {
-       voxelNormal = frag_normal;
+       voxelNormal = In.normal;
     }
 
     if (hasTexture) {
-      voxelColor = texture(textureDiffuse1, frag_texCoordinates);
+      voxelColor = texture(textureDiffuse1, In.textureCoordinates);
     } else {
       voxelColor = vec4(fallbackColor, 1);
     }

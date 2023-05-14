@@ -3,11 +3,12 @@ use std::mem::size_of;
 use crate::{
     config::CONFIG,
     helpers,
-    rendering::{model::Model, shader::Shader},
+    rendering::{model::Model, shader::Shader, transform::Transform},
     types::BufferTexture,
 };
 use c_str_macro::c_str;
 
+use cgmath::point3;
 use gl::types::*;
 
 unsafe fn calculate_voxel_fragment_list_length(
@@ -69,6 +70,29 @@ unsafe fn voxelize_scene(
     gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, *atomic_counter);
 
     voxelization_shader.set_vec3(c_str!("fallbackColor"), 1.0, 1.0, 1.0);
+
+    let mut right_camera = Transform::default();
+    right_camera.position = point3(-2.0, 0.0, 0.0);
+    right_camera.set_rotation_y(0.0);
+    let right_view_matrix = right_camera.get_view_matrix();
+
+    let mut top_camera = Transform::default();
+    top_camera.position = point3(0.0, 2.0, 0.0);
+    top_camera.set_rotation_x(-90.0);
+    top_camera.set_rotation_y(90.0);
+    let top_view_matrix = top_camera.get_view_matrix();
+
+    let mut far_camera = Transform::default();
+    far_camera.position = point3(0.0, 0.0, 2.0);
+    far_camera.set_rotation_y(-90.0);
+    let far_view_matrix = far_camera.get_view_matrix();
+
+    voxelization_shader.set_mat4_array(
+        c_str!("axisProjections"),
+        &[&right_view_matrix, &top_view_matrix, &far_view_matrix],
+    );
+
+    // TODO: We should apparently disable depth test and colormask false flase flase
     for model in models {
         // TODO: Do we need to set more things in the shader?
         model.draw(voxelization_shader);

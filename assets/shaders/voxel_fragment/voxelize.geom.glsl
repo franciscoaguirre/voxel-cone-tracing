@@ -3,17 +3,23 @@
 layout (triangles) in;
 layout (triangle_strip, max_vertices = 3) out;
 
-in vec3 geom_vertexPosition[];
-in vec3 geom_normal[];
-in vec2 geom_texCoordinates[];
+in VertexData {
+    vec3 position;
+    vec3 normal;
+    vec2 textureCoordinates;
+} In[3];
 
-out vec3 frag_position;
-out vec3 frag_normal;
-out vec2 frag_texCoordinates;
+out VoxelData {
+    vec3 position;
+    vec3 normal;
+    vec2 textureCoordinates;
+} Out;
+
 flat out int frag_dominantAxis;
 flat out vec4 frag_aabb; 
 
 uniform int voxelDimension;
+uniform mat4 axisProjections[3];
 
 // 0 means x, 1 means y, 2 means z
 int biggestComponent(vec3 triangleNormal) {
@@ -48,10 +54,12 @@ vec4 defineAabb(vec4 points[3], vec2 halfPixel) {
 }
 
 void main() {
+    // TODO: Check if it's better to use the model normals.
+    // We could use any vertex normal or average all of them.
     vec3 triangleNormal = normalize(
         cross(
-            geom_vertexPosition[1] - geom_vertexPosition[0],
-            geom_vertexPosition[2] - geom_vertexPosition[0]
+            In[1].position - In[0].position,
+            In[2].position - In[0].position
         )
     );
 
@@ -60,33 +68,13 @@ void main() {
     mat4 projection;
 
     vec4 vertex[3];
-    vertex[0] = vec4(geom_vertexPosition[0], 1.0);
-    vertex[1] = vec4(geom_vertexPosition[1], 1.0);
-    vertex[2] = vec4(geom_vertexPosition[2], 1.0);
-    vec3 temp;
-
+    vertex[0] = vec4(In[0].position, 1.0);
+    vertex[1] = vec4(In[1].position, 1.0);
+    vertex[2] = vec4(In[2].position, 1.0);
+  
     // Project triangle to dominant plane
-    if (dominantAxis == 0) {
-        // x-axis is depth
-        for (int i = 0; i < gl_in.length(); i++)
-        {
-            temp.x = vertex[i].z;
-            temp.z = vertex[i].x; 
-            
-            vertex[i].xz = temp.xz; 
-        }
-    
-    } else if (dominantAxis == 1) {
-        // y-axis is depth
-        for (int i = 0; i < gl_in.length(); i++)
-        {
-            temp.y = vertex[i].z;
-            temp.z = vertex[i].y;
-            
-            vertex[i].yz = temp.yz; 
-        }
-    } else {
-        // z-axis is depth, which is usual case so do nothing
+    for (int i = 0; i < gl_in.length(); i++) {
+      vertex[i] = axisProjections[dominantAxis] * vertex[i];
     }
 
     vec3 projectedTriangleNormal = normalize(cross(vertex[1].xyz - vertex[0].xyz, vertex[2].xyz - vertex[0].xyz));
@@ -100,13 +88,13 @@ void main() {
         vertex[2] = vertex[1];
         vertex[1] = vertexTemp;
 
-        normals[0] = geom_normal[0];
-        normals[1] = geom_normal[2];
-        normals[2] = geom_normal[1];
+        normals[0] = In[0].normal;
+        normals[1] = In[2].normal;
+        normals[2] = In[1].normal;
 
-        tex_coordinates[0] = geom_texCoordinates[0];
-        tex_coordinates[1] = geom_texCoordinates[2];
-        tex_coordinates[2] = geom_texCoordinates[1];
+        tex_coordinates[0] = In[0].textureCoordinates;
+        tex_coordinates[1] = In[2].textureCoordinates;
+        tex_coordinates[2] = In[1].textureCoordinates;
     }
     // vec2(2.0 / voxelDimension) is the pixel size, as coordinates go from -1 to 1 (length 2), so a half pixel is half of that
     vec2 halfPixel = vec2(1.0 / voxelDimension);
@@ -148,9 +136,9 @@ void main() {
         
       // Calculate the new z-Coordinate derived from a point on a plane
       gl_Position.z = -(trianglePlane.x * intersect[i].x + trianglePlane.y * intersect[i].y + trianglePlane.w) / trianglePlane.z; 
-      frag_position = intersect[i].xyz;
-      frag_normal = normals[i];
-      frag_texCoordinates = tex_coordinates[i];
+      Out.position = intersect[i].xyz;
+      Out.normal = normals[i];
+      Out.textureCoordinates = tex_coordinates[i];
       EmitVertex();
     }
 
