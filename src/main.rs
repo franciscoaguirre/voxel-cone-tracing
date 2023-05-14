@@ -145,9 +145,8 @@ fn main() {
             },
         )
     };
-    light.transform.position = point3(0.6, 0.25, -0.25);
-    light.transform.set_rotation_x(-45.0);
-    // light.transform.set_rotation_y(0.0);
+    light.transform.position = point3(0.0, 0.00, -2.0);
+    light.transform.set_rotation_y(90.0);
 
     let light_framebuffer = unsafe { Framebuffer::new_light() };
     let _light_view_map = unsafe {
