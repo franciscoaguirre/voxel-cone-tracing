@@ -23,6 +23,10 @@ flat out vec4 frag_aabb;
 uniform int voxelDimension;
 uniform mat4 axisProjections[3];
 
+bool lineIntersection(vec2 p1, vec2 p2, vec2 q1, vec2 q2, out vec2 intersection);
+vec2 normalToSemiDiagonal(vec2 normal);
+float zFromPlaneAndPoint(vec2 point, vec4 plane, float defaultValue);
+
 // 0 means x, 1 means y, 2 means z
 int biggestComponent(vec3 triangleNormal) {
     float xComponent = abs(triangleNormal.x);
@@ -54,9 +58,6 @@ vec4 defineAabb(vec4 points[3], vec2 halfPixel) {
 
     return aabb + vec4(-halfPixel, halfPixel);
 }
-
-bool lineIntersection(vec2 p1, vec2 p2, vec2 q1, vec2 q2, out vec2 intersection);
-vec2 normalToSemiDiagonal(vec2 normal);
 
 void main() {
     // TODO: Check if it's better to use the model normals.
@@ -108,6 +109,10 @@ void main() {
     }
 
     vec3 projectedTriangleNormal = normalize(cross(vertex[1].xyz - vertex[0].xyz, vertex[2].xyz - vertex[0].xyz));
+    vec4 trianglePlane;
+    trianglePlane.xyz = projectedTriangleNormal;
+    trianglePlane.w = -dot(projectedTriangleNormal, vertex[0].xyz);
+
     float normalMultiplier = 1.0;
     if (dot(projectedTriangleNormal, vec3(0, 0, 1)) > 0.0) {
         normalMultiplier = -1.0;
@@ -137,7 +142,9 @@ void main() {
 
         vec2 intersection;
         if (lineIntersection(currentExpanded1, currentExpanded2, previousExpanded1, previousExpanded2, intersection)) {
-            expandedVertex[i] = vec3(intersection, vertex[i].z);
+            expandedVertex[i].xy = intersection;
+            expandedVertex[i].z = zFromPlaneAndPoint(intersection, trianglePlane, vertex[i].z);
+
         } else {
             // We f***** up
             expandedVertex[i] = vertex[i].xyz;
@@ -187,4 +194,11 @@ bool lineIntersection(vec2 p1, vec2 p2, vec2 q1, vec2 q2, out vec2 intersection)
     intersection = p1 + t * r;
 
     return true;
+}
+
+float zFromPlaneAndPoint(vec2 point, vec4 plane, float defaultValue) {
+  if (plane.z == 0.0) {
+    return defaultValue;
+  }
+  return (point.x * plane.x + point.y * plane.y + plane.w) / -plane.z;
 }
