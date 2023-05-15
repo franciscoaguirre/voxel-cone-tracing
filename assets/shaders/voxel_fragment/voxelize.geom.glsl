@@ -102,59 +102,15 @@ void main() {
         // z-axis is depth, which is usual case so do nothing
     }
 
-    vec3 projectedTriangleNormal = normalize(cross(vertex[1].xyz - vertex[0].xyz, vertex[2].xyz - vertex[0].xyz));
-
     vec3 normals[3];
     vec2 tex_coordinates[3];
-    // Change triangle winding, so normal points to "camera"
-    if (dot(projectedTriangleNormal, vec3(0.0, 0.0, 1.0)) < 0.0)
-    {
-        vec4 vertexTemp = vertex[2];
-        vertex[2] = vertex[1];
-        vertex[1] = vertexTemp;
 
-        normals[0] = In[0].normal;
-        normals[1] = In[2].normal;
-        normals[2] = In[1].normal;
-
-        tex_coordinates[0] = In[0].textureCoordinates;
-        tex_coordinates[1] = In[2].textureCoordinates;
-        tex_coordinates[2] = In[1].textureCoordinates;
-    }
     // vec2(2.0 / voxelDimension) is the pixel size, as coordinates go from -1 to 1 (length 2), so a half pixel is half of that
-    vec2 halfPixel = vec2(1.0 / voxelDimension);
+    vec2 halfPixel = vec2(1.0 / float(voxelDimension));
 
     vec4 aabb = defineAabb(vertex, halfPixel);
     frag_aabb = aabb;
 
-    vec4 trianglePlane;
-
-    trianglePlane.xyz = normalize(cross(vertex[1].xyz - vertex[0].xyz, vertex[2].xyz - vertex[0].xyz));
-
-    trianglePlane.w = -dot(vertex[0].xyz, trianglePlane.xyz);
-
-    if (trianglePlane.z == 0.0) {
-        return;
-    }
-
-    vec3 plane[3];
-
-    for (int i = 0; i < gl_in.length(); i++) {
-      plane[i] = cross(vertex[i].xyw, vertex[(i + 2) % 3].xyw);
-      plane[i].z -= dot(halfPixel, abs(plane[i].xy));
-    }
-        
-    vec3 intersect[3];
-
-    for (int i = 0; i < gl_in.length(); i++) {
-        intersect[i] = cross(plane[i], plane[(i+1) % 3]);
-
-        if (intersect[i].z == 0.0) {
-            return;
-        }
-
-        intersect[i] /= intersect[i].z; 
-    }
 
     for (int i = 0; i < 3; i++) {
       //gl_Position.xyw = intersect[i];
@@ -167,10 +123,42 @@ void main() {
       //Out.textureCoordinates = tex_coordinates[i];
       //gl_Position.z = -(trianglePlane.x * intersect[i].x + trianglePlane.y * intersect[i].y + trianglePlane.w) / trianglePlane.z; 
       Out.position = vertex[i].xyz;
-      Out.normal = normals[i];
-      Out.textureCoordinates = tex_coordinates[i];
+      Out.normal = In[i].normal;
+      Out.textureCoordinates = In[i].textureCoordinates;
       EmitVertex();
     }
 
     EndPrimitive();
+}
+
+vec2 normalToSemiDiagonal(vec2 normal) {
+    vec2 signVec = sign(normal);
+    vec2 semiDiagonal;
+
+    semiDiagonal.x = signVec.x == 0.0 ? 1.0 : signVec.x;
+    semiDiagonal.y = signVec.y == 0.0 ? 1.0 : signVec.y;
+    
+    return normalize(semiDiagonal);
+}
+
+bool lineIntersection(vec2 p1, vec2 p2, vec2 q1, vec2 q2, out vec2 intersection) {
+    vec2 r = p2 - p1;
+    vec2 s = q2 - q1;
+    float rxs = cross(vec3(r, 0.0), vec3(s, 0.0)).z;
+
+    if (abs(rxs) < 1e-6) {
+        // Lines are parallel or coincident
+        return false;
+    }
+
+    vec2 pq = q1 - p1;
+    float pqxr = cross(vec3(pq, 0.0), vec3(r, 0.0)).z;
+    float pqxs = cross(vec3(pq, 0.0), vec3(s, 0.0)).z;
+
+    float t = pqxs / rxs;
+    float u = pqxr / rxs;
+
+    intersection = p1 + t * r;
+
+    return true;
 }
