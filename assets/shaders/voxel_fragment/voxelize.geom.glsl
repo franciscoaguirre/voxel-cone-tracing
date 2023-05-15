@@ -14,6 +14,8 @@ out VoxelData {
     vec3 normal;
     vec2 textureCoordinates;
 } Out;
+out vec2 edgeNormal;
+out vec2 semiDiagonal;
 
 flat out int frag_dominantAxis;
 flat out vec4 frag_aabb; 
@@ -52,6 +54,9 @@ vec4 defineAabb(vec4 points[3], vec2 halfPixel) {
 
     return aabb + vec4(-halfPixel, halfPixel);
 }
+
+bool lineIntersection(vec2 p1, vec2 p2, vec2 q1, vec2 q2, out vec2 intersection);
+vec2 normalToSemiDiagonal(vec2 normal);
 
 void main() {
     // TODO: Check if it's better to use the model normals.
@@ -102,30 +107,51 @@ void main() {
         // z-axis is depth, which is usual case so do nothing
     }
 
-    vec3 normals[3];
-    vec2 tex_coordinates[3];
+    vec3 projectedTriangleNormal = normalize(cross(vertex[1].xyz - vertex[0].xyz, vertex[2].xyz - vertex[0].xyz));
+    float normalMultiplier = 1.0;
+    if (dot(projectedTriangleNormal, vec3(0, 0, 1)) > 0.0) {
+        normalMultiplier = -1.0;
+    }
 
     // vec2(2.0 / voxelDimension) is the pixel size, as coordinates go from -1 to 1 (length 2), so a half pixel is half of that
-    vec2 halfPixel = vec2(1.0 / float(voxelDimension));
+    vec2 halfPixel = vec2(1.0 / voxelDimension);
+    // vec2 halfPixel = vec2(0.5);
 
     vec4 aabb = defineAabb(vertex, halfPixel);
     frag_aabb = aabb;
 
-
+    vec3 expandedVertex[3];
     for (int i = 0; i < 3; i++) {
-      //gl_Position.xyw = intersect[i];
-      gl_Position = vertex[i];
+        vec2 currentEdge = vertex[(i + 1) % 3].xy - vertex[i].xy;
+        vec2 previousEdge = vertex[i].xy - vertex[(i + 2) % 3].xy;
+
+        vec2 currentNormal = normalize(vec2(-currentEdge.y, currentEdge.x)) * normalMultiplier;
+        vec2 currentSemiDiagonal = normalToSemiDiagonal(currentNormal);
+        vec2 previousNormal = normalize(vec2(-previousEdge.y, previousEdge.x)) * normalMultiplier;
+        vec2 previousSemiDiagonal = normalToSemiDiagonal(previousNormal);
+
+        vec2 currentExpanded1 = vertex[i].xy + currentSemiDiagonal * halfPixel;
+        vec2 currentExpanded2 = vertex[(i + 1) % 3].xy + currentSemiDiagonal * halfPixel;
+        vec2 previousExpanded1 = vertex[(i + 2) % 3].xy + previousSemiDiagonal * halfPixel;
+        vec2 previousExpanded2 = vertex[i].xy + previousSemiDiagonal * halfPixel;
+
+        vec2 intersection;
+        if (lineIntersection(currentExpanded1, currentExpanded2, previousExpanded1, previousExpanded2, intersection)) {
+            expandedVertex[i] = vec3(intersection, vertex[i].z);
+        } else {
+            // We f***** up
+            expandedVertex[i] = vertex[i].xyz;
+        }
         
-      // Calculate the new z-Coordinate derived from a point on a plane
-      //gl_Position.z = -(trianglePlane.x * intersect[i].x + trianglePlane.y * intersect[i].y + trianglePlane.w) / trianglePlane.z; 
-      //Out.position = intersect[i].xyz;
-      //Out.normal = normals[i];
-      //Out.textureCoordinates = tex_coordinates[i];
-      //gl_Position.z = -(trianglePlane.x * intersect[i].x + trianglePlane.y * intersect[i].y + trianglePlane.w) / trianglePlane.z; 
-      Out.position = vertex[i].xyz;
-      Out.normal = In[i].normal;
-      Out.textureCoordinates = In[i].textureCoordinates;
-      EmitVertex();
+        // Debug values
+        edgeNormal = currentNormal;
+        semiDiagonal = currentSemiDiagonal;
+
+        gl_Position = vec4(expandedVertex[i], 1.0);
+        Out.position = expandedVertex[i];
+        Out.normal = In[i].normal;
+        Out.textureCoordinates = In[i].textureCoordinates;
+        EmitVertex();
     }
 
     EndPrimitive();
