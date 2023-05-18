@@ -21,7 +21,7 @@ void main() {
 
 #version 460 core
 
-layout (location = 0) out uvec3 viewMapPositions;
+layout (location = 0) out uvec4 viewMapPositions;
 layout (location = 1) out vec4 viewMapViewOutput;
 
 in VertexData {
@@ -37,6 +37,6 @@ void main() {
     );
     uvec3 unnormalizedGlobalPosition = uvec3(floor(normalizedGlobalPosition.xyz * float(voxelDimension) * 1.5));
     
-    viewMapPositions = uvec3(unnormalizedGlobalPosition);
+    viewMapPositions = uvec4(unnormalizedGlobalPosition, 1.0);
     viewMapViewOutput = normalizedGlobalPosition;
 }

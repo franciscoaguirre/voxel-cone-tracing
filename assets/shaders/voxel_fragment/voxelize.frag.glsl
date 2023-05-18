@@ -1,6 +1,5 @@
 #version 460 core
 
-layout (pixel_center_integer) in vec4 gl_FragCoord;
 layout (location = 0) out vec4 FragColor;
 
 layout (binding = 0, offset = 0) uniform atomic_uint voxelFragmentCount;

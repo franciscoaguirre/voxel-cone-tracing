@@ -14,7 +14,6 @@ uniform mat4 modelNormalizationMatrix;
 
 void main()
 {
-    // gl_Position = modelNormalizationMatrix * vec4(position, 1.0);
     Out.position = (modelNormalizationMatrix * vec4(position, 1.0)).xyz;
     Out.textureCoordinates = textureCoordinates;
     Out.normal = normal;

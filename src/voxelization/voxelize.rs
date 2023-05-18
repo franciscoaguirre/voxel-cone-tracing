@@ -91,6 +91,8 @@ unsafe fn voxelize_scene(
         c_str!("axisProjections"),
         &[&right_view_matrix, &top_view_matrix, &far_view_matrix],
     );
+    gl::Disable(gl::CULL_FACE);
+    gl::Disable(gl::DEPTH_TEST);
 
     // TODO: We should apparently disable depth test and colormask false flase flase
     for model in models {
@@ -98,8 +100,6 @@ unsafe fn voxelize_scene(
         model.draw(voxelization_shader);
     }
 
-    gl::Disable(gl::CULL_FACE);
-    gl::Disable(gl::DEPTH_TEST);
     gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
     gl::Viewport(
         0,
