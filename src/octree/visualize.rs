@@ -36,13 +36,19 @@ impl Octree {
         );
         helpers::bind_image_texture(
             3,
-            self.geometry_data.voxel_data.voxel_positions.0,
+            self.textures.node_positions.0,
             gl::READ_ONLY,
             gl::RGB10_A2UI,
         );
         helpers::bind_3d_image_texture(
             4,
             self.textures.brick_pool_photons,
+            gl::READ_ONLY,
+            gl::R32UI,
+        );
+        helpers::bind_image_texture(
+            5,
+            self.geometry_data.node_data.level_start_indices.0,
             gl::READ_ONLY,
             gl::R32UI,
         );
@@ -67,7 +73,8 @@ impl Octree {
         gl::DrawArrays(
             gl::POINTS,
             0,
-            self.geometry_data.voxel_data.number_of_voxel_fragments as i32,
+            // Use necessary per level
+            self.geometry_data.node_data.nodes_per_level[octree_level as usize] as i32,
         );
     }
 

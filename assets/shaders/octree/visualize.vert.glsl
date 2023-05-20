@@ -8,8 +8,9 @@ uniform uint voxelDimension;
 
 uniform layout(binding = 0, r32ui) uimageBuffer nodePool;
 uniform layout(binding = 2, rgba8) image3D brickPoolColors;
-uniform layout(binding = 3, rgb10_a2ui) uimageBuffer voxelPositions;
+uniform layout(binding = 3, rgb10_a2ui) uimageBuffer nodePositions;
 uniform layout(binding = 4, r32ui) uimage3D brickPoolPhotons;
+uniform layout(binding = 5, r32ui) readonly uimageBuffer levelStartIndices;
 
 out vec4 geom_nodePosition;
 out float geom_halfNodeSize;
@@ -20,21 +21,19 @@ out ivec3 geom_brickCoordinates;
 #include "./_octreeTraversal.glsl"
 
 void main() {
-  int threadIndex = gl_VertexID;
+  int nodeID = gl_VertexID;
+  int levelStart = int(imageLoad(levelStartIndices, int(octreeLevel)).r);
+  int nextLevelStart = int(imageLoad(levelStartIndices, int(octreeLevel + 1)).r);
+  memoryBarrier();
 
-  // TODO: Find an efficient way to render both occupied and empty nodes.
-  // This approach uses voxel fragment positions and therefore doesn't show
-  // empty nodes.
-  uvec3 voxelFragmentPosition = imageLoad(voxelPositions, threadIndex).xyz;
+  nodeID += levelStart;
+  if (nodeID >= nextLevelStart) {
+      nodeID = levelStart;
+  }
 
-  float halfNodeSize;
-  vec3 nodeCoordinates;
-  int nodeID = traverseOctree(
-    normalizedFromIntCoordinates(voxelFragmentPosition, float(voxelDimension)),
-    octreeLevel,
-    nodeCoordinates,
-    halfNodeSize
-  );
+  uvec3 nodeCoordinatesRaw = imageLoad(nodePositions, nodeID).xyz;
+  vec3 nodeCoordinates = nodeCoordinatesRaw / float(voxelDimension);
+  float halfNodeSize = calculateHalfNodeSize(octreeLevel);
 
   ivec3 brickCoordinates = calculateBrickCoordinates(nodeID);
   geom_brickCoordinates = brickCoordinates;
@@ -53,10 +52,10 @@ void main() {
   // }
 
   // Normalized device coordinates go from -1.0 to 1.0, our coordinates go from 0.0 to 1.0
-  geom_nodePosition = vec4((nodeCoordinates.xyz) * 2.0 - vec3(1.0), 1.0);
   float normalizedHalfNodeSize = halfNodeSize * 2.0;
+  geom_nodePosition = vec4(nodeCoordinates.xyz * 2.0 - vec3(1.0), 1.0);
 
-  geom_nodePosition.xyz += normalizedHalfNodeSize;
+  geom_nodePosition.xyz += vec3(normalizedHalfNodeSize);
   gl_Position = geom_nodePosition;
 
   geom_halfNodeSize = normalizedHalfNodeSize;
