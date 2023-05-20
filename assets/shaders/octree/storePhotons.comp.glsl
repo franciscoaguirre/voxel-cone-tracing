@@ -26,7 +26,7 @@ void main() {
     if (queryCoordinates == uvec3(0)) {
         return;
     }
-    vec3 normalizedQueryCoordinates = normalizedFromIntCoordinates(queryCoordinates, float(voxelDimension) * 1.5);
+    vec3 normalizedQueryCoordinates = normalizedFromIntCoordinates(queryCoordinates, float(voxelDimension));
 
     float halfNodeSize;
     vec3 nodeCoordinates;

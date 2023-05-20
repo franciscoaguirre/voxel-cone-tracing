@@ -35,7 +35,7 @@ void main() {
         ((In.position.xyz / In.position.w) + vec3(1.0)) / 2.0,
         1.0
     );
-    uvec3 unnormalizedGlobalPosition = uvec3(floor(normalizedGlobalPosition.xyz * float(voxelDimension) * 1.5));
+    uvec3 unnormalizedGlobalPosition = uvec3(floor(normalizedGlobalPosition.xyz * float(voxelDimension)));
     
     viewMapPositions = uvec4(unnormalizedGlobalPosition, 1.0);
     viewMapViewOutput = normalizedGlobalPosition;
