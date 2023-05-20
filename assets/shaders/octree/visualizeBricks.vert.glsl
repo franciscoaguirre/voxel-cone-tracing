@@ -29,17 +29,16 @@ void main() {
   }
 
   uvec3 nodeCoordinatesRaw = imageLoad(nodePositions, nodeID).xyz;
-  vec3 nodeCoordinates = normalizedFromIntCoordinates(nodeCoordinatesRaw, float(voxelDimension));
+  vec3 nodeCoordinates = nodeCoordinatesRaw / float(voxelDimension);
   float halfNodeSize = calculateHalfNodeSize(octreeLevel);
 
   ivec3 brickCoordinates = calculateBrickCoordinates(nodeID);
   geom_brickCoordinates = brickCoordinates;
 
-  // Normalized device coordinates go from -1.0 to 1.0, our coordinates go from 0.0 to 1.0
-  geom_nodePosition = vec4((nodeCoordinates) * 2.0 - vec3(1.0), 1.0);
   float normalizedHalfNodeSize = halfNodeSize * 2.0;
+  geom_nodePosition = vec4(nodeCoordinates.xyz * 2.0 - vec3(1.0), 1.0);
 
-  geom_nodePosition.xyz += normalizedHalfNodeSize;
+  geom_nodePosition.xyz += vec3(normalizedHalfNodeSize);
   gl_Position = geom_nodePosition;
 
   geom_halfNodeSize = normalizedHalfNodeSize;

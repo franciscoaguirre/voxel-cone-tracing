@@ -32,7 +32,7 @@ void main() {
 
         if (neighborID != 0) {
             uvec3 neighborPosition = imageLoad(nodePositions, int(neighborID)).xyz;
-            vec3 normalizedNeighborPosition = normalizedFromIntCoordinates(neighborPosition, float(voxelDimension));
+            vec3 normalizedNeighborPosition = vec3(neighborPosition) / float(voxelDimension);
             vec4 finalNeighborPosition = vec4((normalizedNeighborPosition.xyz) * 2.0 - vec3(1.0), 1.0);
             finalNeighborPosition.xyz += geom_halfNodeSize[0];
             drawCube(finalNeighborPosition, geom_halfNodeSize[0], canonizationMatrix, neighborColor);
