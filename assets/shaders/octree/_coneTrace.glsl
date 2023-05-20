@@ -11,7 +11,7 @@ const float brickPoolBrickSize = 3.0 / brickPoolResolution;
 // Returns values in [0, maxOctreeLevel]
 float calculateLod(float coneDiameter) {
     // Could approximate log2 by lines between y = a and y = a + 1
-    return maxOctreeLevel - log2(1 + coneDiameter * voxelDimension);
+    return clamp(log2(1.0 / coneDiameter) - 1, 0.0, maxOctreeLevel);
 }
 
 // Brick marching

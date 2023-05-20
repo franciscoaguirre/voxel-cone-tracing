@@ -125,6 +125,10 @@ void main() {
     vec4 aabb = defineAabb(vertex, halfPixel);
     frag_aabb = aabb;
 
+    // Because we have a square that is half the pixel, but we want to expand on the diagonal of that square, so halfPixel*sqrt(2) 
+    // Not sure of it so left as a comment
+    // halfPixel *= 1.41421356237;
+
     vec3 expandedVertex[3];
     for (int i = 0; i < 3; i++) {
         vec2 currentEdge = vertex[(i + 1) % 3].xy - vertex[i].xy;
