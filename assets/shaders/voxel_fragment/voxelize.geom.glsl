@@ -20,6 +20,8 @@ out vec2 semiDiagonal;
 flat out int frag_dominantAxis;
 flat out vec4 frag_aabb; 
 
+uniform layout(binding = 3, r32f) imageBuffer debug;
+
 uniform int voxelDimension;
 uniform mat4 axisProjections[3];
 
@@ -59,6 +61,9 @@ vec4 defineAabb(vec4 points[3], vec2 halfPixel) {
     return aabb + vec4(-halfPixel, halfPixel);
 }
 
+bool lineIntersection(vec2 p1, vec2 p2, vec2 q1, vec2 q2, out vec2 intersection);
+vec2 normalToSemiDiagonal(vec2 normal);
+
 void main() {
     // TODO: Check if it's better to use the model normals.
     // We could use any vertex normal or average all of them.
@@ -77,13 +82,8 @@ void main() {
     vertex[0] = vec4(In[0].position, 1.0);
     vertex[1] = vec4(In[1].position, 1.0);
     vertex[2] = vec4(In[2].position, 1.0);
-  
-    // Project triangle to dominant plane
-    //for (int i = 0; i < gl_in.length(); i++) {
-      //vertex[i] = axisProjections[dominantAxis] * vertex[i];
-    //}
-    vec3 temp;
 
+    vec4 temp;
     // Project triangle to dominant plane
     if (dominantAxis == 0) {
         // x-axis is depth
@@ -91,22 +91,28 @@ void main() {
         {
             temp.x = vertex[i].z;
             temp.z = vertex[i].x; 
-            
+
             vertex[i].xz = temp.xz; 
         }
-    
+
     } else if (dominantAxis == 1) {
         // y-axis is depth
         for (int i = 0; i < gl_in.length(); i++)
         {
             temp.y = vertex[i].z;
             temp.z = vertex[i].y;
-            
+
             vertex[i].yz = temp.yz; 
         }
     } else {
         // z-axis is depth, which is usual case so do nothing
     }
+
+  
+    // Project triangle to dominant plane
+    //for (int i = 0; i < gl_in.length(); i++) {
+      //vertex[i] = axisProjections[dominantAxis] * vertex[i];
+    //}
 
     vec3 projectedTriangleNormal = normalize(cross(vertex[1].xyz - vertex[0].xyz, vertex[2].xyz - vertex[0].xyz));
     vec4 trianglePlane;

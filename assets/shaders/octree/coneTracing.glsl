@@ -33,6 +33,10 @@ uniform layout(binding = 0, r32ui) readonly uimageBuffer nodePool;
 uniform uint voxelDimension;
 uniform uint maxOctreeLevel;
 uniform bool useLighting;
+uniform vec3 lightDirection;
+uniform float shininess;
+uniform mat4 lightViewMatrix;
+uniform mat4 lightProjectionMatrix;
 
 // Brick attributes
 uniform sampler3D brickPoolColors;
@@ -43,13 +47,16 @@ uniform sampler3D brickPoolPhotons;
 uniform sampler2D gBufferColors;
 uniform sampler2D gBufferPositions;
 uniform sampler2D gBufferNormals;
-// uniform sampler2D shadowMap; // TODO: Later
+uniform sampler2D shadowMap;
 
 #include "./_constants.glsl"
 #include "./_helpers.glsl"
 #include "./_traversalHelpers.glsl"
 #include "./_octreeTraversal.glsl"
 #include "./_coneTrace.glsl"
+
+vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent);
+float visibilityCalculation(vec4 positionInLightSpace, vec3 normal);
 
 void main() {
     // vec4 indirectDiffuse = vec4(0, 0, 0, 1);
@@ -66,15 +73,15 @@ void main() {
     // vec4 totalColor = (directDiffuse + indirectDiffuse + specular);
     // FragColor = totalColor * ambientOcclusion;
 
-    float maxDistance = 0.01;
-    float coneAngle = 0.261799;
     // float coneAngle = 0.000001;
-    vec3 position = texture(gBufferPositions, In.textureCoordinates).xyz * 0.5 + 0.5;
+
+    vec3 positionRaw = texture(gBufferPositions, In.textureCoordinates).xyz;
+    vec3 position = positionRaw * 0.5 + 0.5;
+
     vec3 normal = texture(gBufferNormals, In.textureCoordinates).xyz;
     // vec3 normal = vec3(0, 1, 0);
     vec3 helper = normal - vec3(0.1, 0, 0); // Random vector
     vec3 tangent = normalize(helper - dot(normal, helper) * normal);
-    vec3 bitangent = cross(normal, tangent);
 
     vec4 color = texture(gBufferColors, In.textureCoordinates);
 
@@ -82,6 +89,63 @@ void main() {
         discard;
     }
 
+    vec4 indirectLight = gatherIndirectLight(position, normal, tangent);
+
+    vec4 positionInLightSpace = lightProjectionMatrix * lightViewMatrix * vec4(positionRaw, 1.0);
+    float visibility = visibilityCalculation(positionInLightSpace, normal);
+
+    float diffuse = max(0.0, dot(lightDirection, normal));
+    // float h = normalize((lightDirection - view);
+    // float specular = pow(max(0.0, dot(normal, h)), shininess);
+    vec3 directLight = vec3(1) * diffuse;
+    vec3 ambient = vec3(1) * 0.15;
+
+    vec3 lightIntensity = ambient + visibility * (directLight); // TODO: Add indirectLight.rgb
+
+    // FragColor = vec4(texture(texture_diffuse1, frag_textureCoordinates).xyz - vec3(AO), 1);
+    // outColor = vec4(1.0 - indirectLight.aaa, 1.0);
+    outColor = color * vec4(lightIntensity, 1.0);
+    // outColor = texture(gBufferColors, In.textureCoordinates);
+    // outColor = vec4(position, 1.0);
+    // outColor = vec4(normal, 1.0);
+    // outColor = vec4(color.aaa, 1.0);
+    //vec4 color = texture(texture_diffuse1, frag_textureCoordinates);
+    //FragColor = vec4(color.rgb * AO, color.a);
+}
+
+float visibilityCalculation(vec4 positionInLightSpace, vec3 normal) {
+    vec3 projectedPosition = positionInLightSpace.xyz / positionInLightSpace.w;
+    projectedPosition = projectedPosition * 0.5 + 0.5;
+    float closestDepth = texture(shadowMap, projectedPosition.xy).r;
+    float currentDepth = projectedPosition.z;
+    float bias = max(0.05 * (1.0 - dot(normal, lightDirection)), 0.005);
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+    for (int x = -1; x <= 1; x++) {
+        for (int y = -1; y <= 1; y++) {
+            float pcfDepth = texture(shadowMap, projectedPosition.xy + vec2(x, y) * texelSize).r;
+            shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
+        }
+    }
+    shadow /= 9.0;
+    if (projectedPosition.z > 1.0) {
+        shadow = 0.0;
+    }
+    if (
+        projectedPosition.x < 0.00001 ||
+            projectedPosition.x > 0.99999 ||
+            projectedPosition.y < 0.00001 ||
+            projectedPosition.y > 0.99999
+    ) {
+        shadow = 1.0;
+    }
+    return 1.0 - shadow;
+}
+
+vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent) {
+    float maxDistance = 0.01;
+    float coneAngle = 0.261799;
+    vec3 bitangent = cross(normal, tangent);
     vec3 direction = normal;
     vec4 indirectLight = vec4(0);
     indirectLight += coneTrace(position, direction, coneAngle, maxDistance); // 15deg as rad
@@ -104,12 +168,5 @@ void main() {
 
     indirectLight /= 3.828;
 
-    // FragColor = vec4(texture(texture_diffuse1, frag_textureCoordinates).xyz - vec3(AO), 1);
-    outColor = vec4(1.0 - indirectLight.aaa, 1.0);
-    // outColor = texture(gBufferColors, In.textureCoordinates);
-    // outColor = vec4(position, 1.0);
-    // outColor = vec4(normal, 1.0);
-    // outColor = vec4(color.aaa, 1.0);
-    //vec4 color = texture(texture_diffuse1, frag_textureCoordinates);
-    //FragColor = vec4(color.rgb * AO, color.a);
+    return indirectLight;
 }

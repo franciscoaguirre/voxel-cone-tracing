@@ -2,6 +2,7 @@
 // - uniform uint voxelDimension
 // - uniform uint maxOctreeLevel
 // - uniform sampler3D brickPoolColors
+// - uniform bool useLighting
 // - _traversalHelpers
 // - _octreeTraversal
 
@@ -56,7 +57,7 @@ vec4 coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float m
     Node previousParentNode;
     int steps = 0;
 
-    distanceAlongCone += voxelSize * 2;
+    distanceAlongCone += voxelSize;
     while (distanceAlongCone < maxDistance && returnColor.a < 1.0) {
         float coneDiameter = coneDiameterCoefficient * distanceAlongCone;
         float lod = calculateLod(coneDiameter);
@@ -92,9 +93,15 @@ vec4 coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float m
 
         vec3 childVoxelCoordinates = findVoxel(queryCoordinates, node);
         vec4 childColor = texture(brickPoolColors, childVoxelCoordinates);
+        if (useLighting) {
+            childColor *= texture(brickPoolPhotons, childVoxelCoordinates) / 1000000;
+        }
         childColor.a = 1.0 - pow((1.0 - childColor.a), stepMultiplier); // Step correction
         vec3 parentVoxelCoordinates = findVoxel(queryCoordinates, parentNode);
         vec4 parentColor = texture(brickPoolColors, parentVoxelCoordinates);
+        if (useLighting) {
+            childColor *= texture(brickPoolPhotons, parentVoxelCoordinates) / 1000000;
+        }
         parentColor.a = 1.0 - pow((1.0 - parentColor.a), stepMultiplier); // Step correction
 
         vec4 newColor = mix(childColor, parentColor, parentWeight); // Quadrilinear interpolation
