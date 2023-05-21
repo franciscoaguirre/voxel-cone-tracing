@@ -133,6 +133,25 @@ void main() {
     }
 
     FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+
+    //// Test certain fragment coordinates
+    //// gl_FragCoord is by default on center of voxels
+    //ivec3 fragCoord = ivec3(floor(gl_FragCoord.xyz));
+    ////if (fragCoord.x < 10 && fragCoord.x == fragCoord.y) {
+    //if (fragCoord.x == 1 && (fragCoord.y == 1 || fragCoord.y == 0)) {
+      //imageStore(debug, fragCoord.y * 6 + 0, vec4(float(side), 0, 0, 0));
+      //imageStore(debug, fragCoord.y * 6 + 1, vec4(float(dfdx), 0, 0, 0));
+      //imageStore(debug, fragCoord.y * 6 + 2, vec4(float(dfdy), 0, 0, 0));
+      //imageStore(debug, fragCoord.y * 6 + 3, vec4(float(voxelCoordinates.x), 0, 0, 0));
+      //imageStore(debug, fragCoord.y * 6 + 4, vec4(float(voxelCoordinates.y), 0, 0, 0));
+      //imageStore(debug, fragCoord.y * 6 + 5, vec4(float(voxelCoordinates.z), 0, 0, 0));
+    //}
+}
+
+float findZ(vec2 xyScreenCoordinates) {
+  float zClipSpace = zFromPlaneAndPoint(xyScreenCoordinates, trianglePlane, 69.0);
+
+  return (zClipSpace * -1.0 + 1.0) / 2.0;
 }
 
 float findZ(vec2 xyScreenCoordinates) {
