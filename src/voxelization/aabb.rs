@@ -33,7 +33,8 @@ impl Aabb {
     }
 
     pub fn middle_point(&self) -> Vector3<f32> {
-        (self.min_vertex + self.max_vertex) / 2_f32
+        //(self.min_vertex + self.max_vertex) / 2_f32
+        vec3(0f32, 0f32, 0f32)
     }
 
     pub fn longer_axis_length(&self) -> f32 {
@@ -41,6 +42,8 @@ impl Aabb {
         let x_axis_length = diff_vector.x;
         let y_axis_length = diff_vector.y;
         let z_axis_length = diff_vector.z;
+
+        return 2f32;
 
         if x_axis_length > y_axis_length && x_axis_length > z_axis_length {
             return x_axis_length;

@@ -80,10 +80,10 @@ impl Octree {
             allocated_nodes_counter,
         );
 
-        self.show_nodes(0, 8);
-        self.show_nodes(2914, 8);
-        self.show_nodes(11289, 8);
-        self.show_nodes(11297, 8);
+        //self.show_nodes(0, 8);
+        //self.show_nodes(2914, 8);
+        //self.show_nodes(11289, 8);
+        //self.show_nodes(11297, 8);
 
         shader_passes
             .write_leaf_nodes_pass
