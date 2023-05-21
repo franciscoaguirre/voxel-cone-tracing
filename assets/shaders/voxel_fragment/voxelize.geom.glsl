@@ -19,7 +19,6 @@ out VoxelData {
 } Out;
 out vec2 edgeNormal;
 out vec2 semiDiagonal;
-out vec4 trianglePlane;
 
 flat out int frag_dominantAxis;
 flat out vec4 frag_aabb; 
@@ -113,6 +112,7 @@ void main() {
     }
 
     vec3 projectedTriangleNormal = normalize(cross(vertex[1].xyz - vertex[0].xyz, vertex[2].xyz - vertex[0].xyz));
+    vec4 trianglePlane;
     trianglePlane.xyz = projectedTriangleNormal;
     trianglePlane.w = -dot(projectedTriangleNormal, vertex[0].xyz);
 
@@ -130,7 +130,7 @@ void main() {
 
     // Because we have a square that is half the pixel, but we want to expand on the diagonal of that square, so halfPixel*sqrt(2) 
     // Not sure of it so left as a comment
-    halfPixel *= 1.4;
+    halfPixel *= 1.41421356237;
 
     vec3 expandedVertex[3];
     for (int i = 0; i < 3; i++) {
@@ -150,9 +150,8 @@ void main() {
         vec2 intersection;
         if (lineIntersection(currentExpanded1, currentExpanded2, previousExpanded1, previousExpanded2, intersection)) {
             expandedVertex[i].xy = intersection;
-            // TODO: Important, this z should be 0 and pass in a Z out
+            // Irrelevant which value it is, except for the fact it should be inside clip space (so vertex doesn't get frustumed out)
             expandedVertex[i].z = 0;
-            // expandedVertex[i].z = zFromPlaneAndPoint(intersection, trianglePlane, 0.0);
         } else {
             // We f***** up
             expandedVertex[i] = vertex[i].xyz;
