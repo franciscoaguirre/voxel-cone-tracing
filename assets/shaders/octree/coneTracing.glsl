@@ -86,26 +86,26 @@ void main() {
     vec4 indirectLight = vec4(0);
     indirectLight += coneTrace(position, direction, coneAngle, maxDistance); // 15deg as rad
 
-    float angle = 1.0472;
-    float sinAngle = sin(angle);
-    float cosAngle = cos(angle);
+    //float angle = 1.0472;
+    //float sinAngle = sin(angle);
+    //float cosAngle = cos(angle);
 
-    direction = sinAngle * normal + cosAngle * tangent;
-    indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
+    //direction = sinAngle * normal + cosAngle * tangent;
+    //indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
 
-    direction = sinAngle * normal - cosAngle * tangent;
-    indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
+    //direction = sinAngle * normal - cosAngle * tangent;
+    //indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
 
-    direction = sinAngle * normal + cosAngle * bitangent;
-    indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
+    //direction = sinAngle * normal + cosAngle * bitangent;
+    //indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
 
-    direction = sinAngle * normal - cosAngle * bitangent;
-    indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
+    //direction = sinAngle * normal - cosAngle * bitangent;
+    //indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
 
-    indirectLight /= 3.828;
+    //indirectLight /= 3.828;
 
     // FragColor = vec4(texture(texture_diffuse1, frag_textureCoordinates).xyz - vec3(AO), 1);
-    outColor = vec4(1.0 - indirectLight.aaa, 1.0);
+    outColor = vec4(indirectLight.rgb, 1.0);
     // outColor = texture(gBufferColors, In.textureCoordinates);
     // outColor = vec4(position, 1.0);
     // outColor = vec4(normal, 1.0);

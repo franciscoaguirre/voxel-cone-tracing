@@ -91,10 +91,10 @@ void storeVoxelFragment(uvec4 voxelCoordinates, uint fragmentListIndex) {
 }
 
 void main() {
-    float voxelZCoordinate = float(voxelDimension) * In.z;
+    float voxelZCoordinate = In.z;
     int flooredVoxelZCoordinate = int(voxelZCoordinate);
-    int dfdx = int(dFdx(flooredVoxelZCoordinate)); 
-    int dfdy = int(dFdy(flooredVoxelZCoordinate)); 
+    float dfdx = dFdx(voxelZCoordinate) / 2.0; 
+    float dfdy = dFdy(voxelZCoordinate) / 2.0; 
 
     discardIfOutsideAabb();
     memoryBarrier();
@@ -111,36 +111,28 @@ void main() {
 
     int side = 0;
 
-    if (abs(dfdx) > 0.0 || abs(dfdy) > 0.0) {
-      side = fract(voxelZCoordinate) > 0.5 ? 1 : side;
-      side = fract(voxelZCoordinate) < 0.5 ? -1 : side;
-      voxelCoordinates = calculateVoxelCoordinates(int(flooredVoxelZCoordinate) + side);
+    if(fract(voxelZCoordinate) > 0.5) {
+      if(int(voxelZCoordinate + abs(dfdx)) > flooredVoxelZCoordinate || int(voxelZCoordinate + abs(dfdy)) > flooredVoxelZCoordinate) {
+        side = 1;
+      } 
+    } else if(fract(voxelZCoordinate) < 0.5) {
+      if(int(voxelZCoordinate - abs(dfdx)) < flooredVoxelZCoordinate || int(voxelZCoordinate - abs(dfdy)) < flooredVoxelZCoordinate) {
+        side = -1;
+      } 
+    }
 
-      if (side != 0) {
-        fragmentListIndex = atomicCounterIncrement(voxelFragmentCount);
-      }
+    if (side != 0) {
+      voxelCoordinates = calculateVoxelCoordinates(int(flooredVoxelZCoordinate) + side);
+      fragmentListIndex = atomicCounterIncrement(voxelFragmentCount);
     }
 
     memoryBarrier();
 
     if (shouldStore && side != 0) {
-        storeVoxelFragment(voxelCoordinates, fragmentListIndex);
+      storeVoxelFragment(voxelCoordinates, fragmentListIndex);
     }
 
     FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-
-    //// Test certain fragment coordinates
-    //// gl_FragCoord is by default on center of voxels
-    //ivec3 fragCoord = ivec3(floor(gl_FragCoord.xyz));
-    ////if (fragCoord.x < 10 && fragCoord.x == fragCoord.y) {
-    //if (fragCoord.x == 1 && (fragCoord.y == 1 || fragCoord.y == 0)) {
-      //imageStore(debug, fragCoord.y * 6 + 0, vec4(float(side), 0, 0, 0));
-      //imageStore(debug, fragCoord.y * 6 + 1, vec4(float(dfdx), 0, 0, 0));
-      //imageStore(debug, fragCoord.y * 6 + 2, vec4(float(dfdy), 0, 0, 0));
-      //imageStore(debug, fragCoord.y * 6 + 3, vec4(float(voxelCoordinates.x), 0, 0, 0));
-      //imageStore(debug, fragCoord.y * 6 + 4, vec4(float(voxelCoordinates.y), 0, 0, 0));
-      //imageStore(debug, fragCoord.y * 6 + 5, vec4(float(voxelCoordinates.z), 0, 0, 0));
-    //}
 }
 
 float findZ(vec2 xyScreenCoordinates) {

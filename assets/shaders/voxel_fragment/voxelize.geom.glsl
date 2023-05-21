@@ -166,7 +166,7 @@ void main() {
         //Out.position = vec3(vertex[i]);
         gl_Position = vec4(expandedVertex[i], 1.0);
         Out.position = expandedVertex[i];
-        Out.z = (zFromPlaneAndPoint(Out.position.xy, trianglePlane, 0.0) + 1.0) / 2.0;
+        Out.z = ((zFromPlaneAndPoint(Out.position.xy, trianglePlane, 0.0) + 1.0) / 2.0) * voxelDimension;
         Out.normal = In[i].normal;
         Out.textureCoordinates = In[i].textureCoordinates;
         EmitVertex();

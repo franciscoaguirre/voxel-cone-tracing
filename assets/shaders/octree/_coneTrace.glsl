@@ -11,7 +11,8 @@ const float brickPoolBrickSize = 3.0 / brickPoolResolution;
 // Returns values in [0, maxOctreeLevel]
 float calculateLod(float coneDiameter) {
     // Could approximate log2 by lines between y = a and y = a + 1
-    return clamp(log2(1.0 / coneDiameter) - 1, 0.0, maxOctreeLevel);
+    //return clamp(log2(1.0 / coneDiameter) - 1, 0.0, maxOctreeLevel);
+    return 7;
 }
 
 // Brick marching
@@ -56,7 +57,7 @@ vec4 coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float m
     Node previousParentNode;
     int steps = 0;
 
-    distanceAlongCone += voxelSize * 2;
+    //distanceAlongCone += voxelSize * 2;
     while (distanceAlongCone < maxDistance && returnColor.a < 1.0) {
         float coneDiameter = coneDiameterCoefficient * distanceAlongCone;
         float lod = calculateLod(coneDiameter);
@@ -82,6 +83,7 @@ vec4 coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float m
                 parentNode
             );
             if (node.id == NODE_NOT_FOUND) {
+                return vec4(0.0, 1.0, 0.0, 1.0);
                 distanceAlongCone += sampleStep;
                 continue;
             }
@@ -98,7 +100,7 @@ vec4 coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float m
         parentColor.a = 1.0 - pow((1.0 - parentColor.a), stepMultiplier); // Step correction
 
         vec4 newColor = mix(childColor, parentColor, parentWeight); // Quadrilinear interpolation
-        returnColor += (1 - returnColor.a) * newColor;
+        returnColor = vec4(newColor.rgb, 1.0);
 
         distanceAlongCone += sampleStep;
 
@@ -109,7 +111,7 @@ vec4 coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float m
         previousNode = node;
         previousParentNode = parentNode;
 
-        // break;
+        break;
     }
 
     returnColor.a = min(returnColor.a, 1.0);
