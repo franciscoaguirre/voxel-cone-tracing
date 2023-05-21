@@ -1,5 +1,7 @@
 #version 460 core
 
+#include "assets/shaders/octree/_helpers.glsl"
+
 layout (triangles) in;
 layout (triangle_strip, max_vertices = 3) out;
 
@@ -13,9 +15,11 @@ out VoxelData {
     vec3 position;
     vec3 normal;
     vec2 textureCoordinates;
+    float z;
 } Out;
 out vec2 edgeNormal;
 out vec2 semiDiagonal;
+out vec4 trianglePlane;
 
 flat out int frag_dominantAxis;
 flat out vec4 frag_aabb; 
@@ -109,7 +113,6 @@ void main() {
     }
 
     vec3 projectedTriangleNormal = normalize(cross(vertex[1].xyz - vertex[0].xyz, vertex[2].xyz - vertex[0].xyz));
-    vec4 trianglePlane;
     trianglePlane.xyz = projectedTriangleNormal;
     trianglePlane.w = -dot(projectedTriangleNormal, vertex[0].xyz);
 
@@ -127,7 +130,7 @@ void main() {
 
     // Because we have a square that is half the pixel, but we want to expand on the diagonal of that square, so halfPixel*sqrt(2) 
     // Not sure of it so left as a comment
-    // halfPixel *= 1.41421356237;
+    halfPixel *= 1.4;
 
     vec3 expandedVertex[3];
     for (int i = 0; i < 3; i++) {
@@ -147,8 +150,9 @@ void main() {
         vec2 intersection;
         if (lineIntersection(currentExpanded1, currentExpanded2, previousExpanded1, previousExpanded2, intersection)) {
             expandedVertex[i].xy = intersection;
-            expandedVertex[i].z = zFromPlaneAndPoint(intersection, trianglePlane, vertex[i].z);
-
+            // TODO: Important, this z should be 0 and pass in a Z out
+            expandedVertex[i].z = 0;
+            // expandedVertex[i].z = zFromPlaneAndPoint(intersection, trianglePlane, 0.0);
         } else {
             // We f***** up
             expandedVertex[i] = vertex[i].xyz;
@@ -158,8 +162,11 @@ void main() {
         edgeNormal = currentNormal;
         semiDiagonal = currentSemiDiagonal;
 
+        //gl_Position = vertex[i];
+        //Out.position = vec3(vertex[i]);
         gl_Position = vec4(expandedVertex[i], 1.0);
         Out.position = expandedVertex[i];
+        Out.z = (zFromPlaneAndPoint(Out.position.xy, trianglePlane, 0.0) + 1.0) / 2.0;
         Out.normal = In[i].normal;
         Out.textureCoordinates = In[i].textureCoordinates;
         EmitVertex();
@@ -198,11 +205,4 @@ bool lineIntersection(vec2 p1, vec2 p2, vec2 q1, vec2 q2, out vec2 intersection)
     intersection = p1 + t * r;
 
     return true;
-}
-
-float zFromPlaneAndPoint(vec2 point, vec4 plane, float defaultValue) {
-  if (plane.z == 0.0) {
-    return defaultValue;
-  }
-  return (point.x * plane.x + point.y * plane.y + plane.w) / -plane.z;
 }
