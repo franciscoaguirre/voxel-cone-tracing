@@ -23,6 +23,8 @@ out vec2 semiDiagonal;
 flat out int frag_dominantAxis;
 flat out vec4 frag_aabb; 
 
+uniform layout(binding = 3, r32f) imageBuffer debug;
+
 uniform int voxelDimension;
 uniform mat4 axisProjections[3];
 
@@ -80,13 +82,8 @@ void main() {
     vertex[0] = vec4(In[0].position, 1.0);
     vertex[1] = vec4(In[1].position, 1.0);
     vertex[2] = vec4(In[2].position, 1.0);
-  
-    // Project triangle to dominant plane
-    //for (int i = 0; i < gl_in.length(); i++) {
-      //vertex[i] = axisProjections[dominantAxis] * vertex[i];
-    //}
-    vec3 temp;
 
+    vec4 temp;
     // Project triangle to dominant plane
     if (dominantAxis == 0) {
         // x-axis is depth
@@ -94,17 +91,17 @@ void main() {
         {
             temp.x = vertex[i].z;
             temp.z = vertex[i].x; 
-            
+
             vertex[i].xz = temp.xz; 
         }
-    
+
     } else if (dominantAxis == 1) {
         // y-axis is depth
         for (int i = 0; i < gl_in.length(); i++)
         {
             temp.y = vertex[i].z;
             temp.z = vertex[i].y;
-            
+
             vertex[i].yz = temp.yz; 
         }
     } else {

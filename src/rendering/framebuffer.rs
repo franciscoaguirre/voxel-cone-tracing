@@ -151,8 +151,8 @@ impl Framebuffer {
         gl::GenFramebuffers(1, &mut fbo);
         gl::BindFramebuffer(gl::FRAMEBUFFER, fbo);
 
-        let mut textures = [0; 2]; // First one is rgb10_a2ui, second rgba8 for viewing
-        gl::GenTextures(2, textures.as_mut_ptr());
+        let mut textures = [0; 3]; // First one is rgb10_a2ui, second rgba8 for viewing, third for depth (shadow mapping)
+        gl::GenTextures(3, textures.as_mut_ptr());
 
         gl::BindTexture(gl::TEXTURE_2D, textures[0]);
         gl::TexImage2D(
@@ -186,22 +186,62 @@ impl Framebuffer {
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
         gl::BindTexture(gl::TEXTURE_2D, 0);
 
-        let mut rbo = 0;
-        gl::GenRenderbuffers(1, &mut rbo);
-        gl::BindRenderbuffer(gl::RENDERBUFFER, rbo);
-        gl::RenderbufferStorage(
-            gl::RENDERBUFFER,
-            gl::DEPTH24_STENCIL8,
+        gl::BindTexture(gl::TEXTURE_2D, textures[2]);
+        gl::TexImage2D(
+            gl::TEXTURE_2D,
+            0,
+            gl::DEPTH_COMPONENT as i32,
             CONFIG.viewport_width as i32,
             CONFIG.viewport_height as i32,
+            0,
+            gl::DEPTH_COMPONENT,
+            gl::FLOAT,
+            std::ptr::null(),
         );
-        gl::FramebufferRenderbuffer(
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(
+            gl::TEXTURE_2D,
+            gl::TEXTURE_WRAP_S,
+            gl::CLAMP_TO_BORDER as i32,
+        );
+        gl::TexParameteri(
+            gl::TEXTURE_2D,
+            gl::TEXTURE_WRAP_T,
+            gl::CLAMP_TO_BORDER as i32,
+        );
+        let border_color = [1.0f32; 4];
+        gl::TexParameterfv(
+            gl::TEXTURE_2D,
+            gl::TEXTURE_BORDER_COLOR,
+            border_color.as_ptr(),
+        );
+        gl::BindTexture(gl::TEXTURE_2D, 0);
+
+        gl::FramebufferTexture2D(
             gl::FRAMEBUFFER,
-            gl::DEPTH_STENCIL_ATTACHMENT,
-            gl::RENDERBUFFER,
-            rbo,
+            gl::DEPTH_ATTACHMENT,
+            gl::TEXTURE_2D,
+            textures[2],
+            0,
         );
-        gl::BindRenderbuffer(gl::RENDERBUFFER, 0);
+
+        // let mut rbo = 0;
+        // gl::GenRenderbuffers(1, &mut rbo);
+        // gl::BindRenderbuffer(gl::RENDERBUFFER, rbo);
+        // gl::RenderbufferStorage(
+        //     gl::RENDERBUFFER,
+        //     gl::DEPTH24_STENCIL8,
+        //     CONFIG.viewport_width as i32,
+        //     CONFIG.viewport_height as i32,
+        // );
+        // gl::FramebufferRenderbuffer(
+        //     gl::FRAMEBUFFER,
+        //     gl::DEPTH_STENCIL_ATTACHMENT,
+        //     gl::RENDERBUFFER,
+        //     rbo,
+        // );
+        // gl::BindRenderbuffer(gl::RENDERBUFFER, 0);
 
         gl::FramebufferTexture2D(
             gl::FRAMEBUFFER,
@@ -228,7 +268,7 @@ impl Framebuffer {
 
         Self {
             fbo,
-            textures: [textures[0], textures[1], 0, 0],
+            textures: [textures[0], textures[1], textures[2], 0],
         }
     }
 

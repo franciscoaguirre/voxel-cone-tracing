@@ -38,7 +38,13 @@ unsafe fn populate_voxel_fragment_list(
     helpers::bind_image_texture(1, voxel_colors.0, gl::WRITE_ONLY, gl::RGBA8);
     helpers::bind_image_texture(2, voxel_normals.0, gl::WRITE_ONLY, gl::RGBA8);
 
+    let (debug, buffer) = helpers::generate_texture_buffer(10, gl::R32F, 69f32);
+    helpers::bind_image_texture(3, debug, gl::WRITE_ONLY, gl::R32F);
+
     voxelize_scene(voxelization_shader, models, atomic_counter);
+
+    let debug_values = helpers::get_values_from_texture_buffer(buffer, 10, 420f32);
+    dbg!(&debug_values);
 }
 
 unsafe fn voxelize_scene(
@@ -71,21 +77,23 @@ unsafe fn voxelize_scene(
 
     voxelization_shader.set_vec3(c_str!("fallbackColor"), 1.0, 1.0, 1.0);
 
+    let ortho = cgmath::ortho(-1.0, 1.0, -1.0, 1.0, 0.0001, 10_000.0);
+
     let mut right_camera = Transform::default();
     right_camera.position = point3(-2.0, 0.0, 0.0);
     right_camera.set_rotation_y(0.0);
-    let right_view_matrix = right_camera.get_view_matrix();
+    let right_view_matrix = ortho * right_camera.get_view_matrix();
 
     let mut top_camera = Transform::default();
     top_camera.position = point3(0.0, 2.0, 0.0);
     top_camera.set_rotation_x(-90.0);
     top_camera.set_rotation_y(90.0);
-    let top_view_matrix = top_camera.get_view_matrix();
+    let top_view_matrix = ortho * top_camera.get_view_matrix();
 
     let mut far_camera = Transform::default();
     far_camera.position = point3(0.0, 0.0, 2.0);
     far_camera.set_rotation_y(-90.0);
-    let far_view_matrix = far_camera.get_view_matrix();
+    let far_view_matrix = ortho * far_camera.get_view_matrix();
 
     voxelization_shader.set_mat4_array(
         c_str!("axisProjections"),
@@ -93,7 +101,6 @@ unsafe fn voxelize_scene(
     );
     gl::Disable(gl::CULL_FACE);
     gl::Disable(gl::DEPTH_TEST);
-
     // TODO: We should apparently disable depth test and colormask false flase flase
     for model in models {
         // TODO: Do we need to set more things in the shader?

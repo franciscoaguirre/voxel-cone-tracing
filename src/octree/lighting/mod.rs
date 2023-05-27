@@ -5,7 +5,7 @@ use gl::types::GLuint;
 use crate::{
     config::CONFIG,
     helpers,
-    rendering::{framebuffer::Framebuffer, light::SpotLight, model::Model, shader::Shader},
+    rendering::{framebuffer::Framebuffer, light::SpotLight, model::Model},
 };
 
 use super::Octree;
@@ -14,19 +14,36 @@ mod stages;
 use stages::*;
 
 impl Octree {
+    pub unsafe fn clear_light(&self) {
+        self.renderer.clear_bricks_shader.use_program();
+
+        helpers::bind_3d_image_texture(
+            0,
+            self.textures.brick_pool_photons,
+            gl::WRITE_ONLY,
+            gl::R32UI,
+        );
+
+        let number_of_groups =
+            (self.number_of_nodes() as f64 / CONFIG.working_group_size as f64).ceil() as u32;
+
+        self.renderer.clear_bricks_shader.dispatch(number_of_groups);
+        self.renderer.clear_bricks_shader.wait();
+    }
+
     pub unsafe fn inject_light(
         &self,
         models: &[&Model],
         light: &SpotLight,
         model: &Matrix4<f32>,
         framebuffer: &Framebuffer,
-    ) -> GLuint {
-        let (light_view_map, light_view_map_view) =
+    ) -> (GLuint, GLuint, GLuint) {
+        let (light_view_map, light_view_map_view, shadow_map) =
             self.create_light_view_map(models, light, model, framebuffer);
         self.store_photons(light_view_map, light_view_map_view);
         self.mipmap_photons(light_view_map);
 
-        light_view_map_view
+        (light_view_map, light_view_map_view, shadow_map)
     }
 
     unsafe fn mipmap_photons(&self, light_view_map: GLuint) {
@@ -55,16 +72,20 @@ impl Octree {
     }
 
     unsafe fn store_photons(&self, light_view_map: GLuint, light_view_map_view: GLuint) {
-        let shader = Shader::new_compute("assets/shaders/octree/storePhotons.comp.glsl");
+        self.renderer.store_photons_shader.use_program();
 
-        shader.use_program();
-
-        shader.set_uint(c_str!("octreeLevel"), CONFIG.octree_levels - 1);
-        shader.set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
+        self.renderer
+            .store_photons_shader
+            .set_uint(c_str!("octreeLevel"), CONFIG.octree_levels - 1);
+        self.renderer
+            .store_photons_shader
+            .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
 
         gl::ActiveTexture(gl::TEXTURE0);
         gl::BindTexture(gl::TEXTURE_2D, light_view_map);
-        shader.set_int(c_str!("lightViewMap"), 0);
+        self.renderer
+            .store_photons_shader
+            .set_int(c_str!("lightViewMap"), 0);
 
         helpers::bind_image_texture(0, self.textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
         helpers::bind_3d_image_texture(
@@ -74,13 +95,19 @@ impl Octree {
             gl::R32UI,
         );
         helpers::bind_image_texture(2, light_view_map_view, gl::WRITE_ONLY, gl::RGBA8);
+        let total_photons = helpers::generate_texture_buffer(1, gl::R32UI, 0u32);
+        helpers::bind_image_texture(3, total_photons.0, gl::READ_WRITE, gl::R32UI);
 
-        shader.dispatch_xyz(vec3(
+        self.renderer.store_photons_shader.dispatch_xyz(vec3(
             (CONFIG.viewport_width as f32 / 32 as f32).ceil() as u32,
             (CONFIG.viewport_height as f32 / 32 as f32).ceil() as u32,
             1,
         ));
-        shader.wait();
+        self.renderer.store_photons_shader.wait();
+
+        let total_photons_values =
+            helpers::get_values_from_texture_buffer(total_photons.1, 1, 69u32);
+        // dbg!(&total_photons_values[0]);
     }
 
     unsafe fn create_light_view_map(
@@ -89,17 +116,19 @@ impl Octree {
         light: &SpotLight,
         model: &Matrix4<f32>,
         framebuffer: &Framebuffer,
-    ) -> (GLuint, GLuint) {
+    ) -> (GLuint, GLuint, GLuint) {
         let projection = light.get_projection_matrix();
 
-        let (light_view_map, light_view_map_view, _, _) = light.transform.take_photo(
+        gl::CullFace(gl::FRONT);
+        let (light_view_map, light_view_map_view, shadow_map, _) = light.transform.take_photo(
             models,
             &projection,
             model,
             framebuffer,
             Some(self.renderer.light_view_map_shader),
         );
+        gl::CullFace(gl::BACK);
 
-        (light_view_map, light_view_map_view)
+        (light_view_map, light_view_map_view, shadow_map)
     }
 }
