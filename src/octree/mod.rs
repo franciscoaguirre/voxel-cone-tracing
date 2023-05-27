@@ -85,6 +85,8 @@ struct Renderer {
     eye_ray_shader: Shader,
     get_colors_quad_shader: Shader,
     light_view_map_shader: Shader,
+    store_photons_shader: Shader,
+    clear_bricks_shader: Shader,
 }
 
 impl Octree {
@@ -170,6 +172,10 @@ impl Octree {
                 "assets/shaders/debug/debugInterpolation.glsl",
             ),
             light_view_map_shader: Shader::new_single("assets/shaders/octree/lightViewMap.glsl"),
+            store_photons_shader: Shader::new_compute(
+                "assets/shaders/octree/storePhotons.comp.glsl",
+            ),
+            clear_bricks_shader: Shader::new_compute("assets/shaders/octree/clearBricks.comp.glsl"),
         };
 
         let mut octree = Self {

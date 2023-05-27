@@ -17,11 +17,24 @@ pub struct Transform {
     forward: Vector3<f32>,
     up: Vector3<f32>,
     right: Vector3<f32>,
+    movement_speed: f32,
     pub vao: GLuint,
     shader: Shader,
     // TODO: This is kind of ugly
     view_map_shader: Shader,
 }
+
+// Defines several possible options for movement. Used as abstraction to stay away from window-system specific input methods
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub enum Direction {
+    Forward,
+    Backward,
+    Left,
+    Right,
+    Up,
+    Down,
+}
+use self::Direction::*;
 
 impl Default for Transform {
     fn default() -> Self {
@@ -33,6 +46,7 @@ impl Default for Transform {
             up: Vector3::zero(),    // Initialized later
             right: Vector3::zero(), // Initialized later
             vao: 0,                 // Initialized later
+            movement_speed: 1.0,
             shader: Shader::with_geometry_shader(
                 "assets/shaders/debug/cubicGizmo.vert.glsl",
                 "assets/shaders/debug/cubicGizmo.frag.glsl",
@@ -157,8 +171,6 @@ impl Transform {
         framebuffer: &Framebuffer,
         shader: Option<Shader>,
     ) -> (GLuint, GLuint, GLuint, GLuint) {
-        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-
         let shader = if let Some(shader) = shader {
             shader
         } else {
@@ -174,6 +186,7 @@ impl Transform {
         gl::BindFramebuffer(gl::FRAMEBUFFER, framebuffer.fbo());
         gl::Enable(gl::DEPTH_TEST);
         gl::ClearColor(0.0, 0.0, 0.0, 0.0);
+        gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
         gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         for model in models {
             model.draw(&shader);
@@ -181,5 +194,28 @@ impl Transform {
         gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
 
         framebuffer.textures()
+    }
+
+    /// Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
+    pub fn process_keyboard(&mut self, direction: Direction, delta_time: f32) {
+        let velocity = self.movement_speed * delta_time;
+        if direction == Forward {
+            self.position += self.get_forward() * velocity;
+        }
+        if direction == Backward {
+            self.position += -(self.get_forward() * velocity);
+        }
+        if direction == Left {
+            self.position += -(self.get_right() * velocity);
+        }
+        if direction == Right {
+            self.position += self.get_right() * velocity;
+        }
+        if direction == Up {
+            self.position += self.get_up() * velocity;
+        }
+        if direction == Down {
+            self.position += -(self.get_up() * velocity);
+        }
     }
 }

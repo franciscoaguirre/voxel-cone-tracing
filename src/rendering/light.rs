@@ -41,7 +41,7 @@ impl SpotLight {
             -self.height / 2.0,
             self.height / 2.0,
             0.0001,
-            10000.0,
+            2.0,
         )
     }
 
