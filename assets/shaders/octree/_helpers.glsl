@@ -119,3 +119,9 @@ vec3 normalizedFromIntCoordinates(uvec3 intCoordinates, float factor) {
   return centerVoxel / factor;
 }
 
+float zFromPlaneAndPoint(vec2 point, vec4 plane, float defaultValue) {
+  if (plane.z == 0.0) {
+    return defaultValue;
+  }
+  return (point.x * plane.x + point.y * plane.y + plane.w) / -plane.z;
+}
