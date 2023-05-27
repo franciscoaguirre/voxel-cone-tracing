@@ -5,7 +5,6 @@
 layout (location = 0) out vec4 FragColor;
 
 layout (binding = 0, offset = 0) uniform atomic_uint voxelFragmentCount;
-uniform layout(binding = 4, r32f) imageBuffer debug;
 
 in VoxelData {
     vec3 position;

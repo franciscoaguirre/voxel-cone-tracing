@@ -38,13 +38,7 @@ unsafe fn populate_voxel_fragment_list(
     helpers::bind_image_texture(1, voxel_colors.0, gl::WRITE_ONLY, gl::RGBA8);
     helpers::bind_image_texture(2, voxel_normals.0, gl::WRITE_ONLY, gl::RGBA8);
 
-    let (debug, buffer) = helpers::generate_texture_buffer(10, gl::R32F, 69f32);
-    helpers::bind_image_texture(3, debug, gl::WRITE_ONLY, gl::R32F);
-
     voxelize_scene(voxelization_shader, models, atomic_counter);
-
-    let debug_values = helpers::get_values_from_texture_buffer(buffer, 10, 420f32);
-    dbg!(&debug_values);
 }
 
 unsafe fn voxelize_scene(

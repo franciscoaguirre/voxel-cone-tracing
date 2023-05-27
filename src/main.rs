@@ -197,6 +197,11 @@ fn main() {
         voxel_colors.0,
         number_of_voxel_fragments,
     );
+    let render_border_voxel_fragments_shader = RenderVoxelFragmentsShader::init(
+        octree.border_data.voxel_data.voxel_positions.0,
+        octree.border_data.voxel_data.voxel_colors.0,
+        octree.border_data.voxel_data.number_of_voxel_fragments,
+    );
     let render_depth_buffer_shader = Shader::new_single("assets/shaders/renderDepthQuad.glsl");
 
     // Render loop
@@ -348,7 +353,11 @@ fn main() {
             model = model * Matrix4::from_scale(1.);
 
             if show_voxel_fragment_list {
-                render_voxel_fragments_shader.run(&projection, &view, &model);
+                if should_move_light {
+                    render_border_voxel_fragments_shader.run(&projection, &view, &model);
+                } else {
+                    render_voxel_fragments_shader.run(&projection, &view, &model);
+                }
             }
 
             if show_octree {
@@ -396,7 +405,7 @@ fn main() {
                     .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
                 voxel_cone_tracing_shader
                     .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels - 1);
-                voxel_cone_tracing_shader.set_bool(c_str!("useLighting"), true);
+                voxel_cone_tracing_shader.set_bool(c_str!("useLighting"), false);
                 let light_direction = vec3(
                     light.transform.position.x,
                     light.transform.position.y,

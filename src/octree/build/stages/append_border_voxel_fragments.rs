@@ -30,6 +30,8 @@ impl AppendBorderVoxelFragmentsPass {
         // Last level
         self.shader
             .set_uint(c_str!("octreeLevel"), CONFIG.octree_levels - 1);
+        self.shader
+            .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
         helpers::bind_image_texture(
             0,
             geometry_data.node_data.level_start_indices.0,
@@ -70,5 +72,20 @@ impl AppendBorderVoxelFragmentsPass {
             (number_of_voxel_fragments as f32 / CONFIG.working_group_size as f32).ceil() as u32,
         );
         self.shader.wait();
+
+        let values = helpers::get_values_from_texture_buffer(
+            border_data.voxel_data.voxel_positions.1,
+            20,
+            420u32,
+        );
+        let values = values
+            .iter()
+            .map(|&position| {
+                let (x, y, z) = helpers::r32ui_to_rgb10_a2ui(position);
+                let text = format!("({x}, {y}, {z})");
+                text
+            })
+            .collect::<Vec<String>>();
+        dbg!(&values);
     }
 }
