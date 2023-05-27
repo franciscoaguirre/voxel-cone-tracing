@@ -112,6 +112,7 @@ void main() {
     // Triangle is closer to z+1 voxel
     if(fract(voxelZCoordinate) > 0.5) {
       // Check if within this fragment, triangle toples over to z+ voxel
+      // TODO: Could it go over both in X and Y?
       if(int(voxelZCoordinate + abs(dfdx)) > flooredVoxelZCoordinate || int(voxelZCoordinate + abs(dfdy)) > flooredVoxelZCoordinate) {
         zOffset = 1;
       } 
