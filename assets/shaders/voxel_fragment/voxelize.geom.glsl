@@ -61,9 +61,6 @@ vec4 defineAabb(vec4 points[3], vec2 halfPixel) {
     return aabb + vec4(-halfPixel, halfPixel);
 }
 
-bool lineIntersection(vec2 p1, vec2 p2, vec2 q1, vec2 q2, out vec2 intersection);
-vec2 normalToSemiDiagonal(vec2 normal);
-
 void main() {
     // TODO: Check if it's better to use the model normals.
     // We could use any vertex normal or average all of them.
@@ -107,12 +104,6 @@ void main() {
     } else {
         // z-axis is depth, which is usual case so do nothing
     }
-
-  
-    // Project triangle to dominant plane
-    //for (int i = 0; i < gl_in.length(); i++) {
-      //vertex[i] = axisProjections[dominantAxis] * vertex[i];
-    //}
 
     vec3 projectedTriangleNormal = normalize(cross(vertex[1].xyz - vertex[0].xyz, vertex[2].xyz - vertex[0].xyz));
     vec4 trianglePlane;

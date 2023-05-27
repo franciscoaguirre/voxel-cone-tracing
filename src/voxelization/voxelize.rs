@@ -101,8 +101,6 @@ unsafe fn voxelize_scene(
     );
     gl::Disable(gl::CULL_FACE);
     gl::Disable(gl::DEPTH_TEST);
-
-    gl::Disable(gl::CULL_FACE);
     // TODO: We should apparently disable depth test and colormask false flase flase
     for model in models {
         // TODO: Do we need to set more things in the shader?

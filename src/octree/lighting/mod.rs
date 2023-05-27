@@ -107,7 +107,7 @@ impl Octree {
 
         let total_photons_values =
             helpers::get_values_from_texture_buffer(total_photons.1, 1, 69u32);
-        dbg!(&total_photons_values[0]);
+        // dbg!(&total_photons_values[0]);
     }
 
     unsafe fn create_light_view_map(

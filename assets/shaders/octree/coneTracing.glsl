@@ -118,26 +118,18 @@ float visibilityCalculation(vec4 positionInLightSpace, vec3 normal) {
     projectedPosition = projectedPosition * 0.5 + 0.5;
     float closestDepth = texture(shadowMap, projectedPosition.xy).r;
     float currentDepth = projectedPosition.z;
-    float bias = max(0.05 * (1.0 - dot(normal, lightDirection)), 0.005);
+    float bias = max(0.01 * (1.0 - dot(normal, lightDirection)), 0.003);
     float shadow = 0.0;
     vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
-    for (int x = -1; x <= 1; x++) {
-        for (int y = -1; y <= 1; y++) {
+    for (int x = -2; x <= 2; x++) {
+        for (int y = -2; y <= 2; y++) {
             float pcfDepth = texture(shadowMap, projectedPosition.xy + vec2(x, y) * texelSize).r;
-            shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
+            shadow += (currentDepth - bias) > pcfDepth ? 1.0 : 0.0;
         }
     }
-    shadow /= 9.0;
+    shadow /= 25.0;
     if (projectedPosition.z > 1.0) {
         shadow = 0.0;
-    }
-    if (
-        projectedPosition.x < 0.00001 ||
-            projectedPosition.x > 0.99999 ||
-            projectedPosition.y < 0.00001 ||
-            projectedPosition.y > 0.99999
-    ) {
-        shadow = 1.0;
     }
     return 1.0 - shadow;
 }

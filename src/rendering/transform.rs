@@ -171,8 +171,6 @@ impl Transform {
         framebuffer: &Framebuffer,
         shader: Option<Shader>,
     ) -> (GLuint, GLuint, GLuint, GLuint) {
-        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-
         let shader = if let Some(shader) = shader {
             shader
         } else {
