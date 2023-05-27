@@ -56,19 +56,12 @@ impl AppendBorderVoxelFragmentsPass {
         let next_voxel_fragment_counter = helpers::generate_atomic_counter_buffer();
         gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, next_voxel_fragment_counter);
 
-        self.shader.set_bool(c_str!("shouldStore"), false);
         self.shader
-            .dispatch(geometry_data.voxel_data.number_of_voxel_fragments); // Call first with `shouldStore = false`
+            .dispatch(geometry_data.node_data.nodes_per_level[(CONFIG.octree_levels - 1) as usize]); // Call first with `shouldStore = false`
         self.shader.wait();
 
         let number_of_voxel_fragments =
             helpers::get_value_from_atomic_counter(next_voxel_fragment_counter);
         border_data.voxel_data.number_of_voxel_fragments = number_of_voxel_fragments;
-
-        self.shader.set_bool(c_str!("shouldStore"), true);
-        self.shader.dispatch(
-            (number_of_voxel_fragments as f32 / CONFIG.working_group_size as f32).ceil() as u32,
-        );
-        self.shader.wait();
     }
 }

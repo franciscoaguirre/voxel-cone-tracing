@@ -190,9 +190,9 @@ fn main() {
     let mut bricks_to_show = BricksToShow::default();
 
     let render_voxel_fragments_shader = RenderVoxelFragmentsShader::init(
-        voxel_positions.0,
-        voxel_colors.0,
-        number_of_voxel_fragments,
+        octree.border_data.voxel_data.voxel_positions.0,
+        octree.border_data.voxel_data.voxel_colors.0,
+        octree.border_data.voxel_data.number_of_voxel_fragments,
     );
 
     // Render loop

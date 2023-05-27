@@ -28,7 +28,7 @@ impl FlagNodesPass {
         helpers::bind_image_texture(0, voxel_data.voxel_positions.0, gl::READ_ONLY, gl::RGB10_A2);
         helpers::bind_image_texture(1, textures.node_pool.0, gl::READ_WRITE, gl::R32UI);
 
-        let groups_count = (voxel_data.number_of_voxel_fragments as f32
+        let groups_count = ((voxel_data.number_of_voxel_fragments + 100_000) as f32
             / CONFIG.working_group_size as f32)
             .ceil() as u32;
 

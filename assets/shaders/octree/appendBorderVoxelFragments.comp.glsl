@@ -12,7 +12,6 @@ uniform layout(binding = 3, r32ui) readonly uimageBuffer nodePoolNeighbors[MAX_N
 uniform layout(binding = 0, offset = 0) atomic_uint nextVoxelFragmentCounter;
 
 uniform uint octreeLevel;
-uniform bool shouldStore;
 
 const uvec4 NEIGHBOR_OFFSETS[MAX_NEIGHBORS] = {
     uvec4(1, 0, 0, 0),
@@ -41,9 +40,7 @@ void main() {
         if (neighborID == 0) {
             uvec4 borderVoxelFragmentPosition = nodePosition + NEIGHBOR_OFFSETS[i];
             uint nextVoxelFragment = atomicCounterIncrement(nextVoxelFragmentCounter);
-            if (shouldStore) {
-                imageStore(borderVoxelFragments, int(nextVoxelFragment), borderVoxelFragmentPosition);
-            }
+            imageStore(borderVoxelFragments, int(nextVoxelFragment), borderVoxelFragmentPosition);
         }
     }
 }

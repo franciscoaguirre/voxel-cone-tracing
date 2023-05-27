@@ -18,7 +18,7 @@ pub use visualize::BricksToShow;
 
 pub struct Octree {
     geometry_data: OctreeData,
-    border_data: OctreeData,
+    pub border_data: OctreeData,
     pub textures: OctreeTextures,
     renderer: Renderer,
 }
@@ -38,7 +38,7 @@ pub struct OctreeTextures {
 
 pub struct OctreeData {
     node_data: NodeData,
-    voxel_data: VoxelData,
+    pub voxel_data: VoxelData,
 }
 
 #[derive(Debug)]
@@ -65,9 +65,9 @@ impl NodeData {
 }
 
 pub struct VoxelData {
-    voxel_positions: BufferTexture,
-    number_of_voxel_fragments: u32,
-    voxel_colors: BufferTexture,
+    pub voxel_positions: BufferTexture,
+    pub number_of_voxel_fragments: u32,
+    pub voxel_colors: BufferTexture,
     voxel_normals: BufferTexture,
 }
 

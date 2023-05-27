@@ -48,7 +48,7 @@ impl Octree {
         );
         helpers::bind_image_texture(
             5,
-            self.geometry_data.node_data.level_start_indices.0,
+            self.border_data.node_data.level_start_indices.0,
             gl::READ_ONLY,
             gl::R32UI,
         );
