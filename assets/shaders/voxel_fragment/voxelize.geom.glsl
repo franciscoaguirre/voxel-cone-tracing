@@ -22,9 +22,6 @@ out vec2 semiDiagonal;
 
 flat out int frag_dominantAxis;
 flat out vec4 frag_aabb; 
-
-uniform layout(binding = 3, r32f) imageBuffer debug;
-
 uniform int voxelDimension;
 uniform mat4 axisProjections[3];
 
