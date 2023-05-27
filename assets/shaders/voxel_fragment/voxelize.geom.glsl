@@ -22,6 +22,7 @@ out vec2 semiDiagonal;
 
 flat out int frag_dominantAxis;
 flat out vec4 frag_aabb; 
+
 uniform int voxelDimension;
 uniform mat4 axisProjections[3];
 
