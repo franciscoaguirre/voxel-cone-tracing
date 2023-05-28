@@ -1,7 +1,6 @@
 use std::{ffi::CStr, ptr, sync::mpsc::Receiver};
 
 use egui_glfw_gl::glfw::{self, Action, Context, Glfw, Key, Window, WindowEvent};
-use log::info;
 
 use super::{
     camera::Camera,
@@ -133,7 +132,7 @@ pub fn handle_update_octree_level(
             if *current_octree_level != 0 {
                 *current_octree_level -= 1
             }
-            info!(
+            log::info!(
                 "Current octree level: {} of {}",
                 current_octree_level,
                 CONFIG.octree_levels - 1
@@ -141,7 +140,7 @@ pub fn handle_update_octree_level(
         }
         glfw::WindowEvent::Key(Key::Right, _, Action::Press, _) => {
             *current_octree_level = (*current_octree_level + 1).min(CONFIG.octree_levels - 1);
-            info!(
+            log::info!(
                 "Current octree level: {} of {}",
                 current_octree_level,
                 CONFIG.octree_levels - 1
@@ -204,9 +203,23 @@ pub unsafe fn log_device_information() {
             .to_str()
             .unwrap()
     };
-    info!("GPU in use: {vendor}, {renderer}");
+    log::info!("GPU in use: {vendor}, {renderer}");
+
+    let mut max_texture_buffer_size = 0;
+    unsafe {
+        gl::GetIntegerv(gl::MAX_TEXTURE_BUFFER_SIZE, &mut max_texture_buffer_size);
+    };
+    log::info!("Maximum texture buffer size: {max_texture_buffer_size}");
 
     let mut max_3d_texture_size = 0;
-    unsafe { gl::GetIntegerv(gl::MAX_3D_TEXTURE_SIZE, &mut max_3d_texture_size) };
-    info!("Maximum 3D texture size (by dimension): {max_3d_texture_size}");
+    unsafe {
+        gl::GetIntegerv(gl::MAX_3D_TEXTURE_SIZE, &mut max_3d_texture_size);
+    };
+    log::info!("Maximum 3D texture size (by dimension): {max_3d_texture_size}");
+
+    let mut max_1d_texture_size = 0;
+    unsafe {
+        gl::GetIntegerv(gl::MAX_TEXTURE_SIZE, &mut max_1d_texture_size);
+    };
+    log::info!("Maximum 1D texture size: {max_1d_texture_size}");
 }

@@ -7,7 +7,7 @@ use crate::{
     config::CONFIG,
     constants, helpers,
     rendering::shader::Shader,
-    types::{BufferTexture, Texture2D, Texture3D},
+    types::{BufferTexture, Texture2D, Texture3D, TextureArray},
 };
 
 mod build;
@@ -27,7 +27,7 @@ pub struct OctreeTextures {
     pub node_pool: BufferTexture,
     brick_pointers: BufferTexture,
     pub node_positions: BufferTexture,
-    neighbors: [BufferTexture; 6],
+    neighbors: TextureArray, // Size 6
     pub brick_pool_colors: Texture3D,
     brick_pool_normals: Texture3D,
     pub brick_pool_photons: Texture3D,
@@ -202,14 +202,7 @@ impl Octree {
             node_pool: helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32),
             brick_pointers: helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32),
             node_positions: helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32),
-            neighbors: [
-                helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // X
-                helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // -X
-                helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // Y
-                helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // -Y
-                helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // Z
-                helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // -Z
-            ],
+            neighbors: helpers::generate_1d_texture_array(50_000, 6), // [X, -X, Y, -Y, Z, -Z]
             brick_pool_colors: helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution),
             brick_pool_normals: helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution),
             brick_pool_photons: helpers::generate_3d_r32ui_texture(CONFIG.brick_pool_resolution),

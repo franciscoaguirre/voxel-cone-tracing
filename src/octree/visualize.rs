@@ -313,15 +313,7 @@ impl Octree {
             gl::READ_ONLY,
             gl::R32UI,
         );
-
-        for texture_offset in 0..self.textures.neighbors.len() {
-            helpers::bind_image_texture(
-                3 + texture_offset as u32,
-                self.textures.neighbors[texture_offset as usize].0,
-                gl::READ_ONLY,
-                gl::R32UI,
-            );
-        }
+        helpers::bind_3d_image_texture(3, self.textures.neighbors, gl::READ_ONLY, gl::R32UI);
 
         gl::BindVertexArray(self.renderer.vao);
         gl::DrawArrays(gl::POINTS, 0, self.renderer.node_count as i32);

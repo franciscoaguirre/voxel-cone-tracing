@@ -43,15 +43,7 @@ impl AppendBorderVoxelFragmentsPass {
             gl::RGB10_A2UI,
         );
         helpers::bind_image_texture(2, textures.node_positions.0, gl::READ_ONLY, gl::RGB10_A2UI);
-
-        for texture_offset in 0..textures.neighbors.len() {
-            helpers::bind_image_texture(
-                3 + texture_offset as u32,
-                textures.neighbors[texture_offset as usize].0,
-                gl::READ_ONLY,
-                gl::R32UI,
-            );
-        }
+        helpers::bind_3d_image_texture(3, textures.neighbors, gl::READ_ONLY, gl::R32UI);
 
         let next_voxel_fragment_counter = helpers::generate_atomic_counter_buffer();
         gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, next_voxel_fragment_counter);

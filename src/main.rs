@@ -111,6 +111,8 @@ fn main() {
         )
     };
 
+    dbg!(&octree.number_of_nodes());
+
     let node_positions = unsafe {
         helpers::get_values_from_texture_buffer(
             octree.textures.node_positions.1,

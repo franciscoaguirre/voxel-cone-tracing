@@ -5,3 +5,4 @@ pub type Texture2D = GLuint;
 pub type Texture3D = GLuint;
 pub type TextureBuffer = GLuint;
 pub type BufferTexture = (Texture, TextureBuffer);
+pub type TextureArray = GLuint;

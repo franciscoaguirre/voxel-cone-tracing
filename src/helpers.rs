@@ -8,7 +8,7 @@ use std::{
     path::Path,
 };
 
-use crate::{rendering::model::Model, voxelization::aabb::Aabb};
+use crate::{rendering::model::Model, types::TextureArray, voxelization::aabb::Aabb};
 
 pub unsafe fn generate_atomic_counter_buffer() -> GLuint {
     let mut buffer: u32 = 0;
@@ -119,6 +119,59 @@ unsafe fn generate_3d_texture(
     gl::BindTexture(gl::TEXTURE_3D, 0);
 
     texture
+}
+
+pub unsafe fn generate_1d_texture_array(texture_size: usize, num_textures: usize) -> TextureArray {
+    let mut texture_id = 0;
+    gl::GenTextures(1, &mut texture_id);
+    gl::BindTexture(gl::TEXTURE_1D_ARRAY, texture_id);
+
+    // Allocate storage
+    let mipmap_levels = 1; // Mipmaps are not needed for our use-case
+                           // gl::TexStorage2D(
+                           //     gl::TEXTURE_1D_ARRAY,
+                           //     mipmap_levels,
+                           //     gl::R32UI,
+                           //     texture_size as i32,
+                           //     num_textures as i32,
+                           // );
+
+    dbg!(&texture_size);
+    dbg!(&num_textures);
+    dbg!(&(texture_size * num_textures));
+
+    // Initialize texture with zeroes
+    let data = vec![0u32; texture_size * num_textures];
+    gl::TexSubImage2D(
+        gl::TEXTURE_1D_ARRAY,
+        0,
+        0,
+        0,
+        texture_size as i32,
+        num_textures as i32,
+        gl::RED_INTEGER,
+        gl::UNSIGNED_INT,
+        data.as_ptr() as *const c_void,
+    );
+
+    // Good practice to specify these
+    gl::TexParameteri(
+        gl::TEXTURE_1D_ARRAY,
+        gl::TEXTURE_MIN_FILTER,
+        gl::NEAREST as i32,
+    );
+    gl::TexParameteri(
+        gl::TEXTURE_1D_ARRAY,
+        gl::TEXTURE_MAG_FILTER,
+        gl::NEAREST as i32,
+    );
+    gl::TexParameteri(
+        gl::TEXTURE_1D_ARRAY,
+        gl::TEXTURE_WRAP_S,
+        gl::CLAMP_TO_EDGE as i32,
+    );
+
+    texture_id
 }
 
 pub fn get_constant_pointer(number: &u32) -> *const c_void {

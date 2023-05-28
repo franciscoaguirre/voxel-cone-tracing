@@ -36,7 +36,7 @@ impl BorderTransferPass {
         helpers::bind_image_texture(2, textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
         helpers::bind_image_texture(3, node_data.level_start_indices.0, gl::READ_ONLY, gl::R32UI);
 
-        helpers::bind_image_texture(0, textures.neighbors[0].0, gl::READ_ONLY, gl::R32UI);
+        helpers::bind_3d_image_texture(0, textures.neighbors, gl::READ_ONLY, gl::R32UI);
         self.shader.set_uint(c_str!("axis"), 0);
         // self.shader.dispatch_xyz(vec3(
         //     (CONFIG.viewport_width as f32 / 32 as f32).ceil() as u32,
@@ -48,7 +48,7 @@ impl BorderTransferPass {
         self.shader.dispatch(groups_count);
         self.shader.wait();
 
-        helpers::bind_image_texture(0, textures.neighbors[2].0, gl::READ_ONLY, gl::R32UI);
+        helpers::bind_3d_image_texture(0, textures.neighbors, gl::READ_ONLY, gl::R32UI);
         self.shader.set_uint(c_str!("axis"), 1);
         // self.shader.dispatch_xyz(vec3(
         //     (CONFIG.viewport_width as f32 / 32 as f32).ceil() as u32,
@@ -58,7 +58,7 @@ impl BorderTransferPass {
         self.shader.dispatch(groups_count);
         self.shader.wait();
 
-        helpers::bind_image_texture(0, textures.neighbors[4].0, gl::READ_ONLY, gl::R32UI);
+        helpers::bind_3d_image_texture(0, textures.neighbors, gl::READ_ONLY, gl::R32UI);
         self.shader.set_uint(c_str!("axis"), 2);
         // self.shader.dispatch_xyz(vec3(
         //     (CONFIG.viewport_width as f32 / 32 as f32).ceil() as u32,

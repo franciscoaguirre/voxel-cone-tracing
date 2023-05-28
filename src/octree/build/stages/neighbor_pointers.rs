@@ -33,12 +33,7 @@ impl NeighborPointersPass {
         helpers::bind_image_texture(0, textures.node_pool.0, gl::WRITE_ONLY, gl::R32UI);
         helpers::bind_image_texture(1, voxel_data.voxel_positions.0, gl::WRITE_ONLY, gl::R32UI);
 
-        helpers::bind_image_texture(2, textures.neighbors[0].0, gl::WRITE_ONLY, gl::R32UI);
-        helpers::bind_image_texture(3, textures.neighbors[1].0, gl::WRITE_ONLY, gl::R32UI);
-        helpers::bind_image_texture(4, textures.neighbors[2].0, gl::WRITE_ONLY, gl::R32UI);
-        helpers::bind_image_texture(5, textures.neighbors[3].0, gl::WRITE_ONLY, gl::R32UI);
-        helpers::bind_image_texture(6, textures.neighbors[4].0, gl::WRITE_ONLY, gl::R32UI);
-        helpers::bind_image_texture(7, textures.neighbors[5].0, gl::WRITE_ONLY, gl::R32UI);
+        helpers::bind_3d_image_texture(2, textures.neighbors, gl::WRITE_ONLY, gl::R32UI);
 
         let (debug_texture, debug_texture_buffer) =
             helpers::generate_texture_buffer(9, gl::R32F, 69_f32);

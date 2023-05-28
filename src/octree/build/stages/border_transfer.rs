@@ -50,17 +50,17 @@ impl BorderTransferPass {
         let groups_count = (nodes_in_level as f32 / CONFIG.working_group_size as f32).ceil() as u32;
 
         self.shader.set_uint(c_str!("axis"), X_AXIS);
-        helpers::bind_image_texture(0, textures.neighbors[0].0, gl::READ_ONLY, gl::R32UI);
+        helpers::bind_3d_image_texture(0, textures.neighbors, gl::READ_ONLY, gl::R32UI);
         self.shader.dispatch(groups_count);
         self.shader.wait();
 
         self.shader.set_uint(c_str!("axis"), Y_AXIS);
-        helpers::bind_image_texture(0, textures.neighbors[2].0, gl::READ_ONLY, gl::R32UI);
+        helpers::bind_3d_image_texture(0, textures.neighbors, gl::READ_ONLY, gl::R32UI);
         self.shader.dispatch(groups_count);
         self.shader.wait();
 
         self.shader.set_uint(c_str!("axis"), Z_AXIS);
-        helpers::bind_image_texture(0, textures.neighbors[4].0, gl::READ_ONLY, gl::R32UI);
+        helpers::bind_3d_image_texture(0, textures.neighbors, gl::READ_ONLY, gl::R32UI);
         self.shader.dispatch(groups_count);
         self.shader.wait();
     }

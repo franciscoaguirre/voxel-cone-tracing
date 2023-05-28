@@ -7,12 +7,7 @@ layout (local_size_x = WORKING_GROUP_SIZE, local_size_y = 1, local_size_z = 1) i
 uniform layout(binding = 0, r32ui) uimageBuffer nodePool;
 uniform layout(binding = 1, rgb10_a2ui) uimageBuffer voxelPositions;
 
-uniform layout(binding = 2, r32ui) uimageBuffer nodePoolNeighborsX;
-uniform layout(binding = 3, r32ui) uimageBuffer nodePoolNeighborsXNegative;
-uniform layout(binding = 4, r32ui) uimageBuffer nodePoolNeighborsY;
-uniform layout(binding = 5, r32ui) uimageBuffer nodePoolNeighborsYNegative;
-uniform layout(binding = 6, r32ui) uimageBuffer nodePoolNeighborsZ;
-uniform layout(binding = 7, r32ui) uimageBuffer nodePoolNeighborsZNegative;
+uniform layout(binding = 2, r32ui) uimage1DArray nodePoolNeighbors;
 uniform layout(binding = 8, r32f) imageBuffer debugBuffer;
 uniform layout(binding = 9, r32ui) readonly uimageBuffer levelStartIndices;
 
@@ -160,10 +155,10 @@ void main() {
       }
     }
 
-    imageStore(nodePoolNeighborsX, nodeID, uvec4(neighborX));
-    imageStore(nodePoolNeighborsY, nodeID, uvec4(neighborY));
-    imageStore(nodePoolNeighborsZ, nodeID, uvec4(neighborZ));
-    imageStore(nodePoolNeighborsXNegative, nodeID, uvec4(neighborXNegative));
-    imageStore(nodePoolNeighborsYNegative, nodeID, uvec4(neighborYNegative));
-    imageStore(nodePoolNeighborsZNegative, nodeID, uvec4(neighborZNegative));
+    imageStore(nodePoolNeighbors, ivec2(nodeID, 0), uvec4(neighborX));
+    imageStore(nodePoolNeighbors, ivec2(nodeID, 2), uvec4(neighborY));
+    imageStore(nodePoolNeighbors, ivec2(nodeID, 4), uvec4(neighborZ));
+    imageStore(nodePoolNeighbors, ivec2(nodeID, 1), uvec4(neighborXNegative));
+    imageStore(nodePoolNeighbors, ivec2(nodeID, 3), uvec4(neighborYNegative));
+    imageStore(nodePoolNeighbors, ivec2(nodeID, 5), uvec4(neighborZNegative));
 }
