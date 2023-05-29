@@ -21,8 +21,8 @@ void main() {
         return;
     }
 
-    loadChildNodeIDs(nodeAddress, nodePool);
-    vec4 color = mipmapIsotropic(ivec3(2, 2, 2), brickPoolValues);
+    loadChildNodeIDs(nodeAddress);
+    vec4 color = mipmapIsotropic(ivec3(2, 2, 2));
 
     memoryBarrier();
 

@@ -21,15 +21,15 @@ void main() {
         return;
     }
 
-    loadChildNodeIDs(nodeAddress, nodePool);
-    vec4 nearRightTop = mipmapIsotropic(ivec3(4, 4, 0), brickPoolValues);
-    vec4 nearRightBottom = mipmapIsotropic(ivec3(4, 0, 0), brickPoolValues);
-    vec4 nearLeftTop = mipmapIsotropic(ivec3(0, 4, 0), brickPoolValues);
-    vec4 nearLeftBottom = mipmapIsotropic(ivec3(0, 0, 0), brickPoolValues);
-    vec4 farRightTop = mipmapIsotropic(ivec3(4, 4, 4), brickPoolValues);
-    vec4 farRightBottom = mipmapIsotropic(ivec3(4, 0, 4), brickPoolValues);
-    vec4 farLeftTop = mipmapIsotropic(ivec3(0, 4, 4), brickPoolValues);
-    vec4 farLeftBottom = mipmapIsotropic(ivec3(0, 0, 4), brickPoolValues);
+    loadChildNodeIDs(nodeAddress);
+    vec4 nearRightTop = mipmapIsotropic(ivec3(4, 4, 0));
+    vec4 nearRightBottom = mipmapIsotropic(ivec3(4, 0, 0));
+    vec4 nearLeftTop = mipmapIsotropic(ivec3(0, 4, 0));
+    vec4 nearLeftBottom = mipmapIsotropic(ivec3(0, 0, 0));
+    vec4 farRightTop = mipmapIsotropic(ivec3(4, 4, 4));
+    vec4 farRightBottom = mipmapIsotropic(ivec3(4, 0, 4));
+    vec4 farLeftTop = mipmapIsotropic(ivec3(0, 4, 4));
+    vec4 farLeftBottom = mipmapIsotropic(ivec3(0, 0, 4));
   
     memoryBarrier();
   

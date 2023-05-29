@@ -107,6 +107,7 @@ vec4 coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float m
         parentColor.a = 1.0 - pow((1.0 - parentColor.a), stepMultiplier); // Step correction
 
         vec4 newColor = mix(childColor, parentColor, parentWeight); // Quadrilinear interpolation
+        newColor.a = 1.0;
         // TODO: We should accumulate the color and the alpha separately, using the front-to-back accumulation described in chapter 5 of the GIVoxels paper
         returnColor += (1 - returnColor.a) * newColor;
 

@@ -15,9 +15,10 @@ uniform layout(binding = 1, r32ui) readonly uimageBuffer levelStartIndices;
 uniform layout(binding = 5, r32ui) readonly uimageBuffer borderLevelStartIndices;
 
 #include "assets/shaders/octree/_helpers.glsl"
+#include "assets/shaders/octree/_findOctreeLevel.glsl"
 
 void main() {
-    uint octreeLevel = findOctreeLevel(nodeID, levelStartIndices, borderLevelStartIndices, maxOctreeLevel);
+    uint octreeLevel = findOctreeLevel(nodeID, maxOctreeLevel);
     float halfNodeSize = calculateHalfNodeSize(octreeLevel);
     float normalizedHalfNodeSize = halfNodeSize * 2.0;
     geom_halfNodeSize = normalizedHalfNodeSize;

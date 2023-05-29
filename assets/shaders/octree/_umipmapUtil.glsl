@@ -1,6 +1,6 @@
 // Requires:
 // - _helpers
-// - binding brickPoolValues
+// - binding brickPoolPhotons
 // - binding nodePool
 // - _helpers
 
@@ -17,17 +17,17 @@ void loadChildNodeIDs(in int nodeID) {
     memoryBarrier();
 }
 
-vec4 getValue(in ivec3 position) {
+uint getValue(in ivec3 position) {
     ivec3 childOffset = ivec3(round(vec3(position) / 4.0));
     int childIndex = childOffset.x + childOffset.y * 2 + childOffset.z * 4;
     ivec3 localPositionInChild = position - 2 * childOffset;
 
     ivec3 childBrickAddress = calculateBrickCoordinates(childNodeIDs[childIndex]);
-    return imageLoad(brickPoolValues, childBrickAddress + localPositionInChild);
+    return imageLoad(brickPoolPhotons, childBrickAddress + localPositionInChild).r;
 }
 
-vec4 mipmapIsotropic(in ivec3 position) {
-    vec4 finalValue = vec4(0);
+uint mipmapIsotropic(in ivec3 position) {
+    float finalValue = 0;
     float weightSum = 0.0;
 
     for (int x = -1; x <= 1; x++) {
@@ -46,14 +46,16 @@ vec4 mipmapIsotropic(in ivec3 position) {
                     // It's a voxel from our children and not a neighbor
                     int distance = abs(x) + abs(y) + abs(z);
                     float weight = gaussianWeights[distance];
-                    vec4 value = getValue(lookupPosition);
+                    uint value = getValue(lookupPosition);
 
-                    finalValue += weight * value;
-                    weightSum += weight;
+                    // TODO: Figure out if we want to use the weights
+                    finalValue += weight * float(value);
+                    // finalValue += float(value);
+                    // weightSum += weight;
                 }
             }
         }
     }
 
-    return finalValue / weightSum;
+    return uint(finalValue);
 }

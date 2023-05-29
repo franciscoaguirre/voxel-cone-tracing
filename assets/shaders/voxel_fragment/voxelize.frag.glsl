@@ -16,7 +16,7 @@ in VoxelData {
 flat in int frag_dominantAxis;
 flat in vec4 frag_aabb;
 
-uniform layout(binding = 0, rgb10_a2ui) uimageBuffer voxelPositions;
+layout(binding = 0, rgb10_a2ui) coherent uniform uimageBuffer voxelPositions;
 uniform layout(binding = 1, rgba8) imageBuffer voxelColors;
 uniform layout(binding = 2, rgba8) imageBuffer voxelNormals;
 
