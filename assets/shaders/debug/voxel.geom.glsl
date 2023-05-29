@@ -1,7 +1,7 @@
 #version 460 core
 
 layout (points) in;
-layout (line_strip, max_vertices = 256) out;
+layout (line_strip, max_vertices = 128) out;
 
 in vec4 geom_nodePosition[];
 in vec4 geom_voxelPosition[];

@@ -14,7 +14,7 @@ uniform uint voxelDimension;
 #include "./_helpers.glsl"
 #include "./_traversalHelpers.glsl"
 #include "./_octreeTraversal.glsl"
-#include "./_mipmapUtil.glsl"
+#include "./_umipmapUtil.glsl"
 
 void main() {
     uvec3 queryCoordinates = texelFetch(
@@ -38,8 +38,8 @@ void main() {
         return;
     }
 
-    loadChildNodeIDs(nodeID, nodePool);
-    uint photonCount = mipmapIsotropic(ivec3(2, 2, 2), brickPoolPhotons);
+    loadChildNodeIDs(nodeID);
+    uint photonCount = mipmapIsotropic(ivec3(2, 2, 2));
 
     memoryBarrier();
 
