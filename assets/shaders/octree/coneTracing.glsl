@@ -103,8 +103,8 @@ void main() {
     vec3 lightIntensity = ambient + visibility * (directLight); // TODO: Add indirectLight.rgb
 
     // FragColor = vec4(texture(texture_diffuse1, frag_textureCoordinates).xyz - vec3(AO), 1);
-    // outColor = vec4(1.0 - indirectLight.aaa, 1.0);
-    outColor = color * vec4(lightIntensity, 1.0);
+    outColor = vec4(1.0 - indirectLight.aaa, 1.0);
+    // outColor = color * vec4(lightIntensity, 1.0);
     // outColor = texture(gBufferColors, In.textureCoordinates);
     // outColor = vec4(position, 1.0);
     // outColor = vec4(normal, 1.0);

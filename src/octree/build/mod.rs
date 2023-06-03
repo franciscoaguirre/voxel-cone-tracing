@@ -65,14 +65,6 @@ impl Octree {
             &self.textures,
         );
 
-        // We reset first_node_in_level since it's used to know the parent to subdivide
-        // We don't want to subdivide the last level, we want to start from scratch.
-        // We don't reset first_free_node because it specifies where to add new nodes,
-        // and we do want to add new nodes to the end of our buffer.
-        // We also don't reset our counter because it's already in 0 when the for loop ends,
-        // it resets everytime we get its value.
-        // Append nodes to the end of the structure for representing the border voxels.
-        // We have to go through all levels of our current structure to possibly subdivide nodes.
         self.voxels_to_nodes(
             OctreeDataType::Border,
             &shader_passes,
@@ -81,9 +73,10 @@ impl Octree {
         );
 
         self.show_nodes(0, 8);
-        self.show_nodes(2914, 8);
-        self.show_nodes(11289, 8);
-        self.show_nodes(11297, 8);
+        // self.show_nodes();
+        // self.show_nodes(2914, 8);
+        // self.show_nodes(11289, 8);
+        // self.show_nodes(11297, 8);
 
         shader_passes
             .write_leaf_nodes_pass
@@ -285,17 +278,25 @@ impl Octree {
 
             match octree_data_type {
                 OctreeDataType::Geometry => shader_passes.neighbor_pointers_pass.run(
-                    &voxel_data,
+                    &self.geometry_data.voxel_data,
                     &self.geometry_data.node_data,
                     &self.textures,
                     octree_level + 1,
                 ),
-                OctreeDataType::Border => shader_passes.neighbor_pointers_pass.run(
-                    &voxel_data,
-                    &self.border_data.node_data,
-                    &self.textures,
-                    octree_level + 1,
-                ),
+                OctreeDataType::Border => {
+                    shader_passes.neighbor_pointers_pass.run(
+                        &self.geometry_data.voxel_data,
+                        &self.geometry_data.node_data,
+                        &self.textures,
+                        octree_level + 1,
+                    );
+                    shader_passes.neighbor_pointers_pass.run(
+                        &voxel_data,
+                        &self.border_data.node_data,
+                        &self.textures,
+                        octree_level + 1,
+                    );
+                }
             }
         }
 
@@ -320,13 +321,13 @@ impl Octree {
             &octree_level_start_indices,
         );
 
-        // log::debug!(
-        //     "{octree_data_type:?} nodes_per_level: {:?}",
-        //     &octree_data.node_data.nodes_per_level
-        // );
-        // log::debug!(
-        //     "{octree_data_type:?} level_start_indices: {:?}",
-        //     &octree_level_start_indices
-        // );
+        log::debug!(
+            "{octree_data_type:?} nodes_per_level: {:?}",
+            &octree_data.node_data.nodes_per_level
+        );
+        log::debug!(
+            "{octree_data_type:?} level_start_indices: {:?}",
+            &octree_level_start_indices
+        );
     }
 }
