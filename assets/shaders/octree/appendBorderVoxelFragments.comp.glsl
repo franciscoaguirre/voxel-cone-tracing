@@ -12,15 +12,16 @@ uniform layout(binding = 3, r32ui) readonly uimageBuffer nodePoolNeighbors[MAX_N
 uniform layout(binding = 0, offset = 0) atomic_uint nextVoxelFragmentCounter;
 
 uniform uint octreeLevel;
+uniform uint voxelDimension;
 uniform bool shouldStore;
 
-const uvec4 NEIGHBOR_OFFSETS[MAX_NEIGHBORS] = {
-    uvec4(1, 0, 0, 0),
-    uvec4(-1, 0, 0, 0),
-    uvec4(0, 1, 0, 0),
-    uvec4(0, -1, 0, 0),
-    uvec4(0, 0, 1, 0),
-    uvec4(0, 0, -1, 0)
+const ivec4 NEIGHBOR_OFFSETS[MAX_NEIGHBORS] = {
+    ivec4(2, 0, 0, 0),
+    ivec4(-2, 0, 0, 0),
+    ivec4(0, 2, 0, 0),
+    ivec4(0, -2, 0, 0),
+    ivec4(0, 0, 2, 0),
+    ivec4(0, 0, -2, 0)
 };
 
 #include "./_helpers.glsl"
@@ -33,13 +34,23 @@ void main() {
         return;
     }
 
-    uvec4 nodePosition = imageLoad(nodePositions, nodeID);
+    uvec4 nodePosition = ivec4(imageLoad(nodePositions, nodeID));
 
     for (uint i = 0; i < MAX_NEIGHBORS; i++) {
         uint neighborID = imageLoad(nodePoolNeighbors[i], nodeID).r;
 
         if (neighborID == 0) {
-            uvec4 borderVoxelFragmentPosition = nodePosition + NEIGHBOR_OFFSETS[i];
+            ivec4 borderVoxelFragmentPosition = ivec4(nodePosition) + NEIGHBOR_OFFSETS[i];
+            bvec3 sanityCheck = greaterThan(borderVoxelFragmentPosition.xyz, ivec3(voxelDimension - 1));
+            bvec3 sanityCheckLessThan = lessThan(borderVoxelFragmentPosition.xyz, ivec3(0));
+
+            if (
+                any(sanityCheckLessThan) ||
+                any(sanityCheck)
+            ) {
+                continue;
+            }
+
             uint nextVoxelFragment = atomicCounterIncrement(nextVoxelFragmentCounter);
             if (shouldStore) {
                 imageStore(borderVoxelFragments, int(nextVoxelFragment), borderVoxelFragmentPosition);

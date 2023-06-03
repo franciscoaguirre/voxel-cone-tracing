@@ -57,10 +57,11 @@ vec4 coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float m
     Node previousParentNode;
     int steps = 0;
 
-    distanceAlongCone += voxelSize;
+    distanceAlongCone += voxelSize * 2;
     while (distanceAlongCone < maxDistance && returnColor.a < 1.0) {
         float coneDiameter = coneDiameterCoefficient * distanceAlongCone;
         float lod = calculateLod(coneDiameter);
+        // float lod = 8;
         uint octreeLevel = uint(ceil(lod));
         float parentWeight = octreeLevel - lod; // Non-linear, we should approximate the log with many lines
 
@@ -84,6 +85,7 @@ vec4 coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float m
             );
             if (node.id == NODE_NOT_FOUND) {
                 distanceAlongCone += sampleStep;
+                // break;
                 continue;
             }
         } else {
