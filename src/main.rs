@@ -146,8 +146,8 @@ fn main() {
     };
     // light.transform.position = point3(0.0, 0.00, 2.0);
     // light.transform.set_rotation_y(-90.0);
-    light.transform.position = point3(0.0, 1.0, 0.0);
-    light.transform.set_rotation_x(-90.0);
+    light.transform.position = point3(0.0, 0.5, -0.25);
+    light.transform.set_rotation_x(-60.0);
 
     let light_framebuffer = unsafe { Framebuffer::new_light() };
     let mut light_maps = unsafe {
@@ -159,7 +159,8 @@ fn main() {
         )
     };
     let quad = unsafe { Quad::new() };
-    let camera_framebuffer = unsafe { Framebuffer::new() };
+    let camera_framebuffer = unsafe { Framebuffer::new_gbuffers() };
+    let final_images_framebuffer = unsafe { Framebuffer::new_final_images() };
 
     let ortho = cgmath::ortho(-1.0, 1.0, -1.0, 1.0, 0.0001, 10_000.0);
     let projection: Matrix4<f32> = perspective(
@@ -188,6 +189,7 @@ fn main() {
     let mut node_filter_text = String::new();
     let mut sampler_number = 0;
     let mut should_move_light = false;
+    let mut image_to_show = 0;
 
     let mut should_show_neighbors = false;
     let mut bricks_to_show = BricksToShow::default();
@@ -264,6 +266,7 @@ fn main() {
                 );
                 common::handle_sampler_change(&event, &mut sampler_number);
                 common::handle_light_movement(&event, &mut should_move_light);
+                common::handle_image_selection(&event, &mut image_to_show);
             }
             menu.handle_event(event);
         }
@@ -405,7 +408,6 @@ fn main() {
                     .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
                 voxel_cone_tracing_shader
                     .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels - 1);
-                voxel_cone_tracing_shader.set_bool(c_str!("useLighting"), false);
                 let light_direction = vec3(
                     light.transform.position.x,
                     light.transform.position.y,
@@ -434,27 +436,27 @@ fn main() {
                 );
 
                 let brick_pool_textures = vec![
-                    (c_str!("brickPoolColors"), octree.textures.brick_pool_colors),
+                    (
+                        c_str!("brickPoolColors"),
+                        octree.textures.brick_pool_colors,
+                        gl::LINEAR as i32,
+                    ),
                     (
                         c_str!("brickPoolPhotons"),
                         octree.textures.brick_pool_photons,
+                        gl::NEAREST as i32,
                     ),
                 ];
 
                 let mut texture_counter = 0;
 
-                for &(texture_name, texture) in brick_pool_textures.iter() {
+                for &(texture_name, texture, sampler) in brick_pool_textures.iter() {
                     gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
                     gl::BindTexture(gl::TEXTURE_3D, texture);
                     voxel_cone_tracing_shader.set_int(texture_name, texture_counter as i32);
                     gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
                     gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
                     gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
-                    let sampler = match sampler_number {
-                        1 => gl::LINEAR as i32,
-                        0 => gl::NEAREST as i32,
-                        _ => panic!("Wrong number"),
-                    };
                     gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, sampler);
                     gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, sampler);
                     texture_counter += 1;
@@ -490,9 +492,9 @@ fn main() {
                 gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
                 gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
 
-                let quad_vao = quad.get_vao();
-
                 if sampler_number == 1 {
+                    voxel_cone_tracing_shader.set_uint(c_str!("imageToShow"), image_to_show);
+                    let quad_vao = quad.get_vao();
                     gl::BindVertexArray(quad_vao);
                     gl::DrawElements(
                         gl::TRIANGLES,

@@ -1,7 +1,6 @@
 use std::{ffi::CStr, ptr, sync::mpsc::Receiver};
 
 use egui_glfw_gl::glfw::{self, Action, Context, Glfw, Key, Window, WindowEvent};
-use log::info;
 
 use super::{
     camera::Camera,
@@ -133,7 +132,7 @@ pub fn handle_update_octree_level(
             if *current_octree_level != 0 {
                 *current_octree_level -= 1
             }
-            info!(
+            log::info!(
                 "Current octree level: {} of {}",
                 current_octree_level,
                 CONFIG.octree_levels - 1
@@ -141,7 +140,7 @@ pub fn handle_update_octree_level(
         }
         glfw::WindowEvent::Key(Key::Right, _, Action::Press, _) => {
             *current_octree_level = (*current_octree_level + 1).min(CONFIG.octree_levels - 1);
-            info!(
+            log::info!(
                 "Current octree level: {} of {}",
                 current_octree_level,
                 CONFIG.octree_levels - 1
@@ -168,6 +167,20 @@ pub fn handle_light_movement(event: &glfw::WindowEvent, should_move_light: &mut 
     match *event {
         glfw::WindowEvent::Key(Key::C, _, Action::Press, _) => {
             *should_move_light = !*should_move_light;
+        }
+        _ => {}
+    }
+}
+
+pub fn handle_image_selection(event: &glfw::WindowEvent, image_to_show: &mut u32) {
+    match *event {
+        glfw::WindowEvent::Key(Key::I, _, Action::Press, _) => {
+            if *image_to_show < 3 {
+                *image_to_show += 1;
+            } else {
+                *image_to_show = 0;
+            }
+            log::info!("Current image showing: {}", *image_to_show);
         }
         _ => {}
     }
@@ -204,9 +217,9 @@ pub unsafe fn log_device_information() {
             .to_str()
             .unwrap()
     };
-    info!("GPU in use: {vendor}, {renderer}");
+    log::info!("GPU in use: {vendor}, {renderer}");
 
     let mut max_3d_texture_size = 0;
     unsafe { gl::GetIntegerv(gl::MAX_3D_TEXTURE_SIZE, &mut max_3d_texture_size) };
-    info!("Maximum 3D texture size (by dimension): {max_3d_texture_size}");
+    log::info!("Maximum 3D texture size (by dimension): {max_3d_texture_size}");
 }

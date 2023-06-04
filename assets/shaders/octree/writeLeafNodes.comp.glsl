@@ -34,7 +34,7 @@ void storeInLeaf(
     imageStore(
         brickPoolColors,
         brickCoordinates + 2 * ivec3(CHILD_OFFSETS[offset]),
-        voxelColor
+        voxelColor / 8.0
     );
 
     imageStore(

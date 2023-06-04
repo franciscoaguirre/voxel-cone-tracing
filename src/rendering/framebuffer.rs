@@ -8,7 +8,7 @@ pub struct Framebuffer {
 }
 
 impl Framebuffer {
-    pub unsafe fn new() -> Self {
+    pub unsafe fn new_gbuffers() -> Self {
         let mut fbo = 0;
         gl::GenFramebuffers(1, &mut fbo);
         gl::BindFramebuffer(gl::FRAMEBUFFER, fbo);
@@ -270,6 +270,149 @@ impl Framebuffer {
             fbo,
             textures: [textures[0], textures[1], textures[2], 0],
         }
+    }
+
+    pub unsafe fn new_final_images() -> Self {
+        let mut fbo = 0;
+        gl::GenFramebuffers(1, &mut fbo);
+        gl::BindFramebuffer(gl::FRAMEBUFFER, fbo);
+
+        // Create textures for final images:
+        // 1) Final image
+        // 2) Only direct illumination
+        // 3) Only indirect illumination
+        // 4) Only ambient occlusion
+        let mut textures = [0; 4];
+        gl::GenTextures(4, textures.as_mut_ptr());
+
+        gl::BindTexture(gl::TEXTURE_2D, textures[0]);
+        gl::TexImage2D(
+            gl::TEXTURE_2D,
+            0,
+            gl::RGBA8 as i32,
+            CONFIG.viewport_width as i32,
+            CONFIG.viewport_height as i32,
+            0,
+            gl::RGBA,
+            gl::UNSIGNED_BYTE,
+            std::ptr::null(),
+        );
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+        gl::BindTexture(gl::TEXTURE_2D, 0);
+
+        gl::BindTexture(gl::TEXTURE_2D, textures[1]);
+        gl::TexImage2D(
+            gl::TEXTURE_2D,
+            0,
+            gl::RGBA8 as i32,
+            CONFIG.viewport_width as i32,
+            CONFIG.viewport_height as i32,
+            0,
+            gl::RGBA,
+            gl::UNSIGNED_BYTE,
+            std::ptr::null(),
+        );
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+        gl::BindTexture(gl::TEXTURE_2D, 0);
+
+        gl::BindTexture(gl::TEXTURE_2D, textures[2]);
+        gl::TexImage2D(
+            gl::TEXTURE_2D,
+            0,
+            gl::RGBA8 as i32,
+            CONFIG.viewport_width as i32,
+            CONFIG.viewport_height as i32,
+            0,
+            gl::RGBA,
+            gl::UNSIGNED_BYTE,
+            std::ptr::null(),
+        );
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+        gl::BindTexture(gl::TEXTURE_2D, 0);
+
+        gl::BindTexture(gl::TEXTURE_2D, textures[3]);
+        gl::TexImage2D(
+            gl::TEXTURE_2D,
+            0,
+            gl::RGBA8 as i32,
+            CONFIG.viewport_width as i32,
+            CONFIG.viewport_height as i32,
+            0,
+            gl::RGBA,
+            gl::UNSIGNED_BYTE,
+            std::ptr::null(),
+        );
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+        gl::BindTexture(gl::TEXTURE_2D, 0);
+
+        let mut rbo = 0;
+        gl::GenRenderbuffers(1, &mut rbo);
+        gl::BindRenderbuffer(gl::RENDERBUFFER, rbo);
+        gl::RenderbufferStorage(
+            gl::RENDERBUFFER,
+            gl::DEPTH24_STENCIL8,
+            CONFIG.viewport_width as i32,
+            CONFIG.viewport_height as i32,
+        );
+        gl::FramebufferRenderbuffer(
+            gl::FRAMEBUFFER,
+            gl::DEPTH_STENCIL_ATTACHMENT,
+            gl::RENDERBUFFER,
+            rbo,
+        );
+        gl::BindRenderbuffer(gl::RENDERBUFFER, 0);
+
+        gl::FramebufferTexture2D(
+            gl::FRAMEBUFFER,
+            gl::COLOR_ATTACHMENT0,
+            gl::TEXTURE_2D,
+            textures[0],
+            0,
+        );
+        gl::FramebufferTexture2D(
+            gl::FRAMEBUFFER,
+            gl::COLOR_ATTACHMENT1,
+            gl::TEXTURE_2D,
+            textures[1],
+            0,
+        );
+        gl::FramebufferTexture2D(
+            gl::FRAMEBUFFER,
+            gl::COLOR_ATTACHMENT2,
+            gl::TEXTURE_2D,
+            textures[2],
+            0,
+        );
+        gl::FramebufferTexture2D(
+            gl::FRAMEBUFFER,
+            gl::COLOR_ATTACHMENT3,
+            gl::TEXTURE_2D,
+            textures[3],
+            0,
+        );
+
+        gl::DrawBuffers(
+            4,
+            [
+                gl::COLOR_ATTACHMENT0,
+                gl::COLOR_ATTACHMENT1,
+                gl::COLOR_ATTACHMENT2,
+                gl::COLOR_ATTACHMENT3,
+            ]
+            .as_ptr(),
+        );
+
+        if gl::CheckFramebufferStatus(gl::FRAMEBUFFER) != gl::FRAMEBUFFER_COMPLETE {
+            println!("ERROR::FRAMEBUFFER: Framebuffer is not complete!");
+        }
+
+        gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
+
+        Self { fbo, textures }
     }
 
     pub fn fbo(&self) -> GLuint {

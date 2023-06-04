@@ -48,7 +48,7 @@ impl Octree {
         );
         helpers::bind_image_texture(
             5,
-            self.border_data.node_data.level_start_indices.0,
+            self.geometry_data.node_data.level_start_indices.0,
             gl::READ_ONLY,
             gl::R32UI,
         );
@@ -74,7 +74,7 @@ impl Octree {
             gl::POINTS,
             0,
             // Use necessary per level
-            self.border_data.node_data.nodes_per_level[octree_level as usize] as i32,
+            self.geometry_data.node_data.nodes_per_level[octree_level as usize] as i32,
         );
     }
 
@@ -130,7 +130,7 @@ impl Octree {
         //);
         helpers::bind_image_texture(
             4,
-            self.border_data.node_data.level_start_indices.0,
+            self.geometry_data.node_data.level_start_indices.0,
             gl::READ_ONLY,
             gl::R32UI,
         );
