@@ -1,7 +1,7 @@
 /// 5 vertices
 void createZPositiveFace(vec4 center, vec3 dimensions, mat4 canonizationMatrix, vec4 color) {
     vec4 position;
-    
+
     position = vec4(
         center.x - dimensions.x,
         center.y - dimensions.y,
@@ -22,7 +22,7 @@ void createZPositiveFace(vec4 center, vec3 dimensions, mat4 canonizationMatrix, 
 
     position = vec4(
         center.x + dimensions.x,
-        center.y + dimensions.y,
+        center.y - dimensions.y,
         center.z + dimensions.z,
         center.w
     );
@@ -31,46 +31,6 @@ void createZPositiveFace(vec4 center, vec3 dimensions, mat4 canonizationMatrix, 
 
     position = vec4(
         center.x + dimensions.x,
-        center.y - dimensions.y,
-        center.z + dimensions.z,
-        center.w
-    );
-    gl_Position = canonizationMatrix * position;
-    EmitVertex();
-    position = vec4(
-        center.x - dimensions.x,
-        center.y - dimensions.y,
-        center.z + dimensions.z,
-        center.w
-    );
-    gl_Position = canonizationMatrix * position;
-    EmitVertex();
-}
-
-/// 3 vertices
-void createXNegativeFace(vec4 center, vec3 dimensions, mat4 canonizationMatrix, vec4 color) {
-    vec4 position;
-
-    position = vec4(
-        center.x - dimensions.x,
-        center.y - dimensions.y,
-        center.z - dimensions.z,
-        center.w
-    );
-    gl_Position = canonizationMatrix * position;
-    EmitVertex();
-
-    position = vec4(
-        center.x - dimensions.x,
-        center.y + dimensions.y,
-        center.z - dimensions.z,
-        center.w
-    );
-    gl_Position = canonizationMatrix * position;
-    EmitVertex();
-
-    position = vec4(
-        center.x - dimensions.x,
         center.y + dimensions.y,
         center.z + dimensions.z,
         center.w
@@ -79,21 +39,12 @@ void createXNegativeFace(vec4 center, vec3 dimensions, mat4 canonizationMatrix, 
     EmitVertex();
 }
 
-void createYPositiveFace(vec4 center, vec3 dimensions, mat4 canonizationMatrix, vec4 color) {
+void createXPositiveFace(vec4 center, vec3 dimensions, mat4 canonizationMatrix, vec4 color) {
     vec4 position;
 
     position = vec4(
         center.x + dimensions.x,
-        center.y + dimensions.y,
-        center.z + dimensions.z,
-        center.w
-    );
-    gl_Position = canonizationMatrix * position;
-    EmitVertex();
-
-    position = vec4(
-        center.x + dimensions.x,
-        center.y + dimensions.y,
+        center.y - dimensions.y,
         center.z - dimensions.z,
         center.w
     );
@@ -101,7 +52,7 @@ void createYPositiveFace(vec4 center, vec3 dimensions, mat4 canonizationMatrix, 
     EmitVertex();
 
     position = vec4(
-        center.x - dimensions.x,
+        center.x + dimensions.x,
         center.y + dimensions.y,
         center.z - dimensions.z,
         center.w
@@ -123,8 +74,43 @@ void createZNegativeFace(vec4 center, vec3 dimensions, mat4 canonizationMatrix, 
     EmitVertex();
 
     position = vec4(
-        center.x + dimensions.x,
+        center.x - dimensions.x,
+        center.y + dimensions.y,
+        center.z - dimensions.z,
+        center.w
+    );
+    gl_Position = canonizationMatrix * position;
+    EmitVertex();
+}
+
+void createXNegativeFace(vec4 center, vec3 dimensions, mat4 canonizationMatrix, vec4 color) {
+    vec4 position;
+
+    position = vec4(
+        center.x - dimensions.x,
         center.y - dimensions.y,
+        center.z + dimensions.z,
+        center.w
+    );
+    gl_Position = canonizationMatrix * position;
+    EmitVertex();
+
+    position = vec4(
+        center.x - dimensions.x,
+        center.y + dimensions.y,
+        center.z + dimensions.z,
+        center.w
+    );
+    gl_Position = canonizationMatrix * position;
+    EmitVertex();
+}
+
+void createYPositiveFace(vec4 center, vec3 dimensions, mat4 canonizationMatrix, vec4 color) {
+    vec4 position;
+
+    position = vec4(
+        center.x - dimensions.x,
+        center.y + dimensions.y,
         center.z - dimensions.z,
         center.w
     );
@@ -139,13 +125,43 @@ void createZNegativeFace(vec4 center, vec3 dimensions, mat4 canonizationMatrix, 
     );
     gl_Position = canonizationMatrix * position;
     EmitVertex();
+
+    EmitVertex(); // To start from scratch
+
+    position = vec4(
+        center.x + dimensions.x,
+        center.y + dimensions.y,
+        center.z + dimensions.z,
+        center.w
+    );
+    gl_Position = canonizationMatrix * position;
+    EmitVertex();
+
+    position = vec4(
+        center.x - dimensions.x,
+        center.y + dimensions.y,
+        center.z + dimensions.z,
+        center.w
+    );
+    gl_Position = canonizationMatrix * position;
+    EmitVertex();
 }
 
 void createYNegativeFace(vec4 center, vec3 dimensions, mat4 canonizationMatrix, vec4 color) {
     vec4 position;
 
     position = vec4(
-        center.x + dimensions.x,
+        center.x - dimensions.x,
+        center.y - dimensions.y,
+        center.z + dimensions.z,
+        center.w
+    );
+    gl_Position = canonizationMatrix * position;
+    EmitVertex();
+    EmitVertex(); // To start from here
+
+    position = vec4(
+        center.x - dimensions.x,
         center.y - dimensions.y,
         center.z - dimensions.z,
         center.w
@@ -161,15 +177,30 @@ void createYNegativeFace(vec4 center, vec3 dimensions, mat4 canonizationMatrix, 
     );
     gl_Position = canonizationMatrix * position;
     EmitVertex();
+
+    position = vec4(
+        center.x + dimensions.x,
+        center.y - dimensions.y,
+        center.z - dimensions.z,
+        center.w
+    );
+    gl_Position = canonizationMatrix * position;
+    EmitVertex();
 }
 
 void drawCube(vec4 center, vec3 dimensions, mat4 canonizationMatrix, vec4 color) {
     frag_nodeColor = color;
     createZPositiveFace(center, dimensions, canonizationMatrix, color);
-    createXNegativeFace(center, dimensions, canonizationMatrix, color);
-    createYPositiveFace(center, dimensions, canonizationMatrix, color);
+    createXPositiveFace(center, dimensions, canonizationMatrix, color);
     createZNegativeFace(center, dimensions, canonizationMatrix, color);
+    createXNegativeFace(center, dimensions, canonizationMatrix, color);
+
+    createYPositiveFace(center, dimensions, canonizationMatrix, color);
+
+    EmitVertex(); // To start from scratch
+
     createYNegativeFace(center, dimensions, canonizationMatrix, color);
+
     EndPrimitive();
 }
 
