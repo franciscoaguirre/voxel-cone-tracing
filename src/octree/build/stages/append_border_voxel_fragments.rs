@@ -79,7 +79,7 @@ impl AppendBorderVoxelFragmentsPass {
             .set_uint(c_str!("callOffset"), 3);
 
         self.shader
-            .dispatch(geometry_data.voxel_data.number_of_voxel_fragments); // Call first with `shouldStore = false`
+            .dispatch((number_of_nodes / CONFIG.working_group_size) as u32); // Call first with `shouldStore = false`
         self.shader.wait();
 
         let number_of_voxel_fragments =
