@@ -52,6 +52,8 @@ void main() {
             }
 
             uint nextVoxelFragment = atomicCounterIncrement(nextVoxelFragmentCounter);
+            memoryBarrier();
+
             if (shouldStore) {
                 imageStore(borderVoxelFragments, int(nextVoxelFragment), borderVoxelFragmentPosition);
             }

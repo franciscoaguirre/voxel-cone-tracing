@@ -25,6 +25,7 @@ impl AppendBorderVoxelFragmentsPass {
         geometry_data: &OctreeData,
         border_data: &mut OctreeData,
         textures: &OctreeTextures,
+        number_of_nodes: u32,
     ) {
         self.shader.use_program();
         // Last level
@@ -60,7 +61,7 @@ impl AppendBorderVoxelFragmentsPass {
 
         self.shader.set_bool(c_str!("shouldStore"), false);
         self.shader
-            .dispatch(geometry_data.voxel_data.number_of_voxel_fragments); // Call first with `shouldStore = false`
+            .dispatch((number_of_nodes / CONFIG.working_group_size) as u32); // Call first with `shouldStore = false`
         self.shader.wait();
 
         let number_of_voxel_fragments =
