@@ -56,11 +56,11 @@ vec4 coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float m
     Node previousParentNode;
     int steps = 0;
 
-    distanceAlongCone += voxelSize * 2;
+    // distanceAlongCone += voxelSize * 2;
     while (distanceAlongCone < maxDistance && returnColor.a < 1.0) {
         float coneDiameter = coneDiameterCoefficient * distanceAlongCone;
         // float lod = calculateLod(coneDiameter);
-        float lod = 7;
+        float lod = 6;
         uint octreeLevel = uint(ceil(lod));
         float parentWeight = octreeLevel - lod; // Non-linear, we should approximate the log with many lines
 
@@ -84,7 +84,7 @@ vec4 coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float m
             );
             if (node.id == NODE_NOT_FOUND) {
                 distanceAlongCone += sampleStep;
-                // break;
+                break;
                 continue;
             }
         } else {
@@ -94,15 +94,15 @@ vec4 coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float m
 
         vec3 childVoxelCoordinates = findVoxel(queryCoordinates, node);
         vec4 childColor = texture(brickPoolColors, childVoxelCoordinates);
-        if (useLighting) {
-            childColor.rgb *= texture(brickPoolPhotons, childVoxelCoordinates).r;
-        }
+        // if (useLighting) {
+        //     childColor.rgb *= texture(brickPoolPhotons, childVoxelCoordinates).r;
+        // }
         childColor.a = 1.0 - pow((1.0 - childColor.a), stepMultiplier); // Step correction
         vec3 parentVoxelCoordinates = findVoxel(queryCoordinates, parentNode);
         vec4 parentColor = texture(brickPoolColors, parentVoxelCoordinates);
-        if (useLighting) {
-            parentColor.rgb *= texture(brickPoolPhotons, parentVoxelCoordinates).r;
-        }
+        // if (useLighting) {
+        //     parentColor.rgb *= texture(brickPoolPhotons, parentVoxelCoordinates).r;
+        // }
         parentColor.a = 1.0 - pow((1.0 - parentColor.a), stepMultiplier); // Step correction
 
         vec4 newColor = mix(childColor, parentColor, parentWeight); // Quadrilinear interpolation
@@ -118,7 +118,7 @@ vec4 coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float m
         previousNode = node;
         previousParentNode = parentNode;
 
-        // break;
+        break;
     }
 
     returnColor.a = min(returnColor.a, 1.0);

@@ -78,7 +78,7 @@ void main() {
     float maxDistance = 0.01;
     float coneAngle = 0.261799;
     bool useLighting = false;
-    float ambientOcclusion = gatherIndirectLight(position, normal, tangent, maxDistance, coneAngle, useLighting).a;
+    vec3 ambientOcclusion = gatherIndirectLight(position, normal, tangent, maxDistance, coneAngle, useLighting).rgb;
 
     maxDistance = 0.5;
     useLighting = true;
@@ -92,7 +92,7 @@ void main() {
     vec3 directLight = vec3(diffuse);
 
     if (imageToShow == 0) {
-        finalImage = vec4(vec3(1.0 - ambientOcclusion), 1.0);
+        finalImage = vec4(ambientOcclusion, 1.0);
     } else if (imageToShow == 1) {
         finalImage = color * vec4(visibility * directLight, 1.0);
     } else if (imageToShow == 2) {
