@@ -58,11 +58,13 @@ impl Octree {
             &mut first_free_node,
             allocated_nodes_counter,
         );
+        let number_of_nodes = self.number_of_nodes() as u32;
 
         shader_passes.append_border_voxel_fragments_pass.run(
             &self.geometry_data,
             &mut self.border_data,
             &self.textures,
+            number_of_nodes,
         );
 
         self.voxels_to_nodes(
