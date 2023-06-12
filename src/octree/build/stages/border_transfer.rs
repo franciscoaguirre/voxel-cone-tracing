@@ -29,6 +29,8 @@ impl BorderTransferPass {
         self.shader.use_program();
 
         self.shader.set_uint(c_str!("octreeLevel"), octree_level);
+        self.shader
+            .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
 
         match brick_pool_values {
             BrickPoolValues::Colors => helpers::bind_3d_image_texture(

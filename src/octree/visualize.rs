@@ -463,7 +463,7 @@ impl Octree {
             .get_colors_quad_shader
             .set_uint(c_str!("nodeID"), node_index);
         self.renderer.get_colors_quad_shader.set_float(
-            c_str!("brickPoolResolution"),
+            c_str!("brickPoolResolutionf"),
             CONFIG.brick_pool_resolution as f32,
         );
 

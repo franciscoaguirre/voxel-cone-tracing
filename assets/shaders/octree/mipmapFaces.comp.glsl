@@ -9,10 +9,12 @@ uniform layout(binding = 1, rgba8) image3D brickPoolValues;
 uniform layout(binding = 2, r32ui) uimageBuffer levelStartIndices;
 
 uniform uint octreeLevel;
+uniform uint voxelDimension;
 
 #include "./_helpers.glsl"
-#include "./_mipmapUtil.glsl"
 #include "./_threadNodeUtil.glsl"
+#include "assets/shaders/octree/_brickCoordinates.glsl"
+#include "./_mipmapUtil.glsl"
 
 void main() {
     int nodeAddress = getThreadNode();

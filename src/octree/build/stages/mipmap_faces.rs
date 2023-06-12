@@ -28,6 +28,8 @@ impl MipmapFacesPass {
         self.shader.use_program();
 
         self.shader.set_uint(c_str!("octreeLevel"), level);
+        self.shader
+            .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
 
         helpers::bind_image_texture(0, textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
         match brick_pool_values {

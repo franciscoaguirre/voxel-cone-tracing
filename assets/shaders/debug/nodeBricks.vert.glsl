@@ -16,6 +16,7 @@ uniform layout(binding = 5, r32ui) readonly uimageBuffer borderLevelStartIndices
 
 #include "assets/shaders/octree/_helpers.glsl"
 #include "assets/shaders/octree/_findOctreeLevel.glsl"
+#include "assets/shaders/octree/_brickCoordinates.glsl"
 
 void main() {
     uint octreeLevel = findOctreeLevel(nodeID, maxOctreeLevel);

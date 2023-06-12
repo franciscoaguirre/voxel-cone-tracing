@@ -2,6 +2,7 @@
 // - _helpers
 // - binding brickPoolPhotons
 // - binding nodePool
+// - _brickCoordinates
 // - _helpers
 
 int childNodeIDs[] = {0, 0, 0, 0, 0, 0, 0, 0};

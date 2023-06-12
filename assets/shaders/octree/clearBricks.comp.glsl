@@ -6,7 +6,10 @@ layout (local_size_x = WORKING_GROUP_SIZE, local_size_y = 1, local_size_z = 1) i
 
 uniform layout(binding = 0, r32ui) uimage3D brickPoolPhotons;
 
+uniform uint voxelDimension;
+
 #include "./_helpers.glsl"
+#include "assets/shaders/octree/_brickCoordinates.glsl"
 
 void main() {
     int nodeID = int(gl_GlobalInvocationID.x);

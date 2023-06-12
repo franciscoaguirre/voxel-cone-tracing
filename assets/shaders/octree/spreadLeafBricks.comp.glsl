@@ -8,9 +8,11 @@ uniform layout(binding = 0, rgba8) image3D brickPoolValues;
 uniform layout(binding = 1, r32ui) readonly uimageBuffer levelStartIndices;
 
 uniform uint octreeLevel;
+uniform uint voxelDimension;
 
 #include "./_helpers.glsl"
 #include "./_threadNodeUtil.glsl"
+#include "assets/shaders/octree/_brickCoordinates.glsl"
 
 vec4[8] loadVoxelValues(in ivec3 brickAddress) {
   vec4 voxelValues[8];

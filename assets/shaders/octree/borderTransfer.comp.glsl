@@ -11,8 +11,10 @@ uniform layout(binding = 2, r32ui) uimageBuffer levelStartIndices;
 
 uniform uint axis;
 uniform uint octreeLevel;
+uniform uint voxelDimension;
 
 #include "./_threadNodeUtil.glsl"
+#include "assets/shaders/octree/_brickCoordinates.glsl"
 
 void main() {
     int nodeAddress = getThreadNode();

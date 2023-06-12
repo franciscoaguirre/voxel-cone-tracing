@@ -28,14 +28,16 @@ uniform sampler3D brickPoolColors;
 
 uniform uint nodeID;
 uniform bool isNeighbor;
-uniform float brickPoolResolution;
+uniform float brickPoolResolutionf;
+uniform uint voxelDimension;
 
 #include "assets/shaders/octree/_helpers.glsl"
+#include "assets/shaders/octree/_brickCoordinates.glsl"
 
 void main() {
     // FragColor = texture(brickPoolColors, TexCoords);
 
-    vec3 brickCoordinates = calculateBrickCoordinates(int(nodeID)) / (brickPoolResolution - 1.0);
+    vec3 brickCoordinates = calculateBrickCoordinates(int(nodeID)) / (brickPoolResolutionf - 1.0);
     if (isNeighbor) {
         neighborColor = vec4(1);
     } else {
@@ -44,7 +46,7 @@ void main() {
         nodeColor = vec4(
             vec3(texture(
                 brickPoolColors,
-                brickCoordinates + (vec3(TexCoords, 0) * (2.0 / 3.0) + (1.0 / 6.0)) / (brickPoolResolution - 1.0)
+                brickCoordinates + (vec3(TexCoords, 0) * (2.0 / 3.0) + (1.0 / 6.0)) / (brickPoolResolutionf - 1.0)
             ).a),
             1
         );
