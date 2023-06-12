@@ -12,9 +12,10 @@ uniform uint octreeLevel;
 uniform uint voxelDimension;
 
 #include "./_helpers.glsl"
-#include "./_umipmapUtil.glsl"
 #include "./_traversalHelpers.glsl"
 #include "./_octreeTraversal.glsl"
+#include "assets/shaders/octree/_brickCoordinates.glsl"
+#include "./_umipmapUtil.glsl"
 
 void main() {
     uvec3 queryCoordinates = texelFetch(

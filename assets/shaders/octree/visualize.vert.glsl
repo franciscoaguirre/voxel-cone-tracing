@@ -19,6 +19,7 @@ out ivec3 geom_brickCoordinates;
 
 #include "./_traversalHelpers.glsl"
 #include "./_octreeTraversal.glsl"
+#include "assets/shaders/octree/_brickCoordinates.glsl"
 
 void main() {
   int nodeID = gl_VertexID;

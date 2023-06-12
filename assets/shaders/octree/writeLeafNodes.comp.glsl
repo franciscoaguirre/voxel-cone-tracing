@@ -18,6 +18,7 @@ uniform uint numberOfVoxelFragments;
 
 #include "./_traversalHelpers.glsl"
 #include "./_octreeTraversal.glsl"
+#include "assets/shaders/octree/_brickCoordinates.glsl"
 
 void storeInLeaf(
     vec3 voxelPosition,

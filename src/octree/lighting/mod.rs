@@ -16,6 +16,9 @@ use stages::*;
 impl Octree {
     pub unsafe fn clear_light(&self) {
         //self.renderer.clear_bricks_shader.use_program();
+        //self.renderer
+            //.clear_bricks_shader
+            //.set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
 
         //helpers::bind_3d_image_texture(
             //0,

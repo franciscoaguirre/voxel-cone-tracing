@@ -53,6 +53,7 @@ uniform sampler2D shadowMap;
 #include "./_helpers.glsl"
 #include "./_traversalHelpers.glsl"
 #include "./_octreeTraversal.glsl"
+#include "assets/shaders/octree/_brickCoordinates.glsl"
 #include "./_coneTrace.glsl"
 
 vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent);

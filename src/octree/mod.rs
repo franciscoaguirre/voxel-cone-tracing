@@ -1,5 +1,6 @@
 use std::{ffi::c_void, mem::size_of};
 
+use log::info;
 use gl::types::GLuint;
 use log::debug;
 
@@ -190,11 +191,16 @@ impl Octree {
         octree
     }
 
-    fn get_max_node_pool_size() -> usize {
+    unsafe fn get_max_node_pool_size() -> usize {
         let number_of_nodes = (0..CONFIG.octree_levels)
             .map(|exponent| 8_usize.pow(exponent))
             .sum::<usize>();
-        number_of_nodes * constants::CHILDREN_PER_NODE as usize
+        let max_node_pool_size = number_of_nodes * constants::CHILDREN_PER_NODE as usize;
+
+        let mut max_texture_buffer_size = 0; // In bytes
+        gl::GetIntegerv(gl::MAX_TEXTURE_BUFFER_SIZE, &mut max_texture_buffer_size);
+        max_node_pool_size.min((max_texture_buffer_size / 8).try_into().unwrap()) as usize
+
     }
 
     unsafe fn initialize_textures(max_node_pool_size: usize) -> OctreeTextures {

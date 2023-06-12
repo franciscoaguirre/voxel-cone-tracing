@@ -52,17 +52,6 @@ vec3 calculateNormalizedBrickVoxel(vec3 nodeCoordinates, float halfNodeSize, vec
     return voxelCoordinates;
 }
 
-ivec3 calculateBrickCoordinates(int nodeID) {
-    ivec3 coordinates = ivec3(0);
-    int brickPoolResolution = 384;
-    int brickPoolResolutionBricks = brickPoolResolution / 3;
-    coordinates.x = nodeID % brickPoolResolutionBricks;
-    coordinates.y = (nodeID / brickPoolResolutionBricks) % brickPoolResolutionBricks;
-    coordinates.z = nodeID / (brickPoolResolutionBricks * brickPoolResolutionBricks);
-    coordinates *= 3;
-    return coordinates;
-}
-
 vec3 normalizedFromIntCoordinates(uvec3 intCoordinates, float factor) {
   vec3 centerVoxel = vec3(intCoordinates) + vec3(0.5);
   return centerVoxel / factor;
