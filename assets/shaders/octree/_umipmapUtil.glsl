@@ -1,7 +1,6 @@
 // Requires:
-// - _helpers
-// - binding brickPoolPhotons
-// - binding nodePool
+// - uniform uimage3D brickPoolPhotons
+// - uniform uimageBuffer nodePool
 // - _brickCoordinates
 // - _helpers
 
