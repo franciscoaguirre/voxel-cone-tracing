@@ -14,6 +14,7 @@ pub struct Config {
 
     // Voxel settings
     pub voxel_dimension: u32,
+    #[serde(skip_deserializing)] // Gets calculated based on voxel_dimension
     pub brick_pool_resolution: u32,
 
     // Octree settings
@@ -44,6 +45,7 @@ fn load_config() -> Config {
     let file = File::open(&input_path).expect("Missing config file!");
     let mut config: Config = from_reader(file).expect("Config file malformed!");
     config.octree_levels = config.voxel_dimension.pow(3).ilog2() / 8_u32.ilog2();
+    config.brick_pool_resolution = (config.voxel_dimension * 3) / 2;
     info!("Configuration used: {:#?}", config);
     config
 }

@@ -1,7 +1,7 @@
 use log;
 
 use super::{Octree, OctreeDataType};
-use crate::{config::CONFIG, helpers};
+use crate::{config::CONFIG, constants::Axis, helpers};
 
 mod stages;
 
@@ -58,11 +58,13 @@ impl Octree {
             &mut first_free_node,
             allocated_nodes_counter,
         );
+        let number_of_nodes = self.number_of_nodes() as u32;
 
         shader_passes.append_border_voxel_fragments_pass.run(
             &self.geometry_data,
             &mut self.border_data,
             &self.textures,
+            number_of_nodes,
         );
 
         self.voxels_to_nodes(
@@ -93,25 +95,31 @@ impl Octree {
             BrickPoolValues::Normals,
         );
 
-        shader_passes.border_transfer_pass.run(
-            &self.textures,
-            &self.geometry_data.node_data,
-            CONFIG.octree_levels - 1,
-            BrickPoolValues::Colors,
-        );
-        shader_passes.border_transfer_pass.run(
-            &self.textures,
-            &self.border_data.node_data,
-            CONFIG.octree_levels - 1,
-            BrickPoolValues::Colors,
-        );
+        let all_axis = vec![Axis::X, Axis::Y, Axis::Z];
+        for axis in all_axis.iter() {
+            shader_passes.border_transfer_pass.run(
+                &self.textures,
+                &self.geometry_data.node_data,
+                CONFIG.octree_levels - 1,
+                BrickPoolValues::Colors,
+                *axis,
+            );
+            shader_passes.border_transfer_pass.run(
+                &self.textures,
+                &self.border_data.node_data,
+                CONFIG.octree_levels - 1,
+                BrickPoolValues::Colors,
+                *axis,
+            );
+        }
 
-        shader_passes.border_transfer_pass.run(
-            &self.textures,
-            &self.geometry_data.node_data,
-            CONFIG.octree_levels - 1,
-            BrickPoolValues::Normals,
-        );
+        // shader_passes.border_transfer_pass.run(
+        //     &self.textures,
+        //     &self.geometry_data.node_data,
+        //     CONFIG.octree_levels - 1,
+        //     BrickPoolValues::Normals,
+        //     Axis::X,
+        // );
 
         for level in (0..CONFIG.octree_levels - 1).rev() {
             shader_passes.mipmap_center_pass.run(
@@ -165,24 +173,28 @@ impl Octree {
             );
 
             if level > 0 {
-                shader_passes.border_transfer_pass.run(
-                    &self.textures,
-                    &self.geometry_data.node_data,
-                    level,
-                    BrickPoolValues::Colors,
-                );
-                shader_passes.border_transfer_pass.run(
-                    &self.textures,
-                    &self.border_data.node_data,
-                    level,
-                    BrickPoolValues::Colors,
-                );
-                shader_passes.border_transfer_pass.run(
-                    &self.textures,
-                    &self.geometry_data.node_data,
-                    level,
-                    BrickPoolValues::Normals,
-                );
+                for axis in all_axis.iter() {
+                    shader_passes.border_transfer_pass.run(
+                        &self.textures,
+                        &self.geometry_data.node_data,
+                        level,
+                        BrickPoolValues::Colors,
+                        *axis,
+                    );
+                    shader_passes.border_transfer_pass.run(
+                        &self.textures,
+                        &self.border_data.node_data,
+                        level,
+                        BrickPoolValues::Colors,
+                        *axis,
+                    );
+                }
+                // shader_passes.border_transfer_pass.run(
+                //     &self.textures,
+                //     &self.geometry_data.node_data,
+                //     level,
+                //     BrickPoolValues::Normals,
+                // );
             }
         }
     }

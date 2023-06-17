@@ -12,9 +12,10 @@ uniform uint octreeLevel;
 uniform uint voxelDimension;
 
 #include "./_helpers.glsl"
-#include "./_mipmapUtil.glsl"
 #include "./_traversalHelpers.glsl"
 #include "./_octreeTraversal.glsl"
+#include "assets/shaders/octree/_brickCoordinates.glsl"
+#include "./_umipmapUtil.glsl"
 
 void main() {
     uvec3 queryCoordinates = texelFetch(
@@ -38,15 +39,15 @@ void main() {
         return;
     }
 
-    loadChildNodeIDs(nodeID, nodePool);
-    uint nearRightTop = mipmapIsotropic(ivec3(4, 4, 0), brickPoolPhotons);
-    uint nearRightBottom = mipmapIsotropic(ivec3(4, 0, 0), brickPoolPhotons);
-    uint nearLeftTop = mipmapIsotropic(ivec3(0, 4, 0), brickPoolPhotons);
-    uint nearLeftBottom = mipmapIsotropic(ivec3(0, 0, 0), brickPoolPhotons);
-    uint farRightTop = mipmapIsotropic(ivec3(4, 4, 4), brickPoolPhotons);
-    uint farRightBottom = mipmapIsotropic(ivec3(4, 0, 4), brickPoolPhotons);
-    uint farLeftTop = mipmapIsotropic(ivec3(0, 4, 4), brickPoolPhotons);
-    uint farLeftBottom = mipmapIsotropic(ivec3(0, 0, 4), brickPoolPhotons);
+    loadChildNodeIDs(nodeID);
+    uint nearRightTop = mipmapIsotropic(ivec3(4, 4, 0));
+    uint nearRightBottom = mipmapIsotropic(ivec3(4, 0, 0));
+    uint nearLeftTop = mipmapIsotropic(ivec3(0, 4, 0));
+    uint nearLeftBottom = mipmapIsotropic(ivec3(0, 0, 0));
+    uint farRightTop = mipmapIsotropic(ivec3(4, 4, 4));
+    uint farRightBottom = mipmapIsotropic(ivec3(4, 0, 4));
+    uint farLeftTop = mipmapIsotropic(ivec3(0, 4, 4));
+    uint farLeftBottom = mipmapIsotropic(ivec3(0, 0, 4));
   
     memoryBarrier();
 
