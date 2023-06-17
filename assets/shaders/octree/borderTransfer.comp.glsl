@@ -24,15 +24,12 @@ void main() {
     }
 
     int neighborAddress = int(imageLoad(nodePoolNeighbors, nodeAddress).r);
-    
-    ivec3 neighborBrickAddress;
     if (neighborAddress == 0) {
-        neighborBrickAddress = ivec3(0);
-    } else {
-        neighborBrickAddress = calculateBrickCoordinates(neighborAddress);
+        return;
     }
-
+    
     ivec3 brickAddress = calculateBrickCoordinates(nodeAddress);
+    ivec3 neighborBrickAddress = calculateBrickCoordinates(neighborAddress);
 
     if (axis == 0) { // X axis
         for (int y = 0; y <= 2; y++) {
