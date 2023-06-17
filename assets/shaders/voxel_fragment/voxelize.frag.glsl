@@ -1,17 +1,22 @@
 #version 460 core
 
-in vec3 frag_position;
-in vec3 frag_normal;
-in vec2 frag_texCoordinates;
-flat in int frag_dominantAxis;
-flat in vec4 frag_aabb;
+#include "assets/shaders/octree/_helpers.glsl"
 
 layout (location = 0) out vec4 FragColor;
-layout (pixel_center_integer) in vec4 gl_FragCoord;
 
 layout (binding = 0, offset = 0) uniform atomic_uint voxelFragmentCount;
 
-uniform layout(binding = 0, rgb10_a2ui) uimageBuffer voxelPositions;
+in VoxelData {
+    vec3 position;
+    vec3 normal;
+    vec2 textureCoordinates;
+    float z;
+} In;
+
+flat in int frag_dominantAxis;
+flat in vec4 frag_aabb;
+
+layout(binding = 0, rgb10_a2ui) coherent uniform uimageBuffer voxelPositions;
 uniform layout(binding = 1, rgba8) imageBuffer voxelColors;
 uniform layout(binding = 2, rgba8) imageBuffer voxelNormals;
 
@@ -25,7 +30,7 @@ uniform int voxelDimension;
 uniform bool shouldStore;
 
 void discardIfOutsideAabb() {
-    if (frag_position.x < frag_aabb.x || frag_position.y < frag_aabb.y || frag_position.x > frag_aabb.z || frag_position.y > frag_aabb.w) {
+    if (In.position.x < frag_aabb.x || In.position.y < frag_aabb.y || In.position.x > frag_aabb.z || In.position.y > frag_aabb.w) {
         discard;
     }
 }
@@ -34,11 +39,11 @@ void discardIfOutsideAabb() {
 // We do this to not have to store floating point numbers.
 // The octree traversal functions use normalized voxel coordinates, we just normalize them at that point
 // by dividing them by voxelDimension.
-uvec4 calculateVoxelCoordinates() {
+uvec4 calculateVoxelCoordinates(int z) {
     uvec4 temp = uvec4(
         floor(gl_FragCoord.x),
         floor(gl_FragCoord.y),
-        floor(float(voxelDimension) * gl_FragCoord.z),
+        z,
         0
     );
     uvec4 voxelCoordinates;
@@ -61,35 +66,72 @@ uvec4 calculateVoxelCoordinates() {
 }
 
 void storeVoxelFragment(uvec4 voxelCoordinates, uint fragmentListIndex) {
-    vec3 voxelNormal, voxelColor;
+    vec3 voxelNormal;
+    vec4 voxelColor;
 
     if (hasBump) {
-       voxelNormal = texture(bumpTex, frag_texCoordinates).rgb;
+       voxelNormal = texture(bumpTex, In.textureCoordinates).rgb;
     } else {
-       voxelNormal = frag_normal;
+       voxelNormal = In.normal;
     }
 
     if (hasTexture) {
-      voxelColor = texture(textureDiffuse1, frag_texCoordinates).rgb;
+      voxelColor = texture(textureDiffuse1, In.textureCoordinates);
     } else {
-      voxelColor = fallbackColor;
+      voxelColor = vec4(fallbackColor, 1);
     }
 
     imageStore(voxelPositions, int(fragmentListIndex), voxelCoordinates);
-    imageStore(voxelColors, int(fragmentListIndex), vec4(voxelColor, 0));
+    imageStore(voxelColors, int(fragmentListIndex), voxelColor);
     imageStore(voxelNormals, int(fragmentListIndex), vec4(voxelNormal, 0));
 }
 
 void main() {
-    discardIfOutsideAabb();
+  // TODO: Which memory barriers do we need
+    float voxelZCoordinate = In.z;
+    int flooredVoxelZCoordinate = int(floor(voxelZCoordinate));
+    float dfdx = dFdx(voxelZCoordinate) / 2.0; 
+    float dfdy = dFdy(voxelZCoordinate) / 2.0; 
 
-    uvec4 voxelCoordinates = calculateVoxelCoordinates();
+    discardIfOutsideAabb();
+//    memoryBarrier();
+
+    uvec4 voxelCoordinates = calculateVoxelCoordinates(int(flooredVoxelZCoordinate));
 
     uint fragmentListIndex = atomicCounterIncrement(voxelFragmentCount);
     memoryBarrier();
 
     if (shouldStore) {
         storeVoxelFragment(voxelCoordinates, fragmentListIndex);
+    }
+ //   memoryBarrier();
+
+    int zOffset = 0;
+
+    // Triangle is closer to z+1 voxel
+    if(fract(voxelZCoordinate) > 0.5) {
+      // Check if within this fragment, triangle toples over to z+ voxel
+      // TODO: Could it go over both in X and Y?
+      if(int(voxelZCoordinate + abs(dfdx)) > flooredVoxelZCoordinate || int(voxelZCoordinate + abs(dfdy)) > flooredVoxelZCoordinate) {
+        zOffset = 1;
+      } 
+    // Triangle is closer to z-1 voxel
+    } else if(fract(voxelZCoordinate) < 0.5) {
+      // Check if within this fragment, triangle toples over to z- voxel
+      if(int(voxelZCoordinate - abs(dfdx)) < flooredVoxelZCoordinate || int(voxelZCoordinate - abs(dfdy)) < flooredVoxelZCoordinate) {
+        zOffset = -1;
+      } 
+    }
+
+    if (zOffset != 0) {
+      voxelCoordinates = calculateVoxelCoordinates(int(flooredVoxelZCoordinate) + zOffset);
+      fragmentListIndex = atomicCounterIncrement(voxelFragmentCount);
+    }
+
+  //  memoryBarrier();
+
+    if (shouldStore && zOffset != 0) {
+      storeVoxelFragment(voxelCoordinates, fragmentListIndex);
     }
 
     FragColor = vec4(1.0, 1.0, 1.0, 1.0);

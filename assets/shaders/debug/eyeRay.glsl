@@ -37,13 +37,15 @@ uniform mat4 projection;
 uniform mat4 view;
 
 #include "./_drawCone.glsl"
+#include "assets/shaders/octree/_helpers.glsl"
+#include "assets/shaders/octree/_brickCoordinates.glsl"
 
 void main() {
     frag_color = vec4(1);
     gl_Position = gl_in[0].gl_Position;
     EmitVertex();
 
-    ivec2 pixelCoordinates = ivec2(384, 384);
+    ivec2 pixelCoordinates = ivec2(brickPoolResolution);
 
     uvec3 queryCoordinates = texelFetch(
         eyeViewMap,
@@ -60,7 +62,7 @@ void main() {
         return;
     }
 
-    vec3 normalizedQueryCoordinates = vec3(queryCoordinates / (float(voxelDimension) * 1.5));
+    vec3 normalizedQueryCoordinates = normalizedFromIntCoordinates(queryCoordinates, (float(voxelDimension) * 1.5));
     vec3 ndc = normalizedQueryCoordinates.xyz * 2.0 - 1.0;
 
     gl_Position = projection * view * vec4(ndc, 1.0);
@@ -85,7 +87,7 @@ void main() {
     EmitVertex();
     EndPrimitive();
 
-    drawCone(ndc, normal, tangent, bitangent);
+    drawCone(ndc, normal, 0.523599);
 }
 
 #shader fragment

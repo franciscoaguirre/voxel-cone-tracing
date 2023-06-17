@@ -3,7 +3,10 @@ use std::{ffi::CStr, ptr, sync::mpsc::Receiver};
 use egui_glfw_gl::glfw::{self, Action, Context, Glfw, Key, Window, WindowEvent};
 use log::info;
 
-use super::camera::{Camera, CameraMovement};
+use super::{
+    camera::Camera,
+    transform::{Direction, Transform},
+};
 use crate::{config::CONFIG, helpers};
 
 pub unsafe fn setup_glfw(debug: bool) -> (Glfw, Window, Receiver<(f64, WindowEvent)>) {
@@ -95,24 +98,28 @@ pub fn process_events(
     }
 }
 
-pub fn process_camera_input(window: &mut glfw::Window, delta_time: f32, camera: &mut Camera) {
+pub fn process_movement_input(
+    window: &mut glfw::Window,
+    delta_time: f32,
+    transform: &mut Transform,
+) {
     if window.get_key(Key::W) == Action::Press {
-        camera.process_keyboard(CameraMovement::Forward, delta_time);
+        transform.process_keyboard(Direction::Forward, delta_time);
     }
     if window.get_key(Key::S) == Action::Press {
-        camera.process_keyboard(CameraMovement::Backward, delta_time);
+        transform.process_keyboard(Direction::Backward, delta_time);
     }
     if window.get_key(Key::A) == Action::Press {
-        camera.process_keyboard(CameraMovement::Left, delta_time);
+        transform.process_keyboard(Direction::Left, delta_time);
     }
     if window.get_key(Key::D) == Action::Press {
-        camera.process_keyboard(CameraMovement::Right, delta_time);
+        transform.process_keyboard(Direction::Right, delta_time);
     }
     if window.get_key(Key::Space) == Action::Press {
-        camera.process_keyboard(CameraMovement::Up, delta_time);
+        transform.process_keyboard(Direction::Up, delta_time);
     }
     if window.get_key(Key::LeftShift) == Action::Press {
-        camera.process_keyboard(CameraMovement::Down, delta_time);
+        transform.process_keyboard(Direction::Down, delta_time);
     }
 }
 
@@ -142,6 +149,25 @@ pub fn handle_update_octree_level(
         }
         glfw::WindowEvent::Key(Key::M, _, Action::Press, _) => {
             *show_empty_nodes = !*show_empty_nodes;
+        }
+        _ => {}
+    }
+}
+
+pub fn handle_sampler_change(event: &glfw::WindowEvent, sampler_number: &mut u32) {
+    match *event {
+        glfw::WindowEvent::Key(Key::L, _, Action::Press, _) => {
+            *sampler_number = if *sampler_number == 0 { 1 } else { 0 };
+            dbg!(sampler_number);
+        }
+        _ => {}
+    }
+}
+
+pub fn handle_light_movement(event: &glfw::WindowEvent, should_move_light: &mut bool) {
+    match *event {
+        glfw::WindowEvent::Key(Key::C, _, Action::Press, _) => {
+            *should_move_light = !*should_move_light;
         }
         _ => {}
     }

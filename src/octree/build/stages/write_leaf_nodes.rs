@@ -32,14 +32,14 @@ impl WriteLeafNodesPass {
 
         helpers::bind_image_texture(
             0,
-            voxel_data.voxel_positions,
+            voxel_data.voxel_positions.0,
             gl::READ_WRITE,
             gl::RGB10_A2UI,
         );
-        helpers::bind_image_texture(1, voxel_data.voxel_colors, gl::READ_WRITE, gl::RGBA8);
-        helpers::bind_3d_image_texture(2, textures.brick_pool_colors, gl::WRITE_ONLY, gl::RGBA8);
+        helpers::bind_image_texture(1, voxel_data.voxel_colors.0, gl::READ_WRITE, gl::RGBA8);
+        helpers::bind_3d_image_texture(2, textures.brick_pool_colors, gl::READ_WRITE, gl::RGBA8);
         helpers::bind_image_texture(3, textures.node_pool.0, gl::READ_WRITE, gl::R32UI);
-        helpers::bind_image_texture(4, voxel_data.voxel_normals, gl::READ_ONLY, gl::RGBA8);
+        helpers::bind_image_texture(4, voxel_data.voxel_normals.0, gl::READ_ONLY, gl::RGBA8);
         helpers::bind_3d_image_texture(5, textures.brick_pool_normals, gl::WRITE_ONLY, gl::RGBA8);
 
         self.shader.dispatch(

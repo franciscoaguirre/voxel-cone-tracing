@@ -30,3 +30,6 @@ pub use store_node_positions::StoreNodePositions;
 
 mod write_leaf_nodes;
 pub use write_leaf_nodes::WriteLeafNodesPass;
+
+mod append_border_voxel_fragments;
+pub use append_border_voxel_fragments::AppendBorderVoxelFragmentsPass;

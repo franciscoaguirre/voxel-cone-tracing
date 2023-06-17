@@ -4,9 +4,13 @@
 
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec3 normal;
+layout (location = 2) in vec2 textureCoordinates;
 
-out vec4 frag_position;
-out vec3 frag_normal;
+out VertexData {
+    vec4 position;
+    vec3 normal;
+    vec2 textureCoordinates;
+} Out;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -14,31 +18,39 @@ uniform mat4 projection;
 
 void main() {
     gl_Position = projection * view * model * vec4(position, 1.0);
-    frag_position = model * vec4(position, 1.0);
-    frag_normal = normal;
+    Out.position = model * vec4(position, 1.0);
+    Out.normal = normal;
+    Out.textureCoordinates = textureCoordinates;
 }
 
 #shader fragment
 
 #version 460 core
 
-layout (location = 0) out uvec3 viewMapPositions;
+layout (location = 0) out vec4 viewMapPositions;
 layout (location = 1) out vec4 viewMapViewOutput;
-layout (location = 2) out vec3 viewMapNormals;
+layout (location = 2) out vec4 viewMapNormals;
+layout (location = 3) out vec4 viewMapColors;
 
-in vec4 frag_position;
-in vec3 frag_normal;
+in VertexData {
+    vec4 position;
+    vec3 normal;
+    vec2 textureCoordinates;
+} In;
 
 uniform uint voxelDimension;
+uniform sampler2D texture_diffuse1;
 
 void main() {
     vec4 normalizedGlobalPosition = vec4(
-        ((frag_position.xyz / frag_position.w) + vec3(1.0)) / 2.0,
+        ((In.position.xyz / In.position.w) + vec3(1.0)) / 2.0,
         1.0
     );
-    uvec3 unnormalizedGlobalPosition = uvec3(round(normalizedGlobalPosition.xyz * float(voxelDimension) * 1.5));
+    uvec3 unnormalizedGlobalPosition = uvec3(floor(normalizedGlobalPosition.xyz * float(voxelDimension) * 1.5));
     
-    viewMapViewOutput = vec4(frag_normal, 1.0);
-    viewMapPositions = unnormalizedGlobalPosition;
-    viewMapNormals = frag_normal;
+    viewMapPositions = vec4(In.position.xyz / In.position.w, 1);
+    viewMapNormals = vec4(In.normal, 1);
+    viewMapColors = texture(texture_diffuse1, In.textureCoordinates);
+
+    viewMapViewOutput = normalizedGlobalPosition;
 }

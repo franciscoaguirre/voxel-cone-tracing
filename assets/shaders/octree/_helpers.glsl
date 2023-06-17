@@ -1,3 +1,6 @@
+const float fourThirds = 1.33333333;
+const float twoThirds = 0.6666666;
+
 uint vec3ToUintXYZ10(uvec3 val) {
     return (uint(val.z) & 0x000003FF)   << 20U
             |(uint(val.y) & 0x000003FF) << 10U 
@@ -8,27 +11,6 @@ uvec3 uintXYZ10ToVec3(uint val) {
     return uvec3(uint((val & 0x000003FF)),
                  uint((val & 0x000FFC00) >> 10U), 
                  uint((val & 0x3FF00000) >> 20U));
-}
-
-uint findOctreeLevel(uint nodeID, readonly uimageBuffer levelStartIndices, uint maxOctreeLevel) {
-    uint octreeLevel = 0;
-    bool foundLevel = false;
-
-    for (uint level = 0; level < maxOctreeLevel; level++) {
-        uint levelStartIndex = imageLoad(levelStartIndices, int(level)).r;
-
-        if (levelStartIndex > nodeID) {
-            octreeLevel = level - 1;
-            foundLevel = true;
-            break;
-        }
-
-        if (!foundLevel) {
-            octreeLevel = maxOctreeLevel - 1;
-        }
-    }
-
-    return octreeLevel;
 }
 
 float calculateHalfNodeSize(uint octreeLevel) {
@@ -65,13 +47,19 @@ uvec3 calculateBrickVoxel(vec3 nodeCoordinates, float halfNodeSize, vec3 queryCo
     return uvec3(xOffset, yOffset, zOffset);
 }
 
-ivec3 calculateBrickCoordinates(int nodeID) {
-    ivec3 coordinates = ivec3(0);
-    int brickPoolResolution = 384;
-    int brickPoolResolutionBricks = brickPoolResolution / 3;
-    coordinates.x = nodeID % brickPoolResolutionBricks;
-    coordinates.y = (nodeID / brickPoolResolutionBricks) % brickPoolResolutionBricks;
-    coordinates.z = nodeID / (brickPoolResolutionBricks * brickPoolResolutionBricks);
-    coordinates *= 3;
-    return coordinates;
+vec3 calculateNormalizedBrickVoxel(vec3 nodeCoordinates, float halfNodeSize, vec3 queryCoordinates) {
+    vec3 voxelCoordinates = (queryCoordinates - nodeCoordinates) / (halfNodeSize * 2);
+    return voxelCoordinates;
+}
+
+vec3 normalizedFromIntCoordinates(uvec3 intCoordinates, float factor) {
+  vec3 centerVoxel = vec3(intCoordinates) + vec3(0.5);
+  return centerVoxel / factor;
+}
+
+float zFromPlaneAndPoint(vec2 point, vec4 plane, float defaultValue) {
+  if (plane.z == 0.0) {
+    return defaultValue;
+  }
+  return (point.x * plane.x + point.y * plane.y + plane.w) / -plane.z;
 }

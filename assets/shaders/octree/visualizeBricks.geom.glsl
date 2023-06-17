@@ -1,7 +1,7 @@
 #version 460 core
 
 layout (points) in;
-layout (triangle_strip, max_vertices = 256) out;
+layout (triangle_strip, max_vertices = 128) out;
 
 in vec4 geom_nodePosition[];
 in float geom_halfNodeSize[];
@@ -28,13 +28,13 @@ const int BY_PHOTONS = 0;
 const int BY_COLOR = 1;
 
 vec4 showProp(ivec3 coordinates, int type) {
-    if(type == BY_PHOTONS) {
+    if (type == BY_PHOTONS) {
       uint photonCount = imageLoad(brickPoolPhotons, coordinates).r;
       if (photonCount > 0) {
           return vec4(1.0, 1.0, 1.0, 1.0);
       }
       return vec4(0.0, 0.0, 0.0, 1.0);
-    } else if(type == BY_COLOR) {
+    } else if (type == BY_COLOR) {
       return imageLoad(brickPoolColors, coordinates);
     }
 }
@@ -151,7 +151,7 @@ void main() {
         // (1, 1, 1)
         cubeCenter = vec4(nodePosition.xyz, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(1, 1, 1), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+       drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
         start = cubeCenter.xyz;
         normal = imageLoad(brickPoolNormals, geom_brickCoordinates[0] + ivec3(1, 1, 1)).xyz;
         drawNormal(start, normal);

@@ -6,7 +6,7 @@ use gl::types::GLuint;
 
 use crate::config::CONFIG;
 
-use super::{gizmo::RenderGizmo, model::Model, shader::Shader};
+use super::{framebuffer::Framebuffer, gizmo::RenderGizmo, model::Model, shader::Shader};
 
 /// Struct that handles `position`, `rotation` and `scale` for an entity
 #[derive(Debug)]
@@ -17,9 +17,24 @@ pub struct Transform {
     forward: Vector3<f32>,
     up: Vector3<f32>,
     right: Vector3<f32>,
+    movement_speed: f32,
     pub vao: GLuint,
     shader: Shader,
+    // TODO: This is kind of ugly
+    view_map_shader: Shader,
 }
+
+// Defines several possible options for movement. Used as abstraction to stay away from window-system specific input methods
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub enum Direction {
+    Forward,
+    Backward,
+    Left,
+    Right,
+    Up,
+    Down,
+}
+use self::Direction::*;
 
 impl Default for Transform {
     fn default() -> Self {
@@ -31,11 +46,13 @@ impl Default for Transform {
             up: Vector3::zero(),    // Initialized later
             right: Vector3::zero(), // Initialized later
             vao: 0,                 // Initialized later
+            movement_speed: 1.0,
             shader: Shader::with_geometry_shader(
                 "assets/shaders/debug/cubicGizmo.vert.glsl",
                 "assets/shaders/debug/cubicGizmo.frag.glsl",
                 "assets/shaders/debug/cubicGizmo.geom.glsl",
             ),
+            view_map_shader: Shader::new_single("assets/shaders/octree/viewMap.glsl"),
         };
         this.update_vectors();
         unsafe {
@@ -96,13 +113,11 @@ impl Transform {
         self.update_vectors();
     }
 
-    #[allow(dead_code)]
     pub fn set_rotation_y(&mut self, y: f32) {
         self.rotation.y = y;
         self.update_vectors();
     }
 
-    #[allow(dead_code)]
     pub fn set_rotation_z(&mut self, z: f32) {
         self.rotation.z = z;
         self.update_vectors();
@@ -147,138 +162,60 @@ impl Transform {
     /// Creates textures from its POV of `models`.
     /// First two hold global positions, unnormalized and normalized respectively.
     /// The third holds normals.
+    /// The fourth holds colors.
     pub unsafe fn take_photo(
         &self,
         models: &[&Model],
         projection: &Matrix4<f32>,
         model: &Matrix4<f32>,
-    ) -> (GLuint, GLuint, GLuint) {
-        // TODO: Compile beforehand once we have dynamic lights/objects
-        let shader = Shader::new_single("assets/shaders/octree/viewMap.glsl");
+        framebuffer: &Framebuffer,
+        shader: Option<Shader>,
+    ) -> (GLuint, GLuint, GLuint, GLuint) {
+        let shader = if let Some(shader) = shader {
+            shader
+        } else {
+            self.view_map_shader
+        };
 
-        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         shader.use_program();
         shader.set_mat4(c_str!("projection"), &projection);
         shader.set_mat4(c_str!("view"), &self.get_view_matrix());
         shader.set_mat4(c_str!("model"), &model);
         shader.set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
 
-        let mut fbo = 0;
-        gl::GenFramebuffers(1, &mut fbo);
-        gl::BindFramebuffer(gl::FRAMEBUFFER, fbo);
-
-        let mut textures = [0; 3]; // First one is rgb10_a2ui, second rgba8 for viewing, third is normals
-        gl::GenTextures(3, textures.as_mut_ptr());
-
-        gl::BindTexture(gl::TEXTURE_2D, textures[0]);
-        gl::TexImage2D(
-            gl::TEXTURE_2D,
-            0,
-            gl::RGB10_A2UI as i32,
-            CONFIG.viewport_width as i32,
-            CONFIG.viewport_height as i32,
-            0,
-            gl::RGBA_INTEGER,
-            gl::UNSIGNED_INT_2_10_10_10_REV,
-            std::ptr::null(),
-        );
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
-        gl::BindTexture(gl::TEXTURE_2D, 0);
-
-        gl::BindTexture(gl::TEXTURE_2D, textures[1]);
-        gl::TexImage2D(
-            gl::TEXTURE_2D,
-            0,
-            gl::RGBA8 as i32,
-            CONFIG.viewport_width as i32,
-            CONFIG.viewport_height as i32,
-            0,
-            gl::RGBA,
-            gl::UNSIGNED_BYTE,
-            std::ptr::null(),
-        );
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
-        gl::BindTexture(gl::TEXTURE_2D, 0);
-
-        gl::BindTexture(gl::TEXTURE_2D, textures[2]);
-        gl::TexImage2D(
-            gl::TEXTURE_2D,
-            0,
-            gl::RGB32F as i32,
-            CONFIG.viewport_width as i32,
-            CONFIG.viewport_height as i32,
-            0,
-            gl::RGB,
-            gl::FLOAT,
-            std::ptr::null(),
-        );
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
-        gl::BindTexture(gl::TEXTURE_2D, 0);
-
-        let mut rbo = 0;
-        gl::GenRenderbuffers(1, &mut rbo);
-        gl::BindRenderbuffer(gl::RENDERBUFFER, rbo);
-        gl::RenderbufferStorage(
-            gl::RENDERBUFFER,
-            gl::DEPTH24_STENCIL8,
-            CONFIG.viewport_width as i32,
-            CONFIG.viewport_height as i32,
-        );
-        gl::FramebufferRenderbuffer(
-            gl::FRAMEBUFFER,
-            gl::DEPTH_STENCIL_ATTACHMENT,
-            gl::RENDERBUFFER,
-            rbo,
-        );
-        gl::BindRenderbuffer(gl::RENDERBUFFER, 0);
-
-        gl::FramebufferTexture2D(
-            gl::FRAMEBUFFER,
-            gl::COLOR_ATTACHMENT0,
-            gl::TEXTURE_2D,
-            textures[0],
-            0,
-        );
-        gl::FramebufferTexture2D(
-            gl::FRAMEBUFFER,
-            gl::COLOR_ATTACHMENT1,
-            gl::TEXTURE_2D,
-            textures[1],
-            0,
-        );
-        gl::FramebufferTexture2D(
-            gl::FRAMEBUFFER,
-            gl::COLOR_ATTACHMENT2,
-            gl::TEXTURE_2D,
-            textures[2],
-            0,
-        );
-
-        gl::DrawBuffers(
-            3,
-            [
-                gl::COLOR_ATTACHMENT0,
-                gl::COLOR_ATTACHMENT1,
-                gl::COLOR_ATTACHMENT2,
-            ]
-            .as_ptr(),
-        );
-
-        if gl::CheckFramebufferStatus(gl::FRAMEBUFFER) != gl::FRAMEBUFFER_COMPLETE {
-            println!("ERROR::FRAMEBUFFER: Framebuffer is not complete!");
-        }
-
+        gl::BindFramebuffer(gl::FRAMEBUFFER, framebuffer.fbo());
         gl::Enable(gl::DEPTH_TEST);
+        gl::ClearColor(0.0, 0.0, 0.0, 0.0);
+        gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
         gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         for model in models {
             model.draw(&shader);
         }
-
         gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
 
-        (textures[0], textures[1], textures[2])
+        framebuffer.textures()
+    }
+
+    /// Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
+    pub fn process_keyboard(&mut self, direction: Direction, delta_time: f32) {
+        let velocity = self.movement_speed * delta_time;
+        if direction == Forward {
+            self.position += self.get_forward() * velocity;
+        }
+        if direction == Backward {
+            self.position += -(self.get_forward() * velocity);
+        }
+        if direction == Left {
+            self.position += -(self.get_right() * velocity);
+        }
+        if direction == Right {
+            self.position += self.get_right() * velocity;
+        }
+        if direction == Up {
+            self.position += self.get_up() * velocity;
+        }
+        if direction == Down {
+            self.position += -(self.get_up() * velocity);
+        }
     }
 }

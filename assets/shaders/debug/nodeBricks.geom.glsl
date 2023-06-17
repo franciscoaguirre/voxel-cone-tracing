@@ -1,7 +1,7 @@
 #version 460 core
 
 layout (points) in;
-layout (line_strip, max_vertices = 256) out;
+layout (line_strip, max_vertices = 128) out;
 
 in vec4 geom_nodePosition[];
 in float geom_halfNodeSize[];
@@ -24,14 +24,23 @@ uniform layout(binding = 4, rgba8) image3D brickPoolNormals;
 
 mat4 canonizationMatrix = projection * view * model;
 
-vec4 hasPhoton(uint photonCount) {
-    if (photonCount > 0) {
-        return vec4(1.0, 1.0, 1.0, 1.0);
+const int BY_PHOTONS = 0;
+const int BY_COLOR = 1;
+
+vec4 showProp(ivec3 coordinates, int type) {
+    if (type == BY_PHOTONS) {
+      uint photonCount = imageLoad(brickPoolPhotons, coordinates).r;
+      if (photonCount > 0) {
+          return vec4(1.0, 1.0, 1.0, 1.0);
+      }
+      return vec4(0.0, 0.0, 0.0, 1.0);
+    } else if (type == BY_COLOR) {
+      return imageLoad(brickPoolColors, coordinates);
     }
-    return vec4(0.0, 0.0, 0.0, 1.0);
 }
 
 void main() {
+    int type = BY_COLOR;
     vec4 nodePosition = geom_nodePosition[0];
     float voxelBrickSize = (geom_halfNodeSize[0] / 3) - 0.001;
     // So a brick goes fully inside a node, not accurate but works for debugging
@@ -43,7 +52,7 @@ void main() {
         
         // (0, 0, 0)
         cubeCenter = vec4(nodePosition.xyz - brickDistance, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0]).r);
+        cubeColor = showProp(geom_brickCoordinates[0], type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
         start = cubeCenter.xyz;
         normal = imageLoad(brickPoolNormals, geom_brickCoordinates[0]).xyz;
@@ -51,7 +60,7 @@ void main() {
 
         // (0, 1, 0)
         cubeCenter = vec4(nodePosition.x - brickDistance, nodePosition.y, nodePosition.z - brickDistance, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(0, 1, 0)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(0, 1, 0), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
         start = cubeCenter.xyz;
         normal = imageLoad(brickPoolNormals, geom_brickCoordinates[0] + ivec3(0, 1, 0)).xyz;
@@ -59,7 +68,7 @@ void main() {
 
         // (0, 2, 0)
         cubeCenter = vec4(nodePosition.x - brickDistance, nodePosition.y + brickDistance, nodePosition.z - brickDistance, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(0, 2, 0)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(0, 2, 0), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
         start = cubeCenter.xyz;
         normal = imageLoad(brickPoolNormals, geom_brickCoordinates[0] + ivec3(0, 2, 0)).xyz;
@@ -67,7 +76,7 @@ void main() {
 
         // (2, 0, 0)
         cubeCenter = vec4(nodePosition.x + brickDistance, nodePosition.yz - brickDistance, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(2, 0, 0)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(2, 0, 0), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
         start = cubeCenter.xyz;
         normal = imageLoad(brickPoolNormals, geom_brickCoordinates[0] + ivec3(2, 0, 0)).xyz;
@@ -75,7 +84,7 @@ void main() {
 
         // (2, 2, 0)
         cubeCenter = vec4(nodePosition.xy + brickDistance, nodePosition.z - brickDistance, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(2, 2, 0)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(2, 2, 0), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
         start = cubeCenter.xyz;
         normal = imageLoad(brickPoolNormals, geom_brickCoordinates[0] + ivec3(2, 2, 0)).xyz;
@@ -83,7 +92,7 @@ void main() {
 
         // (1, 1, 0)
         cubeCenter = vec4(nodePosition.xy, nodePosition.z - brickDistance, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(1, 1, 0)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(1, 1, 0), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
         start = cubeCenter.xyz;
         normal = imageLoad(brickPoolNormals, geom_brickCoordinates[0] + ivec3(1, 1, 0)).xyz;
@@ -91,7 +100,7 @@ void main() {
 
         // (1, 0, 0)
         cubeCenter = vec4(nodePosition.x, nodePosition.yz - brickDistance, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(1, 0, 0)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(1, 0, 0), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
         start = cubeCenter.xyz;
         normal = imageLoad(brickPoolNormals, geom_brickCoordinates[0] + ivec3(1, 0, 0)).xyz;
@@ -99,7 +108,7 @@ void main() {
 
         // (1, 2, 0)
         cubeCenter = vec4(nodePosition.x, nodePosition.y + brickDistance, nodePosition.z - brickDistance, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(1, 2, 0)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(1, 2, 0), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
         start = cubeCenter.xyz;
         normal = imageLoad(brickPoolNormals, geom_brickCoordinates[0] + ivec3(1, 2, 0)).xyz;
@@ -107,7 +116,7 @@ void main() {
 
         // (2, 1, 0)
         cubeCenter = vec4(nodePosition.x + brickDistance, nodePosition.y, nodePosition.z - brickDistance, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(2, 1, 0)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(2, 1, 0), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
         start = cubeCenter.xyz;
         normal = imageLoad(brickPoolNormals, geom_brickCoordinates[0] + ivec3(2, 1, 0)).xyz;
@@ -117,47 +126,47 @@ void main() {
         
         // (0, 1, 1)
         cubeCenter = vec4(nodePosition.x - brickDistance, nodePosition.yz, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(0, 1, 1)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(0, 1, 1), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (1, 0, 1)
         cubeCenter = vec4(nodePosition.x, nodePosition.y - brickDistance, nodePosition.z, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(1, 0, 1)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(1, 0, 1), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (0, 0, 1)
         cubeCenter = vec4(nodePosition.xy - brickDistance, nodePosition.z, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(0, 0, 1)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(0, 0, 1), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (1, 1, 1)
         cubeCenter = vec4(nodePosition.xyz, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(1, 1, 1)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(1, 1, 1), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (0, 2, 1)
         cubeCenter = vec4(nodePosition.x - brickDistance, nodePosition.y + brickDistance, nodePosition.z, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(0, 2, 1)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(0, 2, 1), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (1, 2, 1)
         cubeCenter = vec4(nodePosition.x, nodePosition.y + brickDistance, nodePosition.z, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(1, 2, 1)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(1, 2, 1), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (2, 1, 1)
         cubeCenter = vec4(nodePosition.x + brickDistance, nodePosition.yz, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(2, 1, 1)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(2, 1, 1), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (2, 0, 1)
         cubeCenter = vec4(nodePosition.x + brickDistance, nodePosition.y - brickDistance, nodePosition.z, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(2, 0, 1)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(2, 0, 1), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (2, 2, 1)
         cubeCenter = vec4(nodePosition.xy + brickDistance, nodePosition.z, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(2, 2, 1)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(2, 2, 1), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
     } else if (bricksToShow == 4) {
@@ -165,47 +174,47 @@ void main() {
 
         // (0, 0, 2)
         cubeCenter = vec4(nodePosition.xy - brickDistance, nodePosition.z + brickDistance, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(0, 0, 2)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(0, 0, 2), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (1, 0, 2)
         cubeCenter = vec4(nodePosition.x, nodePosition.y - brickDistance, nodePosition.z + brickDistance, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(1, 0, 2)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(1, 0, 2), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (2, 0, 2)
         cubeCenter = vec4(nodePosition.x + brickDistance, nodePosition.y - brickDistance, nodePosition.z + brickDistance, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(2, 0, 2)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(2, 0, 2), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (2, 2, 2)
         cubeCenter = vec4(nodePosition.xyz + brickDistance, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(2, 2, 2)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(2, 2, 2), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (0, 2, 2)
         cubeCenter = vec4(nodePosition.x - brickDistance, nodePosition.yz + brickDistance, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(0, 2, 2)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(0, 2, 2), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (1, 1, 2)
         cubeCenter = vec4(nodePosition.xy, nodePosition.z + brickDistance, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(1, 1, 2)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(1, 1, 2), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (0, 1, 2)
         cubeCenter = vec4(nodePosition.x - brickDistance, nodePosition.y, nodePosition.z + brickDistance, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(0, 1, 2)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(0, 1, 2), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (1, 2, 2)
         cubeCenter = vec4(nodePosition.x, nodePosition.yz + brickDistance, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(1, 2, 2)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(1, 2, 2), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (2, 1, 2)
         cubeCenter = vec4(nodePosition.x + brickDistance, nodePosition.y, nodePosition.z + brickDistance, nodePosition.w);
-        cubeColor = hasPhoton(imageLoad(brickPoolPhotons, geom_brickCoordinates[0] + ivec3(2, 1, 2)).r);
+        cubeColor = showProp(geom_brickCoordinates[0] + ivec3(2, 1, 2), type);
         drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
     }
 }

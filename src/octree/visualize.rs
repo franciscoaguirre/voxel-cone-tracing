@@ -7,7 +7,7 @@ use gl::types::GLuint;
 use crate::{
     config::CONFIG,
     helpers,
-    rendering::{shader::Shader, transform::Transform},
+    rendering::{quad::Quad, transform::Transform},
 };
 
 use super::Octree;
@@ -22,53 +22,60 @@ impl Octree {
     ) {
         if self.renderer.bricks_to_show.at_least_one() {
             self.show_bricks(octree_level, projection, view, model);
+        } else {
+            self.renderer.shader.use_program();
+
+            helpers::bind_image_texture(0, self.textures.node_pool.0, gl::READ_WRITE, gl::R32UI);
+            helpers::bind_image_texture(1, self.textures.brick_pointers.0, gl::READ_WRITE, gl::R32UI);
+            helpers::bind_3d_image_texture(
+                2,
+                self.textures.brick_pool_colors,
+                gl::READ_ONLY,
+                gl::RGBA8,
+            );
+            helpers::bind_image_texture(
+                3,
+                self.textures.node_positions.0,
+                gl::READ_ONLY,
+                gl::RGB10_A2UI,
+            );
+            helpers::bind_3d_image_texture(
+                4,
+                self.textures.brick_pool_photons,
+                gl::READ_ONLY,
+                gl::R32UI,
+            );
+            helpers::bind_image_texture(
+                5,
+                self.geometry_data.node_data.level_start_indices.0,
+                gl::READ_ONLY,
+                gl::R32UI,
+            );
+
+            self.renderer
+                .shader
+                .set_uint(c_str!("octreeLevel"), octree_level);
+            self.renderer
+                .shader
+                .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
+
+            self.renderer
+                .shader
+                .set_mat4(c_str!("projection"), projection);
+            self.renderer.shader.set_mat4(c_str!("view"), view);
+            self.renderer.shader.set_mat4(c_str!("model"), model);
+
+            let mut vao = 0;
+            gl::GenVertexArrays(1, &mut vao);
+            gl::BindVertexArray(vao);
+
+            gl::DrawArrays(
+                gl::POINTS,
+                0,
+                // Use necessary per level
+                self.geometry_data.node_data.nodes_per_level[octree_level as usize] as i32,
+            );
         }
-
-        self.renderer.shader.use_program();
-
-        helpers::bind_image_texture(0, self.textures.node_pool.0, gl::READ_WRITE, gl::R32UI);
-        helpers::bind_image_texture(1, self.textures.brick_pointers.0, gl::READ_WRITE, gl::R32UI);
-        helpers::bind_3d_image_texture(
-            2,
-            self.textures.brick_pool_colors,
-            gl::READ_ONLY,
-            gl::RGBA8,
-        );
-        helpers::bind_image_texture(
-            3,
-            self.voxel_data.voxel_positions,
-            gl::READ_ONLY,
-            gl::RGB10_A2UI,
-        );
-        helpers::bind_3d_image_texture(
-            4,
-            self.textures.brick_pool_photons,
-            gl::READ_ONLY,
-            gl::R32UI,
-        );
-
-        self.renderer
-            .shader
-            .set_uint(c_str!("octreeLevel"), octree_level);
-        self.renderer
-            .shader
-            .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
-
-        self.renderer
-            .shader
-            .set_mat4(c_str!("projection"), projection);
-        self.renderer.shader.set_mat4(c_str!("view"), view);
-        self.renderer.shader.set_mat4(c_str!("model"), model);
-
-        let mut vao = 0;
-        gl::GenVertexArrays(1, &mut vao);
-        gl::BindVertexArray(vao);
-
-        gl::DrawArrays(
-            gl::POINTS,
-            0,
-            self.voxel_data.number_of_voxel_fragments as i32,
-        );
     }
 
     unsafe fn show_bricks(
@@ -116,14 +123,14 @@ impl Octree {
             gl::R32UI,
         );
         //helpers::bind_3d_image_texture(
-            //4,
-            //self.textures.brick_pool_normals,
-            //gl::READ_ONLY,
-            //gl::RGBA8,
+        //4,
+        //self.textures.brick_pool_normals,
+        //gl::READ_ONLY,
+        //gl::RGBA8,
         //);
         helpers::bind_image_texture(
             4,
-            self.textures.level_start_indices.0,
+            self.geometry_data.node_data.level_start_indices.0,
             gl::READ_ONLY,
             gl::R32UI,
         );
@@ -142,7 +149,7 @@ impl Octree {
             gl::DrawArrays(
                 gl::POINTS,
                 0,
-                self.nodes_per_level[octree_level as usize] as i32,
+                self.geometry_data.node_data.nodes_per_level[octree_level as usize] as i32,
             );
         }
 
@@ -154,7 +161,7 @@ impl Octree {
             gl::DrawArrays(
                 gl::POINTS,
                 0,
-                self.nodes_per_level[octree_level as usize] as i32,
+                self.geometry_data.node_data.nodes_per_level[octree_level as usize] as i32,
             );
         }
 
@@ -166,7 +173,7 @@ impl Octree {
             gl::DrawArrays(
                 gl::POINTS,
                 0,
-                self.nodes_per_level[octree_level as usize] as i32,
+                self.geometry_data.node_data.nodes_per_level[octree_level as usize] as i32,
             );
         }
     }
@@ -223,7 +230,7 @@ impl Octree {
             .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
         self.renderer
             .node_positions_shader
-            .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels);
+            .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels + 1);
 
         self.renderer
             .node_positions_shader
@@ -243,7 +250,13 @@ impl Octree {
         );
         helpers::bind_image_texture(
             1,
-            self.textures.level_start_indices.0,
+            self.geometry_data.node_data.level_start_indices.0,
+            gl::READ_ONLY,
+            gl::R32UI,
+        );
+        helpers::bind_image_texture(
+            2,
+            self.border_data.node_data.level_start_indices.0,
             gl::READ_ONLY,
             gl::R32UI,
         );
@@ -269,7 +282,7 @@ impl Octree {
             .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
         self.renderer
             .node_neighbors_shader
-            .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels);
+            .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels + 1);
 
         self.renderer
             .node_neighbors_shader
@@ -290,15 +303,33 @@ impl Octree {
         helpers::bind_image_texture(1, self.textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
         helpers::bind_image_texture(
             2,
-            self.textures.level_start_indices.0,
+            self.geometry_data.node_data.level_start_indices.0,
+            gl::READ_ONLY,
+            gl::R32UI,
+        );
+        helpers::bind_image_texture(
+            3,
+            self.border_data.node_data.level_start_indices.0,
             gl::READ_ONLY,
             gl::R32UI,
         );
 
-        for texture_offset in 0..self.textures.neighbors.len() {
+        for texture_offset in 0..(self.textures.neighbors.len() / 2) {
             helpers::bind_image_texture(
                 3 + texture_offset as u32,
                 self.textures.neighbors[texture_offset as usize].0,
+                gl::READ_ONLY,
+                gl::R32UI,
+            );
+        }
+
+        gl::BindVertexArray(self.renderer.vao);
+        gl::DrawArrays(gl::POINTS, 0, self.renderer.node_count as i32);
+
+        for texture_offset in 0..(self.textures.neighbors.len() / 2) {
+            helpers::bind_image_texture(
+                3 + texture_offset as u32,
+                self.textures.neighbors[(texture_offset + 3) as usize].0,
                 gl::READ_ONLY,
                 gl::R32UI,
             );
@@ -363,7 +394,7 @@ impl Octree {
             .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
         self.renderer
             .node_bricks_shader
-            .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels);
+            .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels + 1);
 
         self.renderer
             .node_bricks_shader
@@ -383,7 +414,7 @@ impl Octree {
         );
         helpers::bind_image_texture(
             1,
-            self.textures.level_start_indices.0,
+            self.geometry_data.node_data.level_start_indices.0,
             gl::READ_ONLY,
             gl::R32UI,
         );
@@ -405,15 +436,123 @@ impl Octree {
             gl::READ_ONLY,
             gl::RGBA8,
         );
+        helpers::bind_image_texture(
+            5,
+            self.border_data.node_data.level_start_indices.0,
+            gl::READ_ONLY,
+            gl::R32UI,
+        );
 
-        // for _ in 0..3 {
+        for z_layer in 0..3 {
+            let mask = 2u32.pow(z_layer);
+            let brick_layer_to_show: u32 = self.renderer.bricks_to_show.into();
+            self.renderer
+                .node_bricks_shader
+                .set_uint(c_str!("bricksToShow"), brick_layer_to_show & mask);
+
+            gl::BindVertexArray(self.renderer.vao);
+            gl::DrawArrays(gl::POINTS, 0, self.renderer.node_count as i32);
+        }
+    }
+
+    pub unsafe fn run_colors_quad_shader(&self, node_index: u32) {
+        self.renderer.get_colors_quad_shader.use_program();
+
+        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         self.renderer
-            .node_bricks_shader
-            .set_uint(c_str!("bricksToShow"), self.renderer.bricks_to_show.into());
+            .get_colors_quad_shader
+            .set_uint(c_str!("nodeID"), node_index);
+        self.renderer.get_colors_quad_shader.set_float(
+            c_str!("brickPoolResolutionf"),
+            CONFIG.brick_pool_resolution as f32,
+        );
 
-        gl::BindVertexArray(self.renderer.vao);
-        gl::DrawArrays(gl::POINTS, 0, self.renderer.node_count as i32);
-        // }
+        let mut fbo = 0;
+        gl::GenFramebuffers(1, &mut fbo);
+        gl::BindFramebuffer(gl::FRAMEBUFFER, fbo);
+
+        let mut rbo = 0;
+        gl::GenRenderbuffers(1, &mut rbo);
+        gl::BindRenderbuffer(gl::RENDERBUFFER, rbo);
+        gl::RenderbufferStorage(
+            gl::RENDERBUFFER,
+            gl::DEPTH24_STENCIL8,
+            CONFIG.viewport_width as i32,
+            CONFIG.viewport_height as i32,
+        );
+        gl::FramebufferRenderbuffer(
+            gl::FRAMEBUFFER,
+            gl::DEPTH_STENCIL_ATTACHMENT,
+            gl::RENDERBUFFER,
+            rbo,
+        );
+        gl::BindRenderbuffer(gl::RENDERBUFFER, 0);
+
+        gl::FramebufferTexture2D(
+            gl::FRAMEBUFFER,
+            gl::COLOR_ATTACHMENT0,
+            gl::TEXTURE_2D,
+            self.textures.color_quad_textures[0],
+            0,
+        );
+
+        gl::FramebufferTexture2D(
+            gl::FRAMEBUFFER,
+            gl::COLOR_ATTACHMENT1,
+            gl::TEXTURE_2D,
+            self.textures.color_quad_textures[1],
+            0,
+        );
+
+        gl::DrawBuffers(2, [gl::COLOR_ATTACHMENT0, gl::COLOR_ATTACHMENT1].as_ptr());
+
+        if gl::CheckFramebufferStatus(gl::FRAMEBUFFER) != gl::FRAMEBUFFER_COMPLETE {
+            println!("ERROR::FRAMEBUFFER: Framebuffer is not complete!");
+        }
+
+        let quad = Quad::new();
+
+        let (debug, buffer) = helpers::generate_texture_buffer(3, gl::R32F, 69f32);
+        helpers::bind_image_texture(0, debug, gl::WRITE_ONLY, gl::R32F);
+
+        gl::ActiveTexture(gl::TEXTURE0);
+        gl::BindTexture(gl::TEXTURE_3D, self.textures.brick_pool_colors);
+        self.renderer
+            .get_colors_quad_shader
+            .set_int(c_str!("brickPoolColors"), 0);
+        gl::BindVertexArray(quad.get_vao());
+
+        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
+        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
+        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::REPEAT as i32);
+        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+
+        gl::Enable(gl::DEPTH_TEST);
+        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+        self.renderer
+            .get_colors_quad_shader
+            .set_bool(c_str!("isNeighbor"), false);
+        gl::DrawElements(
+            gl::TRIANGLES,
+            quad.get_num_indices() as i32,
+            gl::UNSIGNED_INT,
+            std::ptr::null(),
+        );
+
+        self.renderer
+            .get_colors_quad_shader
+            .set_bool(c_str!("isNeighbor"), true);
+        gl::DrawElements(
+            gl::TRIANGLES,
+            quad.get_num_indices() as i32,
+            gl::UNSIGNED_INT,
+            std::ptr::null(),
+        );
+
+        gl::BindVertexArray(0);
+        gl::BindTexture(gl::TEXTURE_3D, 0);
+        gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
     }
 
     pub unsafe fn run_eye_ray_shader(

@@ -15,6 +15,7 @@ mod helpers;
 mod menu;
 mod octree;
 mod rendering;
+mod types;
 mod voxelization;
 
 use cli_arguments::Options;
@@ -25,7 +26,10 @@ use voxelization::visualize::RenderVoxelFragmentsShader;
 
 use octree::{BricksToShow, Octree};
 
-use crate::{menu::DebugNode, rendering::transform::Transform};
+use crate::{
+    menu::DebugNode,
+    rendering::{framebuffer::Framebuffer, transform::Transform},
+};
 
 fn main() {
     let options = Options::from_args();
@@ -42,16 +46,20 @@ fn main() {
 
     // Camera setup
     let mut camera = Camera::default();
-    camera.transform.position = point3(0.0, 0.0, -2.0);
+    // camera.transform.position = point3(0.0, -0.25, 0.0);
+    // camera.transform.position = point3(0.0, 0.0, -2.0);
+    camera.transform.position = point3(0.0, 0.0, 2.0);
+    camera.transform.set_rotation_y(-90.0);
     let mut first_mouse = true;
     let mut last_x: f32 = CONFIG.viewport_width as f32 / 2.0;
     let mut last_y: f32 = CONFIG.viewport_height as f32 / 2.0;
 
     // Static eye
     let mut static_eye = Transform::default();
-    static_eye.position = point3(0.0, 0.0, 0.0);
-    static_eye.set_rotation_x(-60.0);
-    static_eye.set_rotation_y(0.0);
+    // static_eye.position = point3(0.0, -0.25, 0.0);
+    static_eye.position = point3(0.0, 0.0, -2.0);
+    // static_eye.set_rotation_x(-60.0);
+    // static_eye.set_rotation_y(0.0);
 
     // FPS variables
     let mut frame_count = 0;
@@ -76,6 +84,7 @@ fn main() {
         "assets/shaders/model/renderNormals.geom.glsl",
     );
     let voxel_cone_tracing_shader = Shader::new_single("assets/shaders/octree/coneTracing.glsl");
+    let debug_cone_shader = Shader::new_single("assets/shaders/debug/debugConeTracing.glsl");
     let our_model = unsafe { helpers::load_model(&options.model) };
 
     let scene_aabb = &our_model.aabb;
@@ -89,20 +98,16 @@ fn main() {
 
     let model_normalization_matrix = normalize_size_matrix * center_scene_matrix;
 
-    let (
-        number_of_voxel_fragments,
-        voxel_positions_texture,
-        voxel_colors_texture,
-        voxel_normals_texture,
-    ) = unsafe { voxelization::build_voxel_fragment_list(&our_model) };
+    let (voxel_positions, number_of_voxel_fragments, voxel_colors, voxel_normals) =
+        unsafe { voxelization::build_voxel_fragment_list(&our_model) };
     info!("Number of voxel fragments: {}", number_of_voxel_fragments);
 
     let mut octree = unsafe {
         Octree::new(
-            voxel_positions_texture,
+            voxel_positions,
             number_of_voxel_fragments,
-            voxel_colors_texture,
-            voxel_normals_texture,
+            voxel_colors,
+            voxel_normals,
         )
     };
 
@@ -130,8 +135,8 @@ fn main() {
 
     let mut light = unsafe {
         SpotLight::new(
-            1.0,
-            1.0,
+            2.0,
+            2.0,
             Point3 {
                 x: 1.0,
                 y: 1.0,
@@ -139,19 +144,37 @@ fn main() {
             },
         )
     };
-    light.transform.position = point3(0.0, 0.5, -0.5);
-    light.transform.set_rotation_x(-45.0);
-    // light.transform.set_rotation_y(0.0);
+    // light.transform.position = point3(0.0, 0.00, 2.0);
+    // light.transform.set_rotation_y(-90.0);
+    light.transform.position = point3(0.0, 1.0, 0.0);
+    light.transform.set_rotation_x(-90.0);
 
-    let _light_view_map =
-        unsafe { octree.inject_light(&[&our_model], &light, &model_normalization_matrix) };
+    let light_framebuffer = unsafe { Framebuffer::new_light() };
+    let mut light_maps = unsafe {
+        octree.inject_light(
+            &[&our_model],
+            &light,
+            &model_normalization_matrix,
+            &light_framebuffer,
+        )
+    };
     let quad = unsafe { Quad::new() };
+    let camera_framebuffer = unsafe { Framebuffer::new() };
 
-    let (eye_view_map, eye_view_map_view, eye_view_map_normals) = unsafe {
+    let ortho = cgmath::ortho(-1.0, 1.0, -1.0, 1.0, 0.0001, 10_000.0);
+    let projection: Matrix4<f32> = perspective(
+        Deg(camera.zoom),
+        CONFIG.viewport_width as f32 / CONFIG.viewport_height as f32,
+        0.0001,
+        10000.0,
+    );
+    let (eye_view_map, eye_view_map_view, eye_view_map_normals, eye_view_map_colors) = unsafe {
         static_eye.take_photo(
             &[&our_model],
-            &light.get_projection_matrix(),
+            &projection,
             &model_normalization_matrix,
+            &camera_framebuffer,
+            None,
         )
     };
 
@@ -163,15 +186,23 @@ fn main() {
     let mut show_voxel_fragment_list = false;
     let mut show_octree = false;
     let mut node_filter_text = String::new();
+    let mut sampler_number = 0;
+    let mut should_move_light = false;
 
     let mut should_show_neighbors = false;
     let mut bricks_to_show = BricksToShow::default();
 
     let render_voxel_fragments_shader = RenderVoxelFragmentsShader::init(
-        voxel_positions_texture,
-        voxel_colors_texture,
+        voxel_positions.0,
+        voxel_colors.0,
         number_of_voxel_fragments,
     );
+    let render_border_voxel_fragments_shader = RenderVoxelFragmentsShader::init(
+        octree.border_data.voxel_data.voxel_positions.0,
+        octree.border_data.voxel_data.voxel_colors.0,
+        octree.border_data.voxel_data.number_of_voxel_fragments,
+    );
+    let render_depth_buffer_shader = Shader::new_single("assets/shaders/renderDepthQuad.glsl");
 
     // Render loop
     while !window.should_close() {
@@ -189,10 +220,22 @@ fn main() {
             starting_time = current_frame;
         }
 
+        let (camera_view_map_positions, _, camera_view_map_normals, camera_view_map_colors) = unsafe {
+            camera.transform.take_photo(
+                &[&our_model],
+                &projection,
+                &model_normalization_matrix,
+                &camera_framebuffer,
+                None,
+            )
+        };
+
         unsafe {
             gl::ClearColor(0.2, 0.2, 0.2, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
             gl::Enable(gl::DEPTH_TEST);
+            gl::Enable(gl::BLEND);
+            gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
         }
 
         for (_, event) in glfw::flush_messages(&events) {
@@ -219,6 +262,8 @@ fn main() {
                     &mut show_voxel_fragment_list,
                     &mut show_octree,
                 );
+                common::handle_sampler_change(&event, &mut sampler_number);
+                common::handle_light_movement(&event, &mut should_move_light);
             }
             menu.handle_event(event);
         }
@@ -267,29 +312,52 @@ fn main() {
                         8, // Children in a node
                         0_u32,
                     );
+                    octree.run_colors_quad_shader(last_debug_node.index());
                 };
             }
         }
 
         // Input
         if !menu.is_showing() {
-            common::process_camera_input(&mut window, delta_time as f32, &mut camera);
+            let transform = if should_move_light {
+                unsafe {
+                    octree.clear_light();
+                }
+                light_maps = unsafe {
+                    // TODO: This takes too long, optimize
+                    octree.inject_light(
+                        &[&our_model],
+                        &light,
+                        &model_normalization_matrix,
+                        &light_framebuffer,
+                    )
+                };
+                &mut light.transform
+            } else {
+                &mut camera.transform
+            };
+            common::process_movement_input(&mut window, delta_time as f32, transform);
         }
 
         // Render
         unsafe {
-            let projection: Matrix4<f32> = perspective(
-                Deg(camera.zoom),
-                CONFIG.viewport_width as f32 / CONFIG.viewport_height as f32,
-                0.0001,
-                10000.0,
-            );
+            // let projection: Matrix4<f32> = perspective(
+            //     Deg(camera.zoom),
+            //     CONFIG.viewport_width as f32 / CONFIG.viewport_height as f32,
+            //     0.0001,
+            //     10000.0,
+            // );
+            let projection = projection;
             let view = camera.transform.get_view_matrix();
             let mut model = Matrix4::<f32>::from_translation(vec3(0.0, 0.0, 0.0));
             model = model * Matrix4::from_scale(1.);
 
             if show_voxel_fragment_list {
-                render_voxel_fragments_shader.run(&projection, &view, &model);
+                if should_move_light {
+                    render_voxel_fragments_shader.run(&projection, &view, &model);
+                } else {
+                    render_border_voxel_fragments_shader.run(&projection, &view, &model);
+                }
             }
 
             if show_octree {
@@ -304,13 +372,13 @@ fn main() {
             );
             octree.run_node_positions_shader(&projection, &view, &model);
             octree.set_bricks_to_show(bricks_to_show);
-            //octree.run_eye_ray_shader(
-                //&projection,
-                //&view,
-                //&static_eye,
-                //eye_view_map,
-                //eye_view_map_normals,
-            //);
+            // octree.run_eye_ray_shader(
+            //     &projection,
+            //     &view,
+            //     &static_eye,
+            //     eye_view_map,
+            //     eye_view_map_normals,
+            // );
 
             if should_show_neighbors {
                 octree.run_node_neighbors_shader(&projection, &view, &model);
@@ -321,15 +389,125 @@ fn main() {
             }
 
             if show_model {
-                // render_model_shader.use_program();
-                // render_model_shader.set_mat4(c_str!("projection"), &projection);
-                // render_model_shader.set_mat4(c_str!("view"), &view);
-                // render_model_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
+                // Render model normally
+                render_model_shader.use_program();
+                render_model_shader.set_mat4(c_str!("projection"), &projection);
+                render_model_shader.set_mat4(c_str!("view"), &view);
+                render_model_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
+                our_model.draw(&render_model_shader);
+            }
+
+            {
+                // Render illumination image to quad
                 voxel_cone_tracing_shader.use_program();
-                voxel_cone_tracing_shader.set_mat4(c_str!("projection"), &projection);
-                voxel_cone_tracing_shader.set_mat4(c_str!("view"), &view);
-                voxel_cone_tracing_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
-                our_model.draw(&voxel_cone_tracing_shader);
+
+                voxel_cone_tracing_shader
+                    .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
+                voxel_cone_tracing_shader
+                    .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels - 1);
+                voxel_cone_tracing_shader.set_bool(c_str!("useLighting"), false);
+                let light_direction = vec3(
+                    light.transform.position.x,
+                    light.transform.position.y,
+                    light.transform.position.z,
+                );
+                voxel_cone_tracing_shader.set_vec3(
+                    c_str!("lightDirection"),
+                    light_direction.x,
+                    light_direction.y,
+                    light_direction.z,
+                );
+                voxel_cone_tracing_shader.set_float(c_str!("shininess"), 30.0);
+                voxel_cone_tracing_shader.set_mat4(
+                    c_str!("lightViewMatrix"),
+                    &light.transform.get_view_matrix(),
+                );
+                voxel_cone_tracing_shader.set_mat4(
+                    c_str!("lightProjectionMatrix"),
+                    &light.get_projection_matrix(),
+                );
+                helpers::bind_image_texture(
+                    0,
+                    octree.textures.node_pool.0,
+                    gl::READ_ONLY,
+                    gl::R32UI,
+                );
+
+                let brick_pool_textures = vec![
+                    (c_str!("brickPoolColors"), octree.textures.brick_pool_colors),
+                    (
+                        c_str!("brickPoolPhotons"),
+                        octree.textures.brick_pool_photons,
+                    ),
+                ];
+
+                let mut texture_counter = 0;
+
+                for &(texture_name, texture) in brick_pool_textures.iter() {
+                    gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
+                    gl::BindTexture(gl::TEXTURE_3D, texture);
+                    voxel_cone_tracing_shader.set_int(texture_name, texture_counter as i32);
+                    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
+                    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+                    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
+                    let sampler = match sampler_number {
+                        1 => gl::LINEAR as i32,
+                        0 => gl::NEAREST as i32,
+                        _ => panic!("Wrong number"),
+                    };
+                    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, sampler);
+                    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, sampler);
+                    texture_counter += 1;
+                }
+
+                // let g_buffer_textures = vec![
+                //     (c_str!("gBufferColors"), eye_view_map_colors),
+                //     (c_str!("gBufferPositions"), eye_view_map),
+                //     (c_str!("gBufferNormals"), eye_view_map_normals),
+                // ];
+                let g_buffer_textures = vec![
+                    (c_str!("gBufferColors"), camera_view_map_colors),
+                    (c_str!("gBufferPositions"), camera_view_map_positions),
+                    (c_str!("gBufferNormals"), camera_view_map_normals),
+                ];
+
+                for &(texture_name, texture) in g_buffer_textures.iter() {
+                    gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
+                    gl::BindTexture(gl::TEXTURE_2D, texture);
+                    voxel_cone_tracing_shader.set_int(texture_name, texture_counter as i32);
+                    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
+                    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+                    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+                    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+                    texture_counter += 1;
+                }
+
+                gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
+                gl::BindTexture(gl::TEXTURE_2D, light_maps.2);
+                voxel_cone_tracing_shader.set_int(c_str!("shadowMap"), texture_counter as i32);
+                gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
+                gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+                gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+                gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+
+                let quad_vao = quad.get_vao();
+
+                if sampler_number == 1 {
+                    gl::BindVertexArray(quad_vao);
+                    gl::DrawElements(
+                        gl::TRIANGLES,
+                        quad.get_num_indices() as i32,
+                        gl::UNSIGNED_INT,
+                        std::ptr::null(),
+                    );
+                    gl::BindVertexArray(0);
+                }
+
+                // let (debug, buffer) = helpers::generate_texture_buffer(100, gl::R32F, 69f32);
+                // helpers::bind_image_texture(4, debug, gl::WRITE_ONLY, gl::R32F);
+                // our_model.draw(&voxel_cone_tracing_shader);
+                // let debug_values = helpers::get_values_from_texture_buffer(buffer, 100, 420f32);
+                // dbg!(&debug_values[..20]);
 
                 // Show normals
                 // render_normals_shader.use_program();
@@ -339,9 +517,37 @@ fn main() {
                 // our_model.draw(&render_normals_shader);
             }
 
+            {
+                let mut vao = 0;
+                gl::GenVertexArrays(1, &mut vao);
+                gl::BindVertexArray(vao);
+
+                debug_cone_shader.use_program();
+                debug_cone_shader.set_mat4(c_str!("projection"), &projection);
+                debug_cone_shader.set_mat4(c_str!("view"), &view);
+
+                gl::DrawArrays(gl::POINTS, 0, 1);
+                gl::BindVertexArray(0);
+            }
+
             static_eye.draw_gizmo(&projection, &view);
             light.draw_gizmo(&projection, &view);
-            quad.render(eye_view_map_view);
+            // quad.render(octree.textures.color_quad_textures[0]);
+
+            // let quad_vao = quad.get_vao();
+            // render_depth_buffer_shader.use_program();
+
+            // gl::ActiveTexture(gl::TEXTURE0);
+            // gl::BindTexture(gl::TEXTURE_2D, shadow_map);
+            // render_depth_buffer_shader.set_int(c_str!("depthMap"), 0);
+            // gl::BindVertexArray(quad_vao);
+            // gl::DrawElements(
+            //     gl::TRIANGLES,
+            //     quad.get_num_indices() as i32,
+            //     gl::UNSIGNED_INT,
+            //     std::ptr::null(),
+            // );
+            // gl::BindVertexArray(0);
         }
 
         unsafe {

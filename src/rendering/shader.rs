@@ -7,7 +7,7 @@ use cgmath::{vec3, Matrix, Matrix4, Vector3};
 use gl::types::*;
 use log::trace;
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone, Copy)]
 pub struct Shader {
     pub id: u32,
     is_compute: bool,
@@ -137,6 +137,24 @@ impl Shader {
             1,
             gl::FALSE,
             mat.as_ptr(),
+        );
+    }
+    pub unsafe fn set_mat4_array(&self, name: &CStr, mats: &[&Matrix4<f32>]) {
+        let expanded_array: Vec<f32> = mats
+            .iter()
+            .flat_map(|matrix| {
+                [
+                    matrix.x.x, matrix.x.y, matrix.x.z, matrix.x.w, matrix.y.x, matrix.y.y,
+                    matrix.y.z, matrix.y.w, matrix.z.x, matrix.z.y, matrix.z.z, matrix.z.w,
+                    matrix.w.x, matrix.w.y, matrix.w.z, matrix.w.w,
+                ]
+            })
+            .collect();
+        gl::UniformMatrix4fv(
+            gl::GetUniformLocation(self.id, name.as_ptr()),
+            mats.len() as i32,
+            gl::FALSE,
+            expanded_array.as_ptr(),
         );
     }
 

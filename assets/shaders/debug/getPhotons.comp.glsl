@@ -6,8 +6,10 @@ uniform layout(binding = 0, r32ui) writeonly uimageBuffer photonBuffer;
 uniform layout(binding = 1, r32ui) readonly uimage3D brickPoolPhotons;
 
 uniform uint nodeID;
+uniform uint voxelDimension;
 
 #include "assets/shaders/octree/_helpers.glsl"
+#include "assets/shaders/octree/_brickCoordinates.glsl"
 
 void main() {
     ivec3 brickCoordinates = calculateBrickCoordinates(int(nodeID));

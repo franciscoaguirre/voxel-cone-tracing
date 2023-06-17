@@ -19,11 +19,17 @@ impl Quad {
         let mut vbo = 0;
         gl::GenBuffers(1, &mut vbo);
         gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
+        // let vertices: [f32; 20] = [
+        //     1.0, 0.0, 0.0, 1.0, 1.0, // Top right
+        //     1.0, -1.0, 0.0, 1.0, 0.0, // Bottom right
+        //     0.0, -1.0, 0.0, 0.0, 0.0, // Bottom left
+        //     0.0, 0.0, 0.0, 0.0, 1.0, // Top left
+        // ];
         let vertices: [f32; 20] = [
-            1.0, 0.0, 0.0, 1.0, 1.0, // Top right
+            1.0, 1.0, 0.0, 1.0, 1.0, // Top right
             1.0, -1.0, 0.0, 1.0, 0.0, // Bottom right
-            0.0, -1.0, 0.0, 0.0, 0.0, // Bottom left
-            0.0, 0.0, 0.0, 0.0, 1.0, // Top left
+            -1.0, -1.0, 0.0, 0.0, 0.0, // Bottom left
+            -1.0, 1.0, 0.0, 0.0, 1.0, // Top left
         ];
         gl::BufferData(
             gl::ARRAY_BUFFER,
@@ -62,10 +68,7 @@ impl Quad {
             (3 * size_of::<f32>()) as *const c_void,
         );
 
-        let shader = Shader::new(
-            "assets/shaders/renderQuad.vert.glsl",
-            "assets/shaders/renderQuad.frag.glsl",
-        );
+        let shader = Shader::new_single("assets/shaders/renderQuad.glsl");
 
         Self {
             vao,
@@ -74,11 +77,21 @@ impl Quad {
         }
     }
 
+    pub unsafe fn get_vao(&self) -> GLuint {
+        self.vao
+    }
+
+    pub unsafe fn get_num_indices(&self) -> usize {
+        self.indices.len()
+    }
+
     pub unsafe fn render(&self, texture: GLuint) {
         self.shader.use_program();
 
         gl::ActiveTexture(gl::TEXTURE0);
         gl::BindTexture(gl::TEXTURE_2D, texture);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
         gl::BindVertexArray(self.vao);
         gl::DrawElements(
             gl::TRIANGLES,

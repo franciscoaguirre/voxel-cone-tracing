@@ -3,15 +3,13 @@ use std::mem::size_of;
 use crate::{
     config::CONFIG,
     helpers,
-    rendering::{model::Model, shader::Shader},
+    rendering::{model::Model, shader::Shader, transform::Transform},
+    types::BufferTexture,
 };
 use c_str_macro::c_str;
 
+use cgmath::point3;
 use gl::types::*;
-
-pub static mut VOXEL_POSITIONS: (GLuint, GLuint) = (0, 0);
-static mut VOXEL_COLORS: (GLuint, GLuint) = (0, 0);
-static mut VOXEL_NORMALS: (GLuint, GLuint) = (0, 0);
 
 unsafe fn calculate_voxel_fragment_list_length(
     voxelization_shader: &Shader,
@@ -28,14 +26,17 @@ unsafe fn populate_voxel_fragment_list(
     voxelization_shader: &Shader,
     models: &[&Model; 1],
     atomic_counter: &mut u32,
+    voxel_positions: BufferTexture,
+    voxel_colors: BufferTexture,
+    voxel_normals: BufferTexture,
 ) {
     voxelization_shader.use_program();
     voxelization_shader.set_bool(c_str!("shouldStore"), true);
     voxelization_shader.set_bool(c_str!("hasBump"), false);
 
-    helpers::bind_image_texture(0, VOXEL_POSITIONS.0, gl::WRITE_ONLY, gl::RGB10_A2UI);
-    helpers::bind_image_texture(1, VOXEL_COLORS.0, gl::WRITE_ONLY, gl::RGBA8);
-    helpers::bind_image_texture(2, VOXEL_NORMALS.0, gl::WRITE_ONLY, gl::RGBA8);
+    helpers::bind_image_texture(0, voxel_positions.0, gl::WRITE_ONLY, gl::RGB10_A2UI);
+    helpers::bind_image_texture(1, voxel_colors.0, gl::WRITE_ONLY, gl::RGBA8);
+    helpers::bind_image_texture(2, voxel_normals.0, gl::WRITE_ONLY, gl::RGBA8);
 
     voxelize_scene(voxelization_shader, models, atomic_counter);
 }
@@ -69,13 +70,37 @@ unsafe fn voxelize_scene(
     gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, *atomic_counter);
 
     voxelization_shader.set_vec3(c_str!("fallbackColor"), 1.0, 1.0, 1.0);
+
+    let ortho = cgmath::ortho(-1.0, 1.0, -1.0, 1.0, 0.0001, 10_000.0);
+
+    let mut right_camera = Transform::default();
+    right_camera.position = point3(-2.0, 0.0, 0.0);
+    right_camera.set_rotation_y(0.0);
+    let right_view_matrix = ortho * right_camera.get_view_matrix();
+
+    let mut top_camera = Transform::default();
+    top_camera.position = point3(0.0, 2.0, 0.0);
+    top_camera.set_rotation_x(-90.0);
+    top_camera.set_rotation_y(90.0);
+    let top_view_matrix = ortho * top_camera.get_view_matrix();
+
+    let mut far_camera = Transform::default();
+    far_camera.position = point3(0.0, 0.0, 2.0);
+    far_camera.set_rotation_y(-90.0);
+    let far_view_matrix = ortho * far_camera.get_view_matrix();
+
+    voxelization_shader.set_mat4_array(
+        c_str!("axisProjections"),
+        &[&right_view_matrix, &top_view_matrix, &far_view_matrix],
+    );
+    gl::Disable(gl::CULL_FACE);
+    gl::Disable(gl::DEPTH_TEST);
+    // TODO: We should apparently disable depth test and colormask false flase flase
     for model in models {
         // TODO: Do we need to set more things in the shader?
         model.draw(voxelization_shader);
     }
 
-    gl::Disable(gl::CULL_FACE);
-    gl::Disable(gl::DEPTH_TEST);
     gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
     gl::Viewport(
         0,
@@ -85,7 +110,9 @@ unsafe fn voxelize_scene(
     );
 }
 
-pub unsafe fn build_voxel_fragment_list(model: &Model) -> (u32, u32, u32, u32) {
+pub unsafe fn build_voxel_fragment_list(
+    model: &Model,
+) -> (BufferTexture, u32, BufferTexture, BufferTexture) {
     let mut atomic_counter: u32 = helpers::generate_atomic_counter_buffer();
 
     let voxelization_shader = Shader::with_geometry_shader(
@@ -108,19 +135,17 @@ pub unsafe fn build_voxel_fragment_list(model: &Model) -> (u32, u32, u32, u32) {
 
     let number_of_voxel_fragments = *count;
 
-    VOXEL_POSITIONS = helpers::generate_texture_buffer(
+    let voxel_positions: (GLuint, GLuint) = helpers::generate_texture_buffer(
         size_of::<GLuint>() * number_of_voxel_fragments as usize,
         gl::R32UI,
         0u32,
     );
-
-    VOXEL_COLORS = helpers::generate_texture_buffer(
+    let voxel_colors: (GLuint, GLuint) = helpers::generate_texture_buffer(
         size_of::<GLuint>() * number_of_voxel_fragments as usize,
         gl::RGBA8,
         0u32,
     );
-
-    VOXEL_NORMALS = helpers::generate_texture_buffer(
+    let voxel_normals: (GLuint, GLuint) = helpers::generate_texture_buffer(
         size_of::<GLuint>() * number_of_voxel_fragments as usize,
         gl::RGBA8,
         0u32,
@@ -131,14 +156,21 @@ pub unsafe fn build_voxel_fragment_list(model: &Model) -> (u32, u32, u32, u32) {
     gl::UnmapBuffer(gl::ATOMIC_COUNTER_BUFFER);
     gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, 0);
 
-    populate_voxel_fragment_list(&voxelization_shader, &models, &mut atomic_counter);
+    populate_voxel_fragment_list(
+        &voxelization_shader,
+        &models,
+        &mut atomic_counter,
+        voxel_positions,
+        voxel_colors,
+        voxel_normals,
+    );
 
     gl::MemoryBarrier(gl::SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
     (
+        voxel_positions,
         number_of_voxel_fragments,
-        VOXEL_POSITIONS.0,
-        VOXEL_COLORS.0,
-        VOXEL_NORMALS.0,
+        voxel_colors,
+        voxel_normals,
     )
 }

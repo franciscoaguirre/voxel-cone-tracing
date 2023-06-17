@@ -14,7 +14,8 @@ uniform uint voxelDimension;
 #include "./_helpers.glsl"
 #include "./_traversalHelpers.glsl"
 #include "./_octreeTraversal.glsl"
-#include "./_mipmapUtil.glsl"
+#include "assets/shaders/octree/_brickCoordinates.glsl"
+#include "./_umipmapUtil.glsl"
 
 void main() {
     uvec3 queryCoordinates = texelFetch(
@@ -25,7 +26,7 @@ void main() {
     if (queryCoordinates == uvec3(0)) {
         return;
     }
-    vec3 normalizedQueryCoordinates = vec3(queryCoordinates.xyz / float(voxelDimension));
+    vec3 normalizedQueryCoordinates = normalizedFromIntCoordinates(queryCoordinates.xyz, float(voxelDimension) * 1.5);
     float halfNodeSize;
     vec3 nodeCoordinates;
     int nodeID = traverseOctree(
@@ -38,8 +39,8 @@ void main() {
         return;
     }
 
-    loadChildNodeIDs(nodeID, nodePool);
-    uint photonCount = mipmapIsotropic(ivec3(2, 2, 2), brickPoolPhotons);
+    loadChildNodeIDs(nodeID);
+    uint photonCount = mipmapIsotropic(ivec3(2, 2, 2));
 
     memoryBarrier();
 

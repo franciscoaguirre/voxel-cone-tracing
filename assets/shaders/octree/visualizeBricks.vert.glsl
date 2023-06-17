@@ -17,6 +17,8 @@ out vec4 geom_nodePosition;
 out float geom_halfNodeSize;
 out ivec3 geom_brickCoordinates;
 
+#include "assets/shaders/octree/_brickCoordinates.glsl"
+
 void main() {
   int nodeID = gl_VertexID;
   int levelStart = int(imageLoad(levelStartIndices, int(octreeLevel)).r);
@@ -28,18 +30,17 @@ void main() {
       nodeID = levelStart;
   }
 
-  vec3 nodeCoordinates = imageLoad(nodePositions, nodeID).xyz;
-  nodeCoordinates /= float(voxelDimension);
+  uvec3 nodeCoordinatesRaw = imageLoad(nodePositions, nodeID).xyz;
+  vec3 nodeCoordinates = nodeCoordinatesRaw / float(voxelDimension);
   float halfNodeSize = calculateHalfNodeSize(octreeLevel);
 
   ivec3 brickCoordinates = calculateBrickCoordinates(nodeID);
   geom_brickCoordinates = brickCoordinates;
 
-  // Normalized device coordinates go from -1.0 to 1.0, our coordinates go from 0.0 to 1.0
-  geom_nodePosition = vec4((nodeCoordinates.xyz) * 2.0 - vec3(1.0), 1.0);
   float normalizedHalfNodeSize = halfNodeSize * 2.0;
+  geom_nodePosition = vec4(nodeCoordinates.xyz * 2.0 - vec3(1.0), 1.0);
 
-  geom_nodePosition.xyz += normalizedHalfNodeSize;
+  geom_nodePosition.xyz += vec3(normalizedHalfNodeSize);
   gl_Position = geom_nodePosition;
 
   geom_halfNodeSize = normalizedHalfNodeSize;
