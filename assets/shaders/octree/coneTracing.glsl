@@ -114,8 +114,33 @@ void main() {
     //FragColor = vec4(color.rgb * AO, color.a);
 }
 
+float SampleShadowMap(sampler2D shadowMap, vec2 coords, float currentDepth, float bias)
+{
+    float pcfDepth = texture(shadowMap, coords).r;
+    float shadow = (currentDepth - bias) > pcfDepth ? 1.0 : 0.0;
+    return shadow;
+}
+
+float SampleShadowMapLinear(sampler2D shadowMap, vec2 coords, float currentDepth, vec2 texelSize, float bias)
+{
+	vec2 pixelPos = coords/texelSize + vec2(0.5);
+	vec2 fracPart = fract(pixelPos);
+	vec2 startTexel = (pixelPos - fracPart) * texelSize;
+
+	float blTexel = SampleShadowMap(shadowMap, startTexel, currentDepth, bias);
+	float brTexel = SampleShadowMap(shadowMap, startTexel + vec2(texelSize.x, 0.0), currentDepth, bias);
+	float tlTexel = SampleShadowMap(shadowMap, startTexel + vec2(0.0, texelSize.y), currentDepth, bias);
+	float trTexel = SampleShadowMap(shadowMap, startTexel + texelSize, currentDepth, bias);
+
+	float mixA = mix(blTexel, tlTexel, fracPart.y);
+	float mixB = mix(brTexel, trTexel, fracPart.y);
+
+	return mix(mixA, mixB, fracPart.x);
+}
+
 float visibilityCalculation(vec4 positionInLightSpace, vec3 normal) {
     vec3 projectedPosition = positionInLightSpace.xyz / positionInLightSpace.w;
+
     projectedPosition = projectedPosition * 0.5 + 0.5;
     float closestDepth = texture(shadowMap, projectedPosition.xy).r;
     float currentDepth = projectedPosition.z;
@@ -124,8 +149,8 @@ float visibilityCalculation(vec4 positionInLightSpace, vec3 normal) {
     vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
     for (int x = -2; x <= 2; x++) {
         for (int y = -2; y <= 2; y++) {
-            float pcfDepth = texture(shadowMap, projectedPosition.xy + vec2(x, y) * texelSize).r;
-            shadow += (currentDepth - bias) > pcfDepth ? 1.0 : 0.0;
+            float partialShadow = SampleShadowMapLinear(shadowMap, projectedPosition.xy + vec2(x, y) * texelSize, currentDepth, texelSize, bias);
+            shadow += partialShadow;
         }
     }
     shadow /= 25.0;
