@@ -17,6 +17,8 @@ out vec4 geom_nodePosition;
 out float geom_halfNodeSize;
 out ivec3 geom_brickCoordinates;
 
+#include "assets/shaders/octree/_brickCoordinates.glsl"
+
 void main() {
   int nodeID = gl_VertexID;
   int levelStart = int(imageLoad(levelStartIndices, int(octreeLevel)).r);

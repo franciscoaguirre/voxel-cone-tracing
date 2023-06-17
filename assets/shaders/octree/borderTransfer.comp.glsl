@@ -11,8 +11,10 @@ uniform layout(binding = 2, r32ui) uimageBuffer levelStartIndices;
 
 uniform uint axis;
 uniform uint octreeLevel;
+uniform uint voxelDimension;
 
 #include "./_threadNodeUtil.glsl"
+#include "assets/shaders/octree/_brickCoordinates.glsl"
 
 void main() {
     int nodeAddress = getThreadNode();
@@ -22,15 +24,12 @@ void main() {
     }
 
     int neighborAddress = int(imageLoad(nodePoolNeighbors, nodeAddress).r);
-    
-    ivec3 neighborBrickAddress;
     if (neighborAddress == 0) {
-        neighborBrickAddress = ivec3(0);
-    } else {
-        neighborBrickAddress = calculateBrickCoordinates(neighborAddress);
+        return;
     }
-
+    
     ivec3 brickAddress = calculateBrickCoordinates(nodeAddress);
+    ivec3 neighborBrickAddress = calculateBrickCoordinates(neighborAddress);
 
     if (axis == 0) { // X axis
         for (int y = 0; y <= 2; y++) {

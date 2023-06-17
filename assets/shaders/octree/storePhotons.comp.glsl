@@ -16,6 +16,7 @@ uniform uint voxelDimension;
 #include "./_helpers.glsl"
 #include "./_traversalHelpers.glsl"
 #include "./_octreeTraversal.glsl"
+#include "assets/shaders/octree/_brickCoordinates.glsl"
 
 void main() {
     uvec3 queryCoordinates = texelFetch(

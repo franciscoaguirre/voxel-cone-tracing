@@ -116,6 +116,8 @@ unsafe fn generate_3d_texture(
         _type,
         initial_data.as_ptr() as *const c_void,
     );
+    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
     gl::BindTexture(gl::TEXTURE_3D, 0);
 
     texture

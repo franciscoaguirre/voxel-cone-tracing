@@ -1,7 +1,7 @@
 use std::{ffi::c_void, mem::size_of};
 
 use gl::types::GLuint;
-use log::debug;
+use log;
 
 use crate::{
     config::CONFIG,
@@ -190,11 +190,22 @@ impl Octree {
         octree
     }
 
-    fn get_max_node_pool_size() -> usize {
+    unsafe fn get_max_node_pool_size() -> usize {
         let number_of_nodes = (0..CONFIG.octree_levels)
             .map(|exponent| 8_usize.pow(exponent))
             .sum::<usize>();
-        number_of_nodes * constants::CHILDREN_PER_NODE as usize
+        let max_node_pool_size = number_of_nodes * constants::CHILDREN_PER_NODE as usize;
+        log::info!("Max node pool size based on tree height: {}", max_node_pool_size);
+
+        let mut max_texture_buffer_size = 0; // In bytes
+        gl::GetIntegerv(gl::MAX_TEXTURE_BUFFER_SIZE, &mut max_texture_buffer_size);
+        max_texture_buffer_size /= 8;
+
+        let max_node_pool_size = max_node_pool_size.min((max_texture_buffer_size).try_into().unwrap());
+        log::info!("Max node pool size based on memory max: {}", max_texture_buffer_size);
+        log::info!("Final node pool size based on tree height: {}", max_node_pool_size);
+
+        max_node_pool_size
     }
 
     unsafe fn initialize_textures(max_node_pool_size: usize) -> OctreeTextures {
@@ -275,7 +286,7 @@ impl Octree {
         for node in 0..number_of_nodes {
             let lower_limit: usize = (node + offset) * constants::CHILDREN_PER_NODE as usize;
             let upper_limit: usize = lower_limit + constants::CHILDREN_PER_NODE as usize;
-            debug!("{:?}", &values[lower_limit..upper_limit]);
+            log::debug!("{:?}", &values[lower_limit..upper_limit]);
         }
     }
 }

@@ -5,9 +5,10 @@
 // - uniform bool useLighting
 // - _traversalHelpers
 // - _octreeTraversal
+// - _brickCoordinates
 
-const float brickPoolResolution = 384.0;
-const float brickPoolBrickSize = 3.0 / brickPoolResolution;
+float brickPoolResolutionf = float(textureSize(brickPoolColors, 0).x);
+float brickPoolBrickSize = 3.0 / brickPoolResolutionf;
 
 // Returns values in [0, maxOctreeLevel]
 float calculateLod(float coneDiameter) {
@@ -20,7 +21,7 @@ float calculateLod(float coneDiameter) {
    //ivec3 brickCoordinates = calculateBrickCoordinates(node.id);
    ////ivec3 brickOffset = ivec3(calculateBrickVoxel(node.coordinates, node.halfNodeSize, queryCoordinates));
    //vec3 brickOffset = (queryCoordinates - node.coordinates) / (2.0 * node.halfNodeSize);
-   //vec4 color = texture(brickPoolColors, (brickCoordinates / brickPoolResolution + brickOffset * brickPoolBrickSize));
+   //vec4 color = texture(brickPoolColors, (brickCoordinates / brickPoolResolutionf + brickOffset * brickPoolBrickSize));
    //return color.a;
 //}
 
@@ -31,7 +32,7 @@ vec3 findVoxel(vec3 queryCoordinates, Node node) {
     vec3 offset = (normalizedBrickOffset * (2.0 / 3.0) + (1.0 / 6.0)) * 3.0;
 
     vec3 voxelCoordinates = vec3(calculateBrickCoordinates(node.id)) + offset;
-    vec3 normalizedVoxelCoordinates = voxelCoordinates / brickPoolResolution;
+    vec3 normalizedVoxelCoordinates = voxelCoordinates / brickPoolResolutionf;
     return normalizedVoxelCoordinates;
 }
 
@@ -107,6 +108,7 @@ vec4 coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float m
         parentColor.a = 1.0 - pow((1.0 - parentColor.a), stepMultiplier); // Step correction
 
         vec4 newColor = mix(childColor, parentColor, parentWeight); // Quadrilinear interpolation
+        // newColor.a = 1.0;
         // TODO: We should accumulate the color and the alpha separately, using the front-to-back accumulation described in chapter 5 of the GIVoxels paper
         returnColor += (1 - returnColor.a) * newColor;
 
