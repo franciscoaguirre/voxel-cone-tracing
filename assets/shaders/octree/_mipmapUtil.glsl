@@ -1,7 +1,7 @@
 // Requires:
 // - _helpers
-// - binding brickPoolValues
-// - binding nodePool
+// - uniform image3D brickPoolValues
+// - uniform uimageBuffer nodePool
 // - _brickCoordinates
 // - _helpers
 
