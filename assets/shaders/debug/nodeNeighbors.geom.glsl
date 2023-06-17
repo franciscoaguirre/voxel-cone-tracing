@@ -18,7 +18,7 @@ uniform uint voxelDimension;
 #include "assets/shaders/octree/_helpers.glsl"
 
 uniform layout(binding = 0, rgb10_a2ui) readonly uimageBuffer nodePositions;
-uniform layout(binding = 3, r32ui) readonly uimageBuffer nodePoolNeighbors[3];
+uniform layout(binding = 3, r32ui) readonly uimageBuffer nodePoolNeighbors[HALF_NEIGHBORS];
 
 #include "assets/shaders/octree/_drawCube.glsl"
 

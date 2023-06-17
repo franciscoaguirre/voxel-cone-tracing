@@ -12,4 +12,4 @@ const uvec3 CHILD_OFFSETS[8] = {
     uvec3(1, 1, 1)
 };
 const int NODE_NOT_FOUND = 0xFFFFFFFF;
-const uint MAX_NEIGHBORS = 2;
+const uint HALF_NEIGHBORS = 3;
