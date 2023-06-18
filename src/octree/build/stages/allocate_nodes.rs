@@ -44,8 +44,7 @@ impl AllocateNodesPass {
 
         let groups_count = (voxel_data.number_of_voxel_fragments as f32
             / CONFIG.working_group_size as f32)
-            .ceil() as u32
-            + 100000;
+            .ceil() as u32;
 
         // TODO: Could send even less threads
         self.shader.dispatch(groups_count);
