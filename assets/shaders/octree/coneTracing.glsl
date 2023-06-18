@@ -36,6 +36,7 @@ uniform vec3 lightDirection;
 uniform float shininess;
 uniform mat4 lightViewMatrix;
 uniform mat4 lightProjectionMatrix;
+uniform float coneAngle;
 
 // Brick attributes
 uniform sampler3D brickPoolColors;
@@ -164,8 +165,9 @@ float visibilityCalculation(vec4 positionInLightSpace, vec3 normal) {
 }
 
 vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, bool useLighting) {
-    float maxDistance = useLighting ? 0.1 : 0.01;
-    float coneAngle = 0.261799;
+    float maxDistance = useLighting ? 1.0 : 0.01;
+    // float coneAngle = 0.261799;
+    //float coneAngle = 0.0001;
     vec3 bitangent = cross(normal, tangent);
     vec3 direction = normal;
     vec4 indirectLight = vec4(0);

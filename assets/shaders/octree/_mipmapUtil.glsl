@@ -30,6 +30,7 @@ vec4 getValue(in ivec3 position) {
 vec4 mipmapIsotropic(in ivec3 position) {
     vec4 finalValue = vec4(0);
     float weightSum = 0.0;
+    float weightVacios = 0.0;
 
     for (int x = -1; x <= 1; x++) {
         for (int y = -1; y <= 1; y++) {
@@ -49,12 +50,19 @@ vec4 mipmapIsotropic(in ivec3 position) {
                     float weight = gaussianWeights[distance];
                     vec4 value = getValue(lookupPosition);
 
-                    finalValue += weight * value;
-                    weightSum += weight;
+                    if (value == vec4(0)) {
+                        weightVacios += weight;
+                    } else {
+                        finalValue += weight * value;
+                        weightSum += weight;
+                    }
                 }
             }
         }
     }
 
-    return finalValue / weightSum;
+    finalValue.rgb /= weightSum;
+    finalValue.a /= (weightSum + weightVacios);
+
+    return finalValue;
 }
