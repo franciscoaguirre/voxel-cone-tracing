@@ -188,6 +188,7 @@ fn main() {
     let mut node_filter_text = String::new();
     let mut sampler_number = 0;
     let mut should_move_light = false;
+    let mut cone_angle = 0.07;
 
     let mut should_show_neighbors = false;
     let mut bricks_to_show = BricksToShow::default();
@@ -231,7 +232,7 @@ fn main() {
         };
 
         unsafe {
-            gl::ClearColor(0.2, 0.2, 0.2, 1.0);
+            gl::ClearColor(1.0, 1.0, 1.0, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
             gl::Enable(gl::DEPTH_TEST);
             gl::Enable(gl::BLEND);
@@ -264,6 +265,7 @@ fn main() {
                 );
                 common::handle_sampler_change(&event, &mut sampler_number);
                 common::handle_light_movement(&event, &mut should_move_light);
+                common::handle_cone_angle(&event, &mut cone_angle);
             }
             menu.handle_event(event);
         }
@@ -425,6 +427,10 @@ fn main() {
                 voxel_cone_tracing_shader.set_mat4(
                     c_str!("lightProjectionMatrix"),
                     &light.get_projection_matrix(),
+                );
+                voxel_cone_tracing_shader.set_float(
+                    c_str!("coneAngle"),
+                    cone_angle
                 );
                 helpers::bind_image_texture(
                     0,
