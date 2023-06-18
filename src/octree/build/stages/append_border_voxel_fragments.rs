@@ -64,7 +64,7 @@ impl AppendBorderVoxelFragmentsPass {
 
         self.shader.set_bool(c_str!("shouldStore"), false);
         self.shader
-            .dispatch((number_of_nodes / CONFIG.working_group_size) as u32); // Call first with `shouldStore = false`
+            .dispatch((geometry_data.voxel_data.number_of_voxel_fragments / CONFIG.working_group_size) as u32); // Call first with `shouldStore = false`
         self.shader.wait();
 
         for texture_offset in 0..(textures.neighbors.len() / 2) {
@@ -79,7 +79,7 @@ impl AppendBorderVoxelFragmentsPass {
             .set_uint(c_str!("callOffset"), 3);
 
         self.shader
-            .dispatch((number_of_nodes / CONFIG.working_group_size) as u32); // Call first with `shouldStore = false`
+            .dispatch((geometry_data.voxel_data.number_of_voxel_fragments / CONFIG.working_group_size) as u32); // Call first with `shouldStore = false`
         self.shader.wait();
 
         let number_of_voxel_fragments =

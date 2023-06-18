@@ -40,7 +40,7 @@ vec4 showProp(ivec3 coordinates, int type) {
 }
 
 void main() {
-    int mode = BY_COLOR;
+    int mode = BY_PHOTONS;
     vec4 nodePosition = geom_nodePosition[0];
     float voxelBrickSize = (geom_halfNodeSize[0] / 3) * 0.97;
     // So a brick goes fully inside a node, not accurate but works for debugging

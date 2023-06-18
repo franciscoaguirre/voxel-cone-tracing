@@ -41,7 +41,7 @@ uniform float coneAngle;
 // Brick attributes
 uniform sampler3D brickPoolColors;
 // uniform sampler3D brickPoolNormals; // TODO: Use later
-uniform sampler3D brickPoolPhotons;
+uniform usampler3D brickPoolPhotons;
 
 // G-buffers
 uniform sampler2D gBufferColors;
@@ -108,12 +108,13 @@ void main() {
     vec3 lightIntensity = ambient + visibility * (directLight); // TODO: Add indirectLight.rgb
 
     // FragColor = vec4(texture(texture_diffuse1, frag_textureCoordinates).xyz - vec3(AO), 1);
-    // outColor = vec4(1.0 - vec3(ambientOcclusion), 1.0);
+    outColor = vec4(vec3(ambientOcclusion), 1.0);
+    //outColor = vec4(1.0 - vec3(ambientOcclusion), 1.0);
     // outColor = color * vec4(lightIntensity, 1.0);
     // outColor = texture(gBufferColors, In.textureCoordinates);
     // outColor = vec4(position, 1.0);
     // outColor = vec4(normal, 1.0);
-    outColor = vec4(indirectLight, 1.0);
+    //outColor = vec4(indirectLight, 1.0);
     //vec4 color = texture(texture_diffuse1, frag_textureCoordinates);
     //FragColor = vec4(color.rgb * AO, color.a);
 }
@@ -174,22 +175,22 @@ vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, bool useLight
     indirectLight += coneTrace(position, direction, coneAngle, maxDistance, useLighting); // 15deg as rad
 
     float angle = 1.0472;
-    float sinAngle = sin(angle);
-    float cosAngle = cos(angle);
+    //float sinAngle = sin(angle);
+    //float cosAngle = cos(angle);
 
-    direction = sinAngle * normal + cosAngle * tangent;
-    indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    //direction = sinAngle * normal + cosAngle * tangent;
+    //indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
-    direction = sinAngle * normal - cosAngle * tangent;
-    indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    //direction = sinAngle * normal - cosAngle * tangent;
+    //indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
-    direction = sinAngle * normal + cosAngle * bitangent;
-    indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    //direction = sinAngle * normal + cosAngle * bitangent;
+    //indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
-    direction = sinAngle * normal - cosAngle * bitangent;
-    indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    //direction = sinAngle * normal - cosAngle * bitangent;
+    //indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
-    indirectLight /= 3.828;
+    //indirectLight /= 3.828;
 
     return indirectLight;
 }

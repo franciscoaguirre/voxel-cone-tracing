@@ -4,6 +4,7 @@ use gl::types::GLuint;
 
 use crate::{
     config::CONFIG,
+    constants::Axis,
     helpers,
     rendering::{framebuffer::Framebuffer, light::SpotLight, model::Model},
 };
@@ -15,23 +16,23 @@ use stages::*;
 
 impl Octree {
     pub unsafe fn clear_light(&self) {
-        //self.renderer.clear_bricks_shader.use_program();
-        //self.renderer
-            //.clear_bricks_shader
-            //.set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
+        self.renderer.clear_bricks_shader.use_program();
+        self.renderer
+            .clear_bricks_shader
+            .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
 
-        //helpers::bind_3d_image_texture(
-            //0,
-            //self.textures.brick_pool_photons,
-            //gl::WRITE_ONLY,
-            //gl::R32UI,
-        //);
+        helpers::bind_3d_image_texture(
+            0,
+            self.textures.brick_pool_photons,
+            gl::WRITE_ONLY,
+            gl::R32UI,
+        );
 
-        //let number_of_groups =
-            //(self.number_of_nodes() as f64 / CONFIG.working_group_size as f64).ceil() as u32;
+        let number_of_groups =
+            (self.number_of_nodes() as f64 / CONFIG.working_group_size as f64).ceil() as u32;
 
-        //self.renderer.clear_bricks_shader.dispatch(number_of_groups);
-        //self.renderer.clear_bricks_shader.wait();
+        self.renderer.clear_bricks_shader.dispatch(number_of_groups);
+        self.renderer.clear_bricks_shader.wait();
     }
 
     pub unsafe fn inject_light(
@@ -41,13 +42,12 @@ impl Octree {
         model: &Matrix4<f32>,
         framebuffer: &Framebuffer,
     ) -> (GLuint, GLuint, GLuint) {
-        //let (light_view_map, light_view_map_view, shadow_map) =
-            //self.create_light_view_map(models, light, model, framebuffer);
-        //self.store_photons(light_view_map, light_view_map_view);
-        //self.mipmap_photons(light_view_map);
+        let (light_view_map, light_view_map_view, shadow_map) =
+            self.create_light_view_map(models, light, model, framebuffer);
+        self.store_photons(light_view_map, light_view_map_view);
+        self.mipmap_photons(light_view_map);
 
-        //(light_view_map, light_view_map_view, shadow_map)
-        (0, 0, 0)
+        (light_view_map, light_view_map_view, shadow_map)
     }
 
     unsafe fn mipmap_photons(&self, light_view_map: GLuint) {
@@ -57,11 +57,21 @@ impl Octree {
         let mipmap_edges = MipmapEdgesPass::init(light_view_map);
         let border_transfer = BorderTransferPass::init(light_view_map);
 
-        border_transfer.run(
-            &self.textures,
-            CONFIG.octree_levels - 1,
-            &self.geometry_data.node_data,
-        );
+        let all_axis = vec![Axis::X, Axis::Y, Axis::Z];
+        for axis in all_axis.iter() {
+            border_transfer.run(
+                &self.textures,
+                CONFIG.octree_levels - 1,
+                &self.geometry_data.node_data,
+                *axis,
+            );
+            border_transfer.run(
+                &self.textures,
+                CONFIG.octree_levels - 1,
+                &self.border_data.node_data,
+                *axis,
+            );
+        }
 
         for level in (0..CONFIG.octree_levels - 1).rev() {
             mipmap_centers.run(&self.textures, level);
@@ -70,7 +80,20 @@ impl Octree {
             mipmap_edges.run(&self.textures, level);
 
             if level > 0 {
-                border_transfer.run(&self.textures, level, &self.geometry_data.node_data);
+                for axis in all_axis.iter() {
+                    border_transfer.run(
+                        &self.textures,
+                        level,
+                        &self.geometry_data.node_data,
+                        *axis,
+                    );
+                    border_transfer.run(
+                        &self.textures,
+                        level,
+                        &self.border_data.node_data,
+                        *axis,
+                    );
+                }
             }
         }
     }
