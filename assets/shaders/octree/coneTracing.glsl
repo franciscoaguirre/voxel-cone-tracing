@@ -32,7 +32,6 @@ uniform layout(binding = 0, r32ui) readonly uimageBuffer nodePool;
 // Scalar attributes
 uniform uint voxelDimension;
 uniform uint maxOctreeLevel;
-uniform bool useLighting;
 uniform vec3 lightDirection;
 uniform float shininess;
 uniform mat4 lightViewMatrix;
@@ -56,7 +55,7 @@ uniform sampler2D shadowMap;
 #include "assets/shaders/octree/_brickCoordinates.glsl"
 #include "./_coneTrace.glsl"
 
-vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent);
+vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, bool useLighting);
 float visibilityCalculation(vec4 positionInLightSpace, vec3 normal);
 
 void main() {
@@ -90,7 +89,11 @@ void main() {
         discard;
     }
 
-    vec4 indirectLight = gatherIndirectLight(position, normal, tangent);
+    bool useLighting = false;
+    float ambientOcclusion = gatherIndirectLight(position, normal, tangent, useLighting).a;
+
+    useLighting = true;
+    vec3 indirectLight = gatherIndirectLight(position, normal, tangent, useLighting).rgb;
 
     vec4 positionInLightSpace = lightProjectionMatrix * lightViewMatrix * vec4(positionRaw, 1.0);
     float visibility = visibilityCalculation(positionInLightSpace, normal);
@@ -104,12 +107,12 @@ void main() {
     vec3 lightIntensity = ambient + visibility * (directLight); // TODO: Add indirectLight.rgb
 
     // FragColor = vec4(texture(texture_diffuse1, frag_textureCoordinates).xyz - vec3(AO), 1);
-    outColor = vec4(1.0 - indirectLight.aaa, 1.0);
+    // outColor = vec4(1.0 - vec3(ambientOcclusion), 1.0);
     // outColor = color * vec4(lightIntensity, 1.0);
     // outColor = texture(gBufferColors, In.textureCoordinates);
     // outColor = vec4(position, 1.0);
     // outColor = vec4(normal, 1.0);
-    // outColor = vec4(color.aaa, 1.0);
+    outColor = vec4(indirectLight, 1.0);
     //vec4 color = texture(texture_diffuse1, frag_textureCoordinates);
     //FragColor = vec4(color.rgb * AO, color.a);
 }
@@ -160,29 +163,29 @@ float visibilityCalculation(vec4 positionInLightSpace, vec3 normal) {
     return 1.0 - shadow;
 }
 
-vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent) {
-    float maxDistance = 0.01;
+vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, bool useLighting) {
+    float maxDistance = useLighting ? 0.1 : 0.01;
     float coneAngle = 0.261799;
     vec3 bitangent = cross(normal, tangent);
     vec3 direction = normal;
     vec4 indirectLight = vec4(0);
-    indirectLight += coneTrace(position, direction, coneAngle, maxDistance); // 15deg as rad
+    indirectLight += coneTrace(position, direction, coneAngle, maxDistance, useLighting); // 15deg as rad
 
     float angle = 1.0472;
     float sinAngle = sin(angle);
     float cosAngle = cos(angle);
 
     direction = sinAngle * normal + cosAngle * tangent;
-    indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
+    indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
     direction = sinAngle * normal - cosAngle * tangent;
-    indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
+    indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
     direction = sinAngle * normal + cosAngle * bitangent;
-    indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
+    indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
     direction = sinAngle * normal - cosAngle * bitangent;
-    indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance);
+    indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
     indirectLight /= 3.828;
 

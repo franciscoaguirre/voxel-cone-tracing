@@ -2,7 +2,6 @@
 // - uniform uint voxelDimension
 // - uniform uint maxOctreeLevel
 // - uniform sampler3D brickPoolColors
-// - uniform bool useLighting
 // - _traversalHelpers
 // - _octreeTraversal
 // - _brickCoordinates
@@ -46,7 +45,13 @@ vec3 findVoxel(vec3 queryCoordinates, Node node) {
 
 // rayOrigin should be between 0 and 1
 // maxDistance should be max 1
-vec4 coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float maxDistance) {
+vec4 coneTrace(
+    vec3 coneOrigin,
+    vec3 coneDirection,
+    float coneHalfAngle,
+    float maxDistance,
+    bool useLighting
+) {
     vec4 returnColor = vec4(0);
     uint previousOctreeLevel = maxOctreeLevel;
     float voxelSize = 1.0 / float(voxelDimension);
@@ -97,13 +102,13 @@ vec4 coneTrace(vec3 coneOrigin, vec3 coneDirection, float coneHalfAngle, float m
         vec3 childVoxelCoordinates = findVoxel(queryCoordinates, node);
         vec4 childColor = texture(brickPoolColors, childVoxelCoordinates);
         if (useLighting) {
-            childColor *= texture(brickPoolPhotons, childVoxelCoordinates) / 1000000;
+            childColor.rgb *= texture(brickPoolPhotons, childVoxelCoordinates).r;
         }
         childColor.a = 1.0 - pow((1.0 - childColor.a), stepMultiplier); // Step correction
         vec3 parentVoxelCoordinates = findVoxel(queryCoordinates, parentNode);
         vec4 parentColor = texture(brickPoolColors, parentVoxelCoordinates);
         if (useLighting) {
-            childColor *= texture(brickPoolPhotons, parentVoxelCoordinates) / 1000000;
+            childColor.rgb *= texture(brickPoolPhotons, parentVoxelCoordinates).r;
         }
         parentColor.a = 1.0 - pow((1.0 - parentColor.a), stepMultiplier); // Step correction
 
