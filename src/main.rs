@@ -146,8 +146,8 @@ fn main() {
     };
     // light.transform.position = point3(0.0, 0.00, 2.0);
     // light.transform.set_rotation_y(-90.0);
-    light.transform.position = point3(0.0, 1.0, 0.0);
-    light.transform.set_rotation_x(-90.0);
+    light.transform.position = point3(0.0, 0.0, -1.0);
+    light.transform.set_rotation_x(0.0);
 
     let light_framebuffer = unsafe { Framebuffer::new_light() };
     let mut light_maps = unsafe {
@@ -188,7 +188,7 @@ fn main() {
     let mut node_filter_text = String::new();
     let mut sampler_number = 0;
     let mut should_move_light = false;
-    let mut cone_angle = 0.07;
+    let mut cone_angle = 0.26;
 
     let mut should_show_neighbors = false;
     let mut bricks_to_show = BricksToShow::default();
@@ -232,7 +232,7 @@ fn main() {
         };
 
         unsafe {
-            gl::ClearColor(1.0, 1.0, 1.0, 1.0);
+            gl::ClearColor(0.2, 0.2, 0.2, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
             gl::Enable(gl::DEPTH_TEST);
             gl::Enable(gl::BLEND);
@@ -440,29 +440,25 @@ fn main() {
                 );
 
                 let brick_pool_textures = vec![
-                    (c_str!("brickPoolColors"), octree.textures.brick_pool_colors),
+                    (c_str!("brickPoolColors"), octree.textures.brick_pool_colors, gl::LINEAR as i32),
                     (
                         c_str!("brickPoolPhotons"),
                         octree.textures.brick_pool_photons,
+                        gl::NEAREST as i32
                     ),
                 ];
 
                 let mut texture_counter = 0;
 
-                for &(texture_name, texture) in brick_pool_textures.iter() {
+                for &(texture_name, texture, sample_interpolation) in brick_pool_textures.iter() {
                     gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
                     gl::BindTexture(gl::TEXTURE_3D, texture);
                     voxel_cone_tracing_shader.set_int(texture_name, texture_counter as i32);
                     gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
                     gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
                     gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
-                    let sampler = match sampler_number {
-                        1 => gl::LINEAR as i32,
-                        0 => gl::NEAREST as i32,
-                        _ => panic!("Wrong number"),
-                    };
-                    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, sampler);
-                    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, sampler);
+                    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, sample_interpolation);
+                    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, sample_interpolation);
                     texture_counter += 1;
                 }
 
