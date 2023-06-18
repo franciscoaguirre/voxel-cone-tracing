@@ -65,7 +65,7 @@ vec4 coneTrace(
 
     distanceAlongCone += voxelSize * 2;
     while (distanceAlongCone < maxDistance && returnColor.a < 1.0) {
-        float coneDiameter = coneDiameterCoefficient * distanceAlongCone;
+        float coneDiameter = clamp(coneHalfAngle * 2 * distanceAlongCone, 0.0009765625, 1.0);
         float lod = calculateLod(coneDiameter);
         // float lod = 8;
         uint octreeLevel = uint(ceil(lod));
@@ -102,20 +102,22 @@ vec4 coneTrace(
         vec3 childVoxelCoordinates = findVoxel(queryCoordinates, node);
         vec4 childColor = texture(brickPoolColors, childVoxelCoordinates);
         if (useLighting) {
-            childColor.rgb *= texture(brickPoolPhotons, childVoxelCoordinates).r;
+ //           childColor.rgb *= texture(brickPoolPhotons, childVoxelCoordinates).r;
         }
         childColor.a = 1.0 - pow((1.0 - childColor.a), stepMultiplier); // Step correction
         vec3 parentVoxelCoordinates = findVoxel(queryCoordinates, parentNode);
         vec4 parentColor = texture(brickPoolColors, parentVoxelCoordinates);
         if (useLighting) {
-            childColor.rgb *= texture(brickPoolPhotons, parentVoxelCoordinates).r;
+  //          childColor.rgb *= texture(brickPoolPhotons, parentVoxelCoordinates).r;
         }
         parentColor.a = 1.0 - pow((1.0 - parentColor.a), stepMultiplier); // Step correction
 
         vec4 newColor = mix(childColor, parentColor, parentWeight); // Quadrilinear interpolation
         // newColor.a = 1.0;
         // TODO: We should accumulate the color and the alpha separately, using the front-to-back accumulation described in chapter 5 of the GIVoxels paper
-        returnColor += (1 - returnColor.a) * newColor;
+
+        returnColor.rgb = returnColor.rgb * returnColor.a + (1 - returnColor.a) * newColor.a * newColor.rgb;
+        returnColor.a += (1 - returnColor.a) * newColor.a;
 
         distanceAlongCone += sampleStep;
 
@@ -125,8 +127,6 @@ vec4 coneTrace(
         previousOctreeLevel = octreeLevel;
         previousNode = node;
         previousParentNode = parentNode;
-
-        // break;
     }
 
     returnColor.a = min(returnColor.a, 1.0);

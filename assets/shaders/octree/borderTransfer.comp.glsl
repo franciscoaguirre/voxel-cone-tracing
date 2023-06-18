@@ -14,6 +14,7 @@ uniform uint octreeLevel;
 uniform uint voxelDimension;
 
 #include "./_threadNodeUtil.glsl"
+#include "./_averageHelpers.glsl"
 #include "assets/shaders/octree/_brickCoordinates.glsl"
 
 void main() {
@@ -41,7 +42,8 @@ void main() {
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
                 memoryBarrier();
 
-                vec4 finalValue = 0.5 * (borderValue + neighborBorderValue);
+                vec4[] valuesToAverage = { borderValue, neighborBorderValue };
+                vec4 finalValue = averageHandlingEmpty(valuesToAverage);
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
             }
@@ -58,7 +60,8 @@ void main() {
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
                 memoryBarrier();
 
-                vec4 finalValue = 0.5 * (borderValue + neighborBorderValue);
+                vec4[] valuesToAverage = { borderValue, neighborBorderValue };
+                vec4 finalValue = averageHandlingEmpty(valuesToAverage);
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
             }
@@ -75,7 +78,8 @@ void main() {
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
                 memoryBarrier();
 
-                vec4 finalValue = 0.5 * (borderValue + neighborBorderValue);
+                vec4[] valuesToAverage = { borderValue, neighborBorderValue };
+                vec4 finalValue = averageHandlingEmpty(valuesToAverage);
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
             }
