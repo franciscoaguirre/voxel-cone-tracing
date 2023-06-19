@@ -5,9 +5,9 @@
 uniform mat4 projection;
 uniform mat4 view;
 
-out vec3 geom_position;
+uniform vec3 position;
 
-vec3 position = vec3(0.5, 0.5, 0.46);
+out vec3 geom_position;
 
 void main() {
     vec3 ndc = position * 2.0 - vec3(1);
@@ -29,12 +29,13 @@ out vec4 frag_color;
 uniform mat4 projection;
 uniform mat4 view;
 
+uniform vec3 axis;
+
 const float PI = 3.14159;
 
 #include "./_drawCone.glsl"
 
 void main() {
-    vec3 axis = vec3(0, 0, 1);
     vec3 helper = axis - vec3(0.1, 0, 0); // Random vector
     vec3 tangent = normalize(helper - dot(axis, helper) * axis);
     vec3 bitangent = cross(axis, tangent);

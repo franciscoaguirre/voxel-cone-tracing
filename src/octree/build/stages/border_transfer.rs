@@ -57,7 +57,6 @@ impl BorderTransferPass {
             Axis::X => textures.neighbors[0].0,
             Axis::Y => textures.neighbors[2].0,
             Axis::Z => textures.neighbors[4].0,
-            _ => panic!("Wrong Axis value"),
         };
         helpers::bind_image_texture(0, neighbors, gl::READ_ONLY, gl::R32UI);
         self.shader.dispatch(groups_count);
