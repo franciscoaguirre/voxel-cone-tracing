@@ -187,8 +187,13 @@ fn main() {
     let mut show_octree = false;
     let mut node_filter_text = String::new();
     let mut sampler_number = 0;
+
     let mut should_move_light = false;
+
     let mut cone_angle = 0.26;
+
+    let mut debug_cone_position = vec3(0.828125, 0.328125, 0.46875);
+    let mut debug_cone_direction = vec3(0.0, 1.0, 0.0);
 
     let mut should_show_neighbors = false;
     let mut bricks_to_show = BricksToShow::default();
@@ -428,10 +433,7 @@ fn main() {
                     c_str!("lightProjectionMatrix"),
                     &light.get_projection_matrix(),
                 );
-                voxel_cone_tracing_shader.set_float(
-                    c_str!("coneAngle"),
-                    cone_angle
-                );
+                voxel_cone_tracing_shader.set_float(c_str!("coneAngle"), cone_angle);
                 helpers::bind_image_texture(
                     0,
                     octree.textures.node_pool.0,
@@ -440,11 +442,15 @@ fn main() {
                 );
 
                 let brick_pool_textures = vec![
-                    (c_str!("brickPoolColors"), octree.textures.brick_pool_colors, gl::LINEAR as i32),
+                    (
+                        c_str!("brickPoolColors"),
+                        octree.textures.brick_pool_colors,
+                        gl::LINEAR as i32,
+                    ),
                     (
                         c_str!("brickPoolPhotons"),
                         octree.textures.brick_pool_photons,
-                        gl::NEAREST as i32
+                        gl::NEAREST as i32,
                     ),
                 ];
 
@@ -527,6 +533,18 @@ fn main() {
                 debug_cone_shader.use_program();
                 debug_cone_shader.set_mat4(c_str!("projection"), &projection);
                 debug_cone_shader.set_mat4(c_str!("view"), &view);
+                debug_cone_shader.set_vec3(
+                    c_str!("position"),
+                    debug_cone_position.x,
+                    debug_cone_position.y,
+                    debug_cone_position.z,
+                );
+                debug_cone_shader.set_vec3(
+                    c_str!("axis"),
+                    debug_cone_direction.x,
+                    debug_cone_direction.y,
+                    debug_cone_direction.z,
+                );
 
                 gl::DrawArrays(gl::POINTS, 0, 1);
                 gl::BindVertexArray(0);
