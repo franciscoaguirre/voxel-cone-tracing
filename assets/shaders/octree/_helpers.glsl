@@ -63,3 +63,11 @@ float zFromPlaneAndPoint(vec2 point, vec4 plane, float defaultValue) {
   }
   return (point.x * plane.x + point.y * plane.y + plane.w) / -plane.z;
 }
+
+
+bool isOutsideRange(vec3 val, vec3 lowerBound, vec3 higherBound) {
+  bvec3 isGreater = greaterThan(val, higherBound);
+  bvec3 isLess = lessThan(val, lowerBound);
+
+  return any(isGreater) || any(isLess);
+}

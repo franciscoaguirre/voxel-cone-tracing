@@ -42,12 +42,9 @@ void main() {
 
         if (neighborID == 0) {
             ivec4 borderVoxelFragmentPosition = ivec4(nodePosition) + NEIGHBOR_OFFSETS[i + callOffset];
-            bvec3 greaterThanVoxelDimension = greaterThan(borderVoxelFragmentPosition.xyz, ivec3(voxelDimension - 1));
-            bvec3 lessThanZero = lessThan(borderVoxelFragmentPosition.xyz, ivec3(0));
 
             if (
-                any(greaterThanVoxelDimension) ||
-                any(lessThanZero)
+                isOutsideRange(borderVoxelFragmentPosition.xyz, ivec3(0), ivec3(voxelDimension - 1))
             ) {
                 continue;
             }
