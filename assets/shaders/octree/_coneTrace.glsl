@@ -14,7 +14,8 @@ float brickPoolBrickSize = 3.0 / brickPoolResolutionf;
 // Returns values in [0, maxOctreeLevel]
 float calculateLod(float coneDiameter) {
     // Could approximate log2 by lines between y = a and y = a + 1
-    return clamp(maxOctreeLevel - log2(1 + coneDiameter * voxelDimension), 0, 7);
+    // Shouldn't this be log2(1 / coneDiameter) + 1 or something similar?
+    return max(maxOctreeLevel - log2(1 + coneDiameter * voxelDimension), 0);
 }
 
 // Brick marching
@@ -37,13 +38,12 @@ vec3 findVoxel(vec3 queryCoordinates, Node node) {
     return normalizedVoxelCoordinates;
 }
 
-// bool fallsOutsideNode(vec3 queryCoordinates, Node node) {
-//     bool fallsOutsideX = (
-//         queryCoordinates.x > node.coordinates.x ||
-//             queryCoordinates.x < node.coordinates.x
-//     );
-//     return fallsOutsideX;
-// }
+ bool fallsOutsideNode(vec3 queryCoordinates, Node node) {
+     vec3 range_start = node.coordinates; 
+     vec3 range_end = node.coordinates + vec3(node.halfNodeSize * 2);
+
+     return isOutsideRange(queryCoordinates, range_start, range_end);
+ }
 
 // rayOrigin should be between 0 and 1
 // maxDistance should be max 1
@@ -80,8 +80,8 @@ vec4 coneTrace(
         }
 
         vec3 queryCoordinates = coneOrigin + distanceAlongCone * coneDirection;
-        // bool changedNode = fallsOutsideNode(queryCoordinates, previousNode); // Should be true on first iteration
-        bool changedNode = true;
+        bool changedNode = steps == 0 || fallsOutsideNode(queryCoordinates, previousNode); // Should be true on first iteration
+        //bool changedNode = true;
 
         Node node, parentNode;
         if (changedNode || changedOctreeLevel) {
