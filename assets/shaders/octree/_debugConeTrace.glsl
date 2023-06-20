@@ -2,52 +2,16 @@
 // - uniform uint voxelDimension
 // - uniform uint maxOctreeLevel
 // - uniform sampler3D brickPoolColors
+// - uniform (r32ui) nodesQueried
 // - _traversalHelpers
 // - _octreeTraversal
 // - _brickCoordinates
+// - _coneTrace
 
-void correctAlpha(inout vec4 color, in float alphaCorrection);
-
-float brickPoolResolutionf = float(textureSize(brickPoolColors, 0).x);
-float brickPoolBrickSize = 3.0 / brickPoolResolutionf;
-
-// Returns values in [0, maxOctreeLevel]
-float calculateLod(float coneDiameter) {
-    // Could approximate log2 by lines between y = a and y = a + 1
-    return clamp(maxOctreeLevel - log2(1 + coneDiameter * voxelDimension), 0, 7);
-}
-
-// Brick marching
-//float findVoxelOcclusion(vec3 queryCoordinates, Node node) {
-   //ivec3 brickCoordinates = calculateBrickCoordinates(node.id);
-   ////ivec3 brickOffset = ivec3(calculateBrickVoxel(node.coordinates, node.halfNodeSize, queryCoordinates));
-   //vec3 brickOffset = (queryCoordinates - node.coordinates) / (2.0 * node.halfNodeSize);
-   //vec4 color = texture(brickPoolColors, (brickCoordinates / brickPoolResolutionf + brickOffset * brickPoolBrickSize));
-   //return color.a;
-//}
-
-vec3 findVoxel(vec3 queryCoordinates, Node node) {
-    // offset between 0 and 1
-    vec3 normalizedBrickOffset = calculateNormalizedBrickVoxel(node.coordinates, node.halfNodeSize, queryCoordinates);
-    // offset between 0.5 and 2.5
-    vec3 offset = (normalizedBrickOffset * (2.0 / 3.0) + (1.0 / 6.0)) * 3.0;
-
-    vec3 voxelCoordinates = vec3(calculateBrickCoordinates(node.id)) + offset;
-    vec3 normalizedVoxelCoordinates = voxelCoordinates / brickPoolResolutionf;
-    return normalizedVoxelCoordinates;
-}
-
-// bool fallsOutsideNode(vec3 queryCoordinates, Node node) {
-//     bool fallsOutsideX = (
-//         queryCoordinates.x > node.coordinates.x ||
-//             queryCoordinates.x < node.coordinates.x
-//     );
-//     return fallsOutsideX;
-// }
 
 // rayOrigin should be between 0 and 1
 // maxDistance should be max 1
-vec4 coneTrace(
+vec4 debugConeTrace(
     vec3 coneOrigin,
     vec3 coneDirection,
     float coneHalfAngle,
@@ -64,10 +28,11 @@ vec4 coneTrace(
     Node previousNode = Node(0, vec3(0), 0.0);
     Node previousParentNode;
     int steps = 0;
+    int nodesCount = 0; // For debugging
 
-    distanceAlongCone += voxelSize * 2;
+    //distanceAlongCone += voxelSize * 2;
     while (distanceAlongCone < maxDistance && returnColor.a < 1.0) {
-        float coneDiameter = clamp(coneDiameterCoefficient * distanceAlongCone, 0.0009765625, 100.0);
+        float coneDiameter = clamp(coneDiameterCoefficient * distanceAlongCone, 0.0009765625, 1.0);
         float lod = calculateLod(coneDiameter);
         // float lod = 7;
         uint octreeLevel = uint(ceil(lod));
@@ -96,6 +61,8 @@ vec4 coneTrace(
                 // break;
                 continue;
             }
+            imageStore(nodesQueried, nodesCount + 1, uvec4(uint(node.id), 0, 0, 0)); // For debugging
+            nodesCount += 1; // For debugging
         } else {
             node = previousNode;
             parentNode = previousParentNode;
@@ -133,13 +100,8 @@ vec4 coneTrace(
         // break;
     }
 
+    imageStore(nodesQueried, 0, uvec4(nodesCount, 0, 0, 0)); // For debugging
     returnColor.a = min(returnColor.a, 1.0);
 
     return returnColor;
-}
-
-void correctAlpha(inout vec4 color, in float alphaCorrection) {
-  const float oldColA = color.a;
-  color.a = 1.0 - pow((1.0 - color.a), alphaCorrection);
-  // color.rgb *= color.a / clamp(oldColA, 0.0001, 10000.0);
 }

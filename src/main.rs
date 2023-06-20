@@ -3,8 +3,9 @@ extern crate c_str_macro;
 use c_str_macro::c_str;
 use egui_glfw_gl::glfw::{self, Context};
 extern crate gl;
-use cgmath::{perspective, point3, vec3, Deg, Matrix4, Point3};
+use cgmath::{perspective, point3, vec3, InnerSpace, Deg, Matrix4, Point3};
 use log::info;
+
 use rendering::quad::Quad;
 use structopt::StructOpt;
 
@@ -178,13 +179,13 @@ fn main() {
         )
     };
 
-    // Animation variables
     let mut current_voxel_fragment_count: u32 = 0;
     let mut current_octree_level: u32 = 0;
     let mut show_empty_nodes = false;
     let mut show_model = false;
     let mut show_voxel_fragment_list = false;
     let mut show_octree = false;
+
     let mut node_filter_text = String::new();
     let mut sampler_number = 0;
 
@@ -192,8 +193,14 @@ fn main() {
 
     let mut cone_angle = 0.26;
 
-    let mut debug_cone_position = vec3(0.828125, 0.328125, 0.46875);
-    let mut debug_cone_direction = vec3(0.0, 1.0, 0.0);
+    let mut debug_cone_transform = Transform::default();
+    debug_cone_transform.position.x = 0.5;
+    debug_cone_transform.position.y = 0.5;
+    debug_cone_transform.position.z = 0.5;
+    let mut debug_cone_direction = vec3(1.0, 1.0, 1.0).normalize();
+
+    let mut previous_values: Vec<u32> = Vec::new();
+    let (nodes_queried_texture, nodes_queried_texture_buffer) = unsafe { helpers::generate_texture_buffer(2000, gl::R32UI, 69u32) };
 
     let mut should_show_neighbors = false;
     let mut bricks_to_show = BricksToShow::default();
@@ -327,19 +334,20 @@ fn main() {
         // Input
         if !menu.is_showing() {
             let transform = if should_move_light {
-                unsafe {
-                    octree.clear_light();
-                }
-                light_maps = unsafe {
-                    // TODO: This takes too long, optimize
-                    octree.inject_light(
-                        &[&our_model],
-                        &light,
-                        &model_normalization_matrix,
-                        &light_framebuffer,
-                    )
-                };
-                &mut light.transform
+                // unsafe {
+                //     octree.clear_light();
+                // }
+                // light_maps = unsafe {
+                //     // TODO: This takes too long, optimize
+                //     octree.inject_light(
+                //         &[&our_model],
+                //         &light,
+                //         &model_normalization_matrix,
+                //         &light_framebuffer,
+                //     )
+                // };
+                // &mut light.transform
+                &mut debug_cone_transform
             } else {
                 &mut camera.transform
             };
@@ -530,14 +538,28 @@ fn main() {
                 gl::GenVertexArrays(1, &mut vao);
                 gl::BindVertexArray(vao);
 
+                helpers::bind_image_texture(0, nodes_queried_texture, gl::WRITE_ONLY, gl::R32UI);
+                helpers::bind_image_texture(1, octree.textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
+
+                gl::ActiveTexture(gl::TEXTURE0);
+                gl::BindTexture(gl::TEXTURE_3D, octree.textures.brick_pool_colors);
+                debug_cone_shader.set_int(c_str!("brickPoolColors"), 0 as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+
                 debug_cone_shader.use_program();
+                debug_cone_shader.set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
+                debug_cone_shader.set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels - 1);
                 debug_cone_shader.set_mat4(c_str!("projection"), &projection);
                 debug_cone_shader.set_mat4(c_str!("view"), &view);
                 debug_cone_shader.set_vec3(
                     c_str!("position"),
-                    debug_cone_position.x,
-                    debug_cone_position.y,
-                    debug_cone_position.z,
+                    debug_cone_transform.position.x,
+                    debug_cone_transform.position.y,
+                    debug_cone_transform.position.z,
                 );
                 debug_cone_shader.set_vec3(
                     c_str!("axis"),
@@ -545,8 +567,18 @@ fn main() {
                     debug_cone_direction.y,
                     debug_cone_direction.z,
                 );
+                debug_cone_shader.set_float(c_str!("coneAngle"), cone_angle);
 
                 gl::DrawArrays(gl::POINTS, 0, 1);
+                let values = helpers::get_values_from_texture_buffer(nodes_queried_texture_buffer, 100, 42u32);
+
+                if (previous_values != values) {
+                    let values_length = values[0] as usize;
+                    dbg!(&values[1..values_length]);
+                    selected_debug_nodes = (&values[1..values_length]).iter().map(|&index| DebugNode::new(index, "picked by cone".to_string())).collect();
+                    previous_values = values;
+                }
+
                 gl::BindVertexArray(0);
             }
 
