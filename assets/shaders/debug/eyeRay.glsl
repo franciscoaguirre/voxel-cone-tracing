@@ -87,7 +87,7 @@ void main() {
     EmitVertex();
     EndPrimitive();
 
-    drawCone(ndc, normal, 0.523599);
+    drawCone(ndc, normal, 0.523599, 1.0);
 }
 
 #shader fragment
