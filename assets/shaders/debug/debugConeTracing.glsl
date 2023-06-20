@@ -2,17 +2,37 @@
 
 #version 460 core
 
+uniform layout(binding = 0, r32ui) uimageBuffer nodesQueried;
+uniform layout(binding = 1, r32ui) readonly uimageBuffer nodePool;
+
 uniform mat4 projection;
 uniform mat4 view;
+uniform uint voxelDimension;
+uniform uint maxOctreeLevel;
+uniform sampler3D brickPoolColors;
+
+#include "assets/shaders/octree/_constants.glsl"
+#include "assets/shaders/octree/_helpers.glsl"
+#include "assets/shaders/octree/_traversalHelpers.glsl"
+#include "assets/shaders/octree/_octreeTraversal.glsl"
+#include "assets/shaders/octree/_brickCoordinates.glsl"
+#include "assets/shaders/octree/_coneTrace.glsl"
+#include "assets/shaders/octree/_debugConeTrace.glsl"
 
 uniform vec3 position;
+uniform vec3 axis;
+uniform float coneAngle;
 
 out vec3 geom_position;
+out float maxDistance;
 
 void main() {
     vec3 ndc = position * 2.0 - vec3(1);
     geom_position = ndc;
     gl_Position = projection * view * vec4(ndc, 1);
+
+    maxDistance = 1.0;
+    debugConeTrace(position, axis, coneAngle, maxDistance, false);
 }
 
 #shader geometry
@@ -23,6 +43,7 @@ layout (points) in;
 layout (line_strip, max_vertices = 80) out;
 
 in vec3 geom_position[];
+in float maxDistance[];
 
 out vec4 frag_color;
 
@@ -30,6 +51,7 @@ uniform mat4 projection;
 uniform mat4 view;
 
 uniform vec3 axis;
+uniform float coneAngle;
 
 const float PI = 3.14159;
 
@@ -51,10 +73,11 @@ void main() {
     // EmitVertex();
 
     // EndPrimitive();
-    
-    float angleFromAxis = 0.261799;
+
+    float angleFromAxis = coneAngle;
+    // TODO: Corroborar que los angulos dan lo mismo
     float angleFromPlane = (PI / 2) - angleFromAxis;
-    drawCone(geom_position[0], axis, angleFromPlane);
+    drawCone(geom_position[0], axis, angleFromPlane, maxDistance[0]);
 
     float angle = 1.0472;
     float sinAngle = sin(angle);
