@@ -45,8 +45,7 @@ vec4 debugConeTrace(
         }
 
         vec3 queryCoordinates = coneOrigin + distanceAlongCone * coneDirection;
-        // bool changedNode = fallsOutsideNode(queryCoordinates, previousNode); // Should be true on first iteration
-        bool changedNode = true;
+        bool changedNode = steps == 0 || fallsOutsideNode(queryCoordinates, previousNode); // Should be true on first iteration
 
         Node node, parentNode;
         if (changedNode || changedOctreeLevel) {
