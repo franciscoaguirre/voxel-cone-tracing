@@ -196,8 +196,8 @@ fn main() {
     let mut debug_cone_transform = Transform::default();
     debug_cone_transform.position.x = 0.5;
     debug_cone_transform.position.y = 0.5;
-    debug_cone_transform.position.z = 0.5;
-    let mut debug_cone_direction = vec3(1.0, 1.0, 1.0).normalize();
+    debug_cone_transform.position.z = 0.43;
+    let mut debug_cone_direction = vec3(0.0, 1.0, 1.0).normalize();
 
     let mut previous_values: Vec<u32> = Vec::new();
     let (nodes_queried_texture, nodes_queried_texture_buffer) = unsafe { helpers::generate_texture_buffer(2000, gl::R32UI, 69u32) };
