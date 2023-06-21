@@ -9,6 +9,7 @@ use super::{gizmo::RenderGizmo, shader::Shader, transform::Transform};
 #[derive(Debug)]
 pub struct SpotLight {
     pub transform: Transform,
+    pub intensity: f32,
     width: f32,
     height: f32,
     color: Point3<f32>,
@@ -17,11 +18,12 @@ pub struct SpotLight {
 }
 
 impl SpotLight {
-    pub unsafe fn new(width: f32, height: f32, color: Point3<f32>) -> Self {
+    pub unsafe fn new(width: f32, height: f32, color: Point3<f32>, intensity: f32) -> Self {
         let mut light = Self {
             width,
             height,
             color,
+            intensity,
             vao: 0,
             shader: Shader::with_geometry_shader(
                 "assets/shaders/debug/gizmo.vert.glsl",

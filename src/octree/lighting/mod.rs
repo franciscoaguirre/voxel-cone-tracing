@@ -58,20 +58,20 @@ impl Octree {
         let border_transfer = BorderTransferPass::init(light_view_map);
 
         let all_axis = vec![Axis::X, Axis::Y, Axis::Z];
-        // for axis in all_axis.iter() {
-        //     border_transfer.run(
-        //         &self.textures,
-        //         CONFIG.octree_levels - 1,
-        //         &self.geometry_data.node_data,
-        //         *axis,
-        //     );
-        //     border_transfer.run(
-        //         &self.textures,
-        //         CONFIG.octree_levels - 1,
-        //         &self.border_data.node_data,
-        //         *axis,
-        //     );
-        // }
+        for axis in all_axis.iter() {
+            border_transfer.run(
+                &self.textures,
+                CONFIG.octree_levels - 1,
+                &self.geometry_data.node_data,
+                *axis,
+            );
+            border_transfer.run(
+                &self.textures,
+                CONFIG.octree_levels - 1,
+                &self.border_data.node_data,
+                *axis,
+            );
+         }
 
         for level in (0..CONFIG.octree_levels - 1).rev() {
             mipmap_centers.run(&self.textures, level);
@@ -80,20 +80,20 @@ impl Octree {
             mipmap_edges.run(&self.textures, level);
 
             if level > 0 {
-                // for axis in all_axis.iter() {
-                //     border_transfer.run(
-                //         &self.textures,
-                //         level,
-                //         &self.geometry_data.node_data,
-                //         *axis,
-                //     );
-                //     border_transfer.run(
-                //         &self.textures,
-                //         level,
-                //         &self.border_data.node_data,
-                //         *axis,
-                //     );
-                // }
+               for axis in all_axis.iter() {
+                   border_transfer.run(
+                       &self.textures,
+                       level,
+                       &self.geometry_data.node_data,
+                       *axis,
+                   );
+                   border_transfer.run(
+                       &self.textures,
+                       level,
+                       &self.border_data.node_data,
+                       *axis,
+                   );
+               }
             }
         }
     }

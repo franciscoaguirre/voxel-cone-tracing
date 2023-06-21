@@ -345,6 +345,9 @@ impl Octree {
         self.renderer
             .get_photons_shader
             .set_uint(c_str!("nodeID"), node_index);
+        self.renderer
+            .get_photons_shader
+            .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
 
         helpers::bind_image_texture(0, self.textures.photons_buffer.0, gl::WRITE_ONLY, gl::R32UI);
         helpers::bind_3d_image_texture(

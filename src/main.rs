@@ -143,12 +143,13 @@ fn main() {
                 y: 1.0,
                 z: 1.0,
             },
+            100000.0,
         )
     };
     // light.transform.position = point3(0.0, 0.00, 2.0);
     // light.transform.set_rotation_y(-90.0);
-    light.transform.position = point3(0.0, 0.0, -1.0);
-    light.transform.set_rotation_x(0.0);
+    light.transform.position = point3(0.0, 1.0, 0.0);
+    light.transform.set_rotation_x(-90.0);
 
     let light_framebuffer = unsafe { Framebuffer::new_light() };
     let mut light_maps = unsafe {
@@ -309,6 +310,7 @@ fn main() {
             }
         }
 
+        // This is for debugging
         if selected_debug_nodes_updated {
             selected_debug_nodes_updated = false;
             let last_debug_node = selected_debug_nodes.last();
@@ -318,13 +320,13 @@ fn main() {
                     photons = helpers::get_values_from_texture_buffer(
                         octree.textures.photons_buffer.1,
                         27, // Voxels in a brick
-                        0_u32,
+                        42_u32,
                     );
                     octree.run_get_children_shader(last_debug_node.index());
                     children = helpers::get_values_from_texture_buffer(
                         octree.textures.children_buffer.1,
                         8, // Children in a node
-                        0_u32,
+                        42_u32,
                     );
                     octree.run_colors_quad_shader(last_debug_node.index());
                 };
@@ -420,6 +422,8 @@ fn main() {
                     .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
                 voxel_cone_tracing_shader
                     .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels - 1);
+                voxel_cone_tracing_shader
+                    .set_float(c_str!("photonPower"), light.intensity / (CONFIG.viewport_width * CONFIG.viewport_height) as f32);
                 voxel_cone_tracing_shader.set_bool(c_str!("useLighting"), false);
                 let light_direction = vec3(
                     light.transform.position.x,
@@ -570,14 +574,14 @@ fn main() {
                 debug_cone_shader.set_float(c_str!("coneAngle"), cone_angle);
 
                 gl::DrawArrays(gl::POINTS, 0, 1);
-                let values = helpers::get_values_from_texture_buffer(nodes_queried_texture_buffer, 100, 42u32);
+                //let values = helpers::get_values_from_texture_buffer(nodes_queried_texture_buffer, 100, 42u32);
 
-                if (previous_values != values) {
-                    let values_length = values[0] as usize;
-                    dbg!(&values[1..values_length]);
-                    selected_debug_nodes = (&values[1..values_length]).iter().map(|&index| DebugNode::new(index, "picked by cone".to_string())).collect();
-                    previous_values = values;
-                }
+                //if (previous_values != values) {
+                    //let values_length = values[0] as usize;
+                    //dbg!(&values[1..values_length]);
+                    //selected_debug_nodes = (&values[1..values_length]).iter().map(|&index| DebugNode::new(index, "picked by cone".to_string())).collect();
+                    //previous_values = values;
+                //}
 
                 gl::BindVertexArray(0);
             }
