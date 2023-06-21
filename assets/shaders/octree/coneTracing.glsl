@@ -37,6 +37,7 @@ uniform float shininess;
 uniform mat4 lightViewMatrix;
 uniform mat4 lightProjectionMatrix;
 uniform float coneAngle;
+uniform float photonPower;
 
 // Brick attributes
 uniform sampler3D brickPoolColors;

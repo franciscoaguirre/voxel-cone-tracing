@@ -202,27 +202,27 @@ impl Transform {
         let velocity = self.movement_speed * delta_time;
         if direction == Forward {
             self.position += self.get_forward() * velocity;
-            log::debug!("Position = ({}, {}, {})", self.position.x, self.position.y, self.position.z);
+//            log::debug!("Position = ({}, {}, {})", self.position.x, self.position.y, self.position.z);
         }
         if direction == Backward {
             self.position += -(self.get_forward() * velocity);
-            log::debug!("Position = ({}, {}, {})", self.position.x, self.position.y, self.position.z);
+ //           log::debug!("Position = ({}, {}, {})", self.position.x, self.position.y, self.position.z);
         }
         if direction == Left {
             self.position += -(self.get_right() * velocity);
-            log::debug!("Position = ({}, {}, {})", self.position.x, self.position.y, self.position.z);
+  //          log::debug!("Position = ({}, {}, {})", self.position.x, self.position.y, self.position.z);
         }
         if direction == Right {
             self.position += self.get_right() * velocity;
-            log::debug!("Position = ({}, {}, {})", self.position.x, self.position.y, self.position.z);
+   //         log::debug!("Position = ({}, {}, {})", self.position.x, self.position.y, self.position.z);
         }
         if direction == Up {
             self.position += self.get_up() * velocity;
-            log::debug!("Position = ({}, {}, {})", self.position.x, self.position.y, self.position.z);
+    //        log::debug!("Position = ({}, {}, {})", self.position.x, self.position.y, self.position.z);
         }
         if direction == Down {
             self.position += -(self.get_up() * velocity);
-            log::debug!("Position = ({}, {}, {})", self.position.x, self.position.y, self.position.z);
+     //       log::debug!("Position = ({}, {}, {})", self.position.x, self.position.y, self.position.z);
         }
     }
 }

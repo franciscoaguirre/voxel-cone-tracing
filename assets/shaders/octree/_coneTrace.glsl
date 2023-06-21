@@ -65,11 +65,11 @@ vec4 coneTrace(
     Node previousParentNode;
     int steps = 0;
 
-    distanceAlongCone += voxelSize * 2;
+    // distanceAlongCone += voxelSize * 2;
     while (distanceAlongCone < maxDistance && returnColor.a < 1.0) {
         float coneDiameter = clamp(coneDiameterCoefficient * distanceAlongCone, 0.0009765625, 100.0);
         float lod = calculateLod(coneDiameter);
-        // float lod = 7;
+        // float lod = 6;
         uint octreeLevel = uint(ceil(lod));
         float parentWeight = octreeLevel - lod; // Non-linear, we should approximate the log with many lines
 
@@ -93,7 +93,7 @@ vec4 coneTrace(
             );
             if (node.id == NODE_NOT_FOUND) {
                 distanceAlongCone += sampleStep;
-                // break;
+                //break;
                 continue;
             }
         } else {
@@ -104,13 +104,13 @@ vec4 coneTrace(
         vec3 childVoxelCoordinates = findVoxel(queryCoordinates, node);
         vec4 childColor = texture(brickPoolColors, childVoxelCoordinates);
         if (useLighting) {
-           // childColor.rgb *= float(texture(brickPoolPhotons, childVoxelCoordinates).r) / 10;
+            childColor.rgb *= clamp(texture(brickPoolPhotons, childVoxelCoordinates).r * photonPower, 0, 1) * (1 - distanceAlongCone) * (1 - distanceAlongCone);
         }
         correctAlpha(childColor, stepMultiplier);
         vec3 parentVoxelCoordinates = findVoxel(queryCoordinates, parentNode);
         vec4 parentColor = texture(brickPoolColors, parentVoxelCoordinates);
         if (useLighting) {
-            // parentColor.rgb *= float(texture(brickPoolPhotons, parentVoxelCoordinates).r) / 10;
+            parentColor.rgb *= clamp(texture(brickPoolPhotons, parentVoxelCoordinates).r * photonPower, 0, 1) * (1 - distanceAlongCone) * (1 - distanceAlongCone);
         }
         correctAlpha(parentColor, stepMultiplier * 2); // Step correction
 
@@ -130,6 +130,8 @@ vec4 coneTrace(
         previousNode = node;
         previousParentNode = parentNode;
         // returnColor.a = clamp(float(texture(brickPoolPhotons, childVoxelCoordinates).r) / 100, 0, 1);
+        //float photonIntensity = texture(brickPoolPhotons, childVoxelCoordinates).r * photonPower;
+        //returnColor.rgba = vec4(clamp(photonIntensity, 0.0, 1.0));
         // break;
     }
 

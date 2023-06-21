@@ -20,21 +20,12 @@ float calculateHalfNodeSize(uint octreeLevel) {
 // Returns the node quarter the queryCoordinate is on
 // Goes from 0 to 2
 uint findQuarter(float min, float quarterNodeSize, float queryCoordinate) {
-    bool withinFirstHalf = queryCoordinate < min + quarterNodeSize * 2;
-    if (withinFirstHalf) {
-        bool withinFirstQuarter = queryCoordinate < min + quarterNodeSize;
-        if (withinFirstQuarter) {
-            return 0;
-        } else {
-            return 1;
-        }
+    if (queryCoordinate < min + quarterNodeSize) {
+        return 0;
+    } else if (queryCoordinate < min + quarterNodeSize * 3) {
+        return 1;
     } else {
-        bool withinThirdQuarter = queryCoordinate < min + quarterNodeSize * 3;
-        if (withinThirdQuarter) {
-            return 1;
-        } else {
-            return 2;
-        }
+        return 2;
     }
 }
 
@@ -43,6 +34,7 @@ uvec3 calculateBrickVoxel(vec3 nodeCoordinates, float halfNodeSize, vec3 queryCo
     float quarterNodeSize = halfNodeSize / 2.0;
     uint xOffset = findQuarter(nodeCoordinates.x, quarterNodeSize, queryCoordinates.x);
     uint yOffset = findQuarter(nodeCoordinates.y, quarterNodeSize, queryCoordinates.y);
+    //uint yOffset = 1;
     uint zOffset = findQuarter(nodeCoordinates.z, quarterNodeSize, queryCoordinates.z);
     return uvec3(xOffset, yOffset, zOffset);
 }

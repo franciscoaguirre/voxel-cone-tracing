@@ -16,8 +16,8 @@ uniform sampler3D brickPoolColors;
 #include "assets/shaders/octree/_traversalHelpers.glsl"
 #include "assets/shaders/octree/_octreeTraversal.glsl"
 #include "assets/shaders/octree/_brickCoordinates.glsl"
-#include "assets/shaders/octree/_coneTrace.glsl"
-#include "assets/shaders/octree/_debugConeTrace.glsl"
+//include "assets/shaders/octree/_coneTrace.glsl"
+//include "assets/shaders/octree/_debugConeTrace.glsl"
 
 uniform vec3 position;
 uniform vec3 axis;
@@ -32,7 +32,7 @@ void main() {
     gl_Position = projection * view * vec4(ndc, 1);
 
     maxDistance = 1.0;
-    debugConeTrace(position, axis, coneAngle, maxDistance, false);
+//    debugConeTrace(position, axis, coneAngle, maxDistance, false);
 }
 
 #shader geometry
