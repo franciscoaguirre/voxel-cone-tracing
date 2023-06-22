@@ -64,8 +64,9 @@ vec4 coneTrace(
     Node previousNode = Node(0, vec3(0), 0.0);
     Node previousParentNode;
     int steps = 0;
+    float firstStep = voxelSize;
 
-    distanceAlongCone += voxelSize;
+    distanceAlongCone += firstStep;
     while (distanceAlongCone < maxDistance && returnColor.a < 1.0) {
         float coneDiameter = clamp(coneDiameterCoefficient * distanceAlongCone, 0.0009765625, 100.0);
         float lod = calculateLod(coneDiameter);
@@ -105,7 +106,7 @@ vec4 coneTrace(
         float c1 = 1.0;
         float c2 = 0.09;
         float c3 = 0.032;
-        float distance = (distanceAlongCone - voxelSize) * 29;
+        float distance = (distanceAlongCone - firstStep) * 29;
         float distanceFactor = c1 + c2 * distance + c3 * distance * distance;
         if (useLighting) {
             childColor.rgb *= clamp(texture(brickPoolPhotons, childVoxelCoordinates).r * photonPower, 0, 1) / distanceFactor;
