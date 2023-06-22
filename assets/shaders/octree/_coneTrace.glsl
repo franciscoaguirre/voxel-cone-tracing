@@ -65,7 +65,7 @@ vec4 coneTrace(
     Node previousParentNode;
     int steps = 0;
 
-    // distanceAlongCone += voxelSize * 2;
+    distanceAlongCone += voxelSize;
     while (distanceAlongCone < maxDistance && returnColor.a < 1.0) {
         float coneDiameter = clamp(coneDiameterCoefficient * distanceAlongCone, 0.0009765625, 100.0);
         float lod = calculateLod(coneDiameter);
@@ -81,7 +81,6 @@ vec4 coneTrace(
 
         vec3 queryCoordinates = coneOrigin + distanceAlongCone * coneDirection;
         bool changedNode = steps == 0 || fallsOutsideNode(queryCoordinates, previousNode); // Should be true on first iteration
-        //bool changedNode = true;
 
         Node node, parentNode;
         if (changedNode || changedOctreeLevel) {
@@ -103,14 +102,19 @@ vec4 coneTrace(
 
         vec3 childVoxelCoordinates = findVoxel(queryCoordinates, node);
         vec4 childColor = texture(brickPoolColors, childVoxelCoordinates);
+        float c1 = 1.0;
+        float c2 = 0.09;
+        float c3 = 0.032;
+        float distance = (distanceAlongCone - voxelSize) * 29;
+        float distanceFactor = c1 + c2 * distance + c3 * distance * distance;
         if (useLighting) {
-            childColor.rgb *= clamp(texture(brickPoolPhotons, childVoxelCoordinates).r * photonPower, 0, 1) * (1 - distanceAlongCone) * (1 - distanceAlongCone);
+            childColor.rgb *= clamp(texture(brickPoolPhotons, childVoxelCoordinates).r * photonPower, 0, 1) / distanceFactor;
         }
         correctAlpha(childColor, stepMultiplier);
         vec3 parentVoxelCoordinates = findVoxel(queryCoordinates, parentNode);
         vec4 parentColor = texture(brickPoolColors, parentVoxelCoordinates);
         if (useLighting) {
-            parentColor.rgb *= clamp(texture(brickPoolPhotons, parentVoxelCoordinates).r * photonPower, 0, 1) * (1 - distanceAlongCone) * (1 - distanceAlongCone);
+            parentColor.rgb *= clamp(texture(brickPoolPhotons, parentVoxelCoordinates).r * photonPower, 0, 1) / distanceFactor;
         }
         correctAlpha(parentColor, stepMultiplier * 2); // Step correction
 

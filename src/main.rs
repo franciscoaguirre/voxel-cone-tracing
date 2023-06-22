@@ -3,7 +3,7 @@ extern crate c_str_macro;
 use c_str_macro::c_str;
 use egui_glfw_gl::glfw::{self, Context};
 extern crate gl;
-use cgmath::{perspective, point3, vec3, InnerSpace, Deg, Matrix4, Point3};
+use cgmath::{perspective, point3, vec3, Deg, InnerSpace, Matrix4, Point3};
 use log::info;
 
 use rendering::quad::Quad;
@@ -143,13 +143,13 @@ fn main() {
                 y: 1.0,
                 z: 1.0,
             },
-            100000.0,
+            1_000_000.0,
         )
     };
     // light.transform.position = point3(0.0, 0.00, 2.0);
     // light.transform.set_rotation_y(-90.0);
-    light.transform.position = point3(0.0, 1.0, 0.0);
-    light.transform.set_rotation_x(-90.0);
+    light.transform.position = point3(0.0, 1.0, -0.4);
+    light.transform.set_rotation_x(-75.0);
 
     let light_framebuffer = unsafe { Framebuffer::new_light() };
     let mut light_maps = unsafe {
@@ -193,6 +193,7 @@ fn main() {
     let mut should_move_light = false;
 
     let mut cone_angle = 0.26;
+    let mut show_indirect_light = false;
 
     let mut debug_cone_transform = Transform::default();
     debug_cone_transform.position.x = 0.5;
@@ -201,7 +202,8 @@ fn main() {
     let mut debug_cone_direction = vec3(0.0, 1.0, 1.0).normalize();
 
     let mut previous_values: Vec<u32> = Vec::new();
-    let (nodes_queried_texture, nodes_queried_texture_buffer) = unsafe { helpers::generate_texture_buffer(2000, gl::R32UI, 69u32) };
+    let (nodes_queried_texture, nodes_queried_texture_buffer) =
+        unsafe { helpers::generate_texture_buffer(2000, gl::R32UI, 69u32) };
 
     let mut should_show_neighbors = false;
     let mut bricks_to_show = BricksToShow::default();
@@ -278,6 +280,7 @@ fn main() {
                 );
                 common::handle_sampler_change(&event, &mut sampler_number);
                 common::handle_light_movement(&event, &mut should_move_light);
+                common::handle_show_indirect_light(&event, &mut show_indirect_light);
                 common::handle_cone_angle(&event, &mut cone_angle);
             }
             menu.handle_event(event);
@@ -422,9 +425,12 @@ fn main() {
                     .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
                 voxel_cone_tracing_shader
                     .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels - 1);
+                voxel_cone_tracing_shader.set_float(
+                    c_str!("photonPower"),
+                    light.intensity / (CONFIG.viewport_width * CONFIG.viewport_height) as f32,
+                );
                 voxel_cone_tracing_shader
-                    .set_float(c_str!("photonPower"), light.intensity / (CONFIG.viewport_width * CONFIG.viewport_height) as f32);
-                voxel_cone_tracing_shader.set_bool(c_str!("useLighting"), false);
+                    .set_bool(c_str!("showIndirectLight"), show_indirect_light);
                 let light_direction = vec3(
                     light.transform.position.x,
                     light.transform.position.y,
@@ -543,7 +549,12 @@ fn main() {
                 gl::BindVertexArray(vao);
 
                 helpers::bind_image_texture(0, nodes_queried_texture, gl::WRITE_ONLY, gl::R32UI);
-                helpers::bind_image_texture(1, octree.textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
+                helpers::bind_image_texture(
+                    1,
+                    octree.textures.node_pool.0,
+                    gl::READ_ONLY,
+                    gl::R32UI,
+                );
 
                 gl::ActiveTexture(gl::TEXTURE0);
                 gl::BindTexture(gl::TEXTURE_3D, octree.textures.brick_pool_colors);
@@ -577,10 +588,10 @@ fn main() {
                 //let values = helpers::get_values_from_texture_buffer(nodes_queried_texture_buffer, 100, 42u32);
 
                 //if (previous_values != values) {
-                    //let values_length = values[0] as usize;
-                    //dbg!(&values[1..values_length]);
-                    //selected_debug_nodes = (&values[1..values_length]).iter().map(|&index| DebugNode::new(index, "picked by cone".to_string())).collect();
-                    //previous_values = values;
+                //let values_length = values[0] as usize;
+                //dbg!(&values[1..values_length]);
+                //selected_debug_nodes = (&values[1..values_length]).iter().map(|&index| DebugNode::new(index, "picked by cone".to_string())).collect();
+                //previous_values = values;
                 //}
 
                 gl::BindVertexArray(0);
