@@ -39,6 +39,7 @@ uniform mat4 lightProjectionMatrix;
 uniform float coneAngle;
 uniform float photonPower;
 uniform bool showIndirectLight;
+uniform vec3 eyePosition;
 
 // Brick attributes
 uniform sampler3D brickPoolColors;
@@ -59,6 +60,7 @@ uniform sampler2D shadowMap;
 #include "./_coneTrace.glsl"
 
 vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, bool useLighting);
+vec4 gatherSpecularIndirectLight(vec3 position, vec3 eyeDirection, vec3 normal);
 float visibilityCalculation(vec4 positionInLightSpace, vec3 normal);
 
 void main() {
@@ -81,6 +83,8 @@ void main() {
     vec3 positionRaw = texture(gBufferPositions, In.textureCoordinates).xyz;
     vec3 position = positionRaw * 0.5 + 0.5;
 
+    vec3 eyeDirection = normalize(eyePosition - positionRaw);
+
     vec3 normal = texture(gBufferNormals, In.textureCoordinates).xyz;
     // vec3 normal = vec3(0, 1, 0);
     vec3 helper = normal - vec3(0.1, 0, 0); // Random vector
@@ -101,6 +105,11 @@ void main() {
     if (showIndirectLight) {
         indirectLight = gatherIndirectLight(position, normal, tangent, useLighting).rgb;
     }
+
+    // vec3 specularIndirectLight = vec3(0);
+    // if (showIndirectLight) {
+    //     specularIndirectLight = gatherSpecularIndirectLight(position, eyeDirection, normal).rgb;
+    // }
 
     vec4 positionInLightSpace = lightProjectionMatrix * lightViewMatrix * vec4(positionRaw, 1.0);
     float visibility = visibilityCalculation(positionInLightSpace, normal);
@@ -169,6 +178,15 @@ float visibilityCalculation(vec4 positionInLightSpace, vec3 normal) {
         shadow = 0.0;
     }
     return 1.0 - shadow;
+}
+
+vec4 gatherSpecularIndirectLight(vec3 position, vec3 eyeDirection, vec3 normal) {
+    vec3 reflectDirection = reflect(eyeDirection, normal);
+    float coneAngle = 0.05;
+    float maxDistance = 1;
+    bool useLighting = true;
+
+    return coneTrace(position, reflectDirection, coneAngle, maxDistance, useLighting);
 }
 
 vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, bool useLighting) {
