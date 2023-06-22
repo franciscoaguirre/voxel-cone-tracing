@@ -3,7 +3,10 @@ use std::{ffi::CStr, ptr, sync::mpsc::Receiver};
 use egui_glfw_gl::glfw::{self, Action, Context, Glfw, Key, Window, WindowEvent};
 use log::info;
 
-use super::{ camera::Camera, transform::{Direction, Transform}, };
+use super::{
+    camera::Camera,
+    transform::{Direction, Transform},
+};
 use crate::{config::CONFIG, helpers};
 
 pub unsafe fn setup_glfw(debug: bool) -> (Glfw, Window, Receiver<(f64, WindowEvent)>) {
@@ -170,14 +173,22 @@ pub fn handle_light_movement(event: &glfw::WindowEvent, should_move_light: &mut 
     }
 }
 
+pub fn handle_show_indirect_light(event: &glfw::WindowEvent, show_indirect_light: &mut bool) {
+    match *event {
+        glfw::WindowEvent::Key(Key::F, _, Action::Press, _) => {
+            *show_indirect_light = !*show_indirect_light;
+        }
+        _ => {}
+    }
+}
+
 pub fn handle_cone_angle(event: &glfw::WindowEvent, cone_angle: &mut f32) {
     match *event {
         glfw::WindowEvent::Key(Key::Up, _, Action::Press, _) => {
-            *cone_angle += 0.001; 
-           
-       },
+            *cone_angle += 0.01;
+        }
         glfw::WindowEvent::Key(Key::Down, _, Action::Press, _) => {
-            *cone_angle -= 0.001;
+            *cone_angle -= 0.01;
             println!("Angle is: {}", *cone_angle);
         }
         _ => {}

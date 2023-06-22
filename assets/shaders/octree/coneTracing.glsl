@@ -38,6 +38,7 @@ uniform mat4 lightViewMatrix;
 uniform mat4 lightProjectionMatrix;
 uniform float coneAngle;
 uniform float photonPower;
+uniform bool showIndirectLight;
 
 // Brick attributes
 uniform sampler3D brickPoolColors;
@@ -92,10 +93,14 @@ void main() {
     }
 
     bool useLighting = false;
-    float ambientOcclusion = gatherIndirectLight(position, normal, tangent, useLighting).a;
+    // float ambientOcclusion = gatherIndirectLight(position, normal, tangent, useLighting).a;
 
     useLighting = true;
-    vec3 indirectLight = gatherIndirectLight(position, normal, tangent, useLighting).rgb;
+
+    vec3 indirectLight = vec3(0);
+    if (showIndirectLight) {
+        indirectLight = gatherIndirectLight(position, normal, tangent, useLighting).rgb;
+    }
 
     vec4 positionInLightSpace = lightProjectionMatrix * lightViewMatrix * vec4(positionRaw, 1.0);
     float visibility = visibilityCalculation(positionInLightSpace, normal);
@@ -106,16 +111,16 @@ void main() {
     vec3 directLight = vec3(1) * diffuse;
     vec3 ambient = vec3(1) * 0.15;
 
-    vec3 lightIntensity = ambient + visibility * (directLight); // TODO: Add indirectLight.rgb
+    vec3 lightIntensity = indirectLight + visibility * directLight; // TODO: Add indirectLight.rgb
 
     // FragColor = vec4(texture(texture_diffuse1, frag_textureCoordinates).xyz - vec3(AO), 1);
     // outColor = vec4(vec3(ambientOcclusion), 1.0);
     //outColor = vec4(1.0 - vec3(ambientOcclusion), 1.0);
-    // outColor = color * vec4(lightIntensity, 1.0);
+    outColor = color * vec4(lightIntensity, 1.0);
     // outColor = texture(gBufferColors, In.textureCoordinates);
     // outColor = vec4(position, 1.0);
     // outColor = vec4(normal, 1.0);
-    outColor = vec4(indirectLight, 1.0);
+    // outColor = vec4(indirectLight, 1.0);
     //vec4 color = texture(texture_diffuse1, frag_textureCoordinates);
     //FragColor = vec4(color.rgb * AO, color.a);
 }
@@ -173,25 +178,30 @@ vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, bool useLight
     vec3 bitangent = cross(normal, tangent);
     vec3 direction = normal;
     vec4 indirectLight = vec4(0);
-    indirectLight += coneTrace(position, direction, coneAngle, maxDistance, useLighting); // 15deg as rad
+
+    float primaryConeWeight = 1;
+    indirectLight += primaryConeWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting); // 15deg as rad
 
     float angle = 1.0472;
-    //float sinAngle = sin(angle);
-    //float cosAngle = cos(angle);
+    float sinAngle = sin(angle);
+    float cosAngle = cos(angle);
 
-    //direction = sinAngle * normal + cosAngle * tangent;
-    //indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    direction = sinAngle * normal + cosAngle * tangent;
 
-    //direction = sinAngle * normal - cosAngle * tangent;
-    //indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    float secondaryConeWeight = 1;
+    
+    indirectLight += secondaryConeWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
-    //direction = sinAngle * normal + cosAngle * bitangent;
-    //indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    direction = sinAngle * normal - cosAngle * tangent;
+    indirectLight += secondaryConeWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
-    //direction = sinAngle * normal - cosAngle * bitangent;
-    //indirectLight += 0.707 * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    direction = sinAngle * normal + cosAngle * bitangent;
+    indirectLight += secondaryConeWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
-    //indirectLight /= 3.828;
+    direction = sinAngle * normal - cosAngle * bitangent;
+    indirectLight += secondaryConeWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+
+    indirectLight /= primaryConeWeight + secondaryConeWeight * 4;
 
     return indirectLight;
 }
