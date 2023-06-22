@@ -19,18 +19,18 @@ impl Quad {
         let mut vbo = 0;
         gl::GenBuffers(1, &mut vbo);
         gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-         let vertices: [f32; 20] = [
-             1.0, 0.0, 0.0, 1.0, 1.0, // Top right
-             1.0, -1.0, 0.0, 1.0, 0.0, // Bottom right
-             0.0, -1.0, 0.0, 0.0, 0.0, // Bottom left
-             0.0, 0.0, 0.0, 0.0, 1.0, // Top left
-         ];
-        //let vertices: [f32; 20] = [
-            //1.0, 1.0, 0.0, 1.0, 1.0, // Top right
-            //1.0, -1.0, 0.0, 1.0, 0.0, // Bottom right
-            //-1.0, -1.0, 0.0, 0.0, 0.0, // Bottom left
-            //-1.0, 1.0, 0.0, 0.0, 1.0, // Top left
-        //];
+        // let vertices: [f32; 20] = [
+        //     1.0, 0.0, 0.0, 1.0, 1.0, // Top right
+        //     1.0, -1.0, 0.0, 1.0, 0.0, // Bottom right
+        //     0.0, -1.0, 0.0, 0.0, 0.0, // Bottom left
+        //     0.0, 0.0, 0.0, 0.0, 1.0, // Top left
+        // ];
+        let vertices: [f32; 20] = [
+            1.0, 1.0, 0.0, 1.0, 1.0, // Top right
+            1.0, -1.0, 0.0, 1.0, 0.0, // Bottom right
+            -1.0, -1.0, 0.0, 0.0, 0.0, // Bottom left
+            -1.0, 1.0, 0.0, 0.0, 1.0, // Top left
+        ];
         gl::BufferData(
             gl::ARRAY_BUFFER,
             vertices.len() as isize * size_of::<f32>() as isize,
