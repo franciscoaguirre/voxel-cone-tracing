@@ -182,13 +182,12 @@ fn main() {
 
     let mut current_voxel_fragment_count: u32 = 0;
     let mut current_octree_level: u32 = 0;
-    let mut show_empty_nodes = false;
     let mut show_model = false;
     let mut show_voxel_fragment_list = false;
     let mut show_octree = false;
 
     let mut node_filter_text = String::new();
-    let mut sampler_number = 0;
+    let mut should_show_final_image = false;
 
     let mut should_move_light = false;
 
@@ -267,18 +266,11 @@ fn main() {
                     &mut last_y,
                     &mut camera,
                 );
-                common::handle_update_octree_level(
-                    &event,
-                    &mut current_octree_level,
-                    &mut show_empty_nodes,
-                );
-                common::handle_showing_entities(
-                    &event,
-                    &mut show_model,
-                    &mut show_voxel_fragment_list,
-                    &mut show_octree,
-                );
-                common::handle_sampler_change(&event, &mut sampler_number);
+                common::handle_update_octree_level(&event, &mut current_octree_level);
+                common::handle_show_model(&event, &mut show_model);
+                common::handle_show_voxel_fragment_list(&event, &mut show_voxel_fragment_list);
+                common::handle_show_octree(&event, &mut show_octree);
+                common::handle_show_final_image(&event, &mut should_show_final_image);
                 common::handle_light_movement(&event, &mut should_move_light);
                 common::handle_show_indirect_light(&event, &mut show_indirect_light);
                 common::handle_cone_angle(&event, &mut cone_angle);
@@ -431,6 +423,12 @@ fn main() {
                 );
                 voxel_cone_tracing_shader
                     .set_bool(c_str!("showIndirectLight"), show_indirect_light);
+                voxel_cone_tracing_shader.set_vec3(
+                    c_str!("eyePosition"),
+                    camera.transform.position.x,
+                    camera.transform.position.y,
+                    camera.transform.position.z,
+                );
                 let light_direction = vec3(
                     light.transform.position.x,
                     light.transform.position.y,
@@ -518,7 +516,7 @@ fn main() {
 
                 let quad_vao = quad.get_vao();
 
-                if sampler_number == 1 {
+                if should_show_final_image {
                     gl::BindVertexArray(quad_vao);
                     gl::DrawElements(
                         gl::TRIANGLES,

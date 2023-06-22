@@ -1,13 +1,13 @@
 use std::{ffi::CStr, ptr, sync::mpsc::Receiver};
 
 use egui_glfw_gl::glfw::{self, Action, Context, Glfw, Key, Window, WindowEvent};
-use log::info;
+use log;
 
 use super::{
     camera::Camera,
     transform::{Direction, Transform},
 };
-use crate::{config::CONFIG, helpers};
+use crate::{config::CONFIG, handle_increments, helpers, toggle_boolean};
 
 pub unsafe fn setup_glfw(debug: bool) -> (Glfw, Window, Receiver<(f64, WindowEvent)>) {
     // GLFW: Setup
@@ -123,97 +123,32 @@ pub fn process_movement_input(
     }
 }
 
-pub fn handle_update_octree_level(
-    event: &glfw::WindowEvent,
-    current_octree_level: &mut u32,
-    show_empty_nodes: &mut bool,
-) {
-    match *event {
-        glfw::WindowEvent::Key(Key::Left, _, Action::Press, _) => {
-            if *current_octree_level != 0 {
-                *current_octree_level -= 1
-            }
-            info!(
-                "Current octree level: {} of {}",
-                current_octree_level,
-                CONFIG.octree_levels - 1
-            );
-        }
-        glfw::WindowEvent::Key(Key::Right, _, Action::Press, _) => {
-            *current_octree_level = (*current_octree_level + 1).min(CONFIG.octree_levels - 1);
-            info!(
-                "Current octree level: {} of {}",
-                current_octree_level,
-                CONFIG.octree_levels - 1
-            );
-        }
-        glfw::WindowEvent::Key(Key::M, _, Action::Press, _) => {
-            *show_empty_nodes = !*show_empty_nodes;
-        }
-        _ => {}
-    }
-}
-
-pub fn handle_sampler_change(event: &glfw::WindowEvent, sampler_number: &mut u32) {
-    match *event {
-        glfw::WindowEvent::Key(Key::L, _, Action::Press, _) => {
-            *sampler_number = if *sampler_number == 0 { 1 } else { 0 };
-            dbg!(sampler_number);
-        }
-        _ => {}
-    }
-}
-
-pub fn handle_light_movement(event: &glfw::WindowEvent, should_move_light: &mut bool) {
-    match *event {
-        glfw::WindowEvent::Key(Key::C, _, Action::Press, _) => {
-            *should_move_light = !*should_move_light;
-        }
-        _ => {}
-    }
-}
-
-pub fn handle_show_indirect_light(event: &glfw::WindowEvent, show_indirect_light: &mut bool) {
-    match *event {
-        glfw::WindowEvent::Key(Key::F, _, Action::Press, _) => {
-            *show_indirect_light = !*show_indirect_light;
-        }
-        _ => {}
-    }
-}
-
-pub fn handle_cone_angle(event: &glfw::WindowEvent, cone_angle: &mut f32) {
-    match *event {
-        glfw::WindowEvent::Key(Key::Up, _, Action::Press, _) => {
-            *cone_angle += 0.01;
-        }
-        glfw::WindowEvent::Key(Key::Down, _, Action::Press, _) => {
-            *cone_angle -= 0.01;
-            println!("Angle is: {}", *cone_angle);
-        }
-        _ => {}
-    }
-}
-
-pub fn handle_showing_entities(
-    event: &glfw::WindowEvent,
-    show_model: &mut bool,
-    show_voxel_fragment_list: &mut bool,
-    show_octree: &mut bool,
-) {
-    match *event {
-        glfw::WindowEvent::Key(Key::Num1, _, Action::Press, _) => {
-            *show_model = !*show_model;
-        }
-        glfw::WindowEvent::Key(Key::Num2, _, Action::Press, _) => {
-            *show_voxel_fragment_list = !*show_voxel_fragment_list;
-        }
-        glfw::WindowEvent::Key(Key::Num3, _, Action::Press, _) => {
-            *show_octree = !*show_octree;
-        }
-        _ => {}
-    }
-}
+toggle_boolean!(C, handle_light_movement);
+toggle_boolean!(F, handle_show_indirect_light);
+toggle_boolean!(L, handle_show_final_image);
+toggle_boolean!(Num1, handle_show_model);
+toggle_boolean!(Num2, handle_show_voxel_fragment_list);
+toggle_boolean!(Num3, handle_show_octree);
+handle_increments!(
+    "Cone angle",
+    Up,
+    Down,
+    handle_cone_angle,
+    f32,
+    0.01,
+    0.0,
+    6.0
+);
+handle_increments!(
+    "Octree level",
+    Right,
+    Left,
+    handle_update_octree_level,
+    u32,
+    1,
+    0,
+    CONFIG.octree_levels - 1
+);
 
 pub unsafe fn log_device_information() {
     let vendor = unsafe {
@@ -226,9 +161,9 @@ pub unsafe fn log_device_information() {
             .to_str()
             .unwrap()
     };
-    info!("GPU in use: {vendor}, {renderer}");
+    log::info!("GPU in use: {vendor}, {renderer}");
 
     let mut max_3d_texture_size = 0;
     unsafe { gl::GetIntegerv(gl::MAX_3D_TEXTURE_SIZE, &mut max_3d_texture_size) };
-    info!("Maximum 3D texture size (by dimension): {max_3d_texture_size}");
+    log::info!("Maximum 3D texture size (by dimension): {max_3d_texture_size}");
 }
