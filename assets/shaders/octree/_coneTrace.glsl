@@ -64,7 +64,8 @@ vec4 coneTrace(
     Node previousNode = Node(0, vec3(0), 0.0);
     Node previousParentNode;
     int steps = 0;
-    float firstStep = voxelSize;
+    float firstStep = 0;
+    //float firstStep = voxelSize;
 
     distanceAlongCone += firstStep;
     while (distanceAlongCone < maxDistance && returnColor.a < 1.0) {
@@ -111,6 +112,7 @@ vec4 coneTrace(
         if (useLighting) {
             childColor.rgb *= clamp(texture(brickPoolPhotons, childVoxelCoordinates).r * photonPower, 0, 1) / distanceFactor;
         }
+        return vec4(vec3(clamp(texture(brickPoolPhotons, childVoxelCoordinates).r * photonPower / 100, 0, 1)), 1.0);
         correctAlpha(childColor, stepMultiplier);
         vec3 parentVoxelCoordinates = findVoxel(queryCoordinates, parentNode);
         vec4 parentColor = texture(brickPoolColors, parentVoxelCoordinates);
