@@ -15,7 +15,8 @@ float brickPoolBrickSize = 3.0 / brickPoolResolutionf;
 float calculateLod(float coneDiameter) {
     // Could approximate log2 by lines between y = a and y = a + 1
     // Shouldn't this be log2(1 / coneDiameter) + 1 or something similar?
-    return max(maxOctreeLevel - log2(1 + coneDiameter * voxelDimension), 0);
+    //return max(maxOctreeLevel - log2(1 + coneDiameter * voxelDimension), 0);
+    return max(log2(1 / coneDiameter), 0);
 }
 
 // Brick marching
