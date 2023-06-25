@@ -3,11 +3,11 @@
 // - uniform uint maxOctreeLevel
 // - uniform sampler3D brickPoolColors
 // - uniform (r32ui) nodesQueried
+// - uniform atomic_uint queriedNodesCounter
 // - _traversalHelpers
 // - _octreeTraversal
 // - _brickCoordinates
 // - _coneTrace
-
 
 // rayOrigin should be between 0 and 1
 // maxDistance should be max 1
@@ -28,7 +28,6 @@ vec4 debugConeTrace(
     Node previousNode = Node(0, vec3(0), 0.0);
     Node previousParentNode;
     int steps = 0;
-    int nodesCount = 0; // For debugging
 
     //distanceAlongCone += voxelSize * 2;
     while (distanceAlongCone < maxDistance && returnColor.a < 1.0) {
@@ -60,8 +59,8 @@ vec4 debugConeTrace(
                 // break;
                 continue;
             }
+            int nodesCount = int(atomicCounterIncrement(queriedNodesCounter)); // For debugging
             imageStore(nodesQueried, nodesCount + 1, uvec4(uint(node.id), 0, 0, 0)); // For debugging
-            nodesCount += 1; // For debugging
         } else {
             node = previousNode;
             parentNode = previousParentNode;
@@ -99,7 +98,6 @@ vec4 debugConeTrace(
         // break;
     }
 
-    imageStore(nodesQueried, 0, uvec4(nodesCount, 0, 0, 0)); // For debugging
     returnColor.a = min(returnColor.a, 1.0);
 
     return returnColor;
