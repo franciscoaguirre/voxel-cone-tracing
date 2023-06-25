@@ -48,22 +48,22 @@ void main() {
     vec3 tangent = normalize(helper - dot(axis, helper) * axis);
     vec3 bitangent = cross(axis, tangent);
 
-    if (threadIndex == 1) {
+    if (threadIndex == 0) {
         direction = sinAngle * axis + cosAngle * tangent;
         debugConeTrace(position, direction, coneAngle, maxDistance, false);
     }
 
-    if (threadIndex == 2) {
+    if (threadIndex == 1) {
         direction = sinAngle * axis - cosAngle * tangent;
         debugConeTrace(position, direction, coneAngle, maxDistance, false);
     }
 
-    if (threadIndex == 3) {
+    if (threadIndex == 2) {
         direction = sinAngle * axis + cosAngle * bitangent;
         debugConeTrace(position, direction, coneAngle, maxDistance, false);
     }
 
-    if (threadIndex == 4) {
+    if (threadIndex == 3) {
         direction = sinAngle * axis - cosAngle * bitangent;
         debugConeTrace(position, direction, coneAngle, maxDistance, false);
     }
@@ -96,9 +96,7 @@ void main() {
 
     frag_color = vec4(1, 1, 0, 1);
 
-    float angleFromAxis = coneAngle;
-    // TODO: Corroborar que los angulos dan lo mismo
-    float angleFromPlane = (PI / 2) - angleFromAxis;
+    float angleFromPlane = (PI / 2) - coneAngle;
     drawCone(geom_position[0], direction[0], angleFromPlane, maxDistance[0]);
 }
 
