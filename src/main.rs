@@ -598,7 +598,7 @@ fn main() {
                 );
                 debug_cone_shader.set_float(c_str!("coneAngle"), cone_angle as f32);
 
-                gl::DrawArrays(gl::POINTS, 0, 5);
+                gl::DrawArrays(gl::POINTS, 0, 4);
                 let values = helpers::get_values_from_texture_buffer(
                     nodes_queried_texture_buffer,
                     1000,
@@ -610,8 +610,8 @@ fn main() {
                     helpers::get_value_from_atomic_counter(nodes_queried_counter) as usize;
 
                 if previous_values != values_set {
-                    dbg!(&values[1..total_nodes_queried]);
-                    selected_debug_nodes = (&values[1..total_nodes_queried])
+                    dbg!(&values[..total_nodes_queried]);
+                    selected_debug_nodes = (&values[..total_nodes_queried])
                         .iter()
                         .map(|&index| DebugNode::new(index, "picked by cone".to_string()))
                         .collect();

@@ -60,7 +60,7 @@ vec4 debugConeTrace(
                 continue;
             }
             int nodesCount = int(atomicCounterIncrement(queriedNodesCounter)); // For debugging
-            imageStore(nodesQueried, nodesCount + 1, uvec4(uint(node.id), 0, 0, 0)); // For debugging
+            imageStore(nodesQueried, nodesCount, uvec4(uint(node.id), 0, 0, 0)); // For debugging
         } else {
             node = previousNode;
             parentNode = previousParentNode;
