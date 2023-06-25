@@ -59,6 +59,8 @@ uniform sampler2D shadowMap;
 #include "assets/shaders/octree/_brickCoordinates.glsl"
 #include "./_coneTrace.glsl"
 
+const float PI = 3.14159;
+
 vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, bool useLighting);
 vec4 gatherSpecularIndirectLight(vec3 position, vec3 eyeDirection, vec3 normal);
 float visibilityCalculation(vec4 positionInLightSpace, vec3 normal);
@@ -194,32 +196,29 @@ vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, bool useLight
     // float coneAngle = 0.261799;
     //float coneAngle = 0.0001;
     vec3 bitangent = cross(normal, tangent);
-    vec3 direction = normal;
+    vec3 direction;
     vec4 indirectLight = vec4(0);
 
-    float primaryConeWeight = 1;
-    indirectLight += primaryConeWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting); // 15deg as rad
+    float angleFromAxis = 1.0472;
+    float sinAngle = sin(angleFromAxis);
+    float cosAngle = cos(angleFromAxis);
 
-    float angle = 1.0472;
-    float sinAngle = sin(angle);
-    float cosAngle = cos(angle);
+    float coneWeight = (PI / 2) - angleFromAxis;
 
     direction = sinAngle * normal + cosAngle * tangent;
-
-    float secondaryConeWeight = 1;
     
-    indirectLight += secondaryConeWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
     direction = sinAngle * normal - cosAngle * tangent;
-    indirectLight += secondaryConeWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
     direction = sinAngle * normal + cosAngle * bitangent;
-    indirectLight += secondaryConeWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
     direction = sinAngle * normal - cosAngle * bitangent;
-    indirectLight += secondaryConeWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
-    indirectLight /= primaryConeWeight + secondaryConeWeight * 4;
+    indirectLight /= coneWeight * 4;
 
     return indirectLight;
 }
