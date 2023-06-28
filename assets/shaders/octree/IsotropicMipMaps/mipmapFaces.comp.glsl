@@ -7,8 +7,6 @@ layout (local_size_x = WORKING_GROUP_SIZE, local_size_y = 1, local_size_z = 1) i
 uniform layout(binding = 0, r32ui) uimageBuffer nodePool;
 uniform layout(binding = 1, rgba8) image3D brickPoolValues;
 uniform layout(binding = 2, r32ui) uimageBuffer levelStartIndices;
-uniform layout(binding = 3, rgba8) image3D brickPoolChildrenColors;
-uniform layout(binding = 4, r32ui) uimageBuffer directionalNeighbors;
 
 uniform uint octreeLevel;
 uniform uint voxelDimension;
@@ -16,7 +14,7 @@ uniform uint voxelDimension;
 #include "./_helpers.glsl"
 #include "./_threadNodeUtil.glsl"
 #include "assets/shaders/octree/_brickCoordinates.glsl"
-#include "./_mipmapAnisotropic.glsl"
+#include "./_mipmapUtil.glsl"
 
 void main() {
     int nodeAddress = getThreadNode();
@@ -25,13 +23,13 @@ void main() {
         return;
     }
 
-    setup(nodeAddress);
-    vec4 left = mipmapAnisotropic(ivec3(0, 2, 2));
-    vec4 right = mipmapAnisotropic(ivec3(4, 2, 2));
-    vec4 bottom = mipmapAnisotropic(ivec3(2, 0, 2));
-    vec4 top = mipmapAnisotropic(ivec3(2, 4, 2));
-    vec4 near = mipmapAnisotropic(ivec3(2, 2, 0));
-    vec4 far = mipmapAnisotropic(ivec3(2, 2, 4));
+    loadChildNodeIDs(nodeAddress);
+    vec4 left = mipmapIsotropic(ivec3(0, 2, 2));
+    vec4 right = mipmapIsotropic(ivec3(4, 2, 2));
+    vec4 bottom = mipmapIsotropic(ivec3(2, 0, 2));
+    vec4 top = mipmapIsotropic(ivec3(2, 4, 2));
+    vec4 near = mipmapIsotropic(ivec3(2, 2, 0));
+    vec4 far = mipmapIsotropic(ivec3(2, 2, 4));
 
     memoryBarrier();
 

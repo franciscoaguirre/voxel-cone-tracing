@@ -7,8 +7,6 @@ layout (local_size_x = WORKING_GROUP_SIZE, local_size_y = 1, local_size_z = 1) i
 uniform layout(binding = 0, r32ui) uimageBuffer nodePool;
 uniform layout(binding = 1, rgba8) image3D brickPoolValues;
 uniform layout(binding = 2, r32ui) uimageBuffer levelStartIndices;
-uniform layout(binding = 3, rgba8) image3D brickPoolChildrenColors;
-uniform layout(binding = 4, r32ui) uimageBuffer directionalNeighbors;
 
 uniform uint octreeLevel;
 uniform uint voxelDimension;
@@ -16,7 +14,7 @@ uniform uint voxelDimension;
 #include "./_helpers.glsl"
 #include "./_threadNodeUtil.glsl"
 #include "assets/shaders/octree/_brickCoordinates.glsl"
-#include "./_mipmapAnisotropic.glsl"
+#include "./_mipmapUtil.glsl"
 
 void main() {
     int nodeAddress = getThreadNode();
@@ -25,19 +23,19 @@ void main() {
         return;
     }
 
-    setup(nodeAddress);
-    vec4 nearBottom = mipmapAnisotropic(ivec3(2, 0, 0));
-    vec4 nearRight = mipmapAnisotropic(ivec3(4, 2, 0));
-    vec4 nearTop = mipmapAnisotropic(ivec3(2, 4, 0));
-    vec4 nearLeft = mipmapAnisotropic(ivec3(0, 2, 0));
-    vec4 farBottom = mipmapAnisotropic(ivec3(2, 0, 4));
-    vec4 farRight = mipmapAnisotropic(ivec3(4, 2, 4));
-    vec4 farTop = mipmapAnisotropic(ivec3(2, 4, 4));
-    vec4 farLeft = mipmapAnisotropic(ivec3(0, 2, 4));
-    vec4 leftBottom = mipmapAnisotropic(ivec3(0, 0, 2));
-    vec4 leftTop = mipmapAnisotropic(ivec3(0, 4, 2));
-    vec4 rightBottom = mipmapAnisotropic(ivec3(4, 0, 2));
-    vec4 rightTop = mipmapAnisotropic(ivec3(4, 4, 2));
+    loadChildNodeIDs(nodeAddress);
+    vec4 nearBottom = mipmapIsotropic(ivec3(2, 0, 0));
+    vec4 nearRight = mipmapIsotropic(ivec3(4, 2, 0));
+    vec4 nearTop = mipmapIsotropic(ivec3(2, 4, 0));
+    vec4 nearLeft = mipmapIsotropic(ivec3(0, 2, 0));
+    vec4 farBottom = mipmapIsotropic(ivec3(2, 0, 4));
+    vec4 farRight = mipmapIsotropic(ivec3(4, 2, 4));
+    vec4 farTop = mipmapIsotropic(ivec3(2, 4, 4));
+    vec4 farLeft = mipmapIsotropic(ivec3(0, 2, 4));
+    vec4 leftBottom = mipmapIsotropic(ivec3(0, 0, 2));
+    vec4 leftTop = mipmapIsotropic(ivec3(0, 4, 2));
+    vec4 rightBottom = mipmapIsotropic(ivec3(4, 0, 2));
+    vec4 rightTop = mipmapIsotropic(ivec3(4, 4, 2));
 
     memoryBarrier();
 
