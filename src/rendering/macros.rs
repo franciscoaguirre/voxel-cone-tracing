@@ -27,11 +27,13 @@ macro_rules! handle_increments {
         pub fn $fn_name(event: &glfw::WindowEvent, value: &mut $type) {
             match *event {
                 glfw::WindowEvent::Key(Key::$up, _, Action::Press, _) => {
-                    *value = (*value + $increment).max($min_value);
+                    *value = (*value + $increment).min($max_value);
                     println!("{} is: {}", $name, *value);
                 }
                 glfw::WindowEvent::Key(Key::$down, _, Action::Press, _) => {
-                    *value = (*value - $increment).min($max_value);
+                    if *value != 0 as $type {
+                        *value = *value - $increment;
+                    }
                     println!("{} is: {}", $name, *value);
                 }
                 _ => {}
