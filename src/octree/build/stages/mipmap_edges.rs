@@ -33,12 +33,23 @@ impl MipmapEdgesPass {
 
         helpers::bind_image_texture(0, textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
         match brick_pool_values {
-            BrickPoolValues::Colors => helpers::bind_3d_image_texture(
-                1,
-                textures.brick_pool_colors,
-                gl::READ_WRITE,
-                gl::RGBA8,
-            ),
+            BrickPoolValues::Colors => {
+                // Set directional mipmap children's color texture
+                helpers::bind_3d_image_texture(
+                    1,
+                    textures.brick_pool_colors,
+                    gl::READ_WRITE,
+                    gl::RGBA8,
+                );
+                // Set directional mipmap parent's color texture
+                helpers::bind_3d_image_texture(
+                    3,
+                    textures.brick_pool_colors,
+                    gl::READ_WRITE,
+                    gl::RGBA8,
+                );
+                helpers::bind_image_texture(4, textures.neighbors[4].0, gl::READ_ONLY, gl::R32UI);
+            },
             BrickPoolValues::Normals => helpers::bind_3d_image_texture(
                 1,
                 textures.brick_pool_normals,

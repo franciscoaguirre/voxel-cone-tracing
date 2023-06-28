@@ -1,7 +1,7 @@
 #version 460 core
 
 layout (points) in;
-layout (triangle_strip, max_vertices = 128) out;
+layout (triangle_strip, max_vertices = 256) out;
 
 in vec4 geom_nodePosition[];
 in float geom_halfNodeSize[];
@@ -40,7 +40,7 @@ vec4 showProp(ivec3 coordinates, int type) {
 }
 
 void main() {
-    int mode = BY_PHOTONS;
+    int mode = BY_COLOR;
     vec4 nodePosition = geom_nodePosition[0];
     float voxelBrickSize = (geom_halfNodeSize[0] / 3) * 0.97;
     // So a brick goes fully inside a node, not accurate but works for debugging

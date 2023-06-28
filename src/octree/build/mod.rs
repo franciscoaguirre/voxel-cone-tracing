@@ -96,22 +96,22 @@ impl Octree {
         );
 
         let all_axis = vec![Axis::X, Axis::Y, Axis::Z];
-        for axis in all_axis.iter() {
-            shader_passes.border_transfer_pass.run(
-                &self.textures,
-                &self.geometry_data.node_data,
-                CONFIG.octree_levels - 1,
-                BrickPoolValues::Colors,
-                *axis,
-            );
-            shader_passes.border_transfer_pass.run(
-                &self.textures,
-                &self.border_data.node_data,
-                CONFIG.octree_levels - 1,
-                BrickPoolValues::Colors,
-                *axis,
-            );
-        }
+        //for axis in all_axis.iter() {
+            //shader_passes.border_transfer_pass.run(
+                //&self.textures,
+                //&self.geometry_data.node_data,
+                //CONFIG.octree_levels - 1,
+                //BrickPoolValues::Colors,
+                //*axis,
+            //);
+            //shader_passes.border_transfer_pass.run(
+                //&self.textures,
+                //&self.border_data.node_data,
+                //CONFIG.octree_levels - 1,
+                //BrickPoolValues::Colors,
+                //*axis,
+            //);
+        //}
 
         // shader_passes.border_transfer_pass.run(
         //     &self.textures,
@@ -173,22 +173,22 @@ impl Octree {
             );
 
             if level > 0 {
-                for axis in all_axis.iter() {
-                    shader_passes.border_transfer_pass.run(
-                        &self.textures,
-                        &self.geometry_data.node_data,
-                        level,
-                        BrickPoolValues::Colors,
-                        *axis,
-                    );
-                    shader_passes.border_transfer_pass.run(
-                        &self.textures,
-                        &self.border_data.node_data,
-                        level,
-                        BrickPoolValues::Colors,
-                        *axis,
-                    );
-                }
+                //for axis in all_axis.iter() {
+                    //shader_passes.border_transfer_pass.run(
+                        //&self.textures,
+                        //&self.geometry_data.node_data,
+                        //level,
+                        //BrickPoolValues::Colors,
+                        //*axis,
+                    //);
+                    //shader_passes.border_transfer_pass.run(
+                        //&self.textures,
+                        //&self.border_data.node_data,
+                        //level,
+                        //BrickPoolValues::Colors,
+                        //*axis,
+                    //);
+                //}
                 // shader_passes.border_transfer_pass.run(
                 //     &self.textures,
                 //     &self.geometry_data.node_data,
