@@ -5,7 +5,11 @@
 // - uniform uimageBuffer directionalNeighbors
 // - uniform image3D brickPoolValues
 
+uniform int signn;
+uniform int axis;
+
 const float gaussianWeights[3] = { 1, 0.5, 0.25 };
+//const float gaussianWeights[3] = { 1.0, 1.0, 1.0 };
 vec4 adjacentVoxels[3][3][3];
 int childNodeIDs[] = {0, 0, 0, 0, 0, 0, 0, 0};
 int neighborChildNodeIDs[] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -67,7 +71,6 @@ vec4 calculateDirectionalValue(ivec3 initialPosition, Direction direction) {
     } else if (direction.axis == Z_AXIS) {
       stepp = ivec3(0, 0, direction.sign);
     }
-    stepp = ivec3(0);
 
     for (int l = 0; l < 3; l++) {
         vec4 color = adjacentVoxels[position.x][position.y][position.z];
@@ -109,7 +112,7 @@ vec4 getNeighborColor(ivec3 position, int axis) {
     ivec3 localPositionInChild = clampedPosition - 2 * childOffset;
 
     ivec3 childBrickAddress = calculateBrickCoordinates(neighborChildNodeIDs[childIndex]);
-    return imageLoad(brickPoolValues, childBrickAddress + localPositionInChild);
+    return imageLoad(brickPoolChildrenColors, childBrickAddress + localPositionInChild);
 }
 
 vec4 getColor(ivec3 position) {
@@ -190,11 +193,13 @@ void loadAdjacentVoxels(ivec3 position, Direction direction) {
 //vec4 mipmapAnisotropic(ivec3 position, Direction direction) {
 // Encontrar una base de 9 voxels, dirección abajo hacia arriba agarramos los de abajo
 vec4 mipmapAnisotropic(ivec3 position) {
-    Direction direction = Direction(X_AXIS, 1);
+    Direction direction = Direction(axis, signn);
     loadAdjacentVoxels(position, direction);
     vec4 color = vec4(0);
     int baseOffset = direction.sign == -1 ? 2 : 0;
     float weightSum = 0;
+    float alphaWeightSum = 0;
+    vec4 newColor = vec4(0);
 
     // Encontrar una base de 9 voxels, dirección abajo hacia arriba agarramos los de abajo
     for (int i = -1; i <= 1; i++) {
@@ -203,33 +208,55 @@ vec4 mipmapAnisotropic(ivec3 position) {
             float weight = gaussianWeights[distance];
 
             if (direction.axis == X_AXIS) {
-                bool shouldSkipY = position.y + i < 0 || position.x + i > 4;
+                bool shouldSkipY = position.y + i < 0 || position.y + i > 4;
                 bool shouldSkipZ = position.z + j < 0 || position.z + j > 4;
                 if (shouldSkipY || shouldSkipZ) {
                     continue;
                 }
-                color += calculateDirectionalValue(ivec3(baseOffset, i + 1, j + 1), direction) * weight;
-                weightSum += weight;
+
+                newColor = calculateDirectionalValue(ivec3(baseOffset, i + 1, j + 1), direction) * weight;
+                // To treat fully transparent colors as just affecting the transparency of the object 
+                if (newColor.a > 0.001) {
+                  color += newColor;
+                  weightSum += weight;
+                  alphaWeightSum += weight;
+                } else {
+                  alphaWeightSum += weight;
+                }
             } else if (direction.axis == Y_AXIS) {
                 bool shouldSkipX = position.x + i < 0 || position.x + i > 4;
                 bool shouldSkipZ = position.z + j < 0 || position.z + j > 4;
                 if (shouldSkipX || shouldSkipZ) {
                     continue;
                 }
-                color += calculateDirectionalValue(ivec3(i + 1, baseOffset, j + 1), direction) * weight;
-                weightSum += weight;
+
+                newColor = calculateDirectionalValue(ivec3(i + 1, baseOffset, j + 1), direction) * weight;
+                if (newColor.a > 0.001) {
+                  color += newColor;
+                  weightSum += weight;
+                  alphaWeightSum += weight;
+                } else {
+                  alphaWeightSum += weight;
+                }
             } else if (direction.axis == Z_AXIS) {
                 bool shouldSkipX = position.x + i < 0 || position.x + i > 4;
                 bool shouldSkipY = position.y + j < 0 || position.y + j > 4;
                 if (shouldSkipX || shouldSkipY) {
                     continue;
                 }
-                color += calculateDirectionalValue(ivec3(i + 1, j + 1, baseOffset), direction) * weight;
-                weightSum += weight;
+
+                newColor = calculateDirectionalValue(ivec3(i + 1, j + 1, baseOffset), direction) * weight;
+                if (newColor.a > 0.001) {
+                  color += newColor;
+                  weightSum += weight;
+                  alphaWeightSum += weight;
+                } else {
+                  alphaWeightSum += weight;
+                }
             }
         }
     }
 
     //return adjacentVoxels[2][1][1];
-    return color / weightSum;
+    return vec4(color.rgb / weightSum, color.a / alphaWeightSum);
 }
