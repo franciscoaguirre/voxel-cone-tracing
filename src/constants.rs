@@ -13,7 +13,31 @@ impl Into<u32> for Axis {
             Axis::X => 0,
             Axis::Y => 1,
             Axis::Z => 2,
-            _ => panic!("Wrong Axis value"),
+        }
+    }
+}
+
+impl Into<i32> for Axis {
+    fn into(self) -> i32 {
+        match self {
+            Axis::X => 0,
+            Axis::Y => 1,
+            Axis::Z => 2,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum Sign {
+    Pos,
+    Neg,
+}
+
+impl Into<i32> for Sign {
+    fn into(self) -> i32 {
+        match self {
+            Sign::Pos => 1,
+            Sign::Neg => -1,
         }
     }
 }
