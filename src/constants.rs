@@ -1,6 +1,6 @@
 pub const CHILDREN_PER_NODE: u32 = 8;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Axis {
     X,
     Y,

@@ -9,6 +9,12 @@ uniform layout(binding = 0, r32ui) uimageBuffer nodePoolNeighbors; // Will have 
 uniform layout(binding = 1, rgba8) image3D brickPoolValues; // Will be different
 uniform layout(binding = 2, r32ui) uimageBuffer levelStartIndices;
 
+struct Direction {
+    int axis;
+    int sign;
+};
+
+uniform Direction direction;
 uniform uint axis;
 uniform uint octreeLevel;
 uniform uint voxelDimension;
@@ -42,8 +48,7 @@ void main() {
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
                 memoryBarrier();
 
-                vec4[] valuesToAverage = { borderValue, neighborBorderValue };
-                vec4 finalValue = averageHandlingEmpty(valuesToAverage);
+                vec4 finalValue = borderValue; // We copy the value to the neighbor
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
             }
@@ -60,8 +65,7 @@ void main() {
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
                 memoryBarrier();
 
-                vec4[] valuesToAverage = { borderValue, neighborBorderValue };
-                vec4 finalValue = averageHandlingEmpty(valuesToAverage);
+                vec4 finalValue = borderValue + neighborBorderValue; // We hold partial values on each
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
             }
@@ -78,8 +82,7 @@ void main() {
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
                 memoryBarrier();
 
-                vec4[] valuesToAverage = { borderValue, neighborBorderValue };
-                vec4 finalValue = averageHandlingEmpty(valuesToAverage);
+                vec4 finalValue = borderValue + neighborBorderValue; // We hold partial values on each
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
             }
