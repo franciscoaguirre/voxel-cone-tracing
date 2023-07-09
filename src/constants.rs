@@ -1,6 +1,6 @@
 pub const CHILDREN_PER_NODE: u32 = 8;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum Axis {
     X,
     Y,
@@ -27,7 +27,7 @@ impl Into<i32> for Axis {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum Sign {
     Pos,
     Neg,
@@ -40,4 +40,10 @@ impl Into<i32> for Sign {
             Sign::Neg => -1,
         }
     }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct Direction {
+    pub axis: Axis,
+    pub sign: Sign,
 }
