@@ -69,3 +69,10 @@ bool isOutsideRange(ivec3 val, ivec3 lowerBound, ivec3 higherBound) {
 
   return any(isGreater) || any(isLess);
 }
+
+bool isOutsideRange(int val, int lowerBound, int higherBound) {
+  bool isGreater = val > higherBound;
+  bool isLess = val < lowerBound;
+
+  return isGreater || isLess;
+}

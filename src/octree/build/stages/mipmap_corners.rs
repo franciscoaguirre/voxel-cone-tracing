@@ -2,8 +2,8 @@ use c_str_macro::c_str;
 
 use crate::{
     config::CONFIG,
-    constants::Axis,
     constants::Sign,
+    constants::{Axis, Direction},
     helpers,
     octree::{build::BrickPoolValues, NodeData, OctreeTextures},
     rendering::shader::Shader,
@@ -26,16 +26,15 @@ impl MipmapCornersPass {
         node_data: &NodeData,
         level: u32,
         brick_pool_values: BrickPoolValues,
-        axis: Axis,
-        sign: Sign,
+        direction: Direction,
     ) {
-        let mut neighbors_texture_number = match axis {
+        let mut neighbors_texture_number = match direction.axis {
             Axis::X => 0,
             Axis::Y => 2,
             Axis::Z => 4,
         };
         // Sign 1 means positive sign, and also means we need the positive sign neighbors texture
-        neighbors_texture_number = match sign {
+        neighbors_texture_number = match direction.sign {
             Sign::Pos => neighbors_texture_number,
             Sign::Neg => neighbors_texture_number + 1,
         };
@@ -45,9 +44,9 @@ impl MipmapCornersPass {
         self.shader.set_uint(c_str!("octreeLevel"), level);
         self.shader
             .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
-        self.shader.set_int(c_str!("axis"), axis.into());
+        self.shader.set_int(c_str!("axis"), direction.axis.into());
         // sign is a reserved keyword, so using signn
-        self.shader.set_int(c_str!("signn"), sign.into());
+        self.shader.set_int(c_str!("signn"), direction.sign.into());
 
         helpers::bind_image_texture(0, textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
         match brick_pool_values {
@@ -66,8 +65,13 @@ impl MipmapCornersPass {
                     gl::READ_WRITE,
                     gl::RGBA8,
                 );
-                helpers::bind_image_texture(4, textures.neighbors[neighbors_texture_number].0, gl::READ_ONLY, gl::R32UI);
-            },
+                helpers::bind_image_texture(
+                    4,
+                    textures.neighbors[neighbors_texture_number].0,
+                    gl::READ_ONLY,
+                    gl::R32UI,
+                );
+            }
             BrickPoolValues::Normals => helpers::bind_3d_image_texture(
                 1,
                 textures.brick_pool_normals,
