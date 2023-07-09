@@ -9,7 +9,6 @@ uniform int signn;
 uniform int axis;
 
 const float gaussianWeights[3] = { 1, 0.5, 0.25 };
-//const float gaussianWeights[3] = { 1.0, 1.0, 1.0 };
 vec4 adjacentVoxels[3][3][3];
 int childNodeIDs[] = {0, 0, 0, 0, 0, 0, 0, 0};
 int neighborChildNodeIDs[] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -22,7 +21,6 @@ struct Direction {
     int axis;
     int sign;
 };
-
 
 void loadChildNodeIDs(int nodeID) {
     for (int i = 0; i < 8; i++) {
@@ -132,18 +130,15 @@ void loadAdjacentVoxels(ivec3 position, Direction direction) {
 
                 bool shouldSkipX = (
                     direction.axis != X_AXIS &&
-                    lookupPosition.x < 0 &&
-                    lookupPosition.x > 4
+                    isOutsideRange(lookupPosition.x, 0, 4)
                 );
                 bool shouldSkipY = (
                     direction.axis != Y_AXIS &&
-                    lookupPosition.y < 0 &&
-                    lookupPosition.y > 4
+                    isOutsideRange(lookupPosition.y, 0, 4)
                 );
                 bool shouldSkipZ = (
                     direction.axis != Z_AXIS &&
-                    lookupPosition.z < 0 &&
-                    lookupPosition.z > 4
+                    isOutsideRange(lookupPosition.z, 0, 4)
                 );
 
                 if (shouldSkipX || shouldSkipY || shouldSkipZ) {
@@ -208,8 +203,8 @@ vec4 mipmapAnisotropic(ivec3 position) {
             float weight = gaussianWeights[distance];
 
             if (direction.axis == X_AXIS) {
-                bool shouldSkipY = position.y + i < 0 || position.y + i > 4;
-                bool shouldSkipZ = position.z + j < 0 || position.z + j > 4;
+                bool shouldSkipY = isOutsideRange(position.y + i, 0, 4);
+                bool shouldSkipZ = isOutsideRange(position.z + j, 0, 4);
                 if (shouldSkipY || shouldSkipZ) {
                     continue;
                 }
@@ -224,8 +219,8 @@ vec4 mipmapAnisotropic(ivec3 position) {
                   alphaWeightSum += weight;
                 }
             } else if (direction.axis == Y_AXIS) {
-                bool shouldSkipX = position.x + i < 0 || position.x + i > 4;
-                bool shouldSkipZ = position.z + j < 0 || position.z + j > 4;
+                bool shouldSkipX = isOutsideRange(position.x + i, 0, 4);
+                bool shouldSkipZ = isOutsideRange(position.z + j, 0, 4);
                 if (shouldSkipX || shouldSkipZ) {
                     continue;
                 }
@@ -239,8 +234,8 @@ vec4 mipmapAnisotropic(ivec3 position) {
                   alphaWeightSum += weight;
                 }
             } else if (direction.axis == Z_AXIS) {
-                bool shouldSkipX = position.x + i < 0 || position.x + i > 4;
-                bool shouldSkipY = position.y + j < 0 || position.y + j > 4;
+                bool shouldSkipX = isOutsideRange(position.x + i, 0, 4);
+                bool shouldSkipY = isOutsideRange(position.y + j, 0, 4);
                 if (shouldSkipX || shouldSkipY) {
                     continue;
                 }
@@ -257,6 +252,6 @@ vec4 mipmapAnisotropic(ivec3 position) {
         }
     }
 
-    //return adjacentVoxels[2][1][1];
+    // return adjacentVoxels[2][1][1];
     return vec4(color.rgb / weightSum, color.a / alphaWeightSum);
 }
