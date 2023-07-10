@@ -94,6 +94,21 @@ impl BorderTransferPass {
             self.shader.dispatch(groups_count);
             self.shader.wait();
         }
+        let mut neighbors_texture_number = match direction.axis {
+            Axis::X => 0,
+            Axis::Y => 2,
+            Axis::Z => 4,
+        };
+        neighbors_texture_number = match direction.sign {
+            Sign::Pos => neighbors_texture_number,
+            Sign::Neg => neighbors_texture_number + 1,
+        };
+        helpers::bind_image_texture(
+            0,
+            textures.neighbors[neighbors_texture_number].0,
+            gl::READ_ONLY,
+            gl::R32UI,
+        );
         self.shader.set_uint(c_str!("axis"), direction.axis.into());
         self.shader.dispatch(groups_count);
         self.shader.wait();
@@ -127,6 +142,21 @@ impl BorderTransferPass {
             self.shader.dispatch(groups_count);
             self.shader.wait();
         }
+        let mut neighbors_texture_number = match direction.axis {
+            Axis::X => 0,
+            Axis::Y => 2,
+            Axis::Z => 4,
+        };
+        neighbors_texture_number = match direction.sign {
+            Sign::Pos => neighbors_texture_number,
+            Sign::Neg => neighbors_texture_number + 1,
+        };
+        helpers::bind_image_texture(
+            0,
+            textures.neighbors[neighbors_texture_number].0,
+            gl::READ_ONLY,
+            gl::R32UI,
+        );
         self.shader.set_uint(c_str!("axis"), direction.axis.into());
         self.shader.dispatch(groups_count);
         self.shader.wait();
