@@ -252,6 +252,5 @@ vec4 mipmapAnisotropic(ivec3 position) {
         }
     }
 
-    // return adjacentVoxels[2][1][1];
     return vec4(color.rgb / weightSum, color.a / alphaWeightSum);
 }
