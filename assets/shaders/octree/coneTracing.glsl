@@ -41,6 +41,13 @@ uniform float photonPower;
 uniform bool showIndirectLight;
 uniform vec3 eyePosition;
 
+// Boolean toggles
+uniform bool shouldShowColor;
+uniform bool shouldShowDirect;
+uniform bool shouldShowIndirect;
+uniform bool shouldShowIndirectSpecular;
+uniform bool shouldShowAmbientOcclusion;
+
 // Brick attributes
 uniform sampler3D brickPoolColorsX;
 uniform sampler3D brickPoolColorsXNeg;
@@ -71,29 +78,12 @@ vec4 gatherSpecularIndirectLight(vec3 position, vec3 eyeDirection, vec3 normal);
 float visibilityCalculation(vec4 positionInLightSpace, vec3 normal);
 
 void main() {
-    // vec4 indirectDiffuse = vec4(0, 0, 0, 1);
-    // uint numberDiffuseCones = 5;
-    // for (uint i = 0; i < numberDiffuseCones; i++)
-    //     indirectDiffuse += coneTrace(...);
-    // indirectDiffuse /= numberDiffuseCones;
-
-    // vec4 specular = coneTrace(..., specular);
-
-    // vec4 phongDiffuse = min(dot(...), 0);
-    // vec4 directDiffuse = phongDiffuse * texture(texture_diffuse1, frag_textureCoordinates);
-
-    // vec4 totalColor = (directDiffuse + indirectDiffuse + specular);
-    // FragColor = totalColor * ambientOcclusion;
-
-    // float coneAngle = 0.000001;
-
     vec3 positionRaw = texture(gBufferPositions, In.textureCoordinates).xyz;
     vec3 position = positionRaw * 0.5 + 0.5;
 
     vec3 eyeDirection = normalize(eyePosition - positionRaw);
 
     vec3 normal = texture(gBufferNormals, In.textureCoordinates).xyz;
-    // vec3 normal = vec3(0, 1, 0);
     vec3 helper = normal - vec3(0.1, 0, 0); // Random vector
     vec3 tangent = normalize(helper - dot(normal, helper) * normal);
 
@@ -104,19 +94,22 @@ void main() {
     }
 
     bool useLighting = false;
-    // float ambientOcclusion = gatherIndirectLight(position, normal, tangent, useLighting).a;
+    float ambientOcclusion;
+    if (shouldShowAmbientOcclusion) {
+        ambientOcclusion = gatherIndirectLight(position, normal, tangent, useLighting).a;
+    }
 
     useLighting = true;
 
     vec3 indirectLight = vec3(0);
-    if (showIndirectLight) {
+    if (shouldShowIndirect) {
         indirectLight = gatherIndirectLight(position, normal, tangent, useLighting).rgb;
     }
 
-    // vec3 specularIndirectLight = vec3(0);
-    // if (showIndirectLight) {
-    //     specularIndirectLight = gatherSpecularIndirectLight(position, eyeDirection, normal).rgb;
-    // }
+    vec3 specularIndirectLight = vec3(0);
+    if (shouldShowIndirectSpecular) {
+        specularIndirectLight = gatherSpecularIndirectLight(position, eyeDirection, normal).rgb;
+    }
 
     vec4 positionInLightSpace = lightProjectionMatrix * lightViewMatrix * vec4(positionRaw, 1.0);
     float visibility = visibilityCalculation(positionInLightSpace, normal);
@@ -124,15 +117,31 @@ void main() {
     float diffuse = max(0.0, dot(lightDirection, normal));
     // float h = normalize((lightDirection - view);
     // float specular = pow(max(0.0, dot(normal, h)), shininess);
-    vec3 directLight = vec3(1) * diffuse;
-    vec3 ambient = vec3(1) * 0.15;
+    vec3 directLight = vec3(diffuse);
 
-    vec3 lightIntensity = indirectLight + visibility * directLight; // TODO: Add indirectLight.rgb
+    vec4 finalImage = vec4(0);
 
+    if (shouldShowDirect) {
+        finalImage += vec4(visibility * directLight, 1.0);
+    }
+    if (shouldShowIndirect) {
+        finalImage += vec4(indirectLight, 1.0);
+    }
+    if (shouldShowIndirectSpecular) {
+        finalImage += vec4(specularIndirectLight, 1.0);
+    }
+    if (shouldShowAmbientOcclusion) {
+        finalImage += vec4(vec3(1.0 - ambientOcclusion), 1.0);
+    }
+    if (shouldShowColor) {
+        finalImage *= color;
+    }
+    
+    outColor = finalImage;
     // FragColor = vec4(texture(texture_diffuse1, frag_textureCoordinates).xyz - vec3(AO), 1);
     // outColor = vec4(vec3(ambientOcclusion), 1.0);
     //outColor = vec4(1.0 - vec3(ambientOcclusion), 1.0);
-    outColor = color * vec4(lightIntensity, 1.0);
+    // outColor = color * vec4(lightIntensity, 1.0);
     // outColor = texture(gBufferColors, In.textureCoordinates);
     // outColor = vec4(position, 1.0);
     // outColor = vec4(normal, 1.0);
