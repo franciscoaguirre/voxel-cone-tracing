@@ -19,6 +19,7 @@ pub struct Menu {
     is_showing_diagnostics_window: bool,
     is_showing_photons_window: bool,
     is_showing_children_window: bool,
+    is_showing_images_window: bool,
 }
 
 impl Menu {
@@ -54,6 +55,10 @@ impl Menu {
 
     pub fn is_showing_children_window(&self) -> bool {
         self.is_showing_children_window
+    }
+
+    pub fn is_showing_images_window(&self) -> bool {
+        self.is_showing_images_window
     }
 
     pub fn handle_event(&mut self, event: WindowEvent) {
@@ -124,6 +129,7 @@ impl Menu {
             is_showing_diagnostics_window: false,
             is_showing_photons_window: false,
             is_showing_children_window: false,
+            is_showing_images_window: false,
             painter,
             context,
             input_state,
@@ -145,6 +151,9 @@ impl Menu {
             }
             if ui.button("Children").clicked() {
                 self.is_showing_children_window = !self.is_showing_children_window;
+            }
+            if ui.button("Images").clicked() {
+                self.is_showing_images_window = !self.is_showing_images_window;
             }
         });
     }
@@ -190,11 +199,69 @@ impl Menu {
         });
     }
 
+    pub fn create_images_window(
+        &self,
+        should_show_color: &mut bool,
+        should_show_direct: &mut bool,
+        should_show_indirect: &mut bool,
+        should_show_indirect_specular: &mut bool,
+        should_show_ambient_occlusion: &mut bool,
+    ) {
+        egui::Window::new("Images").show(&self.context, |ui| {
+            if ui
+                .button(Self::get_button_text("Color", *should_show_color))
+                .clicked()
+            {
+                *should_show_color = !*should_show_color;
+            }
+            if ui
+                .button(Self::get_button_text("Direct light", *should_show_direct))
+                .clicked()
+            {
+                *should_show_direct = !*should_show_direct;
+            }
+            if ui
+                .button(Self::get_button_text(
+                    "Indirect diffuse",
+                    *should_show_indirect,
+                ))
+                .clicked()
+            {
+                *should_show_indirect = !*should_show_indirect;
+            }
+            if ui
+                .button(Self::get_button_text(
+                    "Indirect specular",
+                    *should_show_indirect_specular,
+                ))
+                .clicked()
+            {
+                *should_show_indirect_specular = !*should_show_indirect_specular;
+            }
+            if ui
+                .button(Self::get_button_text(
+                    "Ambient occlusion",
+                    *should_show_ambient_occlusion,
+                ))
+                .clicked()
+            {
+                *should_show_ambient_occlusion = !*should_show_ambient_occlusion;
+            }
+        });
+    }
+
+    fn get_button_text(text: &str, clicked: bool) -> egui::RichText {
+        let mut button_text = egui::RichText::new(text);
+        if clicked {
+            button_text = button_text.color(Color32::RED);
+        }
+        button_text
+    }
+
     pub fn create_node_positions_window(
         &self,
         items: &Vec<DebugNode>,
         selected_items: &mut Vec<DebugNode>,
-        window_title: &str,
         filter_text: &mut String,
         should_show_neighbors: &mut bool,
         bricks_to_show: &mut BricksToShow,
@@ -204,7 +271,7 @@ impl Menu {
     ) {
         let pinned_items: Vec<DebugNode> = selected_items.clone();
 
-        egui::Window::new(window_title)
+        egui::Window::new("Nodes")
             .resize(|r| r.fixed_size((200., 400.)))
             .show(&self.context, |ui| {
                 ui.vertical(|ui| {
@@ -216,27 +283,20 @@ impl Menu {
                     });
                     ui.horizontal(|ui| {
                         ui.label("Bricks: ");
-                        let get_button_text = |text, clicked| {
-                            let mut button_text = egui::RichText::new(text);
-                            if clicked {
-                                button_text = button_text.color(Color32::RED);
-                            }
-                            button_text
-                        };
                         if ui
-                            .button(get_button_text("Z0", bricks_to_show.z0()))
+                            .button(Self::get_button_text("Z0", bricks_to_show.z0()))
                             .clicked()
                         {
                             bricks_to_show.toggle_z0();
                         }
                         if ui
-                            .button(get_button_text("Z1", bricks_to_show.z1()))
+                            .button(Self::get_button_text("Z1", bricks_to_show.z1()))
                             .clicked()
                         {
                             bricks_to_show.toggle_z1();
                         }
                         if ui
-                            .button(get_button_text("Z2", bricks_to_show.z2()))
+                            .button(Self::get_button_text("Z2", bricks_to_show.z2()))
                             .clicked()
                         {
                             bricks_to_show.toggle_z2();
