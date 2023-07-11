@@ -35,7 +35,7 @@ impl SpreadLeafBricksPass {
             BrickPoolValues::Colors => {
                 helpers::bind_3d_image_texture(
                     0,
-                    textures.brick_pool_colors,
+                    textures.brick_pool_colors[0], // We use the +X texture for the lower level
                     gl::READ_WRITE,
                     gl::RGBA8,
                 );

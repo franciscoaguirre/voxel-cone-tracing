@@ -199,6 +199,8 @@ impl Menu {
         should_show_neighbors: &mut bool,
         bricks_to_show: &mut BricksToShow,
         selected_items_updated: &mut bool,
+        color_direction: &mut u32,
+        current_octree_level: &mut u32,
     ) {
         let pinned_items: Vec<DebugNode> = selected_items.clone();
 
@@ -240,6 +242,11 @@ impl Menu {
                             bricks_to_show.toggle_z2();
                         }
                     });
+                    ui.add(
+                        egui::Slider::new(current_octree_level, 0..=CONFIG.octree_levels - 1)
+                            .text("Octree level"),
+                    );
+                    ui.add(egui::Slider::new(color_direction, 0..=5).text("Direction"));
                     ui.text_edit_singleline(filter_text);
                     egui::ScrollArea::vertical()
                         .max_height(200.)

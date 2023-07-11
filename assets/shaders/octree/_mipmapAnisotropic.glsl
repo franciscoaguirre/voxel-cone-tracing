@@ -3,10 +3,7 @@
 // - _brickCoordinates
 // - uniform uimageBuffer nodePool
 // - uniform uimageBuffer directionalNeighbors
-// - uniform image3D brickPoolValues
-
-uniform int signn;
-uniform int axis;
+// - uniform image3D brickPoolValuesRead
 
 const float gaussianWeights[3] = { 1, 0.5, 0.25 };
 vec4 adjacentVoxels[3][3][3];
@@ -22,6 +19,8 @@ struct Direction {
     int sign;
 };
 
+uniform Direction direction;
+
 void loadChildNodeIDs(int nodeID) {
     for (int i = 0; i < 8; i++) {
         int childNodeID = int(imageLoad(nodePool, nodeID * CHILDREN_PER_NODE + i).r);
@@ -30,9 +29,9 @@ void loadChildNodeIDs(int nodeID) {
     memoryBarrier();
 }
 
-void loadNeighborChildNodeIDs(int nodeID) {
+void loadNeighborChildNodeIDs(int neighborNodeID) {
     for (int i = 0; i < 8; i++) {
-        int childNodeID = int(imageLoad(nodePool, nodeID * CHILDREN_PER_NODE + i).r);
+        int childNodeID = int(imageLoad(nodePool, neighborNodeID * CHILDREN_PER_NODE + i).r);
         neighborChildNodeIDs[i] = childNodeID;
     }
     memoryBarrier();
@@ -52,7 +51,8 @@ void setup(int nodeID) {
 }
 
 void accumulate(inout vec4 color, vec4 voxelColor) {
-    color.rgb = color.rgb * color.a + (1 - color.a) * voxelColor.rgb * voxelColor.a;
+    // TODO: We probably should multiply by `voxelColor.a`
+    color.rgb = color.rgb * color.a + (1 - color.a) * voxelColor.rgb;
     color.a += (1 - color.a) * voxelColor.a;
 }
 
@@ -110,7 +110,7 @@ vec4 getNeighborColor(ivec3 position, int axis) {
     ivec3 localPositionInChild = clampedPosition - 2 * childOffset;
 
     ivec3 childBrickAddress = calculateBrickCoordinates(neighborChildNodeIDs[childIndex]);
-    return imageLoad(brickPoolChildrenColors, childBrickAddress + localPositionInChild);
+    return imageLoad(brickPoolValuesRead, childBrickAddress + localPositionInChild);
 }
 
 vec4 getColor(ivec3 position) {
@@ -119,7 +119,7 @@ vec4 getColor(ivec3 position) {
     ivec3 localPositionInChild = position - 2 * childOffset;
 
     ivec3 childBrickAddress = calculateBrickCoordinates(childNodeIDs[childIndex]);
-    return imageLoad(brickPoolChildrenColors, childBrickAddress + localPositionInChild);
+    return imageLoad(brickPoolValuesRead, childBrickAddress + localPositionInChild);
 }
 
 void loadAdjacentVoxels(ivec3 position, Direction direction) {
@@ -188,7 +188,6 @@ void loadAdjacentVoxels(ivec3 position, Direction direction) {
 //vec4 mipmapAnisotropic(ivec3 position, Direction direction) {
 // Encontrar una base de 9 voxels, dirección abajo hacia arriba agarramos los de abajo
 vec4 mipmapAnisotropic(ivec3 position) {
-    Direction direction = Direction(axis, signn);
     loadAdjacentVoxels(position, direction);
     vec4 color = vec4(0);
     int baseOffset = direction.sign == -1 ? 2 : 0;

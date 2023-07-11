@@ -134,6 +134,7 @@ fn main() {
         .collect();
     let mut selected_debug_nodes: Vec<DebugNode> = Vec::new();
     let mut selected_debug_nodes_updated = false;
+    let mut color_direction: u32 = 0;
     let mut photons: Vec<u32> = Vec::new();
     let mut children: Vec<u32> = Vec::new();
 
@@ -271,7 +272,6 @@ fn main() {
                     &mut last_y,
                     &mut camera,
                 );
-                common::handle_update_octree_level(&event, &mut current_octree_level);
                 common::handle_show_model(&event, &mut show_model);
                 common::handle_show_voxel_fragment_list(&event, &mut show_voxel_fragment_list);
                 common::handle_show_octree(&event, &mut show_octree);
@@ -297,6 +297,8 @@ fn main() {
                     &mut should_show_neighbors,
                     &mut bricks_to_show,
                     &mut selected_debug_nodes_updated,
+                    &mut color_direction,
+                    &mut current_octree_level,
                 );
             }
             if menu.is_showing_diagnostics_window() {
@@ -378,7 +380,13 @@ fn main() {
             }
 
             if show_octree {
-                octree.render(&model, &view, &projection, current_octree_level);
+                octree.render(
+                    &model,
+                    &view,
+                    &projection,
+                    current_octree_level,
+                    color_direction,
+                );
             }
 
             octree.set_node_indices(
@@ -402,7 +410,7 @@ fn main() {
             }
 
             if bricks_to_show.at_least_one() {
-                octree.run_node_bricks_shader(&projection, &view, &model);
+                octree.run_node_bricks_shader(&projection, &view, &model, color_direction);
             }
 
             if show_model {
@@ -462,7 +470,7 @@ fn main() {
                 let brick_pool_textures = vec![
                     (
                         c_str!("brickPoolColors"),
-                        octree.textures.brick_pool_colors,
+                        octree.textures.brick_pool_colors[0], // TODO: Use other directions
                         gl::LINEAR as i32,
                     ),
                     (
@@ -545,7 +553,7 @@ fn main() {
 
             {
                 //////////////////////////////////// Debug stuff //////////////////////////////
-                
+
                 //debug_cone_shader.use_program();
                 //let mut vao = 0;
                 //gl::GenVertexArrays(1, &mut vao);
@@ -553,10 +561,10 @@ fn main() {
 
                 //helpers::bind_image_texture(0, nodes_queried_texture, gl::WRITE_ONLY, gl::R32UI);
                 //helpers::bind_image_texture(
-                    //1,
-                    //octree.textures.node_pool.0,
-                    //gl::READ_ONLY,
-                    //gl::R32UI,
+                //1,
+                //octree.textures.node_pool.0,
+                //gl::READ_ONLY,
+                //gl::R32UI,
                 //);
 
                 //let nodes_queried_counter = helpers::generate_atomic_counter_buffer();
@@ -587,37 +595,37 @@ fn main() {
                 //debug_cone_shader.set_mat4(c_str!("projection"), &projection);
                 //debug_cone_shader.set_mat4(c_str!("view"), &view);
                 //debug_cone_shader.set_vec3(
-                    //c_str!("position"),
-                    //debug_cone_transform.position.x,
-                    //debug_cone_transform.position.y,
-                    //debug_cone_transform.position.z,
+                //c_str!("position"),
+                //debug_cone_transform.position.x,
+                //debug_cone_transform.position.y,
+                //debug_cone_transform.position.z,
                 //);
                 //debug_cone_shader.set_vec3(
-                    //c_str!("axis"),
-                    //debug_cone_direction.x,
-                    //debug_cone_direction.y,
-                    //debug_cone_direction.z,
+                //c_str!("axis"),
+                //debug_cone_direction.x,
+                //debug_cone_direction.y,
+                //debug_cone_direction.z,
                 //);
                 //debug_cone_shader.set_float(c_str!("coneAngle"), cone_angle as f32);
 
                 //gl::DrawArrays(gl::POINTS, 0, 4);
                 //
                 //let values = helpers::get_values_from_texture_buffer(
-                    //nodes_queried_texture_buffer,
-                    //1000,
-                    //42u32,
+                //nodes_queried_texture_buffer,
+                //1000,
+                //42u32,
                 //);
                 //let values_set = HashSet::from_iter(values.iter().cloned());
                 //let total_nodes_queried =
-                    //helpers::get_value_from_atomic_counter(nodes_queried_counter) as usize;
+                //helpers::get_value_from_atomic_counter(nodes_queried_counter) as usize;
 
                 //if previous_values != values_set {
-                    //dbg!(&values[..total_nodes_queried]);
-                    //selected_debug_nodes = (&values[..total_nodes_queried])
-                        //.iter()
-                        //.map(|&index| DebugNode::new(index, "picked by cone".to_string()))
-                        //.collect();
-                    //previous_values = values_set;
+                //dbg!(&values[..total_nodes_queried]);
+                //selected_debug_nodes = (&values[..total_nodes_queried])
+                //.iter()
+                //.map(|&index| DebugNode::new(index, "picked by cone".to_string()))
+                //.collect();
+                //previous_values = values_set;
                 //}
 
                 gl::BindVertexArray(0);
