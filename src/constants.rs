@@ -47,3 +47,9 @@ pub struct Direction {
     pub axis: Axis,
     pub sign: Sign,
 }
+
+impl Direction {
+    pub fn new(axis: Axis, sign: Sign) -> Self {
+        Self { axis, sign }
+    }
+}

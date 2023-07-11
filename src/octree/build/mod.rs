@@ -94,16 +94,20 @@ impl Octree {
             &self.geometry_data.node_data,
             BrickPoolValues::Colors,
         );
-        shader_passes.spread_leaf_bricks_pass.run(
-            &self.textures,
-            &self.geometry_data.node_data,
-            BrickPoolValues::Normals,
-        );
+        // shader_passes.spread_leaf_bricks_pass.run(
+        //     &self.textures,
+        //     &self.geometry_data.node_data,
+        //     BrickPoolValues::Normals,
+        // );
 
-        let direction = Direction {
-            axis: Axis::X,
-            sign: Sign::Pos,
-        };
+        let all_directions = vec![
+            Direction::new(Axis::X, Sign::Pos),
+            Direction::new(Axis::X, Sign::Neg),
+            Direction::new(Axis::Y, Sign::Pos),
+            Direction::new(Axis::Y, Sign::Neg),
+            Direction::new(Axis::Z, Sign::Pos),
+            Direction::new(Axis::Z, Sign::Neg),
+        ];
 
         // shader_passes.border_transfer_pass.run(
         //     &self.textures,
@@ -123,83 +127,85 @@ impl Octree {
         // );
 
         for level in (0..CONFIG.octree_levels - 1).rev() {
-            shader_passes.mipmap_center_pass.run(
-                &self.textures,
-                &self.geometry_data.node_data,
-                level,
-                BrickPoolValues::Colors,
-                direction,
-            );
-            shader_passes.mipmap_faces_pass.run(
-                &self.textures,
-                &self.geometry_data.node_data,
-                level,
-                BrickPoolValues::Colors,
-                direction,
-            );
-            shader_passes.mipmap_corners_pass.run(
-                &self.textures,
-                &self.geometry_data.node_data,
-                level,
-                BrickPoolValues::Colors,
-                direction,
-            );
-            shader_passes.mipmap_edges_pass.run(
-                &self.textures,
-                &self.geometry_data.node_data,
-                level,
-                BrickPoolValues::Colors,
-                direction,
-            );
-
-            // shader_passes.mipmap_center_pass.run(
-            //     &self.textures,
-            //     &self.geometry_data.node_data,
-            //     level,
-            //     BrickPoolValues::Normals,
-            //     axis,
-            //     sign,
-            // );
-            // shader_passes.mipmap_faces_pass.run(
-            //     &self.textures,
-            //     &self.geometry_data.node_data,
-            //     level,
-            //     BrickPoolValues::Normals,
-            //     axis,
-            //     sign,
-            // );
-            // shader_passes.mipmap_corners_pass.run(
-            //     &self.textures,
-            //     &self.geometry_data.node_data,
-            //     level,
-            //     BrickPoolValues::Normals,
-            //     axis,
-            //     sign,
-            // );
-            // shader_passes.mipmap_edges_pass.run(
-            //     &self.textures,
-            //     &self.geometry_data.node_data,
-            //     level,
-            //     BrickPoolValues::Normals,
-            //     axis,
-            //     sign,
-            // );
-
-            if level > 0 {
-                shader_passes.border_transfer_pass.run(
+            for direction in all_directions.iter() {
+                shader_passes.mipmap_center_pass.run(
                     &self.textures,
                     &self.geometry_data.node_data,
-                    &self.border_data.node_data,
                     level,
                     BrickPoolValues::Colors,
-                    direction,
+                    *direction,
                 );
-                // shader_passes.border_transfer_pass.run(
+                shader_passes.mipmap_faces_pass.run(
+                    &self.textures,
+                    &self.geometry_data.node_data,
+                    level,
+                    BrickPoolValues::Colors,
+                    *direction,
+                );
+                shader_passes.mipmap_corners_pass.run(
+                    &self.textures,
+                    &self.geometry_data.node_data,
+                    level,
+                    BrickPoolValues::Colors,
+                    *direction,
+                );
+                shader_passes.mipmap_edges_pass.run(
+                    &self.textures,
+                    &self.geometry_data.node_data,
+                    level,
+                    BrickPoolValues::Colors,
+                    *direction,
+                );
+
+                // shader_passes.mipmap_center_pass.run(
                 //     &self.textures,
                 //     &self.geometry_data.node_data,
                 //     level,
                 //     BrickPoolValues::Normals,
+                //     axis,
+                //     sign,
                 // );
+                // shader_passes.mipmap_faces_pass.run(
+                //     &self.textures,
+                //     &self.geometry_data.node_data,
+                //     level,
+                //     BrickPoolValues::Normals,
+                //     axis,
+                //     sign,
+                // );
+                // shader_passes.mipmap_corners_pass.run(
+                //     &self.textures,
+                //     &self.geometry_data.node_data,
+                //     level,
+                //     BrickPoolValues::Normals,
+                //     axis,
+                //     sign,
+                // );
+                // shader_passes.mipmap_edges_pass.run(
+                //     &self.textures,
+                //     &self.geometry_data.node_data,
+                //     level,
+                //     BrickPoolValues::Normals,
+                //     axis,
+                //     sign,
+                // );
+
+                if level > 0 {
+                    // shader_passes.border_transfer_pass.run(
+                    //     &self.textures,
+                    //     &self.geometry_data.node_data,
+                    //     &self.border_data.node_data,
+                    //     level,
+                    //     BrickPoolValues::Colors,
+                    //     *direction,
+                    // );
+                    // shader_passes.border_transfer_pass.run(
+                    //     &self.textures,
+                    //     &self.geometry_data.node_data,
+                    //     level,
+                    //     BrickPoolValues::Normals,
+                    // );
+                }
             }
         }
     }

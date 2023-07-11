@@ -28,7 +28,7 @@ pub struct OctreeTextures {
     brick_pointers: BufferTexture,
     pub node_positions: BufferTexture,
     neighbors: [BufferTexture; 6],
-    pub brick_pool_colors: Texture3D,
+    pub brick_pool_colors: [Texture3D; 6], // Anisotropic voxels, one texture per main direction
     brick_pool_normals: Texture3D,
     pub brick_pool_photons: Texture3D,
     pub photons_buffer: BufferTexture,
@@ -195,15 +195,25 @@ impl Octree {
             .map(|exponent| 8_usize.pow(exponent))
             .sum::<usize>();
         let max_node_pool_size = number_of_nodes * constants::CHILDREN_PER_NODE as usize;
-        log::info!("Max node pool size based on tree height: {}", max_node_pool_size);
+        log::info!(
+            "Max node pool size based on tree height: {}",
+            max_node_pool_size
+        );
 
         let mut max_texture_buffer_size = 0; // In bytes
         gl::GetIntegerv(gl::MAX_TEXTURE_BUFFER_SIZE, &mut max_texture_buffer_size);
         max_texture_buffer_size /= 8;
 
-        let max_node_pool_size = max_node_pool_size.min((max_texture_buffer_size).try_into().unwrap());
-        log::info!("Max node pool size based on memory max: {}", max_texture_buffer_size);
-        log::info!("Final node pool size based on tree height: {}", max_node_pool_size);
+        let max_node_pool_size =
+            max_node_pool_size.min((max_texture_buffer_size).try_into().unwrap());
+        log::info!(
+            "Max node pool size based on memory max: {}",
+            max_texture_buffer_size
+        );
+        log::info!(
+            "Final node pool size based on tree height: {}",
+            max_node_pool_size
+        );
 
         max_node_pool_size
     }
@@ -221,7 +231,14 @@ impl Octree {
                 helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // Z
                 helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // -Z
             ],
-            brick_pool_colors: helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution),
+            brick_pool_colors: [
+                helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (X, +), also used for lower level
+                helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (X, -)
+                helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (Y, +)
+                helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (Y, -)
+                helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (Z, +)
+                helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (Z, -)
+            ],
             brick_pool_normals: helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution),
             brick_pool_photons: helpers::generate_3d_r32ui_texture(CONFIG.brick_pool_resolution),
             photons_buffer: helpers::generate_texture_buffer(27, gl::R32UI, 0u32), // 27 voxels in a brick
