@@ -135,6 +135,11 @@ fn main() {
     let mut selected_debug_nodes: Vec<DebugNode> = Vec::new();
     let mut selected_debug_nodes_updated = false;
     let mut color_direction: u32 = 0;
+    let mut should_show_color = false;
+    let mut should_show_direct = false;
+    let mut should_show_indirect = false;
+    let mut should_show_indirect_specular = false;
+    let mut should_show_ambient_occlusion = false;
     let mut photons: Vec<u32> = Vec::new();
     let mut children: Vec<u32> = Vec::new();
 
@@ -191,7 +196,7 @@ fn main() {
     let mut show_octree = false;
 
     let mut node_filter_text = String::new();
-    let mut should_show_final_image = false;
+    let mut should_show_final_image_quad = false;
 
     let mut should_move_light = false;
 
@@ -275,7 +280,6 @@ fn main() {
                 common::handle_show_model(&event, &mut show_model);
                 common::handle_show_voxel_fragment_list(&event, &mut show_voxel_fragment_list);
                 common::handle_show_octree(&event, &mut show_octree);
-                common::handle_show_final_image(&event, &mut should_show_final_image);
                 common::handle_light_movement(&event, &mut should_move_light);
                 common::handle_show_indirect_light(&event, &mut show_indirect_light);
                 common::handle_cone_angle(&event, &mut cone_angle);
@@ -292,7 +296,6 @@ fn main() {
                 menu.create_node_positions_window(
                     &debug_nodes,
                     &mut selected_debug_nodes,
-                    "Node positions",
                     &mut node_filter_text,
                     &mut should_show_neighbors,
                     &mut bricks_to_show,
@@ -310,7 +313,22 @@ fn main() {
             if menu.is_showing_children_window() {
                 menu.create_children_window(&children);
             }
+            if menu.is_showing_images_window() {
+                menu.create_images_window(
+                    &mut should_show_color,
+                    &mut should_show_direct,
+                    &mut should_show_indirect,
+                    &mut should_show_indirect_specular,
+                    &mut should_show_ambient_occlusion,
+                );
+            }
         }
+
+        should_show_final_image_quad = should_show_color
+            || should_show_direct
+            || should_show_indirect
+            || should_show_indirect_specular
+            || should_show_ambient_occlusion;
 
         // This is for debugging
         if selected_debug_nodes_updated {
@@ -431,8 +449,18 @@ fn main() {
                 voxel_cone_tracing_shader
                     .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels - 1);
                 voxel_cone_tracing_shader.set_float(c_str!("photonPower"), photon_power as f32);
+                voxel_cone_tracing_shader.set_bool(c_str!("shouldShowColor"), should_show_color);
+                voxel_cone_tracing_shader.set_bool(c_str!("shouldShowDirect"), should_show_direct);
                 voxel_cone_tracing_shader
-                    .set_bool(c_str!("showIndirectLight"), show_indirect_light);
+                    .set_bool(c_str!("shouldShowIndirect"), should_show_indirect);
+                voxel_cone_tracing_shader.set_bool(
+                    c_str!("shouldShowIndirectSpecular"),
+                    should_show_indirect_specular,
+                );
+                voxel_cone_tracing_shader.set_bool(
+                    c_str!("shouldShowAmbientOcclusion"),
+                    should_show_ambient_occlusion,
+                );
                 voxel_cone_tracing_shader.set_vec3(
                     c_str!("eyePosition"),
                     camera.transform.position.x,
@@ -551,7 +579,7 @@ fn main() {
 
                 let quad_vao = quad.get_vao();
 
-                if should_show_final_image {
+                if should_show_final_image_quad {
                     gl::BindVertexArray(quad_vao);
                     gl::DrawElements(
                         gl::TRIANGLES,
