@@ -42,7 +42,12 @@ uniform bool showIndirectLight;
 uniform vec3 eyePosition;
 
 // Brick attributes
-uniform sampler3D brickPoolColors;
+uniform sampler3D brickPoolColorsX;
+uniform sampler3D brickPoolColorsXNeg;
+uniform sampler3D brickPoolColorsY;
+uniform sampler3D brickPoolColorsYNeg;
+uniform sampler3D brickPoolColorsZ;
+uniform sampler3D brickPoolColorsZNeg;
 // uniform sampler3D brickPoolNormals; // TODO: Use later
 uniform usampler3D brickPoolPhotons;
 
