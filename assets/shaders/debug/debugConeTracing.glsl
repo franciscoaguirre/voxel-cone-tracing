@@ -13,7 +13,12 @@ uniform mat4 view;
 uniform uint voxelDimension;
 uniform uint maxOctreeLevel;
 uniform float photonPower;
-uniform sampler3D brickPoolColors;
+uniform sampler3D brickPoolColorsX;
+uniform sampler3D brickPoolColorsXNeg;
+uniform sampler3D brickPoolColorsY;
+uniform sampler3D brickPoolColorsYNeg;
+uniform sampler3D brickPoolColorsZ;
+uniform sampler3D brickPoolColorsZNeg;
 uniform usampler3D brickPoolPhotons;
 
 #include "assets/shaders/octree/_constants.glsl"

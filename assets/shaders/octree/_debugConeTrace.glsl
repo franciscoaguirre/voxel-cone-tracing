@@ -1,7 +1,12 @@
 // Requires:
 // - uniform uint voxelDimension
 // - uniform uint maxOctreeLevel
-// - uniform sampler3D brickPoolColors
+// - uniform sampler3D brickPoolColorsX
+// - uniform sampler3D brickPoolColorsXNeg
+// - uniform sampler3D brickPoolColorsY
+// - uniform sampler3D brickPoolColorsYNeg
+// - uniform sampler3D brickPoolColorsZ
+// - uniform sampler3D brickPoolColorsZNeg
 // - uniform (r32ui) nodesQueried
 // - uniform atomic_uint queriedNodesCounter
 // - _traversalHelpers
@@ -67,13 +72,13 @@ vec4 debugConeTrace(
         }
 
         vec3 childVoxelCoordinates = findVoxel(queryCoordinates, node);
-        vec4 childColor = texture(brickPoolColors, childVoxelCoordinates);
+        vec4 childColor = texture(brickPoolColorsX, childVoxelCoordinates);
         if (useLighting) {
            // childColor.rgb *= float(texture(brickPoolPhotons, childVoxelCoordinates).r) / 10;
         }
         correctAlpha(childColor, stepMultiplier);
         vec3 parentVoxelCoordinates = findVoxel(queryCoordinates, parentNode);
-        vec4 parentColor = texture(brickPoolColors, parentVoxelCoordinates);
+        vec4 parentColor = texture(brickPoolColorsX, parentVoxelCoordinates);
         if (useLighting) {
             // parentColor.rgb *= float(texture(brickPoolPhotons, parentVoxelCoordinates).r) / 10;
         }

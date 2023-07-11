@@ -469,8 +469,33 @@ fn main() {
 
                 let brick_pool_textures = vec![
                     (
-                        c_str!("brickPoolColors"),
-                        octree.textures.brick_pool_colors[0], // TODO: Use other directions
+                        c_str!("brickPoolColorsX"),
+                        octree.textures.brick_pool_colors[0],
+                        gl::LINEAR as i32,
+                    ),
+                    (
+                        c_str!("brickPoolColorsXNeg"),
+                        octree.textures.brick_pool_colors[1],
+                        gl::LINEAR as i32,
+                    ),
+                    (
+                        c_str!("brickPoolColorsY"),
+                        octree.textures.brick_pool_colors[2],
+                        gl::LINEAR as i32,
+                    ),
+                    (
+                        c_str!("brickPoolColorsYNeg"),
+                        octree.textures.brick_pool_colors[3],
+                        gl::LINEAR as i32,
+                    ),
+                    (
+                        c_str!("brickPoolColorsZ"),
+                        octree.textures.brick_pool_colors[4],
+                        gl::LINEAR as i32,
+                    ),
+                    (
+                        c_str!("brickPoolColorsZNeg"),
+                        octree.textures.brick_pool_colors[5],
                         gl::LINEAR as i32,
                     ),
                     (
