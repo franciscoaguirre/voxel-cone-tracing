@@ -1,14 +1,19 @@
 // Requires:
 // - uniform uint voxelDimension
 // - uniform uint maxOctreeLevel
-// - uniform sampler3D brickPoolColors
+// - uniform sampler3D brickPoolColorsX
+// - uniform sampler3D brickPoolColorsXNeg
+// - uniform sampler3D brickPoolColorsY
+// - uniform sampler3D brickPoolColorsYNeg
+// - uniform sampler3D brickPoolColorsZ
+// - uniform sampler3D brickPoolColorsZNeg
 // - _traversalHelpers
 // - _octreeTraversal
 // - _brickCoordinates
 
 void correctAlpha(inout vec4 color, in float alphaCorrection);
 
-float brickPoolResolutionf = float(textureSize(brickPoolColors, 0).x);
+float brickPoolResolutionf = float(textureSize(brickPoolColorsX, 0).x);
 float brickPoolBrickSize = 3.0 / brickPoolResolutionf;
 
 // Returns values in [0, maxOctreeLevel]
@@ -39,18 +44,28 @@ vec3 findVoxel(vec3 queryCoordinates, Node node) {
     return normalizedVoxelCoordinates;
 }
 
- bool fallsOutsideNode(vec3 queryCoordinates, Node node) {
-     vec3 range_start = node.coordinates; 
-     vec3 range_end = node.coordinates + vec3(node.halfNodeSize * 2);
+bool fallsOutsideNode(vec3 queryCoordinates, Node node) {
+    vec3 range_start = node.coordinates; 
+    vec3 range_end = node.coordinates + vec3(node.halfNodeSize * 2);
+    return isOutsideRange(queryCoordinates, range_start, range_end);
+}
 
-     return isOutsideRange(queryCoordinates, range_start, range_end);
- }
+vec4 getLeafColor(vec3 voxelCoordinates) {
+    return texture(brickPoolColorsX, voxelCoordinates);
+}
+
+vec4 getAnisotropicColor(vec3 voxelCoordinates, float weightX, float weightY, float weightZ) {
+    vec4 colorX = weightX > 0 ? texture(brickPoolColorsX, voxelCoordinates) : texture(brickPoolColorsXNeg, voxelCoordinates);
+    vec4 colorY = weightY > 0 ? texture(brickPoolColorsY, voxelCoordinates) : texture(brickPoolColorsYNeg, voxelCoordinates);
+    vec4 colorZ = weightZ > 0 ? texture(brickPoolColorsZ, voxelCoordinates) : texture(brickPoolColorsZNeg, voxelCoordinates);
+    return clamp(colorX * abs(weightX) + colorY * abs(weightY) + colorZ * abs(weightZ), 0.0, 1.0);
+}
 
 // rayOrigin should be between 0 and 1
 // maxDistance should be max 1
 vec4 coneTrace(
     vec3 coneOrigin,
-    vec3 coneDirection,
+    vec3 coneDirection, // Normalized
     float coneHalfAngle,
     float maxDistance,
     bool useLighting
@@ -72,7 +87,6 @@ vec4 coneTrace(
     while (distanceAlongCone < maxDistance && returnColor.a < 1.0) {
         float coneDiameter = clamp(coneDiameterCoefficient * distanceAlongCone, 0.0009765625, 100.0);
         float lod = calculateLod(coneDiameter);
-        // float lod = 6;
         uint octreeLevel = uint(ceil(lod));
         float parentWeight = octreeLevel - lod; // Non-linear, we should approximate the log with many lines
 
@@ -103,20 +117,35 @@ vec4 coneTrace(
             parentNode = previousParentNode;
         }
 
-        vec3 childVoxelCoordinates = findVoxel(queryCoordinates, node);
-        vec4 childColor = texture(brickPoolColors, childVoxelCoordinates);
         float c1 = 1.0;
         float c2 = 0.09;
         float c3 = 0.032;
         float distance = (distanceAlongCone - firstStep) * 29;
         float distanceFactor = c1 + c2 * distance + c3 * distance * distance;
+
+        float weightX = dot(coneDirection, vec3(1, 0, 0));
+        float weightY = dot(coneDirection, vec3(0, 1, 0));
+        float weightZ = dot(coneDirection, vec3(0, 0, 1));
+
+        vec3 childVoxelCoordinates = findVoxel(queryCoordinates, node);
+        vec3 parentVoxelCoordinates = findVoxel(queryCoordinates, parentNode);
+
+        vec4 childColor;
+        vec4 parentColor;
+
+        if (octreeLevel == maxOctreeLevel) {
+            childColor = getLeafColor(childVoxelCoordinates);
+        } else {
+            childColor = getAnisotropicColor(childVoxelCoordinates, weightX, weightY, weightZ);
+        }
+
+        parentColor = getAnisotropicColor(parentVoxelCoordinates, weightX, weightY, weightZ);
+
         if (useLighting) {
             childColor.rgb *= clamp(texture(brickPoolPhotons, childVoxelCoordinates).r * photonPower, 0, 1) / distanceFactor;
         }
-
         correctAlpha(childColor, stepMultiplier);
-        vec3 parentVoxelCoordinates = findVoxel(queryCoordinates, parentNode);
-        vec4 parentColor = texture(brickPoolColors, parentVoxelCoordinates);
+
         if (useLighting) {
             parentColor.rgb *= clamp(texture(brickPoolPhotons, parentVoxelCoordinates).r * photonPower, 0, 1) / distanceFactor;
         }
