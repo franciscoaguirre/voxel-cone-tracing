@@ -44,9 +44,10 @@ impl MipmapFacesPass {
         self.shader.set_uint(c_str!("octreeLevel"), level);
         self.shader
             .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
-        self.shader.set_int(c_str!("axis"), direction.axis.into());
-        // sign is a reserved keyword, so using signn
-        self.shader.set_int(c_str!("signn"), direction.sign.into());
+        self.shader
+            .set_int(c_str!("direction.axis"), direction.axis.into());
+        self.shader
+            .set_int(c_str!("direction.sign"), direction.sign.into());
 
         helpers::bind_image_texture(0, textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
         match brick_pool_values {
@@ -54,19 +55,12 @@ impl MipmapFacesPass {
                 // Set directional mipmap children's color texture
                 helpers::bind_3d_image_texture(
                     1,
-                    textures.brick_pool_colors,
-                    gl::READ_WRITE,
-                    gl::RGBA8,
-                );
-                // Set directional mipmap parent's color texture
-                helpers::bind_3d_image_texture(
-                    3,
-                    textures.brick_pool_colors,
+                    textures.brick_pool_colors[neighbors_texture_number],
                     gl::READ_WRITE,
                     gl::RGBA8,
                 );
                 helpers::bind_image_texture(
-                    4,
+                    3,
                     textures.neighbors[neighbors_texture_number].0,
                     gl::READ_ONLY,
                     gl::R32UI,
@@ -80,6 +74,7 @@ impl MipmapFacesPass {
             ),
         }
         helpers::bind_image_texture(2, node_data.level_start_indices.0, gl::READ_ONLY, gl::R32UI);
+        helpers::bind_3d_image_texture(4, textures.brick_pool_colors[0], gl::READ_WRITE, gl::RGBA8);
 
         let nodes_in_level = node_data.nodes_per_level[level as usize];
         let groups_count = (nodes_in_level as f32 / CONFIG.working_group_size as f32).ceil() as u32;

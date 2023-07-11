@@ -139,16 +139,6 @@ handle_increments!(
     0.0,
     6.0
 );
-handle_increments!(
-    "Octree level",
-    Right,
-    Left,
-    handle_update_octree_level,
-    u32,
-    1,
-    0,
-    CONFIG.octree_levels - 1
-);
 
 pub unsafe fn log_device_information() {
     let vendor = unsafe {

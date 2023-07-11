@@ -43,10 +43,20 @@ impl BorderTransferPass {
         self.shader
             .set_int(c_str!("direction.sign"), direction.sign.into());
 
+        let mut neighbors_texture_number = match direction.axis {
+            Axis::X => 0,
+            Axis::Y => 2,
+            Axis::Z => 4,
+        };
+        neighbors_texture_number = match direction.sign {
+            Sign::Pos => neighbors_texture_number,
+            Sign::Neg => neighbors_texture_number + 1,
+        };
+
         match brick_pool_values {
             BrickPoolValues::Colors => helpers::bind_3d_image_texture(
                 1,
-                textures.brick_pool_colors,
+                textures.brick_pool_colors[neighbors_texture_number],
                 gl::READ_WRITE,
                 gl::RGBA8,
             ),

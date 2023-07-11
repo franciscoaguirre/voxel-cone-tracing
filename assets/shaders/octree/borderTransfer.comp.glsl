@@ -65,7 +65,7 @@ void main() {
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
                 memoryBarrier();
 
-                vec4 finalValue = (borderValue + neighborBorderValue) / 2.0; // We average averages
+                vec4 finalValue = (borderValue + neighborBorderValue) / 2; // We average averages
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
             }
@@ -82,7 +82,7 @@ void main() {
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
                 memoryBarrier();
 
-                vec4 finalValue = (borderValue + neighborBorderValue) / 2.0; // We average averages
+                vec4 finalValue = (borderValue + neighborBorderValue) / 2; // We average averages
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
             }
