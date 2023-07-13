@@ -56,7 +56,7 @@ void main() {
                 if (direction.axis == X_AXIS) {
                     finalValue = borderValue; // We copy the value to the neighbor
                 } else {
-                    finalValue = (borderValue + neighborBorderValue) / 2; // We average averages
+                    finalValue = borderValue + neighborBorderValue; // We add partial values
                 }
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
@@ -78,7 +78,7 @@ void main() {
                 if (direction.axis == Y_AXIS) {
                     finalValue = borderValue; // We copy the value to the neighbor
                 } else {
-                    finalValue = (borderValue + neighborBorderValue) / 2; // We average averages
+                    finalValue = borderValue + neighborBorderValue; // We add partial values
                 }
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
@@ -100,7 +100,7 @@ void main() {
                 if (direction.axis == Z_AXIS) {
                     finalValue = borderValue; // We copy the value to the neighbor
                 } else {
-                    finalValue = (borderValue + neighborBorderValue) / 2; // We average averages
+                    finalValue = borderValue + neighborBorderValue; // We add partial values
                 }
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
