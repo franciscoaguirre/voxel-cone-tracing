@@ -80,8 +80,7 @@ vec4 coneTrace(
     Node previousNode = Node(0, vec3(0), 0.0);
     Node previousParentNode;
     int steps = 0;
-    //float firstStep = 0;
-    float firstStep = voxelSize;
+    float firstStep = voxelSize * 2;
 
     distanceAlongCone += firstStep;
     while (distanceAlongCone < maxDistance && returnColor.a < 1.0) {
@@ -154,8 +153,8 @@ vec4 coneTrace(
         vec4 newColor = mix(childColor, parentColor, parentWeight); // Quadrilinear interpolation
 
         // We probably should multiply by newColor.a
-        returnColor.rgb = returnColor.rgb * returnColor.a + (1 - returnColor.a) * newColor.rgb;
-        returnColor.a += (1 - returnColor.a) * newColor.a;
+        returnColor.rgb = returnColor.rgb + (1 - returnColor.a) * newColor.rgb;
+        returnColor.a = returnColor.a + (1 - returnColor.a) * newColor.a;
         // returnColor += (1.0 - returnColor.a) * newColor;
 
         distanceAlongCone += sampleStep;
