@@ -142,14 +142,14 @@ impl Octree {
                     BrickPoolValues::Colors,
                     *direction,
                 );
-                shader_passes.mipmap_corners_pass.run(
+                shader_passes.mipmap_edges_pass.run(
                     &self.textures,
                     &self.geometry_data.node_data,
                     level,
                     BrickPoolValues::Colors,
                     *direction,
                 );
-                shader_passes.mipmap_edges_pass.run(
+                shader_passes.mipmap_corners_pass.run(
                     &self.textures,
                     &self.geometry_data.node_data,
                     level,
@@ -191,14 +191,14 @@ impl Octree {
                 // );
 
                 if level > 0 {
-                    // shader_passes.border_transfer_pass.run(
-                    //     &self.textures,
-                    //     &self.geometry_data.node_data,
-                    //     &self.border_data.node_data,
-                    //     level,
-                    //     BrickPoolValues::Colors,
-                    //     *direction,
-                    // );
+                    shader_passes.border_transfer_pass.run(
+                        &self.textures,
+                        &self.geometry_data.node_data,
+                        &self.border_data.node_data,
+                        level,
+                        BrickPoolValues::Colors,
+                        *direction,
+                    );
                     // shader_passes.border_transfer_pass.run(
                     //     &self.textures,
                     //     &self.geometry_data.node_data,
