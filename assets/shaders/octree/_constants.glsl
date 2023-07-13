@@ -13,3 +13,6 @@ const uvec3 CHILD_OFFSETS[8] = {
 };
 const int NODE_NOT_FOUND = 0xFFFFFFFF;
 const uint HALF_NEIGHBORS = 3;
+const int X_AXIS = 0;
+const int Y_AXIS = 1;
+const int Z_AXIS = 2;

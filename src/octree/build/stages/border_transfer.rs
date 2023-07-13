@@ -124,51 +124,51 @@ impl BorderTransferPass {
         self.shader.wait();
 
         // Second run for border nodes
-        helpers::bind_image_texture(
-            2,
-            border_node_data.level_start_indices.0,
-            gl::READ_ONLY,
-            gl::R32UI,
-        );
-        let nodes_in_level = border_node_data.nodes_per_level[octree_level as usize];
-        let groups_count = (nodes_in_level as f32 / CONFIG.working_group_size as f32).ceil() as u32;
-        for axis in other_axis.iter() {
-            self.shader.set_uint(c_str!("axis"), (*axis).into());
-            let mut neighbors_texture_number = match axis {
-                Axis::X => 0,
-                Axis::Y => 2,
-                Axis::Z => 4,
-            };
-            neighbors_texture_number = match direction.sign {
-                Sign::Pos => neighbors_texture_number,
-                Sign::Neg => neighbors_texture_number + 1,
-            };
-            helpers::bind_image_texture(
-                0,
-                textures.neighbors[neighbors_texture_number].0,
-                gl::READ_ONLY,
-                gl::R32UI,
-            );
-            self.shader.dispatch(groups_count);
-            self.shader.wait();
-        }
-        let mut neighbors_texture_number = match direction.axis {
-            Axis::X => 0,
-            Axis::Y => 2,
-            Axis::Z => 4,
-        };
-        neighbors_texture_number = match direction.sign {
-            Sign::Pos => neighbors_texture_number,
-            Sign::Neg => neighbors_texture_number + 1,
-        };
-        helpers::bind_image_texture(
-            0,
-            textures.neighbors[neighbors_texture_number].0,
-            gl::READ_ONLY,
-            gl::R32UI,
-        );
-        self.shader.set_uint(c_str!("axis"), direction.axis.into());
-        self.shader.dispatch(groups_count);
-        self.shader.wait();
+        // helpers::bind_image_texture(
+        //     2,
+        //     border_node_data.level_start_indices.0,
+        //     gl::READ_ONLY,
+        //     gl::R32UI,
+        // );
+        // let nodes_in_level = border_node_data.nodes_per_level[octree_level as usize];
+        // let groups_count = (nodes_in_level as f32 / CONFIG.working_group_size as f32).ceil() as u32;
+        // for axis in other_axis.iter() {
+        //     self.shader.set_uint(c_str!("axis"), (*axis).into());
+        //     let mut neighbors_texture_number = match axis {
+        //         Axis::X => 0,
+        //         Axis::Y => 2,
+        //         Axis::Z => 4,
+        //     };
+        //     neighbors_texture_number = match direction.sign {
+        //         Sign::Pos => neighbors_texture_number,
+        //         Sign::Neg => neighbors_texture_number + 1,
+        //     };
+        //     helpers::bind_image_texture(
+        //         0,
+        //         textures.neighbors[neighbors_texture_number].0,
+        //         gl::READ_ONLY,
+        //         gl::R32UI,
+        //     );
+        //     self.shader.dispatch(groups_count);
+        //     self.shader.wait();
+        // }
+        // let mut neighbors_texture_number = match direction.axis {
+        //     Axis::X => 0,
+        //     Axis::Y => 2,
+        //     Axis::Z => 4,
+        // };
+        // neighbors_texture_number = match direction.sign {
+        //     Sign::Pos => neighbors_texture_number,
+        //     Sign::Neg => neighbors_texture_number + 1,
+        // };
+        // helpers::bind_image_texture(
+        //     0,
+        //     textures.neighbors[neighbors_texture_number].0,
+        //     gl::READ_ONLY,
+        //     gl::R32UI,
+        // );
+        // self.shader.set_uint(c_str!("axis"), direction.axis.into());
+        // self.shader.dispatch(groups_count);
+        // self.shader.wait();
     }
 }
