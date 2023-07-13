@@ -10,10 +10,6 @@ vec4 adjacentVoxels[3][3][3];
 int childNodeIDs[] = {0, 0, 0, 0, 0, 0, 0, 0};
 int neighborChildNodeIDs[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
-const int X_AXIS = 0;
-const int Y_AXIS = 1;
-const int Z_AXIS = 2;
-
 struct Direction {
     int axis;
     int sign;
@@ -51,9 +47,8 @@ void setup(int nodeID) {
 }
 
 void accumulate(inout vec4 color, vec4 voxelColor) {
-    // TODO: We probably should multiply by `voxelColor.a`
-    color.rgb = color.rgb * color.a + (1 - color.a) * voxelColor.rgb;
-    color.a += (1 - color.a) * voxelColor.a;
+    color.rgb = color.rgb + (1 - color.a) * voxelColor.rgb;
+    color.a = color.a + (1 - color.a) * voxelColor.a;
 }
 
 vec4 calculateDirectionalValue(ivec3 initialPosition, Direction direction) {
@@ -78,10 +73,13 @@ vec4 calculateDirectionalValue(ivec3 initialPosition, Direction direction) {
         }
         // Accumulate changes directly the value of accumulatedColor
         accumulate(accumulatedColor, color);
+        if (accumulatedColor.a == 1) {
+            break;
+        }
         position += stepp;
     }
 
-    return accumulatedColor;
+    return vec4(accumulatedColor.rgb * accumulatedColor.a, accumulatedColor.a);
 }
 
 vec4 getNeighborColor(ivec3 position, int axis) {
