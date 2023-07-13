@@ -27,13 +27,18 @@ impl Menu {
         Self::setup_egui(window)
     }
 
-    pub fn toggle_showing(&mut self, window: &mut Window) {
+    pub fn toggle_showing(&mut self, window: &mut Window, last_x: &mut f32, last_y: &mut f32) {
         self.is_showing = !self.is_showing;
 
         if self.is_showing {
-            window.set_cursor_mode(CursorMode::Normal)
+            window.set_cursor_mode(CursorMode::Normal);
         } else {
-            window.set_cursor_mode(CursorMode::Disabled)
+            window.set_cursor_mode(CursorMode::Disabled);
+
+            // So that we don't take into account mouse movements while using the menu
+            let cursor_position = window.get_cursor_pos();
+            *last_x = cursor_position.0 as f32;
+            *last_y = cursor_position.1 as f32;
         };
     }
 

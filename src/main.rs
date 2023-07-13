@@ -267,7 +267,7 @@ fn main() {
         for (_, event) in glfw::flush_messages(&events) {
             // Events
             if let glfw::WindowEvent::Key(glfw::Key::Escape, _, glfw::Action::Press, _) = event {
-                menu.toggle_showing(&mut window);
+                menu.toggle_showing(&mut window, &mut last_x, &mut last_y);
             };
             if !menu.is_showing() {
                 common::process_events(
