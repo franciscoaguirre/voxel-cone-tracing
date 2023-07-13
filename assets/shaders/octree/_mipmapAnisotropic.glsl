@@ -79,7 +79,7 @@ vec4 calculateDirectionalValue(ivec3 initialPosition, Direction direction) {
         position += stepp;
     }
 
-    return vec4(accumulatedColor.rgb * accumulatedColor.a, accumulatedColor.a);
+    return accumulatedColor;
 }
 
 vec4 getNeighborColor(ivec3 position, int axis) {
@@ -189,8 +189,11 @@ vec4 mipmapAnisotropic(ivec3 position) {
     loadAdjacentVoxels(position, direction);
     vec4 color = vec4(0);
     int baseOffset = direction.sign == -1 ? 2 : 0;
-    float weightSum = 0;
-    float alphaWeightSum = 0;
+    float weightSum = 4; // The sum of all 9 distance weights of a 2D grid with values {-1, 0, 1} on each axis
+    // TODO: Empty directional values are making the overall value darker.
+    // This could be solved if we knew how many directional values were empty beforehand, but we can't know that
+    // unless we get all neighbors, and if we do that, we might as well use them for the calculation instead of
+    // doing partial averages.
     vec4 newColor = vec4(0);
 
     // Encontrar una base de 9 voxels, dirección abajo hacia arriba agarramos los de abajo
@@ -206,15 +209,22 @@ vec4 mipmapAnisotropic(ivec3 position) {
                     continue;
                 }
 
-                newColor = calculateDirectionalValue(ivec3(baseOffset, i + 1, j + 1), direction) * weight;
-                // To treat fully transparent colors as just affecting the transparency of the object 
-                if (newColor.a > 0.001) {
-                  color += newColor;
-                  weightSum += weight;
-                  alphaWeightSum += weight;
-                } else {
-                  alphaWeightSum += weight;
+                // Partial weight that will be fixed by borderTransfer
+                float partialWeight = 1;
+
+                // On the edge with bottom or top brick
+                if (position.y + i == 0 || position.y + i == 4) {
+                    partialWeight *= 0.5;
                 }
+
+                // On the edge with far or near brick
+                if (position.z + j == 0 || position.z + j == 4) {
+                    partialWeight *= 0.5;
+                }
+
+                ivec3 baseVoxel = ivec3(baseOffset, i + 1, j + 1);
+                newColor = calculateDirectionalValue(baseVoxel, direction) * partialWeight * weight;
+                color += newColor;
             } else if (direction.axis == Y_AXIS) {
                 bool shouldSkipX = isOutsideRange(position.x + i, 0, 4);
                 bool shouldSkipZ = isOutsideRange(position.z + j, 0, 4);
@@ -222,14 +232,22 @@ vec4 mipmapAnisotropic(ivec3 position) {
                     continue;
                 }
 
-                newColor = calculateDirectionalValue(ivec3(i + 1, baseOffset, j + 1), direction) * weight;
-                if (newColor.a > 0.001) {
-                  color += newColor;
-                  weightSum += weight;
-                  alphaWeightSum += weight;
-                } else {
-                  alphaWeightSum += weight;
+                // Partial weight that will be fixed by borderTransfer
+                float partialWeight = 1;
+
+                // On the edge with left or right brick
+                if (position.x + i == 0 || position.x + i == 4) {
+                    partialWeight *= 0.5;
                 }
+
+                // On the edge with far or near brick
+                if (position.z + j == 0 || position.z + j == 4) {
+                    partialWeight *= 0.5;
+                }
+
+                ivec3 baseVoxel = ivec3(i + 1, baseOffset, j + 1);
+                newColor = calculateDirectionalValue(baseVoxel, direction) * partialWeight * weight;
+                color += newColor;
             } else if (direction.axis == Z_AXIS) {
                 bool shouldSkipX = isOutsideRange(position.x + i, 0, 4);
                 bool shouldSkipY = isOutsideRange(position.y + j, 0, 4);
@@ -237,17 +255,25 @@ vec4 mipmapAnisotropic(ivec3 position) {
                     continue;
                 }
 
-                newColor = calculateDirectionalValue(ivec3(i + 1, j + 1, baseOffset), direction) * weight;
-                if (newColor.a > 0.001) {
-                  color += newColor;
-                  weightSum += weight;
-                  alphaWeightSum += weight;
-                } else {
-                  alphaWeightSum += weight;
+                // Partial weight that will be fixed by borderTransfer
+                float partialWeight = 1;
+
+                // On the edge with left or right brick
+                if (position.x + i == 0 || position.x + i == 4) {
+                    partialWeight *= 0.5;
                 }
+
+                // On the edge with bottom or top brick
+                if (position.y + j == 0 || position.y + j == 4) {
+                    partialWeight *= 0.5;
+                }
+
+                ivec3 baseVoxel = ivec3(i + 1, j + 1, baseOffset);
+                newColor = calculateDirectionalValue(baseVoxel, direction) * partialWeight * weight;
+                color += newColor;
             }
         }
     }
 
-    return vec4(color.rgb / weightSum, color.a / alphaWeightSum);
+    return color / weightSum;
 }
