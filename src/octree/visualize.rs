@@ -20,39 +20,33 @@ impl Octree {
         projection: &Matrix4<f32>,
         octree_level: u32,
         color_direction: u32,
+        should_show_normals: bool,
+        brick_attribute: BrickAttribute,
     ) {
+        if should_show_normals {
+            self.show_normals(octree_level, projection, view, model);
+        }
+
         if self.renderer.bricks_to_show.at_least_one() {
-            self.show_bricks(octree_level, projection, view, model, color_direction);
+            self.show_bricks(
+                octree_level,
+                projection,
+                view,
+                model,
+                color_direction,
+                brick_attribute,
+            );
         } else {
             self.renderer.shader.use_program();
 
-            helpers::bind_image_texture(0, self.textures.node_pool.0, gl::READ_WRITE, gl::R32UI);
             helpers::bind_image_texture(
-                1,
-                self.textures.brick_pointers.0,
-                gl::READ_WRITE,
-                gl::R32UI,
-            );
-            helpers::bind_3d_image_texture(
-                2,
-                self.textures.brick_pool_colors[0], // TODO: Visualize other directions
-                gl::READ_ONLY,
-                gl::RGBA8,
-            );
-            helpers::bind_image_texture(
-                3,
+                0,
                 self.textures.node_positions.0,
                 gl::READ_ONLY,
                 gl::RGB10_A2UI,
             );
-            helpers::bind_3d_image_texture(
-                4,
-                self.textures.brick_pool_photons,
-                gl::READ_ONLY,
-                gl::R32UI,
-            );
             helpers::bind_image_texture(
-                5,
+                1,
                 self.geometry_data.node_data.level_start_indices.0,
                 gl::READ_ONLY,
                 gl::R32UI,
@@ -84,6 +78,92 @@ impl Octree {
         }
     }
 
+    unsafe fn show_normals(
+        &self,
+        octree_level: u32,
+        projection: &Matrix4<f32>,
+        view: &Matrix4<f32>,
+        model: &Matrix4<f32>,
+    ) {
+        self.renderer.normals_shader.use_program();
+
+        self.renderer
+            .normals_shader
+            .set_mat4(c_str!("projection"), projection);
+        self.renderer.normals_shader.set_mat4(c_str!("view"), view);
+        self.renderer
+            .normals_shader
+            .set_mat4(c_str!("model"), model);
+
+        self.renderer
+            .normals_shader
+            .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
+        self.renderer
+            .normals_shader
+            .set_uint(c_str!("octreeLevel"), octree_level);
+
+        helpers::bind_image_texture(
+            0,
+            self.geometry_data.node_data.level_start_indices.0,
+            gl::READ_ONLY,
+            gl::R32UI,
+        );
+        helpers::bind_image_texture(
+            1,
+            self.textures.node_positions.0,
+            gl::READ_ONLY,
+            gl::RGB10_A2UI,
+        );
+        helpers::bind_3d_image_texture(
+            2,
+            self.textures.brick_pool_normals,
+            gl::READ_ONLY,
+            gl::RGBA32F,
+        );
+
+        let mut vao = 0;
+        gl::GenVertexArrays(1, &mut vao);
+        gl::BindVertexArray(vao);
+
+        let all_bricks_to_show: u32 = self.renderer.bricks_to_show.into();
+
+        if (all_bricks_to_show & 1) > 0 {
+            self.renderer
+                .normals_shader
+                .set_uint(c_str!("bricksToShow"), all_bricks_to_show & 1);
+
+            gl::DrawArrays(
+                gl::POINTS,
+                0,
+                self.geometry_data.node_data.nodes_per_level[octree_level as usize] as i32,
+            );
+        }
+
+        if (all_bricks_to_show & 2) > 0 {
+            self.renderer
+                .normals_shader
+                .set_uint(c_str!("bricksToShow"), all_bricks_to_show & 2);
+
+            gl::DrawArrays(
+                gl::POINTS,
+                0,
+                self.geometry_data.node_data.nodes_per_level[octree_level as usize] as i32,
+            );
+        }
+
+        if (all_bricks_to_show & 4) > 0 {
+            self.renderer
+                .normals_shader
+                .set_uint(c_str!("bricksToShow"), all_bricks_to_show & 4);
+
+            gl::DrawArrays(
+                gl::POINTS,
+                0,
+                self.geometry_data.node_data.nodes_per_level[octree_level as usize] as i32,
+            );
+        }
+    }
+
     unsafe fn show_bricks(
         &self,
         octree_level: u32,
@@ -91,6 +171,7 @@ impl Octree {
         view: &Matrix4<f32>,
         model: &Matrix4<f32>,
         color_direction: u32,
+        brick_attribute: BrickAttribute,
     ) {
         self.renderer.bricks_shader.use_program();
 
@@ -109,34 +190,30 @@ impl Octree {
         self.renderer
             .bricks_shader
             .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels);
+        self.renderer
+            .bricks_shader
+            .set_uint(c_str!("mode"), brick_attribute.into());
 
-        helpers::bind_image_texture(0, self.textures.node_pool.0, gl::READ_WRITE, gl::R32UI);
         helpers::bind_3d_image_texture(
-            1,
-            self.textures.brick_pool_colors[color_direction as usize], // TODO: Visualize other directions as well
+            0,
+            self.textures.brick_pool_colors[color_direction as usize],
             gl::READ_ONLY,
             gl::RGBA8,
         );
         helpers::bind_image_texture(
-            2,
+            1,
             self.textures.node_positions.0,
             gl::READ_ONLY,
             gl::RGB10_A2UI,
         );
         helpers::bind_3d_image_texture(
-            3,
+            2,
             self.textures.brick_pool_photons,
             gl::READ_ONLY,
             gl::R32UI,
         );
-        //helpers::bind_3d_image_texture(
-        //4,
-        //self.textures.brick_pool_normals,
-        //gl::READ_ONLY,
-        //gl::RGBA8,
-        //);
         helpers::bind_image_texture(
-            4,
+            3,
             self.geometry_data.node_data.level_start_indices.0,
             gl::READ_ONLY,
             gl::R32UI,
@@ -445,7 +522,7 @@ impl Octree {
             4,
             self.textures.brick_pool_normals,
             gl::READ_ONLY,
-            gl::RGBA8,
+            gl::RGBA32F,
         );
         helpers::bind_image_texture(
             5,
@@ -598,6 +675,35 @@ impl Octree {
 
         gl::BindVertexArray(eye.vao);
         gl::DrawArrays(gl::POINTS, 0, 1);
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BrickAttribute {
+    None,
+    Color,
+    Photons,
+}
+
+impl Into<u32> for BrickAttribute {
+    fn into(self) -> u32 {
+        use BrickAttribute::*;
+        match self {
+            None => 0,
+            Color => 1,
+            Photons => 2,
+        }
+    }
+}
+
+impl BrickAttribute {
+    pub fn next(self) -> Self {
+        use BrickAttribute::*;
+        match self {
+            None => Color,
+            Color => Photons,
+            Photons => None,
+        }
     }
 }
 

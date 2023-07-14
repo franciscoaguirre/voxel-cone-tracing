@@ -45,7 +45,7 @@ impl SpreadLeafBricksPass {
                     0,
                     textures.brick_pool_normals,
                     gl::READ_WRITE,
-                    gl::RGBA8,
+                    gl::RGBA32F,
                 );
             }
         }

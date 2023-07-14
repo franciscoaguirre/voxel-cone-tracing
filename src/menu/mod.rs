@@ -6,7 +6,10 @@ use egui_backend::{
 };
 use egui_glfw_gl as egui_backend;
 
-use crate::{config::CONFIG, octree::BricksToShow};
+use crate::{
+    config::CONFIG,
+    octree::{BrickAttribute, BricksToShow},
+};
 
 pub struct Menu {
     is_showing: bool,
@@ -15,8 +18,9 @@ pub struct Menu {
     input_state: egui_backend::EguiInputState,
     modifier_keys: egui::Modifiers,
     native_pixels_per_point: f32,
-    is_showing_node_positions_window: bool,
-    is_showing_diagnostics_window: bool,
+    is_showing_all_nodes_window: bool,
+    is_showing_node_search_window: bool,
+    is_showing_bricks_window: bool,
     is_showing_photons_window: bool,
     is_showing_children_window: bool,
     is_showing_images_window: bool,
@@ -46,12 +50,16 @@ impl Menu {
         self.is_showing
     }
 
-    pub fn is_showing_node_positions_window(&self) -> bool {
-        self.is_showing_node_positions_window
+    pub fn is_showing_all_nodes_window(&self) -> bool {
+        self.is_showing_all_nodes_window
     }
 
-    pub fn is_showing_diagnostics_window(&self) -> bool {
-        self.is_showing_diagnostics_window
+    pub fn is_showing_node_search_window(&self) -> bool {
+        self.is_showing_node_search_window
+    }
+
+    pub fn is_showing_bricks_window(&self) -> bool {
+        self.is_showing_bricks_window
     }
 
     pub fn is_showing_photons_window(&self) -> bool {
@@ -130,8 +138,9 @@ impl Menu {
 
         Self {
             is_showing: false,
-            is_showing_node_positions_window: false,
-            is_showing_diagnostics_window: false,
+            is_showing_all_nodes_window: false,
+            is_showing_node_search_window: false,
+            is_showing_bricks_window: false,
             is_showing_photons_window: false,
             is_showing_children_window: false,
             is_showing_images_window: false,
@@ -145,11 +154,14 @@ impl Menu {
 
     pub fn show_main_window(&mut self) {
         egui::Window::new("Menu").show(&self.context, |ui| {
-            if ui.button("Diagnostics").clicked() {
-                self.is_showing_diagnostics_window = !self.is_showing_diagnostics_window;
+            if ui.button("All nodes").clicked() {
+                self.is_showing_all_nodes_window = !self.is_showing_all_nodes_window;
             }
-            if ui.button("Node positions").clicked() {
-                self.is_showing_node_positions_window = !self.is_showing_node_positions_window;
+            if ui.button("Node search").clicked() {
+                self.is_showing_node_search_window = !self.is_showing_node_search_window;
+            }
+            if ui.button("Bricks").clicked() {
+                self.is_showing_bricks_window = !self.is_showing_bricks_window;
             }
             if ui.button("Photons").clicked() {
                 self.is_showing_photons_window = !self.is_showing_photons_window;
@@ -263,55 +275,48 @@ impl Menu {
         button_text
     }
 
-    pub fn create_node_positions_window(
+    pub fn create_all_nodes_window(
+        &self,
+        should_render_octree: &mut bool,
+        current_octree_level: &mut u32,
+    ) {
+        egui::Window::new("All nodes").show(&self.context, |ui| {
+            if ui
+                .button(Self::get_button_text("Show octree", *should_render_octree))
+                .clicked()
+            {
+                *should_render_octree = !*should_render_octree;
+            }
+            ui.add(
+                egui::Slider::new(current_octree_level, 0..=CONFIG.octree_levels - 1)
+                    .text("Octree level"),
+            );
+        });
+    }
+
+    pub fn create_node_search_window(
         &self,
         items: &Vec<DebugNode>,
         selected_items: &mut Vec<DebugNode>,
         filter_text: &mut String,
         should_show_neighbors: &mut bool,
-        bricks_to_show: &mut BricksToShow,
         selected_items_updated: &mut bool,
-        color_direction: &mut u32,
-        current_octree_level: &mut u32,
     ) {
         let pinned_items: Vec<DebugNode> = selected_items.clone();
 
-        egui::Window::new("Nodes")
+        egui::Window::new("Node search")
             .resize(|r| r.fixed_size((200., 400.)))
             .show(&self.context, |ui| {
                 ui.vertical(|ui| {
                     ui.horizontal(|ui| {
                         ui.label("Neighbors: ");
-                        if ui.button("Toggle").clicked() {
+                        if ui
+                            .button(Self::get_button_text("Toggle", *should_show_neighbors))
+                            .clicked()
+                        {
                             *should_show_neighbors = !*should_show_neighbors;
                         }
                     });
-                    ui.horizontal(|ui| {
-                        ui.label("Bricks: ");
-                        if ui
-                            .button(Self::get_button_text("Z0", bricks_to_show.z0()))
-                            .clicked()
-                        {
-                            bricks_to_show.toggle_z0();
-                        }
-                        if ui
-                            .button(Self::get_button_text("Z1", bricks_to_show.z1()))
-                            .clicked()
-                        {
-                            bricks_to_show.toggle_z1();
-                        }
-                        if ui
-                            .button(Self::get_button_text("Z2", bricks_to_show.z2()))
-                            .clicked()
-                        {
-                            bricks_to_show.toggle_z2();
-                        }
-                    });
-                    ui.add(
-                        egui::Slider::new(current_octree_level, 0..=CONFIG.octree_levels - 1)
-                            .text("Octree level"),
-                    );
-                    ui.add(egui::Slider::new(color_direction, 0..=5).text("Direction"));
                     ui.text_edit_singleline(filter_text);
                     egui::ScrollArea::vertical()
                         .max_height(200.)
@@ -364,6 +369,59 @@ impl Menu {
                     }
                 });
             });
+    }
+
+    pub fn create_bricks_window(
+        &self,
+        bricks_to_show: &mut BricksToShow,
+        brick_attribute: &mut BrickAttribute,
+        should_show_brick_normals: &mut bool,
+        color_direction: &mut u32,
+    ) {
+        egui::Window::new("Bricks").show(&self.context, |ui| {
+            ui.horizontal(|ui| {
+                ui.label("Bricks: ");
+                if ui
+                    .button(Self::get_button_text("Z0", bricks_to_show.z0()))
+                    .clicked()
+                {
+                    bricks_to_show.toggle_z0();
+                }
+                if ui
+                    .button(Self::get_button_text("Z1", bricks_to_show.z1()))
+                    .clicked()
+                {
+                    bricks_to_show.toggle_z1();
+                }
+                if ui
+                    .button(Self::get_button_text("Z2", bricks_to_show.z2()))
+                    .clicked()
+                {
+                    bricks_to_show.toggle_z2();
+                }
+            });
+            ui.horizontal(|ui| {
+                ui.label("Brick attribute: ");
+                let button_text = match *brick_attribute {
+                    BrickAttribute::None => "None",
+                    BrickAttribute::Color => "Color",
+                    BrickAttribute::Photons => "Photons",
+                };
+                if ui.button(button_text).clicked() {
+                    *brick_attribute = brick_attribute.next();
+                }
+            });
+            if ui
+                .button(Self::get_button_text(
+                    "Show normals",
+                    *should_show_brick_normals,
+                ))
+                .clicked()
+            {
+                *should_show_brick_normals = !*should_show_brick_normals;
+            }
+            ui.add(egui::Slider::new(color_direction, 0..=5).text("Color direction"));
+        });
     }
 }
 

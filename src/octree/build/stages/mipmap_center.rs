@@ -69,7 +69,7 @@ impl MipmapCenterPass {
                 1,
                 textures.brick_pool_normals,
                 gl::READ_WRITE,
-                gl::RGBA8,
+                gl::RGBA32F,
             ),
         }
         helpers::bind_image_texture(2, node_data.level_start_indices.0, gl::READ_ONLY, gl::R32UI);

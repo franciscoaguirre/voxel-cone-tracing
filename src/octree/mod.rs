@@ -14,7 +14,7 @@ mod build;
 mod lighting;
 mod visualize;
 
-pub use visualize::BricksToShow;
+pub use visualize::{BrickAttribute, BricksToShow};
 
 pub struct Octree {
     geometry_data: OctreeData,
@@ -75,6 +75,7 @@ struct Renderer {
     vao: GLuint,
     node_count: u32,
     shader: Shader,
+    normals_shader: Shader,
     bricks_shader: Shader,
     bricks_to_show: BricksToShow,
     node_positions_shader: Shader,
@@ -143,6 +144,11 @@ impl Octree {
                 "assets/shaders/octree/visualize.vert.glsl",
                 "assets/shaders/octree/visualize.frag.glsl",
                 "assets/shaders/octree/visualize.geom.glsl",
+            ),
+            normals_shader: Shader::with_geometry_shader(
+                "assets/shaders/octree/visualizeBrickNormals.vert.glsl",
+                "assets/shaders/octree/visualizeBrickNormals.frag.glsl",
+                "assets/shaders/octree/visualizeBrickNormals.geom.glsl",
             ),
             bricks_shader: Shader::with_geometry_shader(
                 "assets/shaders/octree/visualizeBricks.vert.glsl",
@@ -239,7 +245,7 @@ impl Octree {
                 helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (Z, +)
                 helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (Z, -)
             ],
-            brick_pool_normals: helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution),
+            brick_pool_normals: helpers::generate_3d_rgba32f_texture(CONFIG.brick_pool_resolution),
             brick_pool_photons: helpers::generate_3d_r32ui_texture(CONFIG.brick_pool_resolution),
             photons_buffer: helpers::generate_texture_buffer(27, gl::R32UI, 0u32), // 27 voxels in a brick
             children_buffer: helpers::generate_texture_buffer(8, gl::R32UI, 0_u32), // 8 children in a node
