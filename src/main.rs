@@ -32,6 +32,7 @@ use octree::{BricksToShow, Octree};
 
 use crate::{
     menu::DebugNode,
+    octree::BrickAttribute,
     rendering::{framebuffer::Framebuffer, transform::Transform},
 };
 
@@ -135,6 +136,8 @@ fn main() {
     let mut selected_debug_nodes: Vec<DebugNode> = Vec::new();
     let mut selected_debug_nodes_updated = false;
     let mut color_direction: u32 = 0;
+    let mut brick_attribute = BrickAttribute::None;
+    let mut should_show_normals = false;
     let mut should_show_color = false;
     let mut should_show_direct = false;
     let mut should_show_indirect = false;
@@ -279,9 +282,7 @@ fn main() {
                 );
                 common::handle_show_model(&event, &mut show_model);
                 common::handle_show_voxel_fragment_list(&event, &mut show_voxel_fragment_list);
-                common::handle_show_octree(&event, &mut show_octree);
                 common::handle_light_movement(&event, &mut should_move_light);
-                common::handle_show_indirect_light(&event, &mut show_indirect_light);
                 common::handle_cone_angle(&event, &mut cone_angle);
             }
             menu.handle_event(event);
@@ -291,21 +292,28 @@ fn main() {
 
         // egui render
         if menu.is_showing() {
+            // Always show diagnostics
+            menu.create_diagnostics_window(fps);
             menu.show_main_window();
-            if menu.is_showing_node_positions_window() {
-                menu.create_node_positions_window(
+            if menu.is_showing_all_nodes_window() {
+                menu.create_all_nodes_window(&mut show_octree, &mut current_octree_level);
+            }
+            if menu.is_showing_node_search_window() {
+                menu.create_node_search_window(
                     &debug_nodes,
                     &mut selected_debug_nodes,
                     &mut node_filter_text,
                     &mut should_show_neighbors,
-                    &mut bricks_to_show,
                     &mut selected_debug_nodes_updated,
-                    &mut color_direction,
-                    &mut current_octree_level,
                 );
             }
-            if menu.is_showing_diagnostics_window() {
-                menu.create_diagnostics_window(fps);
+            if menu.is_showing_bricks_window() {
+                menu.create_bricks_window(
+                    &mut bricks_to_show,
+                    &mut brick_attribute,
+                    &mut should_show_normals,
+                    &mut color_direction,
+                );
             }
             if menu.is_showing_photons_window() {
                 menu.create_photons_window(&photons);
@@ -404,6 +412,8 @@ fn main() {
                     &projection,
                     current_octree_level,
                     color_direction,
+                    should_show_normals,
+                    brick_attribute,
                 );
             }
 

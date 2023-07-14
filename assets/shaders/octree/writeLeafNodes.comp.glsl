@@ -9,8 +9,8 @@ uniform layout(binding = 0, rgb10_a2ui) uimageBuffer voxelPositions;
 uniform layout(binding = 1, rgba8) imageBuffer voxelColors;
 uniform layout(binding = 2, rgba8) image3D brickPoolColors;
 uniform layout(binding = 3, r32ui) uimageBuffer nodePool;
-uniform layout(binding = 4, rgba8) imageBuffer voxelNormals;
-uniform layout(binding = 5, rgba8) image3D brickPoolNormals;
+uniform layout(binding = 4, rgba32f) imageBuffer voxelNormals;
+uniform layout(binding = 5, rgba32f) image3D brickPoolNormals;
 
 uniform uint voxelDimension;
 uniform uint octreeLevel;

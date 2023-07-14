@@ -124,11 +124,8 @@ pub fn process_movement_input(
 }
 
 toggle_boolean!(C, handle_light_movement);
-toggle_boolean!(F, handle_show_indirect_light);
-toggle_boolean!(L, handle_show_final_image);
 toggle_boolean!(Num1, handle_show_model);
 toggle_boolean!(Num2, handle_show_voxel_fragment_list);
-toggle_boolean!(Num3, handle_show_octree);
 handle_increments!(
     "Cone angle",
     Up,

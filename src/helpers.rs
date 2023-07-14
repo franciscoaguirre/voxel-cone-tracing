@@ -65,7 +65,17 @@ pub unsafe fn fill_texture_buffer_with_data<T>(texture_buffer: GLuint, data: &Ve
 }
 
 pub unsafe fn generate_3d_rgba_texture(size_one_dimension: u32) -> GLuint {
-    generate_3d_texture(size_one_dimension, gl::RGBA8, gl::RGBA, gl::UNSIGNED_BYTE)
+    generate_3d_texture(
+        size_one_dimension,
+        gl::RGBA8,
+        gl::RGBA,
+        gl::UNSIGNED_BYTE,
+        0u32,
+    )
+}
+
+pub unsafe fn generate_3d_rgba32f_texture(size_one_dimension: u32) -> GLuint {
+    generate_3d_texture(size_one_dimension, gl::RGBA32F, gl::RGBA, gl::FLOAT, 0u128)
 }
 
 pub unsafe fn generate_3d_rgb10_a2ui_texture(size_one_dimension: u32) -> GLuint {
@@ -74,6 +84,7 @@ pub unsafe fn generate_3d_rgb10_a2ui_texture(size_one_dimension: u32) -> GLuint 
         gl::RGB10_A2,
         gl::RGBA_INTEGER,
         gl::UNSIGNED_INT_2_10_10_10_REV,
+        0u32,
     )
 }
 
@@ -83,14 +94,18 @@ pub unsafe fn generate_3d_r32ui_texture(size_one_dimension: u32) -> GLuint {
         gl::R32UI,
         gl::RED_INTEGER,
         gl::UNSIGNED_INT,
+        0u32,
     )
 }
 
-unsafe fn generate_3d_texture(
+/// Generates a 3D texture
+/// Takes `T` as a default_value to account for size differences in the components
+unsafe fn generate_3d_texture<T: Clone>(
     size_one_dimension: u32,
     internal_format: GLenum,
     format: GLenum,
     _type: GLenum,
+    default_value: T,
 ) -> GLuint {
     let mut texture: GLuint = 0;
 
@@ -100,7 +115,7 @@ unsafe fn generate_3d_texture(
 
     let size = size_one_dimension.pow(3);
 
-    let initial_data = vec![0u32; size as usize];
+    let initial_data = vec![default_value; size as usize];
 
     gl::GenTextures(1, &mut texture);
     gl::BindTexture(gl::TEXTURE_3D, texture);
