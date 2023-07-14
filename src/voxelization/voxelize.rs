@@ -36,7 +36,7 @@ unsafe fn populate_voxel_fragment_list(
 
     helpers::bind_image_texture(0, voxel_positions.0, gl::WRITE_ONLY, gl::RGB10_A2UI);
     helpers::bind_image_texture(1, voxel_colors.0, gl::WRITE_ONLY, gl::RGBA8);
-    helpers::bind_image_texture(2, voxel_normals.0, gl::WRITE_ONLY, gl::RGBA8);
+    helpers::bind_image_texture(2, voxel_normals.0, gl::WRITE_ONLY, gl::RGBA32F);
 
     voxelize_scene(voxelization_shader, models, atomic_counter);
 }
@@ -147,7 +147,7 @@ pub unsafe fn build_voxel_fragment_list(
     );
     let voxel_normals: (GLuint, GLuint) = helpers::generate_texture_buffer(
         size_of::<GLuint>() * number_of_voxel_fragments as usize,
-        gl::RGBA8,
+        gl::RGBA32F,
         0u32,
     );
 

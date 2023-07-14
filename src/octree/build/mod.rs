@@ -94,11 +94,11 @@ impl Octree {
             &self.geometry_data.node_data,
             BrickPoolValues::Colors,
         );
-        // shader_passes.spread_leaf_bricks_pass.run(
-        //     &self.textures,
-        //     &self.geometry_data.node_data,
-        //     BrickPoolValues::Normals,
-        // );
+        shader_passes.spread_leaf_bricks_pass.run(
+            &self.textures,
+            &self.geometry_data.node_data,
+            BrickPoolValues::Normals,
+        );
 
         let all_directions = vec![
             Direction::new(Axis::X, Sign::Pos),

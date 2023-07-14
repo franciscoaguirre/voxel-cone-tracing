@@ -3,24 +3,24 @@
 layout (points) in;
 layout (line_strip, max_vertices = 128) out;
 
-in vec4 geom_nodePosition[];
-in float geom_halfNodeSize[];
-in vec4 nodeColor[];
+in VertexData {
+    vec4 nodePosition;
+    float halfNodeSize;
+} In[];
 
-out flat vec4 frag_nodeColor;
+out vec4 frag_nodeColor;
 
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-
-uniform layout(binding = 4, r32ui) uimage3D brickPoolPhotons;
 
 #include "./_drawCube.glsl"
 
 mat4 canonizationMatrix = projection * view * model;
 
 void main() {
-    vec4 nodePosition = geom_nodePosition[0];
+    vec4 nodePosition = In[0].nodePosition;
     vec4 cubeCenter = nodePosition;
-    drawCube(cubeCenter, geom_halfNodeSize[0], canonizationMatrix, nodeColor[0]);
+    vec4 cubeColor = vec4(0, 0, 1, 1);
+    drawCube(cubeCenter, In[0].halfNodeSize, canonizationMatrix, cubeColor);
 }
