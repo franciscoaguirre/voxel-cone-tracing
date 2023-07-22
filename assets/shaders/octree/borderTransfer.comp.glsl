@@ -45,8 +45,8 @@ void main() {
     if (axis == X_AXIS) {
         for (int y = 0; y <= 2; y++) {
             for (int z = 0; z <= 2; z++) {
-                ivec3 offset = direction.sign == -1 ? ivec3(0, y, z) : ivec3(2, y, z);
-                ivec3 neighborOffset = direction.sign == -1 ? ivec3(2, y, z) : ivec3(0, y, z);
+                ivec3 offset = (direction.axis == X_AXIS && direction.sign == -1) ? ivec3(0, y, z) : ivec3(2, y, z);
+                ivec3 neighborOffset = (direction.axis == X_AXIS && direction.sign == -1) ? ivec3(2, y, z) : ivec3(0, y, z);
 
                 vec4 borderValue = imageLoad(brickPoolValues, brickAddress + offset);
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
@@ -56,7 +56,7 @@ void main() {
                 if (direction.axis == X_AXIS) {
                     finalValue = borderValue; // We copy the value to the neighbor
                 } else {
-                    finalValue = borderValue + neighborBorderValue; // We add partial values
+                    finalValue = (borderValue + neighborBorderValue) / 2.0; // We average partial averages
                 }
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
@@ -67,8 +67,8 @@ void main() {
     if (axis == Y_AXIS) {
         for (int x = 0; x <= 2; x++) {
             for (int z = 0; z <= 2; z++) {
-                ivec3 offset = direction.sign == -1 ? ivec3(x, 0, z) : ivec3(x, 2, z);
-                ivec3 neighborOffset = direction.sign == -1 ? ivec3(x, 2, z) : ivec3(x, 0, z);
+                ivec3 offset = (direction.axis == Y_AXIS && direction.sign == -1) ? ivec3(x, 0, z) : ivec3(x, 2, z);
+                ivec3 neighborOffset = (direction.axis == Y_AXIS && direction.sign == -1) ? ivec3(x, 2, z) : ivec3(x, 0, z);
 
                 vec4 borderValue = imageLoad(brickPoolValues, brickAddress + offset);
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
@@ -78,7 +78,7 @@ void main() {
                 if (direction.axis == Y_AXIS) {
                     finalValue = borderValue; // We copy the value to the neighbor
                 } else {
-                    finalValue = borderValue + neighborBorderValue; // We add partial values
+                    finalValue = (borderValue + neighborBorderValue) / 2.0; // We average partial averages
                 }
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
@@ -89,8 +89,8 @@ void main() {
     if (axis == Z_AXIS) {
         for (int x = 0; x <= 2; x++) {
             for (int y = 0; y <= 2; y++) {
-                ivec3 offset = direction.sign == -1 ? ivec3(x, y, 0) : ivec3(x, y, 2);
-                ivec3 neighborOffset = direction.sign == -1 ? ivec3(x, y, 2) : ivec3(x, y, 0);
+                ivec3 offset = (direction.axis == Z_AXIS && direction.sign == -1) ? ivec3(x, y, 0) : ivec3(x, y, 2);
+                ivec3 neighborOffset = (direction.axis == Z_AXIS && direction.sign == -1) ? ivec3(x, y, 2) : ivec3(x, y, 0);
 
                 vec4 borderValue = imageLoad(brickPoolValues, brickAddress + offset);
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
@@ -100,7 +100,7 @@ void main() {
                 if (direction.axis == Z_AXIS) {
                     finalValue = borderValue; // We copy the value to the neighbor
                 } else {
-                    finalValue = borderValue + neighborBorderValue; // We add partial values
+                    finalValue = (borderValue + neighborBorderValue) / 2.0; // We average partial averages
                 }
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);

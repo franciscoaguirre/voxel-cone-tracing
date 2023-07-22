@@ -1,6 +1,6 @@
 #version 460 core
 
-#include "./_constants.glsl"
+#include "assets/shaders/octree/_constants.glsl"
 
 layout (local_size_x = WORKING_GROUP_SIZE, local_size_y = 1, local_size_z = 1) in;
 
@@ -13,10 +13,10 @@ uniform layout(binding = 4, rgba8) image3D brickPoolValuesRead;
 uniform uint octreeLevel;
 uniform uint voxelDimension;
 
-#include "./_helpers.glsl"
-#include "./_threadNodeUtil.glsl"
+#include "assets/shaders/octree/_helpers.glsl"
+#include "assets/shaders/octree/_threadNodeUtil.glsl"
 #include "assets/shaders/octree/_brickCoordinates.glsl"
-#include "./_mipmapAnisotropic.glsl"
+#include "assets/shaders/octree/_mipmapAnisotropic.glsl"
 
 void main() {
     int nodeAddress = getThreadNode();

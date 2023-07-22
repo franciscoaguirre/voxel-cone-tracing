@@ -9,14 +9,14 @@ use crate::{
     rendering::shader::Shader,
 };
 
-pub struct MipmapCornersPass {
+pub struct MipmapFacesPass {
     shader: Shader,
 }
 
-impl MipmapCornersPass {
+impl MipmapFacesPass {
     pub fn init() -> Self {
         Self {
-            shader: Shader::new_compute("assets/shaders/octree/mipmapCorners.comp.glsl"),
+            shader: Shader::new_compute("assets/shaders/octree/mipmapFaces.comp.glsl"),
         }
     }
 
@@ -25,7 +25,6 @@ impl MipmapCornersPass {
         textures: &OctreeTextures,
         node_data: &NodeData,
         level: u32,
-        brick_pool_values: BrickPoolValues,
         direction: Direction,
     ) {
         let mut neighbors_texture_number = match direction.axis {
@@ -50,31 +49,33 @@ impl MipmapCornersPass {
             .set_int(c_str!("direction.sign"), direction.sign.into());
 
         helpers::bind_image_texture(0, textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
-        match brick_pool_values {
-            BrickPoolValues::Colors => {
-                // Set directional mipmap children's color texture
-                helpers::bind_3d_image_texture(
-                    1,
-                    textures.brick_pool_colors[neighbors_texture_number],
-                    gl::READ_WRITE,
-                    gl::RGBA8,
-                );
-                helpers::bind_image_texture(
-                    3,
-                    textures.neighbors[neighbors_texture_number].0,
-                    gl::READ_ONLY,
-                    gl::R32UI,
-                );
-            }
-            BrickPoolValues::Normals => helpers::bind_3d_image_texture(
-                1,
-                textures.brick_pool_normals,
-                gl::READ_WRITE,
-                gl::RGBA32F,
-            ),
-        }
+        // Set directional mipmap children's color texture
+        helpers::bind_3d_image_texture(
+            1,
+            textures.brick_pool_colors[neighbors_texture_number],
+            gl::WRITE_ONLY,
+            gl::RGBA8,
+        );
+        helpers::bind_image_texture(
+            3,
+            textures.neighbors[neighbors_texture_number].0,
+            gl::READ_ONLY,
+            gl::R32UI,
+        );
         helpers::bind_image_texture(2, node_data.level_start_indices.0, gl::READ_ONLY, gl::R32UI);
-        helpers::bind_3d_image_texture(4, textures.brick_pool_colors[0], gl::READ_WRITE, gl::RGBA8);
+
+        let last_level = CONFIG.octree_levels - 1;
+        let read_texture_index = if level == last_level - 1 {
+            0
+        } else {
+            neighbors_texture_number
+        };
+        helpers::bind_3d_image_texture(
+            4,
+            textures.brick_pool_colors[read_texture_index],
+            gl::READ_ONLY,
+            gl::RGBA8,
+        );
 
         let nodes_in_level = node_data.nodes_per_level[level as usize];
         let groups_count = (nodes_in_level as f32 / CONFIG.working_group_size as f32).ceil() as u32;
