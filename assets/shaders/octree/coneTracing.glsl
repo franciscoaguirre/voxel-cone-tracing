@@ -55,7 +55,7 @@ uniform sampler3D brickPoolColorsY;
 uniform sampler3D brickPoolColorsYNeg;
 uniform sampler3D brickPoolColorsZ;
 uniform sampler3D brickPoolColorsZNeg;
-// uniform sampler3D brickPoolNormals; // TODO: Use later
+uniform sampler3D brickPoolNormals;
 uniform usampler3D brickPoolPhotons;
 
 // G-buffers

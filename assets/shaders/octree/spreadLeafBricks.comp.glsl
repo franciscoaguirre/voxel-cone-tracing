@@ -43,7 +43,7 @@ void main() {
     imageStore(brickPoolValues, brickAddress + ivec3(1, 1, 1), average);
 
     // Neg and Pos X
-    for(int i = 0; i <= 1; i++) {
+    for (int i = 0; i <= 1; i++) {
       vec4[] valuesToAverage = {
         voxelValues[0 + i],
         voxelValues[2 + i],
@@ -55,7 +55,7 @@ void main() {
     }
 
     // Neg and Pos Y
-    for(int i = 0; i <= 1; i++) {
+    for (int i = 0; i <= 1; i++) {
       vec4[] valuesToAverage = {
         voxelValues[0 + i],
         voxelValues[1 + i],
@@ -67,7 +67,7 @@ void main() {
     }
 
     // Neg and Pos Z
-    for(int i = 0; i <= 1; i++) {
+    for (int i = 0; i <= 1; i++) {
       vec4[] valuesToAverage = {
         voxelValues[0 + i * 4],
         voxelValues[1 + i * 4],
@@ -79,24 +79,24 @@ void main() {
     }
 
     // Central edges parallel to z-y plane
-    for(int z = 0; z <= 1; z++) {
-      for(int y = 0; y <= 1; y++) {
+    for (int z = 0; z <= 1; z++) {
+      for (int y = 0; y <= 1; y++) {
         vec4[] valuesToAverage = { voxelValues[0 + y * 2 + z * 4], voxelValues[1 + y * 2 + z * 4] };
         vec4 average = averageHandlingEmpty(valuesToAverage);
         imageStore(brickPoolValues, brickAddress + ivec3(1,y * 2,z * 2), average);
       }
     }
 
-    for(int z = 0; z <= 1; z++) {
-      for(int x = 0; x <= 1; x++) {    
+    for (int z = 0; z <= 1; z++) {
+      for (int x = 0; x <= 1; x++) {    
         vec4[] valuesToAverage = { voxelValues[0 + x + 4 * z], voxelValues[2 + x + 4 * z] };
         vec4 average = averageHandlingEmpty(valuesToAverage);
         imageStore(brickPoolValues, brickAddress + ivec3(x * 2,1, z * 2), average);
       }
     }
 
-    for(int y = 0; y <= 1; y++) {
-      for(int x = 0; x <= 1; x++) {
+    for (int y = 0; y <= 1; y++) {
+      for (int x = 0; x <= 1; x++) {
         vec4[] valuesToAverage = { voxelValues[0 + x + 2 * y], voxelValues[4 + x + 2 * y] };
         vec4 average = averageHandlingEmpty(valuesToAverage);
         imageStore(brickPoolValues, brickAddress + ivec3(x * 2,y * 2, 1), average);

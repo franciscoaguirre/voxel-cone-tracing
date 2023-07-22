@@ -53,7 +53,7 @@ fn main() {
     let mut camera = Camera::default();
     // camera.transform.position = point3(0.0, -0.25, 0.0);
     // camera.transform.position = point3(0.0, 0.0, -2.0);
-    camera.transform.position = point3(0.0, 0.0, 2.0);
+    camera.transform.position = point3(0.0, 0.0, 3.0);
     camera.transform.set_rotation_y(-90.0);
     let mut first_mouse = true;
     let mut last_x: f32 = CONFIG.viewport_width as f32 / 2.0;
@@ -260,7 +260,7 @@ fn main() {
         };
 
         unsafe {
-            gl::ClearColor(0.2, 0.2, 0.2, 1.0);
+            gl::ClearColor(1.0, 1.0, 1.0, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
             gl::Enable(gl::DEPTH_TEST);
             gl::Enable(gl::BLEND);
@@ -539,6 +539,11 @@ fn main() {
                     (
                         c_str!("brickPoolPhotons"),
                         octree.textures.brick_pool_photons,
+                        gl::NEAREST as i32,
+                    ),
+                    (
+                        c_str!("brickPoolNormals"),
+                        octree.textures.brick_pool_normals,
                         gl::NEAREST as i32,
                     ),
                 ];

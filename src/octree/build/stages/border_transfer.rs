@@ -91,10 +91,6 @@ impl BorderTransferPass {
                 Axis::Y => 2,
                 Axis::Z => 4,
             };
-            neighbors_texture_number = match direction.sign {
-                Sign::Pos => neighbors_texture_number,
-                Sign::Neg => neighbors_texture_number + 1,
-            };
             helpers::bind_image_texture(
                 0,
                 textures.neighbors[neighbors_texture_number].0,

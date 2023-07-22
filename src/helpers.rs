@@ -1,4 +1,4 @@
-use cgmath::Matrix4;
+use cgmath::{vec3, Matrix4, Vector3};
 use gl::types::*;
 use image::{GenericImageView, ImageFormat};
 use std::{
@@ -8,7 +8,7 @@ use std::{
     path::Path,
 };
 
-use crate::{rendering::model::Model, voxelization::aabb::Aabb};
+use crate::{config::CONFIG, rendering::model::Model, voxelization::aabb::Aabb};
 
 pub unsafe fn generate_atomic_counter_buffer() -> GLuint {
     let mut buffer: u32 = 0;
@@ -313,6 +313,17 @@ pub fn r32ui_to_rgb10_a2ui(from: u32) -> (u32, u32, u32) {
     let mask = 0b00000000000000000000001111111111;
 
     (from & mask, (from >> 10) & mask, (from >> 20) & mask)
+}
+
+#[allow(dead_code)]
+pub fn get_brick_coordinates(node_id: u32) -> Vector3<u32> {
+    let brick_pool_resolution_bricks = CONFIG.brick_pool_resolution / 3;
+    let mut coordinates = vec3(0u32, 0u32, 0u32);
+    coordinates.x = node_id % brick_pool_resolution_bricks;
+    coordinates.y = (node_id / brick_pool_resolution_bricks) % brick_pool_resolution_bricks;
+    coordinates.z = node_id / (brick_pool_resolution_bricks * brick_pool_resolution_bricks);
+    coordinates *= 3;
+    return coordinates;
 }
 
 /// Load a model with a given `name`.
