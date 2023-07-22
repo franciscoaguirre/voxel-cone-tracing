@@ -25,10 +25,8 @@ struct ShaderPasses {
     write_leaf_nodes_pass: WriteLeafNodesPass,
     spread_leaf_bricks_pass: SpreadLeafBricksPass,
     border_transfer_pass: BorderTransferPass,
-    mipmap_center_pass: MipmapCenterPass,
-    mipmap_faces_pass: MipmapFacesPass,
-    mipmap_corners_pass: MipmapCornersPass,
-    mipmap_edges_pass: MipmapEdgesPass,
+    mipmap_anisotropic_pass: MipmapAnisotropicPass,
+    mipmap_isotropic_pass: MipmapIsotropicPass,
     append_border_voxel_fragments_pass: AppendBorderVoxelFragmentsPass,
 }
 
@@ -48,10 +46,8 @@ impl Octree {
             write_leaf_nodes_pass: WriteLeafNodesPass::init(),
             spread_leaf_bricks_pass: SpreadLeafBricksPass::init(),
             border_transfer_pass: BorderTransferPass::init(),
-            mipmap_center_pass: MipmapCenterPass::init(),
-            mipmap_faces_pass: MipmapFacesPass::init(),
-            mipmap_corners_pass: MipmapCornersPass::init(),
-            mipmap_edges_pass: MipmapEdgesPass::init(),
+            mipmap_anisotropic_pass: MipmapAnisotropicPass::init(),
+            mipmap_isotropic_pass: MipmapIsotropicPass::init(),
             append_border_voxel_fragments_pass: AppendBorderVoxelFragmentsPass::init(),
         };
 
@@ -80,10 +76,6 @@ impl Octree {
         );
 
         self.show_nodes(0, 8);
-        // self.show_nodes();
-        // self.show_nodes(2914, 8);
-        // self.show_nodes(11289, 8);
-        // self.show_nodes(11297, 8);
 
         shader_passes
             .write_leaf_nodes_pass
@@ -128,77 +120,28 @@ impl Octree {
 
         for level in (0..CONFIG.octree_levels - 1).rev() {
             for direction in all_directions.iter() {
-                shader_passes.mipmap_center_pass.run(
+                shader_passes.mipmap_anisotropic_pass.run(
                     &self.textures,
                     &self.geometry_data.node_data,
                     level,
-                    BrickPoolValues::Colors,
-                    *direction,
-                );
-                shader_passes.mipmap_faces_pass.run(
-                    &self.textures,
-                    &self.geometry_data.node_data,
-                    level,
-                    BrickPoolValues::Colors,
-                    *direction,
-                );
-                shader_passes.mipmap_edges_pass.run(
-                    &self.textures,
-                    &self.geometry_data.node_data,
-                    level,
-                    BrickPoolValues::Colors,
-                    *direction,
-                );
-                shader_passes.mipmap_corners_pass.run(
-                    &self.textures,
-                    &self.geometry_data.node_data,
-                    level,
-                    BrickPoolValues::Colors,
                     *direction,
                 );
 
-                // shader_passes.mipmap_center_pass.run(
-                //     &self.textures,
-                //     &self.geometry_data.node_data,
-                //     level,
-                //     BrickPoolValues::Normals,
-                //     axis,
-                //     sign,
-                // );
-                // shader_passes.mipmap_faces_pass.run(
-                //     &self.textures,
-                //     &self.geometry_data.node_data,
-                //     level,
-                //     BrickPoolValues::Normals,
-                //     axis,
-                //     sign,
-                // );
-                // shader_passes.mipmap_corners_pass.run(
-                //     &self.textures,
-                //     &self.geometry_data.node_data,
-                //     level,
-                //     BrickPoolValues::Normals,
-                //     axis,
-                //     sign,
-                // );
-                // shader_passes.mipmap_edges_pass.run(
-                //     &self.textures,
-                //     &self.geometry_data.node_data,
-                //     level,
-                //     BrickPoolValues::Normals,
-                //     axis,
-                //     sign,
-                // );
+                shader_passes.mipmap_isotropic_pass.run(
+                    &self.textures,
+                    &self.geometry_data.node_data,
+                    level,
+                );
 
                 if level > 0 {
-                    shader_passes.border_transfer_pass.run(
-                        &self.textures,
-                        &self.geometry_data.node_data,
-                        &self.border_data.node_data,
-                        level,
-                        BrickPoolValues::Colors,
-                        *direction,
-                    );
+                    // shader_passes.border_transfer_pass.run(
+                    //     &self.textures,
+                    //     &self.geometry_data.node_data,
+                    //     &self.border_data.node_data,
+                    //     level,
+                    //     BrickPoolValues::Colors,
+                    //     *direction,
+                    // );
                     // shader_passes.border_transfer_pass.run(
                     //     &self.textures,
                     //     &self.geometry_data.node_data,

@@ -1,14 +1,15 @@
 // Requires:
-// - _helpers
 // - uniform image3D brickPoolValues
 // - uniform uimageBuffer nodePool
+// - _helpers
 // - _brickCoordinates
 // - _helpers
 
 int childNodeIDs[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 // const float gaussianWeights[4] = { 0.125, 0.0625, 0.03125, 0.015625 };
-const float gaussianWeights[4] = { 0.25, 0.125, 0.0625, 0.03125 };
+// const float gaussianWeights[4] = { 0.25, 0.125, 0.0625, 0.03125 };
+const float gaussianWeights[4] = { 1.0, 0.5, 0.25, 0.125 };
 
 void loadChildNodeIDs(in int nodeID) {
     for (int i = 0; i < 8; i++) {
@@ -30,7 +31,6 @@ vec4 getValue(in ivec3 position) {
 vec4 mipmapIsotropic(in ivec3 position) {
     vec4 finalValue = vec4(0);
     float weightSum = 0.0;
-    float weightVacios = 0.0;
 
     for (int x = -1; x <= 1; x++) {
         for (int y = -1; y <= 1; y++) {
@@ -50,19 +50,12 @@ vec4 mipmapIsotropic(in ivec3 position) {
                     float weight = gaussianWeights[distance];
                     vec4 value = getValue(lookupPosition);
 
-                    if (value == vec4(0)) {
-                        weightVacios += weight;
-                    } else {
-                        finalValue += weight * value;
-                        weightSum += weight;
-                    }
+                    finalValue += weight * value;
+                    weightSum += weight;
                 }
             }
         }
     }
 
-    finalValue.rgb /= weightSum;
-    finalValue.a /= (weightSum + weightVacios);
-
-    return finalValue;
+    return finalValue / weightSum;
 }

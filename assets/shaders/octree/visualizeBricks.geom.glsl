@@ -8,6 +8,7 @@ in float geom_halfNodeSize[];
 in ivec3 geom_brickCoordinates[];
 
 out flat vec4 frag_nodeColor;
+out vec3 frag_normal;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -21,7 +22,7 @@ uniform layout(binding = 2, r32ui) uimage3D brickPoolPhotons;
 
 mat4 canonizationMatrix = projection * view * model;
 
-#include "assets/shaders/octree/_drawCube.glsl"
+#include "assets/shaders/octree/_drawCubeFilled.glsl"
 
 const uint BY_NONE = 0;
 const uint BY_COLOR = 1;
@@ -54,94 +55,94 @@ void main() {
         // (0, 0, 0)
         cubeCenter = vec4(nodePosition.xyz - brickDistance, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0], mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (0, 1, 0)
         cubeCenter = vec4(nodePosition.x - brickDistance, nodePosition.y, nodePosition.z - brickDistance, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(0, 1, 0), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (0, 2, 0)
         cubeCenter = vec4(nodePosition.x - brickDistance, nodePosition.y + brickDistance, nodePosition.z - brickDistance, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(0, 2, 0), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (2, 0, 0)
         cubeCenter = vec4(nodePosition.x + brickDistance, nodePosition.yz - brickDistance, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(2, 0, 0), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (2, 2, 0)
         cubeCenter = vec4(nodePosition.xy + brickDistance, nodePosition.z - brickDistance, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(2, 2, 0), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (1, 1, 0)
         cubeCenter = vec4(nodePosition.xy, nodePosition.z - brickDistance, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(1, 1, 0), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (1, 0, 0)
         cubeCenter = vec4(nodePosition.x, nodePosition.yz - brickDistance, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(1, 0, 0), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (1, 2, 0)
         cubeCenter = vec4(nodePosition.x, nodePosition.y + brickDistance, nodePosition.z - brickDistance, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(1, 2, 0), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (2, 1, 0)
         cubeCenter = vec4(nodePosition.x + brickDistance, nodePosition.y, nodePosition.z - brickDistance, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(2, 1, 0), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
     } else if (bricksToShow == 2) {
         // Show z = 1
         
         // (0, 1, 1)
         cubeCenter = vec4(nodePosition.x - brickDistance, nodePosition.yz, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(0, 1, 1), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (1, 0, 1)
         cubeCenter = vec4(nodePosition.x, nodePosition.y - brickDistance, nodePosition.z, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(1, 0, 1), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (0, 0, 1)
         cubeCenter = vec4(nodePosition.xy - brickDistance, nodePosition.z, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(0, 0, 1), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (1, 1, 1)
         cubeCenter = vec4(nodePosition.xyz, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(1, 1, 1), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (0, 2, 1)
         cubeCenter = vec4(nodePosition.x - brickDistance, nodePosition.y + brickDistance, nodePosition.z, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(0, 2, 1), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (1, 2, 1)
         cubeCenter = vec4(nodePosition.x, nodePosition.y + brickDistance, nodePosition.z, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(1, 2, 1), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (2, 1, 1)
         cubeCenter = vec4(nodePosition.x + brickDistance, nodePosition.yz, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(2, 1, 1), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (2, 0, 1)
         cubeCenter = vec4(nodePosition.x + brickDistance, nodePosition.y - brickDistance, nodePosition.z, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(2, 0, 1), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (2, 2, 1)
         cubeCenter = vec4(nodePosition.xy + brickDistance, nodePosition.z, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(2, 2, 1), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
     } else if (bricksToShow == 4) {
         // Show z = 2
@@ -149,46 +150,46 @@ void main() {
         // (0, 0, 2)
         cubeCenter = vec4(nodePosition.xy - brickDistance, nodePosition.z + brickDistance, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(0, 0, 2), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (1, 0, 2)
         cubeCenter = vec4(nodePosition.x, nodePosition.y - brickDistance, nodePosition.z + brickDistance, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(1, 0, 2), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (2, 0, 2)
         cubeCenter = vec4(nodePosition.x + brickDistance, nodePosition.y - brickDistance, nodePosition.z + brickDistance, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(2, 0, 2), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (2, 2, 2)
         cubeCenter = vec4(nodePosition.xyz + brickDistance, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(2, 2, 2), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (0, 2, 2)
         cubeCenter = vec4(nodePosition.x - brickDistance, nodePosition.yz + brickDistance, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(0, 2, 2), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (1, 1, 2)
         cubeCenter = vec4(nodePosition.xy, nodePosition.z + brickDistance, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(1, 1, 2), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (0, 1, 2)
         cubeCenter = vec4(nodePosition.x - brickDistance, nodePosition.y, nodePosition.z + brickDistance, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(0, 1, 2), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (1, 2, 2)
         cubeCenter = vec4(nodePosition.x, nodePosition.yz + brickDistance, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(1, 2, 2), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
 
         // (2, 1, 2)
         cubeCenter = vec4(nodePosition.x + brickDistance, nodePosition.y, nodePosition.z + brickDistance, nodePosition.w);
         cubeColor = showProp(geom_brickCoordinates[0] + ivec3(2, 1, 2), mode);
-        drawCube(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
+        drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor);
     }
 }

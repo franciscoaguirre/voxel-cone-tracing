@@ -7,6 +7,8 @@
 // - uniform sampler3D brickPoolColorsYNeg
 // - uniform sampler3D brickPoolColorsZ
 // - uniform sampler3D brickPoolColorsZNeg
+// - uniform sampler3D brickPoolPhotons
+// - uniform sampler3D brickPoolNormals
 // - _traversalHelpers
 // - _octreeTraversal
 // - _brickCoordinates
@@ -135,10 +137,12 @@ vec4 coneTrace(
         if (octreeLevel == maxOctreeLevel) {
             childColor = getLeafColor(childVoxelCoordinates);
         } else {
-            childColor = getAnisotropicColor(childVoxelCoordinates, weightX, weightY, weightZ);
+            childColor = getLeafColor(childVoxelCoordinates);
+            // childColor = getAnisotropicColor(childVoxelCoordinates, weightX, weightY, weightZ);
         }
 
-        parentColor = getAnisotropicColor(parentVoxelCoordinates, weightX, weightY, weightZ);
+        parentColor = getLeafColor(parentVoxelCoordinates);
+        // parentColor = getAnisotropicColor(parentVoxelCoordinates, weightX, weightY, weightZ);
 
         if (useLighting) {
             childColor.rgb *= clamp(texture(brickPoolPhotons, childVoxelCoordinates).r * photonPower, 0, 1) / distanceFactor;

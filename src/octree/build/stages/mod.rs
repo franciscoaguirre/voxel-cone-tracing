@@ -7,17 +7,11 @@ pub use border_transfer::BorderTransferPass;
 mod flag_nodes;
 pub use flag_nodes::FlagNodesPass;
 
-mod mipmap_center;
-pub use mipmap_center::MipmapCenterPass;
+mod mipmap_anisotropic;
+pub use mipmap_anisotropic::MipmapAnisotropicPass;
 
-mod mipmap_corners;
-pub use mipmap_corners::MipmapCornersPass;
-
-mod mipmap_edges;
-pub use mipmap_edges::MipmapEdgesPass;
-
-mod mipmap_faces;
-pub use mipmap_faces::MipmapFacesPass;
+mod mipmap_isotropic;
+pub use mipmap_isotropic::MipmapIsotropicPass;
 
 mod neighbor_pointers;
 pub use neighbor_pointers::NeighborPointersPass;
