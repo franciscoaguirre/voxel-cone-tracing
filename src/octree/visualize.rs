@@ -200,6 +200,12 @@ impl Octree {
             .bricks_shader
             .set_float(c_str!("brickPadding"), brick_padding);
 
+        let color_direction = if octree_level == CONFIG.last_octree_level {
+            0
+        } else {
+            color_direction
+        };
+
         helpers::bind_3d_image_texture(
             0,
             self.textures.brick_pool_colors[color_direction as usize],
