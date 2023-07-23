@@ -57,8 +57,8 @@ void main() {
     // Neg and Pos Y
     for (int i = 0; i <= 1; i++) {
       vec4[] valuesToAverage = {
-        voxelValues[0 + i],
-        voxelValues[1 + i],
+        voxelValues[0 + i * 2],
+        voxelValues[1 + i * 2],
         voxelValues[4 + i * 2],
         voxelValues[5 + i * 2]
       };
@@ -78,28 +78,30 @@ void main() {
       imageStore(brickPoolValues, brickAddress + ivec3(1,1,i * 2), average);
     }
 
-    // Central edges parallel to z-y plane
+    // Edges perpendicular to z-y plane
     for (int z = 0; z <= 1; z++) {
       for (int y = 0; y <= 1; y++) {
         vec4[] valuesToAverage = { voxelValues[0 + y * 2 + z * 4], voxelValues[1 + y * 2 + z * 4] };
         vec4 average = averageHandlingEmpty(valuesToAverage);
-        imageStore(brickPoolValues, brickAddress + ivec3(1,y * 2,z * 2), average);
+        imageStore(brickPoolValues, brickAddress + ivec3(1, y * 2, z * 2), average);
       }
     }
 
+    // Edges perpendicular to z-x plane
     for (int z = 0; z <= 1; z++) {
-      for (int x = 0; x <= 1; x++) {    
-        vec4[] valuesToAverage = { voxelValues[0 + x + 4 * z], voxelValues[2 + x + 4 * z] };
+      for (int x = 0; x <= 1; x++) {
+        vec4[] valuesToAverage = { voxelValues[x + 0 + z * 4], voxelValues[x + 2 + z * 4] };
         vec4 average = averageHandlingEmpty(valuesToAverage);
-        imageStore(brickPoolValues, brickAddress + ivec3(x * 2,1, z * 2), average);
+        imageStore(brickPoolValues, brickAddress + ivec3(x * 2, 1, z * 2), average);
       }
     }
 
+    // Edges perpendicular to y-x plane
     for (int y = 0; y <= 1; y++) {
       for (int x = 0; x <= 1; x++) {
-        vec4[] valuesToAverage = { voxelValues[0 + x + 2 * y], voxelValues[4 + x + 2 * y] };
+        vec4[] valuesToAverage = { voxelValues[x + y * 2 + 0], voxelValues[x + y * 2 + 4] };
         vec4 average = averageHandlingEmpty(valuesToAverage);
-        imageStore(brickPoolValues, brickAddress + ivec3(x * 2,y * 2, 1), average);
+        imageStore(brickPoolValues, brickAddress + ivec3(x * 2, y * 2, 1), average);
       }
     }
 }
