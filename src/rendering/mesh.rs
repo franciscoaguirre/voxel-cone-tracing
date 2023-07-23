@@ -46,6 +46,7 @@ pub struct Mesh {
     pub indices: Vec<u32>,
     pub textures: Vec<Texture>,
     pub vao: u32,
+    pub diffuse: Option<[f32; 3]>,
 
     /*  Render data  */
     vbo: u32,
@@ -53,11 +54,17 @@ pub struct Mesh {
 }
 
 impl Mesh {
-    pub fn new(vertices: Vec<Vertex>, indices: Vec<u32>, textures: Vec<Texture>) -> Mesh {
+    pub fn new(
+        vertices: Vec<Vertex>,
+        indices: Vec<u32>,
+        textures: Vec<Texture>,
+        diffuse: Option<[f32; 3]>,
+    ) -> Mesh {
         let mut mesh = Mesh {
             vertices,
             indices,
             textures,
+            diffuse,
             vao: 0,
             vbo: 0,
             ebo: 0,
@@ -77,6 +84,15 @@ impl Mesh {
         let mut num_height = 0;
         if !self.textures.is_empty() {
             shader.set_bool(c_str!("hasTexture"), true);
+        }
+        if let Some(diffuse) = self.diffuse {
+            shader.set_bool(c_str!("hasDiffuse"), true);
+            shader.set_vec3(
+                c_str!("materialDiffuse"),
+                diffuse[0],
+                diffuse[1],
+                diffuse[2],
+            );
         }
         for (i, texture) in self.textures.iter().enumerate() {
             gl::ActiveTexture(gl::TEXTURE0 + i as u32); // active proper texture unit before binding
