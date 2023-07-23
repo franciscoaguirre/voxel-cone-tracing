@@ -70,6 +70,7 @@ uniform sampler2D shadowMap;
 #include "./_octreeTraversal.glsl"
 #include "assets/shaders/octree/_brickCoordinates.glsl"
 #include "./_coneTrace.glsl"
+#include "./_anisotropicColor.glsl"
 
 const float PI = 3.14159;
 

@@ -1,7 +1,7 @@
 use std::{ffi::c_void, mem::size_of};
 
 use c_str_macro::c_str;
-use cgmath::Matrix4;
+use cgmath::{vec3, Matrix4, Vector3};
 use gl::types::GLuint;
 
 use crate::{
@@ -19,7 +19,7 @@ impl Octree {
         view: &Matrix4<f32>,
         projection: &Matrix4<f32>,
         octree_level: u32,
-        color_direction: u32,
+        color_direction: Vector3<f32>,
         should_show_normals: bool,
         brick_attribute: BrickAttribute,
         brick_padding: f32, // Between 0 and 1
@@ -172,7 +172,7 @@ impl Octree {
         projection: &Matrix4<f32>,
         view: &Matrix4<f32>,
         model: &Matrix4<f32>,
-        color_direction: u32,
+        color_direction: Vector3<f32>,
         brick_attribute: BrickAttribute,
         brick_padding: f32, // Between 0 and 1
     ) {
@@ -201,35 +201,78 @@ impl Octree {
             .set_float(c_str!("brickPadding"), brick_padding);
 
         let color_direction = if octree_level == CONFIG.last_octree_level {
-            0
+            vec3(1.0, 0.0, 0.0)
         } else {
             color_direction
         };
 
-        helpers::bind_3d_image_texture(
-            0,
-            self.textures.brick_pool_colors[color_direction as usize],
-            gl::READ_ONLY,
-            gl::RGBA8,
+        self.renderer.bricks_shader.set_vec3(
+            c_str!("colorDirection"),
+            color_direction.x,
+            color_direction.y,
+            color_direction.z,
         );
+
         helpers::bind_image_texture(
-            1,
+            0,
             self.textures.node_positions.0,
             gl::READ_ONLY,
             gl::RGB10_A2UI,
         );
         helpers::bind_3d_image_texture(
-            2,
+            1,
             self.textures.brick_pool_photons,
             gl::READ_ONLY,
             gl::R32UI,
         );
         helpers::bind_image_texture(
-            3,
+            2,
             self.geometry_data.node_data.level_start_indices.0,
             gl::READ_ONLY,
             gl::R32UI,
         );
+
+        let color_textures = vec![
+            (
+                c_str!("brickPoolColorsX"),
+                self.textures.brick_pool_colors[0],
+            ),
+            (
+                c_str!("brickPoolColorsXNeg"),
+                self.textures.brick_pool_colors[1],
+            ),
+            (
+                c_str!("brickPoolColorsY"),
+                self.textures.brick_pool_colors[2],
+            ),
+            (
+                c_str!("brickPoolColorsYNeg"),
+                self.textures.brick_pool_colors[3],
+            ),
+            (
+                c_str!("brickPoolColorsZ"),
+                self.textures.brick_pool_colors[4],
+            ),
+            (
+                c_str!("brickPoolColorsZNeg"),
+                self.textures.brick_pool_colors[5],
+            ),
+        ];
+
+        let mut texture_counter = 0;
+        for &(texture_name, texture) in color_textures.iter() {
+            gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
+            gl::BindTexture(gl::TEXTURE_3D, texture);
+            self.renderer
+                .bricks_shader
+                .set_int(texture_name, texture_counter as i32);
+            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
+            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
+            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+            texture_counter += 1;
+        }
 
         let mut vao = 0;
         gl::GenVertexArrays(1, &mut vao);
@@ -486,7 +529,7 @@ impl Octree {
         projection: &Matrix4<f32>,
         view: &Matrix4<f32>,
         model: &Matrix4<f32>,
-        color_direction: u32,
+        color_direction: Vector3<f32>,
     ) {
         if self.renderer.node_count == 0 {
             return;
@@ -525,7 +568,7 @@ impl Octree {
         );
         helpers::bind_3d_image_texture(
             2,
-            self.textures.brick_pool_colors[color_direction as usize],
+            self.textures.brick_pool_colors[0 as usize], // TODO: Use `color_direction`
             gl::READ_ONLY,
             gl::RGBA8,
         );

@@ -1,14 +1,9 @@
 // Requires:
 // - uniform uint voxelDimension
 // - uniform uint maxOctreeLevel
-// - uniform sampler3D brickPoolColorsX
-// - uniform sampler3D brickPoolColorsXNeg
-// - uniform sampler3D brickPoolColorsY
-// - uniform sampler3D brickPoolColorsYNeg
-// - uniform sampler3D brickPoolColorsZ
-// - uniform sampler3D brickPoolColorsZNeg
 // - uniform sampler3D brickPoolPhotons
 // - uniform sampler3D brickPoolNormals
+// - _anisotropicColor
 // - _traversalHelpers
 // - _octreeTraversal
 // - _brickCoordinates
@@ -54,13 +49,6 @@ bool fallsOutsideNode(vec3 queryCoordinates, Node node) {
 
 vec4 getLeafColor(vec3 voxelCoordinates) {
     return texture(brickPoolColorsX, voxelCoordinates);
-}
-
-vec4 getAnisotropicColor(vec3 voxelCoordinates, float weightX, float weightY, float weightZ) {
-    vec4 colorX = weightX > 0 ? texture(brickPoolColorsX, voxelCoordinates) : texture(brickPoolColorsXNeg, voxelCoordinates);
-    vec4 colorY = weightY > 0 ? texture(brickPoolColorsY, voxelCoordinates) : texture(brickPoolColorsYNeg, voxelCoordinates);
-    vec4 colorZ = weightZ > 0 ? texture(brickPoolColorsZ, voxelCoordinates) : texture(brickPoolColorsZNeg, voxelCoordinates);
-    return clamp(colorX * abs(weightX) + colorY * abs(weightY) + colorZ * abs(weightZ), 0.0, 1.0);
 }
 
 // rayOrigin should be between 0 and 1
@@ -124,10 +112,6 @@ vec4 coneTrace(
         float distance = (distanceAlongCone - firstStep) * 29;
         float distanceFactor = c1 + c2 * distance + c3 * distance * distance;
 
-        float weightX = dot(coneDirection, vec3(1, 0, 0));
-        float weightY = dot(coneDirection, vec3(0, 1, 0));
-        float weightZ = dot(coneDirection, vec3(0, 0, 1));
-
         vec3 childVoxelCoordinates = findVoxel(queryCoordinates, node);
         vec3 parentVoxelCoordinates = findVoxel(queryCoordinates, parentNode);
 
@@ -138,11 +122,11 @@ vec4 coneTrace(
             childColor = getLeafColor(childVoxelCoordinates);
         } else {
             childColor = getLeafColor(childVoxelCoordinates);
-            // childColor = getAnisotropicColor(childVoxelCoordinates, weightX, weightY, weightZ);
+            // childColor = getAnisotropicColor(childVoxelCoordinates, coneDirection);
         }
 
         parentColor = getLeafColor(parentVoxelCoordinates);
-        // parentColor = getAnisotropicColor(parentVoxelCoordinates, weightX, weightY, weightZ);
+        // parentColor = getAnisotropicColor(parentVoxelCoordinates, coneDirection);
 
         if (useLighting) {
             childColor.rgb *= clamp(texture(brickPoolPhotons, childVoxelCoordinates).r * photonPower, 0, 1) / distanceFactor;

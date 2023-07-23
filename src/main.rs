@@ -135,7 +135,7 @@ fn main() {
         .collect();
     let mut selected_debug_nodes: Vec<DebugNode> = Vec::new();
     let mut selected_debug_nodes_updated = false;
-    let mut color_direction: u32 = 0;
+    let mut color_direction = vec3(1.0, 0.0, 0.0);
     let mut brick_attribute = BrickAttribute::None;
     let mut brick_padding = 0.0;
     let mut should_show_normals = false;
@@ -264,8 +264,9 @@ fn main() {
             gl::ClearColor(1.0, 1.0, 1.0, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
             gl::Enable(gl::DEPTH_TEST);
-            gl::Enable(gl::BLEND);
-            gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
+            gl::Disable(gl::BLEND);
+            // gl::Enable(gl::BLEND);
+            // gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
         }
 
         for (_, event) in glfw::flush_messages(&events) {
