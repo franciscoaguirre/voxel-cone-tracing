@@ -38,7 +38,7 @@ vec4 showProp(ivec3 coordinates, uint type) {
       }
       return vec4(0.0, 0.0, 0.0, 1.0);
     } else if (type == BY_COLOR) {
-      return vec4(imageLoad(brickPoolColors, coordinates).rgb, 1.0);
+      return imageLoad(brickPoolColors, coordinates);
     }
 }
 
