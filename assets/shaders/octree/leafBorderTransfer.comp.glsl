@@ -2,6 +2,7 @@
 
 #include "./_constants.glsl"
 #include "./_helpers.glsl"
+#include "./_averageHelpers.glsl"
 
 layout (local_size_x = WORKING_GROUP_SIZE, local_size_y = 1, local_size_z = 1) in;
 
@@ -41,7 +42,8 @@ void main() {
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
                 memoryBarrier();
 
-                vec4 finalValue = 0.5 * (borderValue + neighborBorderValue);
+                vec4[] voxelValues = { borderValue, neighborBorderValue };
+                vec4 finalValue = averageHandlingEmpty(voxelValues);
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
             }
@@ -58,7 +60,8 @@ void main() {
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
                 memoryBarrier();
 
-                vec4 finalValue = 0.5 * (borderValue + neighborBorderValue);
+                vec4[] voxelValues = { borderValue, neighborBorderValue };
+                vec4 finalValue = averageHandlingEmpty(voxelValues);
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
             }
@@ -75,7 +78,8 @@ void main() {
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
                 memoryBarrier();
 
-                vec4 finalValue = 0.5 * (borderValue + neighborBorderValue);
+                vec4[] voxelValues = { borderValue, neighborBorderValue };
+                vec4 finalValue = averageHandlingEmpty(voxelValues);
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
             }

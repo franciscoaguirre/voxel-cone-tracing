@@ -56,7 +56,8 @@ void main() {
                 if (direction.axis == X_AXIS) {
                     finalValue = borderValue; // We copy the value to the neighbor
                 } else {
-                    finalValue = (borderValue + neighborBorderValue) / 2.0; // We average partial averages
+                    vec4[] voxelValues = { borderValue, neighborBorderValue };
+                    finalValue = averageHandlingEmpty(voxelValues); // We average partial averages
                 }
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
@@ -78,7 +79,8 @@ void main() {
                 if (direction.axis == Y_AXIS) {
                     finalValue = borderValue; // We copy the value to the neighbor
                 } else {
-                    finalValue = (borderValue + neighborBorderValue) / 2.0; // We average partial averages
+                    vec4[] voxelValues = { borderValue, neighborBorderValue };
+                    finalValue = averageHandlingEmpty(voxelValues); // We average partial averages
                 }
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
@@ -100,7 +102,8 @@ void main() {
                 if (direction.axis == Z_AXIS) {
                     finalValue = borderValue; // We copy the value to the neighbor
                 } else {
-                    finalValue = (borderValue + neighborBorderValue) / 2.0; // We average partial averages
+                    vec4[] voxelValues = { borderValue, neighborBorderValue };
+                    finalValue = averageHandlingEmpty(voxelValues); // We average partial averages
                 }
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
