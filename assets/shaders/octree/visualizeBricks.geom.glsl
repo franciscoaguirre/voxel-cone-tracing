@@ -16,6 +16,7 @@ uniform mat4 projection;
 
 uniform uint bricksToShow;
 uniform uint mode;
+uniform float brickPadding = 0.0;
 
 uniform layout(binding = 0, rgba8) image3D brickPoolColors;
 uniform layout(binding = 2, r32ui) uimage3D brickPoolPhotons;
@@ -47,8 +48,8 @@ void main() {
     float voxelBrickSize = (geom_halfNodeSize[0] / 2);
     // So a brick goes fully inside a node, not accurate but works for debugging
     float brickDistance = geom_halfNodeSize[0];
-    vec3 minCorner = (nodePosition.xyz - vec3(geom_halfNodeSize[0] * 0.95));
-    vec3 maxCorner = (nodePosition.xyz + vec3(geom_halfNodeSize[0] * 0.95));
+    vec3 minCorner = (nodePosition.xyz - vec3(geom_halfNodeSize[0] * (1 - brickPadding)));
+    vec3 maxCorner = (nodePosition.xyz + vec3(geom_halfNodeSize[0] * (1 - brickPadding)));
     vec4 cubeCenter, cubeColor;
     vec3 start, normal;
     if (bricksToShow == 1) {
