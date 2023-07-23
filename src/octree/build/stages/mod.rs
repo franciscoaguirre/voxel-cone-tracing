@@ -1,8 +1,11 @@
 mod allocate_nodes;
 pub use allocate_nodes::AllocateNodesPass;
 
-mod border_transfer;
-pub use border_transfer::BorderTransferPass;
+mod leaf_border_transfer;
+pub use leaf_border_transfer::LeafBorderTransferPass;
+
+mod anisotropic_border_transfer;
+pub use anisotropic_border_transfer::AnisotropicBorderTransferPass;
 
 mod flag_nodes;
 pub use flag_nodes::FlagNodesPass;

@@ -1,6 +1,3 @@
-// Requires:
-// - uniform uint voxelDimension
-
 int brickPoolResolution = 384; // TODO: Get this from a uniform. No hardcoding.
 
 ivec3 calculateBrickCoordinates(int nodeID) {
