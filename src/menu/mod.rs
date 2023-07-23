@@ -154,22 +154,58 @@ impl Menu {
 
     pub fn show_main_window(&mut self) {
         egui::Window::new("Menu").show(&self.context, |ui| {
-            if ui.button("All nodes").clicked() {
+            if ui
+                .button(Self::get_button_text(
+                    "All nodes",
+                    self.is_showing_all_nodes_window,
+                ))
+                .clicked()
+            {
                 self.is_showing_all_nodes_window = !self.is_showing_all_nodes_window;
             }
-            if ui.button("Node search").clicked() {
+            if ui
+                .button(Self::get_button_text(
+                    "Node search",
+                    self.is_showing_node_search_window,
+                ))
+                .clicked()
+            {
                 self.is_showing_node_search_window = !self.is_showing_node_search_window;
             }
-            if ui.button("Bricks").clicked() {
+            if ui
+                .button(Self::get_button_text(
+                    "Bricks",
+                    self.is_showing_bricks_window,
+                ))
+                .clicked()
+            {
                 self.is_showing_bricks_window = !self.is_showing_bricks_window;
             }
-            if ui.button("Photons").clicked() {
+            if ui
+                .button(Self::get_button_text(
+                    "Photons",
+                    self.is_showing_photons_window,
+                ))
+                .clicked()
+            {
                 self.is_showing_photons_window = !self.is_showing_photons_window;
             }
-            if ui.button("Children").clicked() {
+            if ui
+                .button(Self::get_button_text(
+                    "Children",
+                    self.is_showing_children_window,
+                ))
+                .clicked()
+            {
                 self.is_showing_children_window = !self.is_showing_children_window;
             }
-            if ui.button("Images").clicked() {
+            if ui
+                .button(Self::get_button_text(
+                    "Images",
+                    self.is_showing_images_window,
+                ))
+                .clicked()
+            {
                 self.is_showing_images_window = !self.is_showing_images_window;
             }
         });
