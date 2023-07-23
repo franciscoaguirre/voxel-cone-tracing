@@ -75,9 +75,6 @@ vec4 calculateDirectionalValue(ivec3 initialPosition, Direction direction) {
         // }
         // Accumulate changes directly the value of accumulatedColor
         accumulate(accumulatedColor, color);
-        if (accumulatedColor.a == 1) {
-            break;
-        }
         position += stepp;
     }
 
