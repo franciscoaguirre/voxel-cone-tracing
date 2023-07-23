@@ -137,6 +137,7 @@ fn main() {
     let mut selected_debug_nodes_updated = false;
     let mut color_direction: u32 = 0;
     let mut brick_attribute = BrickAttribute::None;
+    let mut brick_padding = 0.0;
     let mut should_show_normals = false;
     let mut should_show_color = false;
     let mut should_show_direct = false;
@@ -313,6 +314,7 @@ fn main() {
                     &mut brick_attribute,
                     &mut should_show_normals,
                     &mut color_direction,
+                    &mut brick_padding,
                 );
             }
             if menu.is_showing_photons_window() {
@@ -414,6 +416,7 @@ fn main() {
                     color_direction,
                     should_show_normals,
                     brick_attribute,
+                    brick_padding,
                 );
             }
 
