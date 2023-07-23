@@ -22,6 +22,7 @@ impl Octree {
         color_direction: u32,
         should_show_normals: bool,
         brick_attribute: BrickAttribute,
+        brick_padding: f32, // Between 0 and 1
     ) {
         if should_show_normals {
             self.show_normals(octree_level, projection, view, model);
@@ -35,6 +36,7 @@ impl Octree {
                 model,
                 color_direction,
                 brick_attribute,
+                brick_padding,
             );
         } else {
             self.renderer.shader.use_program();
@@ -172,6 +174,7 @@ impl Octree {
         model: &Matrix4<f32>,
         color_direction: u32,
         brick_attribute: BrickAttribute,
+        brick_padding: f32, // Between 0 and 1
     ) {
         self.renderer.bricks_shader.use_program();
 
@@ -193,6 +196,9 @@ impl Octree {
         self.renderer
             .bricks_shader
             .set_uint(c_str!("mode"), brick_attribute.into());
+        self.renderer
+            .bricks_shader
+            .set_float(c_str!("brickPadding"), brick_padding);
 
         helpers::bind_3d_image_texture(
             0,

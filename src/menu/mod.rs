@@ -433,6 +433,7 @@ impl Menu {
         brick_attribute: &mut BrickAttribute,
         should_show_brick_normals: &mut bool,
         color_direction: &mut u32,
+        brick_padding: &mut f32,
     ) {
         egui::Window::new("Bricks").show(&self.context, |ui| {
             ui.horizontal(|ui| {
@@ -477,6 +478,7 @@ impl Menu {
                 *should_show_brick_normals = !*should_show_brick_normals;
             }
             ui.add(egui::Slider::new(color_direction, 0..=5).text("Color direction"));
+            ui.add(egui::Slider::new(brick_padding, 0.0..=1.0).text("Brick padding"));
         });
     }
 }
