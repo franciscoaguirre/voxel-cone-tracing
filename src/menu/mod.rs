@@ -338,7 +338,10 @@ impl Menu {
         should_show_neighbors: &mut bool,
         selected_items_updated: &mut bool,
     ) {
-        let pinned_items: Vec<DebugNode> = selected_items.clone();
+        // Variables for handling modifications to `selected_items`
+        let mut should_clear = false;
+        let mut index_to_push = None;
+        let mut index_to_remove = None;
 
         egui::Window::new("Node search")
             .resize(|r| r.fixed_size((200., 400.)))
@@ -357,51 +360,68 @@ impl Menu {
                     egui::ScrollArea::vertical()
                         .max_height(200.)
                         .show(ui, |ui| {
-                            for pinned_node in pinned_items.iter() {
-                                let button_text = format!("{}", pinned_node);
+                            for selected_index in 0..selected_items.len() {
+                                let button_text = format!("{}", selected_items[selected_index]);
                                 if ui
-                                    .button(egui::RichText::new(button_text).color(Color32::RED))
+                                    .button(Self::get_button_text(&button_text, true))
                                     .clicked()
                                 {
-                                    let pinned_index = selected_items
-                                        .iter()
-                                        .position(|node| node.index == pinned_node.index)
-                                        .expect("Pinned item was selected");
+                                    let selected_item = &selected_items[selected_index];
+                                    index_to_remove = Some(
+                                        selected_items
+                                            .iter()
+                                            .position(|item| item.index == selected_item.index)
+                                            .expect("Selected item was clicked"),
+                                    );
                                     *selected_items_updated = true;
-                                    selected_items.remove(pinned_index);
                                 }
                             }
                         });
                     ui.separator();
-                    for node in items
-                        .iter()
-                        .filter(|node| {
-                            pinned_items
-                                .iter()
-                                .find(|pinned_node| pinned_node.index == node.index as u32)
+                    for item_index in (0..items.len())
+                        .filter(|&item_index| {
+                            (0..selected_items.len())
+                                .find(|&selected_index| {
+                                    selected_items[selected_index].index == item_index as u32
+                                })
                                 .is_none()
-                                && (node.index.to_string().starts_with(&*filter_text)
-                                    || node.text.contains(&*filter_text))
+                                && (item_index.to_string().starts_with(&*filter_text)
+                                    || items[item_index].text.contains(&*filter_text))
                         })
                         .take(20)
                     {
-                        let button_text = format!("{}", node);
+                        let button_text = format!("{}", &items[item_index]);
                         let button = ui.button(button_text.clone());
+                        let clicking_selected_item = selected_items
+                            .iter()
+                            .find(|selected_item| selected_item.index == item_index as u32)
+                            .is_some();
                         if button.clicked() {
-                            if !self.input_state.input.modifiers.shift {
-                                selected_items.clear();
-                                selected_items.push(node.clone());
-                            } else if selected_items
-                                .iter()
-                                .find(|selected_node| selected_node.index == node.index as u32)
-                                .is_some()
-                            {
-                                selected_items.remove(node.index as usize);
+                            if clicking_selected_item {
+                                index_to_remove = Some(item_index);
+                            } else if !self.input_state.input.modifiers.shift {
+                                should_clear = true;
+                                index_to_push = Some(item_index);
                             } else {
-                                selected_items.push(node.clone());
+                                index_to_push = Some(item_index);
                             }
                             *selected_items_updated = true;
                         }
+                    }
+
+                    if should_clear {
+                        selected_items.clear();
+                        should_clear = false;
+                    }
+
+                    if let Some(index) = index_to_push {
+                        selected_items.push(items[index].clone());
+                        index_to_push = None;
+                    }
+
+                    if let Some(index) = index_to_remove {
+                        selected_items.remove(index);
+                        index_to_remove = None;
                     }
                 });
             });
