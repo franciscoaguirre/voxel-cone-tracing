@@ -156,10 +156,7 @@ vec4 coneTrace(
 
         vec4 newColor = mix(childColor, parentColor, parentWeight); // Quadrilinear interpolation
 
-        // We probably should multiply by newColor.a
-        returnColor.rgb = returnColor.rgb + (1 - returnColor.a) * newColor.rgb;
-        returnColor.a = returnColor.a + (1 - returnColor.a) * newColor.a;
-        // returnColor += (1.0 - returnColor.a) * newColor;
+        returnColor += (1 - returnColor.a) * newColor;
 
         distanceAlongCone += sampleStep;
 

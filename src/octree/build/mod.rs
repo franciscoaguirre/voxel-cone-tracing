@@ -132,14 +132,14 @@ impl Octree {
                 );
 
                 if level > 0 {
-                    // shader_passes.border_transfer_pass.run(
-                    //     &self.textures,
-                    //     &self.geometry_data.node_data,
-                    //     &self.border_data.node_data,
-                    //     level,
-                    //     BrickPoolValues::Colors,
-                    //     *direction,
-                    // );
+                    shader_passes.anisotropic_border_transfer_pass.run(
+                        &self.textures,
+                        &self.geometry_data.node_data,
+                        &self.border_data.node_data,
+                        level,
+                        BrickPoolValues::Colors,
+                        *direction,
+                    );
                     // shader_passes.border_transfer_pass.run(
                     //     &self.textures,
                     //     &self.geometry_data.node_data,

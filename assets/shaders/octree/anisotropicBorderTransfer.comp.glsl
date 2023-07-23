@@ -20,7 +20,6 @@ uniform uint octreeLevel;
 uniform uint voxelDimension;
 
 #include "./_threadNodeUtil.glsl"
-#include "./_averageHelpers.glsl"
 #include "assets/shaders/octree/_brickCoordinates.glsl"
 
 void main() {
@@ -56,8 +55,7 @@ void main() {
                 if (direction.axis == X_AXIS) {
                     finalValue = borderValue; // We copy the value to the neighbor
                 } else {
-                    vec4[] voxelValues = { borderValue, neighborBorderValue };
-                    finalValue = averageHandlingEmpty(voxelValues); // We average partial averages
+                    finalValue = 0.5 * (borderValue + neighborBorderValue); // We average partial averages
                 }
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
@@ -79,8 +77,7 @@ void main() {
                 if (direction.axis == Y_AXIS) {
                     finalValue = borderValue; // We copy the value to the neighbor
                 } else {
-                    vec4[] voxelValues = { borderValue, neighborBorderValue };
-                    finalValue = averageHandlingEmpty(voxelValues); // We average partial averages
+                    finalValue = 0.5 * (borderValue + neighborBorderValue); // We average partial averages
                 }
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
@@ -102,8 +99,7 @@ void main() {
                 if (direction.axis == Z_AXIS) {
                     finalValue = borderValue; // We copy the value to the neighbor
                 } else {
-                    vec4[] voxelValues = { borderValue, neighborBorderValue };
-                    finalValue = averageHandlingEmpty(voxelValues); // We average partial averages
+                    finalValue = 0.5 * (borderValue + neighborBorderValue); // We average partial averages
                 }
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);

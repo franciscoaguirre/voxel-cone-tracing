@@ -47,8 +47,7 @@ void setup(int nodeID) {
 }
 
 void accumulate(inout vec4 color, vec4 voxelColor) {
-    color.rgb = color.rgb + (1 - color.a) * voxelColor.rgb * voxelColor.a;
-    color.a = color.a + (1 - color.a) * voxelColor.a;
+    color += (1 - color.a) * voxelColor;
 }
 
 vec4 calculateDirectionalValue(ivec3 initialPosition, Direction direction) {
@@ -75,7 +74,7 @@ vec4 calculateDirectionalValue(ivec3 initialPosition, Direction direction) {
         // }
         // Accumulate changes directly the value of accumulatedColor
         accumulate(accumulatedColor, color);
-        if (accumulatedColor.a == 1) {
+        if (accumulatedColor.a >= 1) {
             break;
         }
         position += stepp;
@@ -192,7 +191,6 @@ vec4 mipmapAnisotropic(ivec3 position) {
     vec4 color = vec4(0);
     int baseOffset = direction.sign == -1 ? 2 : 0;
     float weightSum = 0;
-    float alphaWeightSum = 0;
     // TODO: Empty directional values are making the overall value darker.
     // This could be solved if we knew how many directional values were empty beforehand, but we can't know that
     // unless we get all neighbors, and if we do that, we might as well use them for the calculation instead of
@@ -228,13 +226,8 @@ vec4 mipmapAnisotropic(ivec3 position) {
                 float weight = distanceWeight * partialWeight;
                 ivec3 baseVoxel = ivec3(baseOffset, i + 1, j + 1);
                 newColor = calculateDirectionalValue(baseVoxel, direction) * weight;
-                if (newColor.a > 0.001) {
-                    color += newColor;
-                    weightSum += weight;
-                    alphaWeightSum += weight;
-                } else {
-                    alphaWeightSum += weight;
-                }
+                color += newColor;
+                weightSum += weight;
             } else if (direction.axis == Y_AXIS) {
                 bool shouldSkipX = isOutsideRange(position.x + i, 0, 4);
                 bool shouldSkipZ = isOutsideRange(position.z + j, 0, 4);
@@ -258,13 +251,8 @@ vec4 mipmapAnisotropic(ivec3 position) {
                 float weight = distanceWeight * partialWeight;
                 ivec3 baseVoxel = ivec3(i + 1, baseOffset, j + 1);
                 newColor = calculateDirectionalValue(baseVoxel, direction) * weight;
-                if (newColor.a > 0.001) {
-                    color += newColor;
-                    weightSum += weight;
-                    alphaWeightSum += weight;
-                } else {
-                    alphaWeightSum += weight;
-                }
+                color += newColor;
+                weightSum += weight;
             } else if (direction.axis == Z_AXIS) {
                 bool shouldSkipX = isOutsideRange(position.x + i, 0, 4);
                 bool shouldSkipY = isOutsideRange(position.y + j, 0, 4);
@@ -288,16 +276,11 @@ vec4 mipmapAnisotropic(ivec3 position) {
                 float weight = distanceWeight * partialWeight;
                 ivec3 baseVoxel = ivec3(i + 1, j + 1, baseOffset);
                 newColor = calculateDirectionalValue(baseVoxel, direction) * weight;
-                if (newColor.a > 0.001) {
-                    color += newColor;
-                    weightSum += weight;
-                    alphaWeightSum += weight;
-                } else {
-                    alphaWeightSum += weight;
-                }
+                color += newColor;
+                weightSum += weight;
             }
         }
     }
 
-    return vec4(color.rgb / weightSum, color.a / alphaWeightSum);
+    return color / weightSum;
 }
