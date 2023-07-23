@@ -86,8 +86,13 @@ impl Model {
 
             // process material
             let mut textures = Vec::new();
+            let mut diffuse: Option<[f32; 3]> = None;
             if let Some(material_id) = mesh.material_id {
                 let material = &materials[material_id];
+
+                if !material.diffuse.is_empty() {
+                    diffuse = Some(material.diffuse);
+                }
 
                 // 1. diffuse map
                 if !material.diffuse_texture.is_empty() {
@@ -110,7 +115,8 @@ impl Model {
                 // NOTE: no height maps
             }
 
-            self.meshes.push(Mesh::new(vertices, indices, textures));
+            self.meshes
+                .push(Mesh::new(vertices, indices, textures, diffuse));
         }
         self.aabb = aabb;
     }

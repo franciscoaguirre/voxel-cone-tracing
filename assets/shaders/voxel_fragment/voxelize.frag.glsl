@@ -21,10 +21,12 @@ uniform layout(binding = 1, rgba8) imageBuffer voxelColors;
 uniform layout(binding = 2, rgba32f) imageBuffer voxelNormals;
 
 uniform vec3 fallbackColor;
+uniform vec3 materialDiffuse;
 uniform float shininess;
 uniform sampler2D textureDiffuse1;
 uniform sampler2D bumpTex;
 uniform bool hasTexture;
+uniform bool hasDiffuse;
 uniform bool hasBump;
 uniform int voxelDimension;
 uniform bool shouldStore;
@@ -77,6 +79,8 @@ void storeVoxelFragment(uvec4 voxelCoordinates, uint fragmentListIndex) {
 
     if (hasTexture) {
       voxelColor = texture(textureDiffuse1, In.textureCoordinates);
+    } else if (hasDiffuse) {
+      voxelColor = vec4(materialDiffuse, 1);
     } else {
       voxelColor = vec4(fallbackColor, 1);
     }
