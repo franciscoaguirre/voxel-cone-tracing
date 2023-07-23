@@ -78,7 +78,7 @@ void main() {
       for (int y = 0; y <= 1; y++) {
         vec4 leftVoxel = voxelValues[0 + y * 2 + z * 4];
         vec4 rightVoxel = voxelValues[1 + y * 2 + z * 4];
-        vec4 average = 0.5 * (leftVoxel * rightVoxel);
+        vec4 average = 0.5 * (leftVoxel + rightVoxel);
         imageStore(brickPoolValues, brickAddress + ivec3(1, y * 2, z * 2), average);
       }
     }

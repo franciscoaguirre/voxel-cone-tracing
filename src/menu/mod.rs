@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use cgmath::{vec3, InnerSpace, Vector3};
 use egui_backend::{
     egui::{self, vec2, Color32, Pos2, Rect},
     glfw::{Action, CursorMode, Key, Window, WindowEvent},
@@ -432,7 +433,7 @@ impl Menu {
         bricks_to_show: &mut BricksToShow,
         brick_attribute: &mut BrickAttribute,
         should_show_brick_normals: &mut bool,
-        color_direction: &mut u32,
+        color_direction: &mut Vector3<f32>,
         brick_padding: &mut f32,
     ) {
         egui::Window::new("Bricks").show(&self.context, |ui| {
@@ -477,7 +478,14 @@ impl Menu {
             {
                 *should_show_brick_normals = !*should_show_brick_normals;
             }
-            ui.add(egui::Slider::new(color_direction, 0..=5).text("Color direction"));
+            ui.add(egui::Slider::new(&mut color_direction.x, -1.0..=1.0).text("Color direction X"));
+            ui.add(egui::Slider::new(&mut color_direction.y, -1.0..=1.0).text("Color direction Y"));
+            ui.add(egui::Slider::new(&mut color_direction.z, -1.0..=1.0).text("Color direction Z"));
+            if color_direction.magnitude2() == 0.0 {
+                *color_direction = vec3(1.0, 0.0, 0.0);
+            } else {
+                *color_direction = color_direction.normalize();
+            }
             ui.add(egui::Slider::new(brick_padding, 0.0..=1.0).text("Brick padding"));
         });
     }
