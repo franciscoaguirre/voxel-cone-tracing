@@ -268,6 +268,11 @@ impl Octree {
 
     pub unsafe fn set_node_indices(&mut self, node_indices: &Vec<u32>) {
         if node_indices.is_empty() {
+            let mut vao = 0;
+            gl::GenVertexArrays(1, &mut vao);
+            gl::BindVertexArray(vao);
+            self.renderer.node_count = 0;
+            self.renderer.vao = vao;
             return;
         }
 
