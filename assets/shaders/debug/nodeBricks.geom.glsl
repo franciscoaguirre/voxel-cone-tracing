@@ -1,7 +1,7 @@
 #version 460 core
 
 layout (points) in;
-layout (triangle_strip, max_vertices = 128) out;
+layout (triangle_strip, max_vertices = 256) out;
 
 in vec4 geom_nodePosition[];
 in float geom_halfNodeSize[];
