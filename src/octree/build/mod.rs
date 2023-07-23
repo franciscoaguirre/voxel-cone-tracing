@@ -93,11 +93,11 @@ impl Octree {
         );
 
         let all_directions = vec![
-            //Direction::new(Axis::X, Sign::Pos),
-            //Direction::new(Axis::X, Sign::Neg),
-            //Direction::new(Axis::Y, Sign::Pos),
-            //Direction::new(Axis::Y, Sign::Neg),
-            //Direction::new(Axis::Z, Sign::Pos),
+            Direction::new(Axis::X, Sign::Pos),
+            Direction::new(Axis::X, Sign::Neg),
+            Direction::new(Axis::Y, Sign::Pos),
+            Direction::new(Axis::Y, Sign::Neg),
+            Direction::new(Axis::Z, Sign::Pos),
             Direction::new(Axis::Z, Sign::Neg),
         ];
 

@@ -52,13 +52,13 @@ impl MipmapFacesPass {
         // Set directional mipmap children's color texture
         helpers::bind_3d_image_texture(
             1,
-            textures.brick_pool_colors[0],
+            textures.brick_pool_colors[neighbors_texture_number],
             gl::WRITE_ONLY,
             gl::RGBA8,
         );
         helpers::bind_image_texture(
             3,
-            textures.neighbors[0].0,
+            textures.neighbors[neighbors_texture_number].0,
             gl::READ_ONLY,
             gl::R32UI,
         );
@@ -68,7 +68,7 @@ impl MipmapFacesPass {
         let read_texture_index = if level == last_level - 1 {
             0
         } else {
-            0
+            neighbors_texture_number
         };
         helpers::bind_3d_image_texture(
             4,
