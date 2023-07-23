@@ -2,7 +2,6 @@
 
 #include "./_constants.glsl"
 #include "./_helpers.glsl"
-#include "./_averageHelpers.glsl"
 
 layout (local_size_x = WORKING_GROUP_SIZE, local_size_y = 1, local_size_z = 1) in;
 
@@ -42,8 +41,15 @@ void main() {
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
                 memoryBarrier();
 
-                vec4[] voxelValues = { borderValue, neighborBorderValue };
-                vec4 finalValue = averageHandlingEmpty(voxelValues);
+                vec4 finalValue;
+                // We don't want border nodes to affect the geometry nodes' color
+                if (borderValue == vec4(0)) {
+                    finalValue = neighborBorderValue;
+                } else if (neighborBorderValue == vec4(0)) {
+                    finalValue = borderValue;
+                } else {
+                    finalValue = 0.5 * (borderValue + neighborBorderValue);
+                }
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
             }
@@ -60,8 +66,15 @@ void main() {
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
                 memoryBarrier();
 
-                vec4[] voxelValues = { borderValue, neighborBorderValue };
-                vec4 finalValue = averageHandlingEmpty(voxelValues);
+                vec4 finalValue;
+                // We don't want border nodes to affect the geometry nodes' color
+                if (borderValue == vec4(0)) {
+                    finalValue = neighborBorderValue;
+                } else if (neighborBorderValue == vec4(0)) {
+                    finalValue = borderValue;
+                } else {
+                    finalValue = 0.5 * (borderValue + neighborBorderValue);
+                }
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
             }
@@ -78,8 +91,15 @@ void main() {
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
                 memoryBarrier();
 
-                vec4[] voxelValues = { borderValue, neighborBorderValue };
-                vec4 finalValue = averageHandlingEmpty(voxelValues);
+                vec4 finalValue;
+                // We don't want border nodes to affect the geometry nodes' color
+                if (borderValue == vec4(0)) {
+                    finalValue = neighborBorderValue;
+                } else if (neighborBorderValue == vec4(0)) {
+                    finalValue = borderValue;
+                } else {
+                    finalValue = 0.5 * (borderValue + neighborBorderValue);
+                }
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
             }
