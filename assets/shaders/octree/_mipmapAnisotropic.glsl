@@ -47,7 +47,7 @@ void setup(int nodeID) {
 }
 
 void accumulate(inout vec4 color, vec4 voxelColor) {
-    color.rgb = color.rgb * color.a + (1 - color.a) * voxelColor.rgb * voxelColor.a;
+    color.rgb = color.rgb + (1 - color.a) * voxelColor.rgb * voxelColor.a;
     color.a = color.a + (1 - color.a) * voxelColor.a;
 }
 
