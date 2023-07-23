@@ -8,14 +8,16 @@ use crate::{
     rendering::shader::Shader,
 };
 
-pub struct BorderTransferPass {
+pub struct AnisotropicBorderTransferPass {
     shader: Shader,
 }
 
-impl BorderTransferPass {
+impl AnisotropicBorderTransferPass {
     pub fn init() -> Self {
         Self {
-            shader: Shader::new_compute("assets/shaders/octree/borderTransfer.comp.glsl"),
+            shader: Shader::new_compute(
+                "assets/shaders/octree/anisotropicBorderTransfer.comp.glsl",
+            ),
         }
     }
 

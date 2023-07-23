@@ -24,7 +24,8 @@ struct ShaderPasses {
     store_node_positions_pass: StoreNodePositions,
     write_leaf_nodes_pass: WriteLeafNodesPass,
     spread_leaf_bricks_pass: SpreadLeafBricksPass,
-    border_transfer_pass: BorderTransferPass,
+    leaf_border_transfer_pass: LeafBorderTransferPass,
+    anisotropic_border_transfer_pass: AnisotropicBorderTransferPass,
     mipmap_anisotropic_pass: MipmapAnisotropicPass,
     mipmap_isotropic_pass: MipmapIsotropicPass,
     append_border_voxel_fragments_pass: AppendBorderVoxelFragmentsPass,
@@ -45,7 +46,8 @@ impl Octree {
             store_node_positions_pass: StoreNodePositions::init(),
             write_leaf_nodes_pass: WriteLeafNodesPass::init(),
             spread_leaf_bricks_pass: SpreadLeafBricksPass::init(),
-            border_transfer_pass: BorderTransferPass::init(),
+            leaf_border_transfer_pass: LeafBorderTransferPass::init(),
+            anisotropic_border_transfer_pass: AnisotropicBorderTransferPass::init(),
             mipmap_anisotropic_pass: MipmapAnisotropicPass::init(),
             mipmap_isotropic_pass: MipmapIsotropicPass::init(),
             append_border_voxel_fragments_pass: AppendBorderVoxelFragmentsPass::init(),
@@ -99,14 +101,12 @@ impl Octree {
             Direction::new(Axis::Z, Sign::Neg),
         ];
 
-        // shader_passes.border_transfer_pass.run(
-        //     &self.textures,
-        //     &self.geometry_data.node_data,
-        //     &self.border_data.node_data,
-        //     CONFIG.octree_levels - 1,
-        //     BrickPoolValues::Colors,
-        //     direction,
-        // );
+        shader_passes.leaf_border_transfer_pass.run(
+            &self.textures,
+            &self.geometry_data.node_data,
+            &self.border_data.node_data,
+            BrickPoolValues::Colors,
+        );
 
         // shader_passes.border_transfer_pass.run(
         //     &self.textures,

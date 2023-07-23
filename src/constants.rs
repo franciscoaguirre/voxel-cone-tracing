@@ -7,23 +7,27 @@ pub enum Axis {
     Z,
 }
 
-impl Into<u32> for Axis {
-    fn into(self) -> u32 {
-        match self {
-            Axis::X => 0,
-            Axis::Y => 1,
-            Axis::Z => 2,
+macro_rules! impl_into_number_axis {
+    ($type:ty) => {
+        impl Into<$type> for Axis {
+            fn into(self) -> $type {
+                match self {
+                    Axis::X => 0,
+                    Axis::Y => 1,
+                    Axis::Z => 2,
+                }
+            }
         }
-    }
+    };
 }
 
-impl Into<i32> for Axis {
-    fn into(self) -> i32 {
-        match self {
-            Axis::X => 0,
-            Axis::Y => 1,
-            Axis::Z => 2,
-        }
+impl_into_number_axis!(u32);
+impl_into_number_axis!(i32);
+impl_into_number_axis!(usize);
+
+impl Axis {
+    pub fn all_axis() -> [Self; 3] {
+        [Self::X, Self::Y, Self::Z]
     }
 }
 
