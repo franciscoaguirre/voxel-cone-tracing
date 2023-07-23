@@ -75,8 +75,6 @@ impl Octree {
             allocated_nodes_counter,
         );
 
-        self.show_nodes(0, 8);
-
         shader_passes
             .write_leaf_nodes_pass
             .run(&self.geometry_data.voxel_data, &self.textures);
