@@ -12,7 +12,9 @@ pub struct Config {
     pub viewport_width: u32,
     pub viewport_height: u32,
 
-    // Voxel settings
+    /// Voxel settings
+    /// Voxel dimension exponent
+    /// Voxel dimension will be 2 to the power of this item
     pub voxel_dimension: u32,
     pub brick_pool_resolution: u32,
 
@@ -43,6 +45,7 @@ fn load_config() -> Config {
     let input_path = "config.ron";
     let file = File::open(&input_path).expect("Missing config file!");
     let mut config: Config = from_reader(file).expect("Config file malformed!");
+    config.voxel_dimension = 2u32.pow(config.voxel_dimension);
     config.octree_levels = config.voxel_dimension.pow(3).ilog2() / 8_u32.ilog2();
     info!("Configuration used: {:#?}", config);
     config
