@@ -68,9 +68,11 @@ vec4 calculateDirectionalValue(ivec3 initialPosition, Direction direction) {
     for (int l = 0; l < 3; l++) {
         vec4 color = adjacentVoxels[position.x][position.y][position.z];
         // The center voxel has twice the width of the other ones
-        if (l != 1) {
-          color *= 0.5;
-        }
+        // TODO: Without this, sponza looks much nicer.
+        // But, the triangle seen from the front is much darker.
+        // if (l != 1) {
+        //   color.a *= 0.5;
+        // }
         // Accumulate changes directly the value of accumulatedColor
         accumulate(accumulatedColor, color);
         if (accumulatedColor.a == 1) {
