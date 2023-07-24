@@ -63,14 +63,14 @@ vec4 coneTrace(
     vec4 returnColor = vec4(0);
     uint previousOctreeLevel = maxOctreeLevel;
     float voxelSize = 1.0 / float(voxelDimension);
-    float stepMultiplier = 1.0 / 3.0;
-    float sampleStep = voxelSize * stepMultiplier;
+    float sampleStep = voxelSize;
     float coneDiameterCoefficient = 2 * tan(coneHalfAngle);
     float distanceAlongCone = 0.0;
     Node previousNode = Node(0, vec3(0), 0.0);
     Node previousParentNode;
     int steps = 0;
-    float firstStep = voxelSize * 2;
+    // float firstStep = voxelSize;
+    float firstStep = 0;
 
     distanceAlongCone += firstStep;
     while (distanceAlongCone < maxDistance && returnColor.a < 1.0) {
@@ -121,22 +121,20 @@ vec4 coneTrace(
         if (octreeLevel == maxOctreeLevel) {
             childColor = getLeafColor(childVoxelCoordinates);
         } else {
-            childColor = getLeafColor(childVoxelCoordinates);
-            // childColor = getAnisotropicColor(childVoxelCoordinates, coneDirection);
+            childColor = getAnisotropicColor(childVoxelCoordinates, coneDirection);
         }
 
-        parentColor = getLeafColor(parentVoxelCoordinates);
-        // parentColor = getAnisotropicColor(parentVoxelCoordinates, coneDirection);
+        parentColor = getAnisotropicColor(parentVoxelCoordinates, coneDirection);
 
         if (useLighting) {
             childColor.rgb *= clamp(texture(brickPoolPhotons, childVoxelCoordinates).r * photonPower, 0, 1) / distanceFactor;
         }
-        correctAlpha(childColor, stepMultiplier);
+        // correctAlpha(childColor, stepMultiplier);
 
         if (useLighting) {
             parentColor.rgb *= clamp(texture(brickPoolPhotons, parentVoxelCoordinates).r * photonPower, 0, 1) / distanceFactor;
         }
-        correctAlpha(parentColor, stepMultiplier * 2); // Step correction
+        // correctAlpha(parentColor, stepMultiplier * 2); // Step correction
 
         vec4 newColor = mix(childColor, parentColor, parentWeight); // Quadrilinear interpolation
 
