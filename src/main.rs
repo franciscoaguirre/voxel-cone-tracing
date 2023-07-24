@@ -162,7 +162,8 @@ fn main() {
     // light.transform.position = point3(0.0, 0.00, 2.0);
     // light.transform.set_rotation_y(-90.0);
     light.transform.position = point3(0.0, 1.0, -0.4);
-    light.transform.set_rotation_x(-75.0);
+    // light.transform.set_rotation_x(-75.0);
+    light.transform.set_rotation_x(-60.0);
 
     let light_framebuffer = unsafe { Framebuffer::new_light() };
     let mut light_maps = unsafe {
@@ -204,7 +205,8 @@ fn main() {
 
     let mut should_move_light = false;
 
-    let mut cone_angle = 0.453599;
+    // let mut cone_angle = 0.453599;
+    let mut cone_angle = 0.263599;
     let mut show_indirect_light = false;
 
     let mut debug_cone_transform = Transform::default();
@@ -462,7 +464,7 @@ fn main() {
                     .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
                 voxel_cone_tracing_shader
                     .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels - 1);
-                voxel_cone_tracing_shader.set_float(c_str!("photonPower"), photon_power as f32);
+                voxel_cone_tracing_shader.set_float(c_str!("photonPower"), photon_power as f32); // TODO: Is this power correct?
                 voxel_cone_tracing_shader.set_bool(c_str!("shouldShowColor"), should_show_color);
                 voxel_cone_tracing_shader.set_bool(c_str!("shouldShowDirect"), should_show_direct);
                 voxel_cone_tracing_shader
