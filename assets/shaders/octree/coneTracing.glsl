@@ -68,9 +68,9 @@ uniform sampler2D shadowMap;
 #include "./_helpers.glsl"
 #include "./_traversalHelpers.glsl"
 #include "./_octreeTraversal.glsl"
-#include "assets/shaders/octree/_brickCoordinates.glsl"
-#include "./_coneTrace.glsl"
+#include "./_brickCoordinates.glsl"
 #include "./_anisotropicColor.glsl"
+#include "./_coneTrace.glsl"
 
 const float PI = 3.14159;
 
@@ -218,7 +218,7 @@ vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, bool useLight
     float sinAngle = sin(angleFromAxis);
     float cosAngle = cos(angleFromAxis);
 
-    float coneWeight = (PI / 2) - angleFromAxis;
+    float coneWeight = (PI / 2) - angleFromAxis; // TODO: Shouldn't it be a cosine?
 
     direction = sinAngle * normal + cosAngle * tangent;
     

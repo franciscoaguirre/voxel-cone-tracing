@@ -26,6 +26,7 @@ uniform usampler3D brickPoolPhotons;
 #include "assets/shaders/octree/_traversalHelpers.glsl"
 #include "assets/shaders/octree/_octreeTraversal.glsl"
 #include "assets/shaders/octree/_brickCoordinates.glsl"
+#include "assets/shaders/octree/_anisotropicColor.glsl"
 #include "assets/shaders/octree/_coneTrace.glsl"
 #include "assets/shaders/octree/_debugConeTrace.glsl"
 
