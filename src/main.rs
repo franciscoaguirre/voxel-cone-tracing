@@ -263,7 +263,7 @@ fn main() {
         };
 
         unsafe {
-            gl::ClearColor(1.0, 1.0, 1.0, 1.0);
+            gl::ClearColor(1.0, 0.0, 0.0, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
             gl::Enable(gl::DEPTH_TEST);
             gl::Disable(gl::BLEND);
@@ -713,7 +713,7 @@ fn main() {
 
             static_eye.draw_gizmo(&projection, &view);
             light.draw_gizmo(&projection, &view);
-            //quad.render(light_maps.1);
+            // quad.render(light_maps.1);
 
             // let quad_vao = quad.get_vao();
             // render_depth_buffer_shader.use_program();
