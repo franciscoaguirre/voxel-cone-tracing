@@ -48,7 +48,7 @@ vec4 showProp(ivec3 coordinates, uint type) {
       if (photonCount > 0) {
           return vec4(1.0, 1.0, 1.0, 1.0);
       }
-      return vec4(0.0, 0.0, 0.0, 1.0);
+      return vec4(0.0, 0.0, 0.0, 0.0);
     } else if (type == BY_COLOR) {
       vec3 normalizedCoordinates = normalizedFromIntCoordinates(coordinates, 384.0);
       return getAnisotropicColor(normalizedCoordinates, colorDirection);
