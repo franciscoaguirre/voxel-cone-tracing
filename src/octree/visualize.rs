@@ -530,6 +530,7 @@ impl Octree {
         view: &Matrix4<f32>,
         model: &Matrix4<f32>,
         color_direction: Vector3<f32>,
+        brick_attribute: BrickAttribute,
     ) {
         if self.renderer.node_count == 0 {
             return;
@@ -553,6 +554,10 @@ impl Octree {
         self.renderer
             .node_bricks_shader
             .set_mat4(c_str!("model"), &model);
+
+        self.renderer
+            .node_bricks_shader
+            .set_uint(c_str!("mode"), brick_attribute.into());
 
         helpers::bind_image_texture(
             0,

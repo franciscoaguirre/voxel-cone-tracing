@@ -444,7 +444,13 @@ fn main() {
             }
 
             if bricks_to_show.at_least_one() {
-                octree.run_node_bricks_shader(&projection, &view, &model, color_direction);
+                octree.run_node_bricks_shader(
+                    &projection,
+                    &view,
+                    &model,
+                    color_direction,
+                    brick_attribute,
+                );
             }
 
             if show_model {
