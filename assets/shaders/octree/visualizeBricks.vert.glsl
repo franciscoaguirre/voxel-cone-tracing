@@ -1,3 +1,6 @@
+/// `visualizeBricks.vert.glsl`
+/// Visualize all bricks in the octree, one Z layer at a time.
+
 #version 460 core
 
 #include "./_constants.glsl"
@@ -7,9 +10,8 @@ uniform uint octreeLevel;
 uniform uint voxelDimension;
 uniform uint maxOctreeLevel;
 
-uniform layout(binding = 0, rgb10_a2ui) uimageBuffer nodePositions;
-uniform layout(binding = 1, r32ui) uimage3D brickPoolPhotons;
-uniform layout(binding = 2, r32ui) readonly uimageBuffer levelStartIndices;
+uniform layout(binding = 0, rgb10_a2ui) readonly uimageBuffer nodePositions;
+uniform layout(binding = 1, r32ui) readonly uimageBuffer levelStartIndices;
 
 out VertexData {
     vec4 nodePosition;

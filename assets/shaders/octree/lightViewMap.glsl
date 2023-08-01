@@ -35,6 +35,8 @@ void main() {
         ((In.position.xyz / In.position.w) + vec3(1.0)) / 2.0,
         1.0
     );
+    /// We need to multiply by 2 since the nodes are already divided into 2x2x2, but we need to address
+    /// each quarter to get the correct voxel.
     uvec3 unnormalizedGlobalPosition = uvec3(floor(normalizedGlobalPosition.xyz * float(voxelDimension) * 2.0));
     
     viewMapPositions = uvec4(unnormalizedGlobalPosition, 1.0);

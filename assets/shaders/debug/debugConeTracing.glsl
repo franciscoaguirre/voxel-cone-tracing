@@ -13,13 +13,23 @@ uniform mat4 view;
 uniform uint voxelDimension;
 uniform uint maxOctreeLevel;
 uniform float photonPower;
+
 uniform sampler3D brickPoolColorsX;
 uniform sampler3D brickPoolColorsXNeg;
 uniform sampler3D brickPoolColorsY;
 uniform sampler3D brickPoolColorsYNeg;
 uniform sampler3D brickPoolColorsZ;
 uniform sampler3D brickPoolColorsZNeg;
+
 uniform usampler3D brickPoolPhotons;
+
+// Irradiance
+uniform sampler3D brickPoolIrradianceX;
+uniform sampler3D brickPoolIrradianceXNeg;
+uniform sampler3D brickPoolIrradianceY;
+uniform sampler3D brickPoolIrradianceYNeg;
+uniform sampler3D brickPoolIrradianceZ;
+uniform sampler3D brickPoolIrradianceZNeg;
 
 #include "assets/shaders/octree/_constants.glsl"
 #include "assets/shaders/octree/_helpers.glsl"

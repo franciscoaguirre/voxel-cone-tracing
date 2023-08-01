@@ -26,6 +26,7 @@ impl MipmapEdgesPass {
         node_data: &NodeData,
         level: u32,
         direction: Direction,
+        brick_pool_values: BrickPoolValues,
     ) {
         let mut neighbors_texture_number = match direction.axis {
             Axis::X => 0,
@@ -49,10 +50,17 @@ impl MipmapEdgesPass {
             .set_int(c_str!("direction.sign"), direction.sign.into());
 
         helpers::bind_image_texture(0, textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
+        let anisotropic_texture = match brick_pool_values {
+            BrickPoolValues::Colors => textures.brick_pool_colors,
+            BrickPoolValues::Normals => {
+                todo!("Need to do anisotropic normals, but will probably be different")
+            }
+            BrickPoolValues::Irradiance => textures.brick_pool_irradiance,
+        };
         // Set directional mipmap children's color texture
         helpers::bind_3d_image_texture(
             1,
-            textures.brick_pool_colors[neighbors_texture_number],
+            anisotropic_texture[neighbors_texture_number],
             gl::WRITE_ONLY,
             gl::RGBA8,
         );
@@ -64,15 +72,14 @@ impl MipmapEdgesPass {
         );
         helpers::bind_image_texture(2, node_data.level_start_indices.0, gl::READ_ONLY, gl::R32UI);
 
-        let last_level = CONFIG.octree_levels - 1;
-        let read_texture_index = if level == last_level - 1 {
+        let read_texture_index = if level == CONFIG.last_octree_level {
             0
         } else {
             neighbors_texture_number
         };
         helpers::bind_3d_image_texture(
             4,
-            textures.brick_pool_colors[read_texture_index],
+            anisotropic_texture[read_texture_index],
             gl::READ_ONLY,
             gl::RGBA8,
         );

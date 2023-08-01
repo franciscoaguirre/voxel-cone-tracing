@@ -4,13 +4,15 @@
 
 layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
-uniform layout(binding = 0, r32ui) readonly uimageBuffer nodePool; // TODO: Could be a texture
-uniform layout(binding = 1, r32ui) uimage3D brickPoolPhotons;
-uniform layout(binding = 2, r32ui) uimageBuffer totalPhotonHits;
+uniform layout(binding = 0, rgba8) writeonly image3D brickPoolIrradiance;
+uniform layout(binding = 1, r32ui) readonly uimageBuffer nodePool;
 
+uniform sampler3D brickPoolColors;
+uniform usampler3D brickPoolPhotons;
 uniform usampler2D lightViewMap;
-uniform uint octreeLevel;
+
 uniform uint voxelDimension;
+uniform uint octreeLevel;
 
 #include "./_helpers.glsl"
 #include "./_traversalHelpers.glsl"
@@ -23,7 +25,6 @@ void main() {
         ivec2(gl_GlobalInvocationID.xy),
         0
     ).xyz;
-
     if (queryCoordinates == uvec3(0)) {
         return;
     }
@@ -44,6 +45,8 @@ void main() {
     ivec3 brickCoordinates = calculateBrickCoordinates(nodeID);
     ivec3 brickOffset = ivec3(calculateBrickVoxel(nodeCoordinates, halfNodeSize, normalizedQueryCoordinates));
 
-    imageAtomicAdd(brickPoolPhotons, brickCoordinates + brickOffset, uint(1));
-    imageAtomicAdd(totalPhotonHits, 0, uint(1));
+    vec4 voxelColor = texelFetch(brickPoolColors, brickCoordinates + brickOffset, 0);
+    uint numberOfPhotons = texelFetch(brickPoolPhotons, brickCoordinates + brickOffset, 0).r;
+    vec4 irradiance = numberOfPhotons * voxelColor;
+    imageStore(brickPoolIrradiance, brickCoordinates + brickOffset, irradiance);
 }
