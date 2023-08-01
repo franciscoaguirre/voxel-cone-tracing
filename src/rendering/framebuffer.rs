@@ -2,6 +2,8 @@ use gl::types::GLuint;
 
 use crate::config::CONFIG;
 
+use super::geometry_buffers::GeometryBuffers;
+
 pub struct Framebuffer {
     fbo: GLuint,
     textures: [GLuint; 4], // TODO: Make generic?
@@ -276,8 +278,8 @@ impl Framebuffer {
         self.fbo
     }
 
-    pub fn textures(&self) -> (GLuint, GLuint, GLuint, GLuint) {
-        (
+    pub fn textures(&self) -> GeometryBuffers {
+        GeometryBuffers::new(
             self.textures[0],
             self.textures[1],
             self.textures[2],

@@ -32,6 +32,7 @@ use voxelization::visualize::RenderVoxelFragmentsShader;
 use octree::{BricksToShow, Octree};
 
 use crate::{
+    cone_tracing::ConeTracer,
     menu::DebugNode,
     octree::BrickAttribute,
     rendering::{framebuffer::Framebuffer, transform::Transform},
@@ -89,7 +90,7 @@ fn main() {
         "assets/shaders/model/renderNormals.frag.glsl",
         "assets/shaders/model/renderNormals.geom.glsl",
     );
-    let voxel_cone_tracing_shader = Shader::new_single("assets/shaders/octree/coneTracing.glsl");
+    let mut cone_tracer = ConeTracer::init();
     let debug_cone_shader = Shader::new_single("assets/shaders/debug/debugConeTracing.glsl");
     let our_model = unsafe { helpers::load_model(&options.model) };
 
@@ -140,11 +141,7 @@ fn main() {
     let mut brick_attribute = BrickAttribute::None;
     let mut brick_padding = 0.0;
     let mut should_show_normals = false;
-    let mut should_show_color = false;
-    let mut should_show_direct = false;
-    let mut should_show_indirect = false;
-    let mut should_show_indirect_specular = false;
-    let mut should_show_ambient_occlusion = false;
+
     let mut photons: Vec<u32> = Vec::new();
     let mut children: Vec<u32> = Vec::new();
 
@@ -185,7 +182,7 @@ fn main() {
         0.0001,
         10000.0,
     );
-    let (eye_view_map, eye_view_map_view, eye_view_map_normals, eye_view_map_colors) = unsafe {
+    let eye_geometry_buffers = unsafe {
         static_eye.take_photo(
             &[&our_model],
             &projection,
@@ -253,7 +250,7 @@ fn main() {
             starting_time = current_frame;
         }
 
-        let (camera_view_map_positions, _, camera_view_map_normals, camera_view_map_colors) = unsafe {
+        let geometry_buffers = unsafe {
             camera.transform.take_photo(
                 &[&our_model],
                 &projection,
@@ -328,21 +325,9 @@ fn main() {
                 menu.create_children_window(&children);
             }
             if menu.is_showing_images_window() {
-                menu.create_images_window(
-                    &mut should_show_color,
-                    &mut should_show_direct,
-                    &mut should_show_indirect,
-                    &mut should_show_indirect_specular,
-                    &mut should_show_ambient_occlusion,
-                );
+                menu.create_images_window(&mut cone_tracer.toggles);
             }
         }
-
-        should_show_final_image_quad = should_show_color
-            || should_show_direct
-            || should_show_indirect
-            || should_show_indirect_specular
-            || should_show_ambient_occlusion;
 
         // This is for debugging
         if selected_debug_nodes_updated {
@@ -432,13 +417,6 @@ fn main() {
             );
             octree.run_node_positions_shader(&projection, &view, &model);
             octree.set_bricks_to_show(bricks_to_show);
-            // octree.run_eye_ray_shader(
-            //     &projection,
-            //     &view,
-            //     &static_eye,
-            //     eye_view_map,
-            //     eye_view_map_normals,
-            // );
 
             if should_show_neighbors {
                 octree.run_node_neighbors_shader(&projection, &view, &model);
@@ -463,23 +441,14 @@ fn main() {
                 our_model.draw(&render_model_shader);
             }
 
-            cone_tracing::voxel_cone_trace(
-                &voxel_cone_tracing_shader,
-                should_show_color,
-                should_show_direct,
-                should_show_indirect,
-                should_show_indirect_specular,
-                should_show_ambient_occlusion,
+            cone_tracer.run(
                 &light,
                 cone_angle,
                 &octree.textures,
-                camera_view_map_positions,
-                camera_view_map_normals,
-                camera_view_map_colors,
+                &geometry_buffers,
                 light_maps,
                 &quad,
                 &camera,
-                should_show_final_image_quad,
             );
 
             {

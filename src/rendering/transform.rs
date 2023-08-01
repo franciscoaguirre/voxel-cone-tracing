@@ -7,7 +7,10 @@ use log;
 
 use crate::config::CONFIG;
 
-use super::{framebuffer::Framebuffer, gizmo::RenderGizmo, model::Model, shader::Shader};
+use super::{
+    framebuffer::Framebuffer, geometry_buffers::GeometryBuffers, gizmo::RenderGizmo, model::Model,
+    shader::Shader,
+};
 
 /// Struct that handles `position`, `rotation` and `scale` for an entity
 #[derive(Debug)]
@@ -160,10 +163,7 @@ impl Transform {
         // Not that relevant since it's debugging code.
     }
 
-    /// Creates textures from its POV of `models`.
-    /// First two hold global positions, unnormalized and normalized respectively.
-    /// The third holds normals.
-    /// The fourth holds colors.
+    /// Creates geometry buffers from its POV of `models`.
     pub unsafe fn take_photo(
         &self,
         models: &[&Model],
@@ -171,7 +171,7 @@ impl Transform {
         model: &Matrix4<f32>,
         framebuffer: &Framebuffer,
         shader: Option<Shader>,
-    ) -> (GLuint, GLuint, GLuint, GLuint) {
+    ) -> GeometryBuffers {
         let shader = if let Some(shader) = shader {
             shader
         } else {

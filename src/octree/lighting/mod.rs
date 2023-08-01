@@ -51,6 +51,11 @@ impl Octree {
         self.store_photons(light_view_map, light_view_map_view);
         self.border_transfer(light_view_map); // TODO: Should maybe take border nodes into account
 
+        // TODO: Visualizar los fotones "puros" también así veo si el problema de que esté todo pixelado
+        // es por `store_photons` o por `photons_to_irradiance`.
+
+        // TODO: Refactorear todos estos métodos a su propia stage.
+
         self.builder
             .photons_to_irradiance_pass
             .run(&self.textures, light_view_map);
@@ -173,7 +178,7 @@ impl Octree {
         let projection = light.get_projection_matrix();
 
         gl::CullFace(gl::FRONT);
-        let (light_view_map, light_view_map_view, shadow_map, _) = light.transform.take_photo(
+        let geometry_buffers = light.transform.take_photo(
             models,
             &projection,
             model,
@@ -182,6 +187,10 @@ impl Octree {
         );
         gl::CullFace(gl::BACK);
 
-        (light_view_map, light_view_map_view, shadow_map)
+        (
+            geometry_buffers.raw_positions(),
+            geometry_buffers.positions(),
+            geometry_buffers.normals(), // We use the normals texture for the shadow map
+        )
     }
 }
