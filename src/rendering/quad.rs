@@ -4,9 +4,13 @@ use gl::types::GLuint;
 
 use super::shader::Shader;
 
+/// Quad to display textures flat on-screen.
 pub struct Quad {
+    /// `Vertex Array Object`, gets populated in `new` with all 8 vertices that make up a square
     vao: GLuint,
+    /// Indices for `vao`, they exist to reuse vertices.
     indices: Vec<u32>,
+    /// Simple shader that renders the quad with any desired texture.
     shader: Shader,
 }
 

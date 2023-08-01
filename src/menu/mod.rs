@@ -8,6 +8,7 @@ use egui_backend::{
 use egui_glfw_gl as egui_backend;
 
 use crate::{
+    cone_tracing::Toggles,
     config::CONFIG,
     octree::{BrickAttribute, BricksToShow},
 };
@@ -253,53 +254,49 @@ impl Menu {
         });
     }
 
-    pub fn create_images_window(
-        &self,
-        should_show_color: &mut bool,
-        should_show_direct: &mut bool,
-        should_show_indirect: &mut bool,
-        should_show_indirect_specular: &mut bool,
-        should_show_ambient_occlusion: &mut bool,
-    ) {
+    pub fn create_images_window(&self, toggles: &mut Toggles) {
         egui::Window::new("Images").show(&self.context, |ui| {
             if ui
-                .button(Self::get_button_text("Color", *should_show_color))
+                .button(Self::get_button_text("Color", toggles.should_show_color()))
                 .clicked()
             {
-                *should_show_color = !*should_show_color;
+                toggles.toggle_color();
             }
             if ui
-                .button(Self::get_button_text("Direct light", *should_show_direct))
+                .button(Self::get_button_text(
+                    "Direct light",
+                    toggles.should_show_direct(),
+                ))
                 .clicked()
             {
-                *should_show_direct = !*should_show_direct;
+                toggles.toggle_direct();
             }
             if ui
                 .button(Self::get_button_text(
                     "Indirect diffuse",
-                    *should_show_indirect,
+                    toggles.should_show_indirect(),
                 ))
                 .clicked()
             {
-                *should_show_indirect = !*should_show_indirect;
+                toggles.toggle_indirect();
             }
             if ui
                 .button(Self::get_button_text(
                     "Indirect specular",
-                    *should_show_indirect_specular,
+                    toggles.should_show_indirect_specular(),
                 ))
                 .clicked()
             {
-                *should_show_indirect_specular = !*should_show_indirect_specular;
+                toggles.toggle_indirect_specular();
             }
             if ui
                 .button(Self::get_button_text(
                     "Ambient occlusion",
-                    *should_show_ambient_occlusion,
+                    toggles.should_show_ambient_occlusion(),
                 ))
                 .clicked()
             {
-                *should_show_ambient_occlusion = !*should_show_ambient_occlusion;
+                toggles.toggle_ambient_occlusion();
             }
         });
     }

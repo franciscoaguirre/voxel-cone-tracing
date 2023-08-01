@@ -1,6 +1,7 @@
 pub mod camera;
 pub mod common;
 pub mod framebuffer;
+pub mod geometry_buffers;
 pub mod gizmo;
 pub mod light;
 pub mod macros;
