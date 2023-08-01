@@ -263,7 +263,7 @@ fn main() {
         };
 
         unsafe {
-            gl::ClearColor(1.0, 0.0, 0.0, 1.0);
+            gl::ClearColor(0.1, 0.1, 0.1, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
             gl::Enable(gl::DEPTH_TEST);
             gl::Disable(gl::BLEND);
@@ -369,20 +369,20 @@ fn main() {
         // Input
         if !menu.is_showing() {
             let transform = if should_move_light {
-                // unsafe {
-                //     octree.clear_light();
-                // }
-                // light_maps = unsafe {
-                //     // TODO: This takes too long, optimize
-                //     octree.inject_light(
-                //         &[&our_model],
-                //         &light,
-                //         &model_normalization_matrix,
-                //         &light_framebuffer,
-                //     )
-                // };
-                // &mut light.transform
-                &mut debug_cone_transform
+                unsafe {
+                    octree.clear_light();
+                }
+                light_maps = unsafe {
+                    // TODO: This takes too long, optimize
+                    octree.inject_light(
+                        &[&our_model],
+                        &light,
+                        &model_normalization_matrix,
+                        &light_framebuffer,
+                    )
+                };
+                &mut light.transform
+                // &mut debug_cone_transform
             } else {
                 &mut camera.transform
             };
@@ -549,13 +549,39 @@ fn main() {
                         gl::LINEAR as i32,
                     ),
                     (
-                        c_str!("brickPoolPhotons"),
-                        octree.textures.brick_pool_photons,
+                        c_str!("brickPoolNormals"),
+                        octree.textures.brick_pool_normals,
+                        gl::NEAREST as i32,
+                    ),
+                    // Irradiance textures
+                    (
+                        c_str!("brickPoolIrradianceX"),
+                        octree.textures.brick_pool_irradiance[0],
                         gl::NEAREST as i32,
                     ),
                     (
-                        c_str!("brickPoolNormals"),
-                        octree.textures.brick_pool_normals,
+                        c_str!("brickPoolIrradianceXNeg"),
+                        octree.textures.brick_pool_irradiance[1],
+                        gl::NEAREST as i32,
+                    ),
+                    (
+                        c_str!("brickPoolIrradianceY"),
+                        octree.textures.brick_pool_irradiance[2],
+                        gl::NEAREST as i32,
+                    ),
+                    (
+                        c_str!("brickPoolIrradianceYNeg"),
+                        octree.textures.brick_pool_irradiance[3],
+                        gl::NEAREST as i32,
+                    ),
+                    (
+                        c_str!("brickPoolIrradianceZ"),
+                        octree.textures.brick_pool_irradiance[4],
+                        gl::NEAREST as i32,
+                    ),
+                    (
+                        c_str!("brickPoolIrradianceZNeg"),
+                        octree.textures.brick_pool_irradiance[5],
                         gl::NEAREST as i32,
                     ),
                 ];

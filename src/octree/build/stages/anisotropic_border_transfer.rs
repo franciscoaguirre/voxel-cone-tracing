@@ -68,6 +68,12 @@ impl AnisotropicBorderTransferPass {
                 gl::READ_WRITE,
                 gl::RGBA32F,
             ),
+            BrickPoolValues::Irradiance => helpers::bind_3d_image_texture(
+                1,
+                textures.brick_pool_irradiance[neighbors_texture_number],
+                gl::READ_WRITE,
+                gl::RGBA8,
+            ),
         }
         let other_axis = if direction.axis == Axis::X {
             vec![Axis::Y, Axis::Z]

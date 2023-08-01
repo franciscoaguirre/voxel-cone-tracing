@@ -32,21 +32,20 @@ impl SpreadLeafBricksPass {
             .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
 
         match brick_pool_values {
-            BrickPoolValues::Colors => {
-                helpers::bind_3d_image_texture(
-                    0,
-                    textures.brick_pool_colors[0], // We use the +X texture for the lower level
-                    gl::READ_WRITE,
-                    gl::RGBA8,
-                );
-            }
-            BrickPoolValues::Normals => {
-                helpers::bind_3d_image_texture(
-                    0,
-                    textures.brick_pool_normals,
-                    gl::READ_WRITE,
-                    gl::RGBA32F,
-                );
+            BrickPoolValues::Colors => helpers::bind_3d_image_texture(
+                0,
+                textures.brick_pool_colors[0], // We use the +X texture for the lower level
+                gl::READ_WRITE,
+                gl::RGBA8,
+            ),
+            BrickPoolValues::Normals => helpers::bind_3d_image_texture(
+                0,
+                textures.brick_pool_normals,
+                gl::READ_WRITE,
+                gl::RGBA32F,
+            ),
+            BrickPoolValues::Irradiance => {
+                todo!("Not sure if needed. We don't do spread with photons.")
             }
         }
         helpers::bind_image_texture(1, node_data.level_start_indices.0, gl::READ_ONLY, gl::R32UI);

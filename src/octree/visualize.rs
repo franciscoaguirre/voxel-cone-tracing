@@ -219,14 +219,8 @@ impl Octree {
             gl::READ_ONLY,
             gl::RGB10_A2UI,
         );
-        helpers::bind_3d_image_texture(
-            1,
-            self.textures.brick_pool_photons,
-            gl::READ_ONLY,
-            gl::R32UI,
-        );
         helpers::bind_image_texture(
-            2,
+            1,
             self.geometry_data.node_data.level_start_indices.0,
             gl::READ_ONLY,
             gl::R32UI,
@@ -256,6 +250,31 @@ impl Octree {
             (
                 c_str!("brickPoolColorsZNeg"),
                 self.textures.brick_pool_colors[5],
+            ),
+            // Irradiance textures
+            (
+                c_str!("brickPoolIrradianceX"),
+                self.textures.brick_pool_irradiance[0],
+            ),
+            (
+                c_str!("brickPoolIrradianceXNeg"),
+                self.textures.brick_pool_irradiance[1],
+            ),
+            (
+                c_str!("brickPoolIrradianceY"),
+                self.textures.brick_pool_irradiance[2],
+            ),
+            (
+                c_str!("brickPoolIrradianceYNeg"),
+                self.textures.brick_pool_irradiance[3],
+            ),
+            (
+                c_str!("brickPoolIrradianceZ"),
+                self.textures.brick_pool_irradiance[4],
+            ),
+            (
+                c_str!("brickPoolIrradianceZNeg"),
+                self.textures.brick_pool_irradiance[5],
             ),
         ];
 

@@ -55,8 +55,16 @@ uniform sampler3D brickPoolColorsY;
 uniform sampler3D brickPoolColorsYNeg;
 uniform sampler3D brickPoolColorsZ;
 uniform sampler3D brickPoolColorsZNeg;
+
 uniform sampler3D brickPoolNormals;
-uniform usampler3D brickPoolPhotons;
+
+// Irradiance
+uniform sampler3D brickPoolIrradianceX;
+uniform sampler3D brickPoolIrradianceXNeg;
+uniform sampler3D brickPoolIrradianceY;
+uniform sampler3D brickPoolIrradianceYNeg;
+uniform sampler3D brickPoolIrradianceZ;
+uniform sampler3D brickPoolIrradianceZNeg;
 
 // G-buffers
 uniform sampler2D gBufferColors;
@@ -70,6 +78,7 @@ uniform sampler2D shadowMap;
 #include "./_octreeTraversal.glsl"
 #include "./_brickCoordinates.glsl"
 #include "./_anisotropicColor.glsl"
+#include "./_anisotropicIrradiance.glsl"
 #include "./_coneTrace.glsl"
 
 const float PI = 3.14159;
