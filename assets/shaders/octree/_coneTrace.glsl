@@ -4,6 +4,7 @@
 // - uniform sampler3D brickPoolPhotons
 // - uniform sampler3D brickPoolNormals
 // - _anisotropicColor
+// - _anisotropicIrradiance
 // - _traversalHelpers
 // - _octreeTraversal
 // - _brickCoordinates
@@ -51,6 +52,10 @@ vec4 getLeafColor(vec3 voxelCoordinates) {
     return texture(brickPoolColorsX, voxelCoordinates);
 }
 
+vec4 getLeafIrradiance(vec3 voxelCoordinates) {
+    return texture(brickPoolIrradianceX, voxelCoordinates);
+}
+
 // rayOrigin should be between 0 and 1
 // maxDistance should be max 1
 vec4 coneTrace(
@@ -69,8 +74,8 @@ vec4 coneTrace(
     Node previousNode = Node(0, vec3(0), 0.0);
     Node previousParentNode;
     int steps = 0;
-    // float firstStep = voxelSize;
-    float firstStep = 0;
+    float firstStep = voxelSize;
+    // float firstStep = 0;
 
     distanceAlongCone += firstStep;
     while (distanceAlongCone < maxDistance && returnColor.a < 1.0) {
@@ -119,21 +124,21 @@ vec4 coneTrace(
         vec4 parentColor;
 
         if (octreeLevel == maxOctreeLevel) {
-            childColor = getLeafColor(childVoxelCoordinates);
+            childColor = getLeafIrradiance(childVoxelCoordinates);
         } else {
-            childColor = getAnisotropicColor(childVoxelCoordinates, coneDirection);
+            childColor = getAnisotropicIrradiance(childVoxelCoordinates, coneDirection);
         }
 
-        parentColor = getAnisotropicColor(parentVoxelCoordinates, coneDirection);
+        parentColor = getAnisotropicIrradiance(parentVoxelCoordinates, coneDirection);
 
-        if (useLighting) {
-            childColor.rgb *= clamp(texture(brickPoolPhotons, childVoxelCoordinates).r * photonPower, 0, 1) / distanceFactor;
-        }
+        // if (useLighting) {
+        //     childColor.rgb *= clamp(texture(brickPoolPhotons, childVoxelCoordinates).r * photonPower, 0, 1) / distanceFactor;
+        // }
         // correctAlpha(childColor, stepMultiplier);
 
-        if (useLighting) {
-            parentColor.rgb *= clamp(texture(brickPoolPhotons, parentVoxelCoordinates).r * photonPower, 0, 1) / distanceFactor;
-        }
+        // if (useLighting) {
+        //     parentColor.rgb *= clamp(texture(brickPoolPhotons, parentVoxelCoordinates).r * photonPower, 0, 1) / distanceFactor;
+        // }
         // correctAlpha(parentColor, stepMultiplier * 2); // Step correction
 
         vec4 newColor = mix(childColor, parentColor, parentWeight); // Quadrilinear interpolation

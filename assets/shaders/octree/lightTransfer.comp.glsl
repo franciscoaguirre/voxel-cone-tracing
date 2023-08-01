@@ -18,35 +18,35 @@ uniform uint octreeLevel;
 uniform uint voxelDimension;
 
 #include "./_threadNodeUtil.glsl"
-#include "assets/shaders/octree/_brickCoordinates.glsl"
+#include "./_traversalHelpers.glsl"
+#include "./_octreeTraversal.glsl"
+#include "./_brickCoordinates.glsl"
 
 // Doing it this way can have concurrency problems if we run all three axis concurrently (not sure if posible, but paper does it in two passes)
 
 void main() {
     // TODO: Optimize with the 2D node map
-    int nodeID = getThreadNode();
-    // uvec3 queryCoordinates = texelFetch(
-    //     lightViewMap,
-    //     ivec2(gl_GlobalInvocationID.xy),
-    //     0
-    // ).xyz;
-    // if (queryCoordinates == uvec3(0)) {
-    //     return;
-    // }
-    // vec3 normalizedQueryCoordinates = vec3(queryCoordinates.xyz / (float(voxelDimension) * 1.5));
-    // vec3 normalizedQueryCoordinates = vec3(uvec3(128, 224, 128) / float(voxelDimension));
-    // uint myOctreeLevel = 5;
-    // float halfNodeSize;
-    // vec3 nodeCoordinates;
-    // int nodeID = traverseOctree(
-    //     normalizedQueryCoordinates,
-    //     octreeLevel,
-    //     nodeCoordinates,
-    //     halfNodeSize
-    // );
-    // if (nodeID == NODE_NOT_FOUND) {
-    //     return;
-    // }
+    uvec3 queryCoordinates = texelFetch(
+        lightViewMap,
+        ivec2(gl_GlobalInvocationID.xy),
+        0
+    ).xyz;
+    if (queryCoordinates == uvec3(0)) {
+        return;
+    }
+    vec3 normalizedQueryCoordinates = vec3(queryCoordinates.xyz / (float(voxelDimension) * 2.0));
+
+    float halfNodeSize;
+    vec3 nodeCoordinates;
+    int nodeID = traverseOctree(
+        normalizedQueryCoordinates,
+        octreeLevel,
+        nodeCoordinates,
+        halfNodeSize
+    );
+    if (nodeID == NODE_NOT_FOUND) {
+        return;
+    }
 
     int neighborID = int(imageLoad(nodePoolNeighbors, nodeID).r);
     if (neighborID == 0) {

@@ -9,10 +9,13 @@ use crate::{
     rendering::{framebuffer::Framebuffer, light::SpotLight, model::Model},
 };
 
-use super::Octree;
+use super::{
+    build::{AnisotropicBorderTransferPass, BrickPoolValues, MipmapAnisotropicPass},
+    Octree,
+};
 
 mod stages;
-use stages::*;
+pub use stages::*;
 
 impl Octree {
     pub unsafe fn clear_light(&self) {
@@ -21,6 +24,7 @@ impl Octree {
             .clear_bricks_shader
             .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
 
+        // TODO: Should also clear `brickPoolIrradiance`
         helpers::bind_3d_image_texture(
             0,
             self.textures.brick_pool_photons,
@@ -45,57 +49,80 @@ impl Octree {
         let (light_view_map, light_view_map_view, shadow_map) =
             self.create_light_view_map(models, light, model, framebuffer);
         self.store_photons(light_view_map, light_view_map_view);
+        self.border_transfer(light_view_map); // TODO: Should maybe take border nodes into account
+
+        self.builder
+            .photons_to_irradiance_pass
+            .run(&self.textures, light_view_map);
+
         self.mipmap_photons(light_view_map);
 
         (light_view_map, light_view_map_view, shadow_map)
     }
 
-    unsafe fn mipmap_photons(&self, light_view_map: GLuint) {
-        let mipmap_centers = MipmapCentersPass::init(light_view_map);
-        let mipmap_faces = MipmapFacesPass::init(light_view_map);
-        let mipmap_corners = MipmapCornersPass::init(light_view_map);
-        let mipmap_edges = MipmapEdgesPass::init(light_view_map);
+    unsafe fn border_transfer(&self, light_view_map: GLuint) {
         let border_transfer = BorderTransferPass::init(light_view_map);
 
-        let all_axis = vec![Axis::X, Axis::Y, Axis::Z];
-        for axis in all_axis.iter() {
+        for axis in Axis::all_axis().iter() {
             border_transfer.run(
                 &self.textures,
-                CONFIG.octree_levels - 1,
+                CONFIG.last_octree_level,
                 &self.geometry_data.node_data,
                 *axis,
             );
-            border_transfer.run(
-                &self.textures,
-                CONFIG.octree_levels - 1,
-                &self.border_data.node_data,
-                *axis,
-            );
-         }
-
-        for level in (0..CONFIG.octree_levels - 1).rev() {
-            mipmap_centers.run(&self.textures, level);
-            mipmap_faces.run(&self.textures, level);
-            mipmap_corners.run(&self.textures, level);
-            mipmap_edges.run(&self.textures, level);
-
-            if level > 0 {
-               for axis in all_axis.iter() {
-                   border_transfer.run(
-                       &self.textures,
-                       level,
-                       &self.geometry_data.node_data,
-                       *axis,
-                   );
-                   border_transfer.run(
-                       &self.textures,
-                       level,
-                       &self.border_data.node_data,
-                       *axis,
-                   );
-               }
-            }
         }
+    }
+
+    unsafe fn mipmap_photons(&self, light_view_map: GLuint) {
+        let mipmap = MipmapAnisotropicPass::init();
+
+        // let mipmap_centers = MipmapCentersPass::init(light_view_map);
+        // let mipmap_faces = MipmapFacesPass::init(light_view_map);
+        // let mipmap_corners = MipmapCornersPass::init(light_view_map);
+        // let mipmap_edges = MipmapEdgesPass::init(light_view_map);
+
+        self.builder.leaf_border_transfer_pass.run(
+            &self.textures,
+            &self.geometry_data.node_data,
+            &self.border_data.node_data,
+            BrickPoolValues::Irradiance,
+        );
+
+        self.run_mipmap(BrickPoolValues::Irradiance);
+
+        // for axis in all_axis.iter() {
+        //     border_transfer.run(
+        //         &self.textures,
+        //         CONFIG.octree_levels - 1,
+        //         &self.geometry_data.node_data,
+        //         *axis,
+        //     );
+        //     border_transfer.run(
+        //         &self.textures,
+        //         CONFIG.octree_levels - 1,
+        //         &self.border_data.node_data,
+        //         *axis,
+        //     );
+        // }
+
+        // for level in (0..CONFIG.octree_levels - 1).rev() {
+        //     mipmap_centers.run(&self.textures, level);
+        //     mipmap_faces.run(&self.textures, level);
+        //     mipmap_corners.run(&self.textures, level);
+        //     mipmap_edges.run(&self.textures, level);
+
+        //     if level > 0 {
+        //         for axis in all_axis.iter() {
+        //             border_transfer.run(
+        //                 &self.textures,
+        //                 level,
+        //                 &self.geometry_data.node_data,
+        //                 *axis,
+        //             );
+        //             border_transfer.run(&self.textures, level, &self.border_data.node_data, *axis);
+        //         }
+        //     }
+        // }
     }
 
     unsafe fn store_photons(&self, light_view_map: GLuint, light_view_map_view: GLuint) {
@@ -121,9 +148,8 @@ impl Octree {
             gl::READ_WRITE,
             gl::R32UI,
         );
-        helpers::bind_image_texture(2, light_view_map_view, gl::WRITE_ONLY, gl::RGBA8);
         let total_photons = helpers::generate_texture_buffer(1, gl::R32UI, 0u32);
-        helpers::bind_image_texture(3, total_photons.0, gl::READ_WRITE, gl::R32UI);
+        helpers::bind_image_texture(2, total_photons.0, gl::READ_WRITE, gl::R32UI);
 
         self.renderer.store_photons_shader.dispatch_xyz(vec3(
             (CONFIG.viewport_width as f32 / 32 as f32).ceil() as u32,

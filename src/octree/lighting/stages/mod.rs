@@ -12,3 +12,6 @@ pub use mipmap_faces::MipmapFacesPass;
 
 mod light_transfer;
 pub use light_transfer::BorderTransferPass;
+
+mod photons_to_irradiance;
+pub use photons_to_irradiance::PhotonsToIrradiance;

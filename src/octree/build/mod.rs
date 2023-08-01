@@ -10,11 +10,13 @@ use crate::{
 
 mod stages;
 
-use stages::*;
+pub use stages::*;
 
+#[derive(Debug, Clone, Copy)]
 pub enum BrickPoolValues {
     Colors,
     Normals,
+    Irradiance,
 }
 
 struct ShaderPasses {
@@ -39,31 +41,16 @@ impl Octree {
         self.geometry_data.node_data.nodes_per_level.push(1);
         self.border_data.node_data.nodes_per_level.push(0);
 
-        let shader_passes = ShaderPasses {
-            neighbor_pointers_pass: NeighborPointersPass::init(),
-            flag_nodes_pass: FlagNodesPass::init(),
-            allocate_nodes_pass: AllocateNodesPass::init(),
-            store_node_positions_pass: StoreNodePositions::init(),
-            write_leaf_nodes_pass: WriteLeafNodesPass::init(),
-            spread_leaf_bricks_pass: SpreadLeafBricksPass::init(),
-            leaf_border_transfer_pass: LeafBorderTransferPass::init(),
-            anisotropic_border_transfer_pass: AnisotropicBorderTransferPass::init(),
-            mipmap_anisotropic_pass: MipmapAnisotropicPass::init(),
-            mipmap_isotropic_pass: MipmapIsotropicPass::init(),
-            append_border_voxel_fragments_pass: AppendBorderVoxelFragmentsPass::init(),
-        };
-
         let mut first_free_node = 1; // Index of first free node (unallocated) in the octree
 
         self.voxels_to_nodes(
             OctreeDataType::Geometry,
-            &shader_passes,
             &mut first_free_node,
             allocated_nodes_counter,
         );
         let number_of_nodes = self.number_of_nodes() as u32;
 
-        shader_passes.append_border_voxel_fragments_pass.run(
+        self.builder.append_border_voxel_fragments_pass.run(
             &self.geometry_data,
             &mut self.border_data,
             &self.textures,
@@ -72,26 +59,38 @@ impl Octree {
 
         self.voxels_to_nodes(
             OctreeDataType::Border,
-            &shader_passes,
             &mut first_free_node,
             allocated_nodes_counter,
         );
 
-        shader_passes
+        self.builder
             .write_leaf_nodes_pass
             .run(&self.geometry_data.voxel_data, &self.textures);
 
-        shader_passes.spread_leaf_bricks_pass.run(
+        self.builder.spread_leaf_bricks_pass.run(
             &self.textures,
             &self.geometry_data.node_data,
             BrickPoolValues::Colors,
         );
-        shader_passes.spread_leaf_bricks_pass.run(
+        self.builder.spread_leaf_bricks_pass.run(
             &self.textures,
             &self.geometry_data.node_data,
             BrickPoolValues::Normals,
         );
 
+        // self.builder.border_transfer_pass.run(
+        //     &self.textures,
+        //     &self.geometry_data.node_data,
+        //     CONFIG.octree_levels - 1,
+        //     BrickPoolValues::Normals,
+        //     Axis::X,
+        // );
+
+        #[cfg(debug_assertions)]
+        self.run_mipmap(BrickPoolValues::Colors);
+    }
+
+    pub unsafe fn run_mipmap(&self, brick_pool_values: BrickPoolValues) {
         let all_directions = vec![
             Direction::new(Axis::X, Sign::Pos),
             Direction::new(Axis::X, Sign::Neg),
@@ -101,46 +100,32 @@ impl Octree {
             Direction::new(Axis::Z, Sign::Neg),
         ];
 
-        shader_passes.leaf_border_transfer_pass.run(
-            &self.textures,
-            &self.geometry_data.node_data,
-            &self.border_data.node_data,
-            BrickPoolValues::Colors,
-        );
-
-        // shader_passes.border_transfer_pass.run(
-        //     &self.textures,
-        //     &self.geometry_data.node_data,
-        //     CONFIG.octree_levels - 1,
-        //     BrickPoolValues::Normals,
-        //     Axis::X,
-        // );
-
         for level in (0..CONFIG.octree_levels - 1).rev() {
             for direction in all_directions.iter() {
-                shader_passes.mipmap_anisotropic_pass.run(
+                self.builder.mipmap_anisotropic_pass.run(
                     &self.textures,
                     &self.geometry_data.node_data,
                     level,
                     *direction,
+                    brick_pool_values,
                 );
 
-                shader_passes.mipmap_isotropic_pass.run(
-                    &self.textures,
-                    &self.geometry_data.node_data,
-                    level,
-                );
+                // self.builder.mipmap_isotropic_pass.run(
+                //     &self.textures,
+                //     &self.geometry_data.node_data,
+                //     level,
+                // );
 
                 if level > 0 {
-                    shader_passes.anisotropic_border_transfer_pass.run(
+                    self.builder.anisotropic_border_transfer_pass.run(
                         &self.textures,
                         &self.geometry_data.node_data,
                         &self.border_data.node_data,
                         level,
-                        BrickPoolValues::Colors,
+                        brick_pool_values,
                         *direction,
                     );
-                    // shader_passes.border_transfer_pass.run(
+                    // self.builder.border_transfer_pass.run(
                     //     &self.textures,
                     //     &self.geometry_data.node_data,
                     //     level,
@@ -154,7 +139,6 @@ impl Octree {
     unsafe fn voxels_to_nodes(
         &mut self,
         octree_data_type: OctreeDataType,
-        shader_passes: &ShaderPasses,
         first_free_node: &mut i32,
         allocated_nodes_counter: u32,
     ) {
@@ -177,10 +161,10 @@ impl Octree {
         };
 
         for octree_level in 0..CONFIG.octree_levels - 1 {
-            shader_passes
+            self.builder
                 .flag_nodes_pass
                 .run(&voxel_data, &self.textures, octree_level);
-            shader_passes.allocate_nodes_pass.run(
+            self.builder.allocate_nodes_pass.run(
                 &voxel_data,
                 &self.textures,
                 allocated_nodes_counter,
@@ -196,7 +180,7 @@ impl Octree {
                 let geometry_first_node_in_level =
                     geometry_level_start_indices[octree_level as usize];
 
-                shader_passes.allocate_nodes_pass.run(
+                self.builder.allocate_nodes_pass.run(
                     &voxel_data,
                     &self.textures,
                     allocated_nodes_counter,
@@ -236,25 +220,25 @@ impl Octree {
 
             octree_level_start_indices.push(first_node_in_level);
 
-            shader_passes
+            self.builder
                 .store_node_positions_pass
                 .run(&self.textures, octree_level, &voxel_data);
 
             match octree_data_type {
-                OctreeDataType::Geometry => shader_passes.neighbor_pointers_pass.run(
+                OctreeDataType::Geometry => self.builder.neighbor_pointers_pass.run(
                     &self.geometry_data.voxel_data,
                     &self.geometry_data.node_data,
                     &self.textures,
                     octree_level + 1,
                 ),
                 OctreeDataType::Border => {
-                    shader_passes.neighbor_pointers_pass.run(
+                    self.builder.neighbor_pointers_pass.run(
                         &self.geometry_data.voxel_data,
                         &self.geometry_data.node_data,
                         &self.textures,
                         octree_level + 1,
                     );
-                    shader_passes.neighbor_pointers_pass.run(
+                    self.builder.neighbor_pointers_pass.run(
                         &voxel_data,
                         &self.border_data.node_data,
                         &self.textures,
@@ -264,7 +248,7 @@ impl Octree {
             }
         }
 
-        shader_passes.store_node_positions_pass.run(
+        self.builder.store_node_positions_pass.run(
             &self.textures,
             CONFIG.octree_levels - 1, // Last level
             &voxel_data,

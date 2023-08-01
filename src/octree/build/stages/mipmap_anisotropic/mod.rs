@@ -10,7 +10,7 @@ use mipmap_faces::MipmapFacesPass;
 
 use crate::{
     constants::Direction,
-    octree::{NodeData, OctreeTextures},
+    octree::{build::BrickPoolValues, NodeData, OctreeTextures},
 };
 
 pub struct MipmapAnisotropicPass {
@@ -36,10 +36,15 @@ impl MipmapAnisotropicPass {
         node_data: &NodeData,
         level: u32,
         direction: Direction,
+        brick_pool_values: BrickPoolValues,
     ) {
-        self.center.run(textures, node_data, level, direction);
-        self.corners.run(textures, node_data, level, direction);
-        self.edges.run(textures, node_data, level, direction);
-        self.faces.run(textures, node_data, level, direction);
+        self.center
+            .run(textures, node_data, level, direction, brick_pool_values);
+        self.corners
+            .run(textures, node_data, level, direction, brick_pool_values);
+        self.edges
+            .run(textures, node_data, level, direction, brick_pool_values);
+        self.faces
+            .run(textures, node_data, level, direction, brick_pool_values);
     }
 }

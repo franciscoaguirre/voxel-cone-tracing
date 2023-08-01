@@ -14,13 +14,17 @@ mod build;
 mod lighting;
 mod visualize;
 
+use build::*;
 pub use visualize::{BrickAttribute, BricksToShow};
+
+use self::lighting::PhotonsToIrradiance;
 
 pub struct Octree {
     geometry_data: OctreeData,
     pub border_data: OctreeData,
     pub textures: OctreeTextures,
     renderer: Renderer,
+    builder: Builder,
 }
 
 pub struct OctreeTextures {
@@ -29,6 +33,7 @@ pub struct OctreeTextures {
     pub node_positions: BufferTexture,
     neighbors: [BufferTexture; 6],
     pub brick_pool_colors: [Texture3D; 6], // Anisotropic voxels, one texture per main direction
+    pub brick_pool_irradiance: [Texture3D; 6], // Anisotropic voxels
     pub brick_pool_normals: Texture3D,
     pub brick_pool_photons: Texture3D,
     pub photons_buffer: BufferTexture,
@@ -88,6 +93,21 @@ struct Renderer {
     light_view_map_shader: Shader,
     store_photons_shader: Shader,
     clear_bricks_shader: Shader,
+}
+
+struct Builder {
+    neighbor_pointers_pass: NeighborPointersPass,
+    flag_nodes_pass: FlagNodesPass,
+    allocate_nodes_pass: AllocateNodesPass,
+    store_node_positions_pass: StoreNodePositions,
+    write_leaf_nodes_pass: WriteLeafNodesPass,
+    spread_leaf_bricks_pass: SpreadLeafBricksPass,
+    leaf_border_transfer_pass: LeafBorderTransferPass,
+    anisotropic_border_transfer_pass: AnisotropicBorderTransferPass,
+    mipmap_anisotropic_pass: MipmapAnisotropicPass,
+    mipmap_isotropic_pass: MipmapIsotropicPass,
+    append_border_voxel_fragments_pass: AppendBorderVoxelFragmentsPass,
+    photons_to_irradiance_pass: PhotonsToIrradiance,
 }
 
 impl Octree {
@@ -183,12 +203,27 @@ impl Octree {
             ),
             clear_bricks_shader: Shader::new_compute("assets/shaders/octree/clearBricks.comp.glsl"),
         };
+        let builder = Builder {
+            neighbor_pointers_pass: NeighborPointersPass::init(),
+            flag_nodes_pass: FlagNodesPass::init(),
+            allocate_nodes_pass: AllocateNodesPass::init(),
+            store_node_positions_pass: StoreNodePositions::init(),
+            write_leaf_nodes_pass: WriteLeafNodesPass::init(),
+            spread_leaf_bricks_pass: SpreadLeafBricksPass::init(),
+            leaf_border_transfer_pass: LeafBorderTransferPass::init(),
+            anisotropic_border_transfer_pass: AnisotropicBorderTransferPass::init(),
+            mipmap_anisotropic_pass: MipmapAnisotropicPass::init(),
+            mipmap_isotropic_pass: MipmapIsotropicPass::init(),
+            append_border_voxel_fragments_pass: AppendBorderVoxelFragmentsPass::init(),
+            photons_to_irradiance_pass: PhotonsToIrradiance::init(),
+        };
 
         let mut octree = Self {
             geometry_data,
             border_data,
             textures,
             renderer,
+            builder,
         };
 
         octree.build();
@@ -238,6 +273,14 @@ impl Octree {
                 helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // -Z
             ],
             brick_pool_colors: [
+                helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (X, +), also used for lower level
+                helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (X, -)
+                helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (Y, +)
+                helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (Y, -)
+                helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (Z, +)
+                helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (Z, -)
+            ],
+            brick_pool_irradiance: [
                 helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (X, +), also used for lower level
                 helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (X, -)
                 helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (Y, +)

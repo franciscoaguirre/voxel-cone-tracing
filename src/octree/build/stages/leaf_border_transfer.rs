@@ -35,13 +35,19 @@ impl LeafBorderTransferPass {
         match brick_pool_values {
             BrickPoolValues::Colors => helpers::bind_3d_image_texture(
                 1,
-                textures.brick_pool_colors[0],
+                textures.brick_pool_colors[0], // We use +X texture for lowest level
                 gl::READ_WRITE,
                 gl::RGBA8,
             ),
             BrickPoolValues::Normals => helpers::bind_3d_image_texture(
                 1,
                 textures.brick_pool_normals,
+                gl::READ_WRITE,
+                gl::RGBA8,
+            ),
+            BrickPoolValues::Irradiance => helpers::bind_3d_image_texture(
+                1,
+                textures.brick_pool_irradiance[0], // We use +X texture for lower level
                 gl::READ_WRITE,
                 gl::RGBA8,
             ),
