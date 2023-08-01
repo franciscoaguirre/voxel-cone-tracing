@@ -42,7 +42,7 @@ pub struct OctreeTextures {
 }
 
 pub struct OctreeData {
-    node_data: NodeData,
+    pub node_data: NodeData,
     pub voxel_data: VoxelData,
 }
 
