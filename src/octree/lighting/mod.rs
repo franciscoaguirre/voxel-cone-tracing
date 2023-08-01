@@ -49,7 +49,7 @@ impl Octree {
         let (light_view_map, light_view_map_view, shadow_map) =
             self.create_light_view_map(models, light, model, framebuffer);
         self.store_photons(light_view_map, light_view_map_view);
-        self.border_transfer(light_view_map); // TODO: Should maybe take border nodes into account
+        // self.border_transfer(light_view_map); // TODO: Should maybe take border nodes into account
 
         // TODO: Visualizar los fotones "puros" también así veo si el problema de que esté todo pixelado
         // es por `store_photons` o por `photons_to_irradiance`.
@@ -86,12 +86,12 @@ impl Octree {
         // let mipmap_corners = MipmapCornersPass::init(light_view_map);
         // let mipmap_edges = MipmapEdgesPass::init(light_view_map);
 
-        self.builder.leaf_border_transfer_pass.run(
-            &self.textures,
-            &self.geometry_data.node_data,
-            &self.border_data.node_data,
-            BrickPoolValues::Irradiance,
-        );
+        // self.builder.leaf_border_transfer_pass.run(
+        //     &self.textures,
+        //     &self.geometry_data.node_data,
+        //     &self.border_data.node_data,
+        //     BrickPoolValues::Irradiance,
+        // );
 
         self.run_mipmap(BrickPoolValues::Irradiance);
 

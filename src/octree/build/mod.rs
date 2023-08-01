@@ -78,12 +78,11 @@ impl Octree {
             BrickPoolValues::Normals,
         );
 
-        // self.builder.border_transfer_pass.run(
+        // self.builder.leaf_border_transfer_pass.run(
         //     &self.textures,
         //     &self.geometry_data.node_data,
-        //     CONFIG.octree_levels - 1,
-        //     BrickPoolValues::Normals,
-        //     Axis::X,
+        //     &self.border_data.node_data,
+        //     BrickPoolValues::Colors,
         // );
 
         #[cfg(debug_assertions)]
@@ -117,14 +116,14 @@ impl Octree {
                 // );
 
                 if level > 0 {
-                    self.builder.anisotropic_border_transfer_pass.run(
-                        &self.textures,
-                        &self.geometry_data.node_data,
-                        &self.border_data.node_data,
-                        level,
-                        brick_pool_values,
-                        *direction,
-                    );
+                    // self.builder.anisotropic_border_transfer_pass.run(
+                    //     &self.textures,
+                    //     &self.geometry_data.node_data,
+                    //     &self.border_data.node_data,
+                    //     level,
+                    //     brick_pool_values,
+                    //     *direction,
+                    // );
                     // self.builder.border_transfer_pass.run(
                     //     &self.textures,
                     //     &self.geometry_data.node_data,
