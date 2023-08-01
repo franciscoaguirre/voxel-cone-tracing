@@ -10,7 +10,7 @@ use crate::{
     rendering::{quad::Quad, transform::Transform},
 };
 
-use super::Octree;
+use super::{NodeData, Octree};
 
 impl Octree {
     pub unsafe fn render(
@@ -23,6 +23,7 @@ impl Octree {
         should_show_normals: bool,
         brick_attribute: BrickAttribute,
         brick_padding: f32, // Between 0 and 1
+        node_data: &NodeData,
     ) {
         if should_show_normals {
             self.show_normals(octree_level, projection, view, model);
@@ -49,7 +50,7 @@ impl Octree {
             );
             helpers::bind_image_texture(
                 1,
-                self.geometry_data.node_data.level_start_indices.0,
+                node_data.level_start_indices.0,
                 gl::READ_ONLY,
                 gl::R32UI,
             );
@@ -75,7 +76,7 @@ impl Octree {
                 gl::POINTS,
                 0,
                 // Use necessary per level
-                self.geometry_data.node_data.nodes_per_level[octree_level as usize] as i32,
+                node_data.nodes_per_level[octree_level as usize] as i32,
             );
         }
     }

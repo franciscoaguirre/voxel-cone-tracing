@@ -406,6 +406,7 @@ fn main() {
                     should_show_normals,
                     brick_attribute,
                     brick_padding,
+                    &octree.border_data.node_data,
                 );
             }
 
