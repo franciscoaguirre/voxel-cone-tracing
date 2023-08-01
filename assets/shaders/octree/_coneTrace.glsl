@@ -9,8 +9,6 @@
 // - _octreeTraversal
 // - _brickCoordinates
 
-void correctAlpha(inout vec4 color, in float alphaCorrection);
-
 float brickPoolResolutionf = float(textureSize(brickPoolColorsX, 0).x);
 float brickPoolBrickSize = 3.0 / brickPoolResolutionf;
 
@@ -75,7 +73,6 @@ vec4 coneTrace(
     Node previousParentNode;
     int steps = 0;
     float firstStep = voxelSize;
-    // float firstStep = 0;
 
     distanceAlongCone += firstStep;
     while (distanceAlongCone < maxDistance && returnColor.a < 1.0) {
@@ -119,53 +116,27 @@ vec4 coneTrace(
 
         vec3 childVoxelCoordinates = findVoxel(queryCoordinates, node);
         vec3 parentVoxelCoordinates = findVoxel(queryCoordinates, parentNode);
-
         vec4 childColor;
         vec4 parentColor;
-
         if (octreeLevel == maxOctreeLevel) {
             childColor = getLeafIrradiance(childVoxelCoordinates);
         } else {
             childColor = getAnisotropicIrradiance(childVoxelCoordinates, coneDirection);
         }
-
         parentColor = getAnisotropicIrradiance(parentVoxelCoordinates, coneDirection);
-
-        // if (useLighting) {
-        //     childColor.rgb *= clamp(texture(brickPoolPhotons, childVoxelCoordinates).r * photonPower, 0, 1) / distanceFactor;
-        // }
-        // correctAlpha(childColor, stepMultiplier);
-
-        // if (useLighting) {
-        //     parentColor.rgb *= clamp(texture(brickPoolPhotons, parentVoxelCoordinates).r * photonPower, 0, 1) / distanceFactor;
-        // }
-        // correctAlpha(parentColor, stepMultiplier * 2); // Step correction
-
         vec4 newColor = mix(childColor, parentColor, parentWeight); // Quadrilinear interpolation
 
         returnColor += (1 - returnColor.a) * newColor;
 
-        distanceAlongCone += sampleStep;
-
-        steps++;
-
         // Prepare for next iteration
+        distanceAlongCone += sampleStep;
+        steps++;
         previousOctreeLevel = octreeLevel;
         previousNode = node;
         previousParentNode = parentNode;
-        // returnColor.a = clamp(float(texture(brickPoolPhotons, childVoxelCoordinates).r) / 100, 0, 1);
-        //float photonIntensity = texture(brickPoolPhotons, childVoxelCoordinates).r * photonPower;
-        //returnColor.rgba = vec4(clamp(photonIntensity, 0.0, 1.0));
-        // break;
     }
 
     returnColor.a = min(returnColor.a, 1.0);
 
     return returnColor;
-}
-
-void correctAlpha(inout vec4 color, in float alphaCorrection) {
-  const float oldColA = color.a;
-  color.a = 1.0 - pow((1.0 - color.a), alphaCorrection);
-  // color.rgb *= color.a / clamp(oldColA, 0.0001, 10000.0);
 }

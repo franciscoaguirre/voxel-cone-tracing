@@ -37,6 +37,7 @@ uniform sampler3D brickPoolIrradianceZNeg;
 #include "assets/shaders/octree/_octreeTraversal.glsl"
 #include "assets/shaders/octree/_brickCoordinates.glsl"
 #include "assets/shaders/octree/_anisotropicColor.glsl"
+#include "assets/shaders/octree/_anisotropicIrradiance.glsl"
 #include "assets/shaders/octree/_coneTrace.glsl"
 #include "assets/shaders/octree/_debugConeTrace.glsl"
 

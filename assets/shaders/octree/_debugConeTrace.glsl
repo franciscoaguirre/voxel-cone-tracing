@@ -76,13 +76,11 @@ vec4 debugConeTrace(
         if (useLighting) {
            // childColor.rgb *= float(texture(brickPoolPhotons, childVoxelCoordinates).r) / 10;
         }
-        correctAlpha(childColor, stepMultiplier);
         vec3 parentVoxelCoordinates = findVoxel(queryCoordinates, parentNode);
         vec4 parentColor = texture(brickPoolColorsX, parentVoxelCoordinates);
         if (useLighting) {
             // parentColor.rgb *= float(texture(brickPoolPhotons, parentVoxelCoordinates).r) / 10;
         }
-        correctAlpha(parentColor, stepMultiplier * 2); // Step correction
 
         vec4 newColor = mix(childColor, parentColor, parentWeight); // Quadrilinear interpolation
 

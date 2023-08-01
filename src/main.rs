@@ -13,6 +13,7 @@ use rendering::quad::Quad;
 use structopt::StructOpt;
 
 mod cli_arguments;
+mod cone_tracing;
 mod config;
 mod constants;
 mod helpers;
@@ -462,200 +463,24 @@ fn main() {
                 our_model.draw(&render_model_shader);
             }
 
-            {
-                // Render illumination image to quad
-                voxel_cone_tracing_shader.use_program();
-
-                voxel_cone_tracing_shader
-                    .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
-                voxel_cone_tracing_shader
-                    .set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels - 1);
-                voxel_cone_tracing_shader.set_float(c_str!("photonPower"), photon_power as f32); // TODO: Is this power correct?
-                voxel_cone_tracing_shader.set_bool(c_str!("shouldShowColor"), should_show_color);
-                voxel_cone_tracing_shader.set_bool(c_str!("shouldShowDirect"), should_show_direct);
-                voxel_cone_tracing_shader
-                    .set_bool(c_str!("shouldShowIndirect"), should_show_indirect);
-                voxel_cone_tracing_shader.set_bool(
-                    c_str!("shouldShowIndirectSpecular"),
-                    should_show_indirect_specular,
-                );
-                voxel_cone_tracing_shader.set_bool(
-                    c_str!("shouldShowAmbientOcclusion"),
-                    should_show_ambient_occlusion,
-                );
-                voxel_cone_tracing_shader.set_vec3(
-                    c_str!("eyePosition"),
-                    camera.transform.position.x,
-                    camera.transform.position.y,
-                    camera.transform.position.z,
-                );
-                let light_direction = vec3(
-                    light.transform.position.x,
-                    light.transform.position.y,
-                    light.transform.position.z,
-                );
-                voxel_cone_tracing_shader.set_vec3(
-                    c_str!("lightDirection"),
-                    light_direction.x,
-                    light_direction.y,
-                    light_direction.z,
-                );
-                voxel_cone_tracing_shader.set_float(c_str!("shininess"), 30.0);
-                voxel_cone_tracing_shader.set_mat4(
-                    c_str!("lightViewMatrix"),
-                    &light.transform.get_view_matrix(),
-                );
-                voxel_cone_tracing_shader.set_mat4(
-                    c_str!("lightProjectionMatrix"),
-                    &light.get_projection_matrix(),
-                );
-                voxel_cone_tracing_shader.set_float(c_str!("coneAngle"), cone_angle as f32);
-                helpers::bind_image_texture(
-                    0,
-                    octree.textures.node_pool.0,
-                    gl::READ_ONLY,
-                    gl::R32UI,
-                );
-
-                let brick_pool_textures = vec![
-                    (
-                        c_str!("brickPoolColorsX"),
-                        octree.textures.brick_pool_colors[0],
-                        gl::LINEAR as i32,
-                    ),
-                    (
-                        c_str!("brickPoolColorsXNeg"),
-                        octree.textures.brick_pool_colors[1],
-                        gl::LINEAR as i32,
-                    ),
-                    (
-                        c_str!("brickPoolColorsY"),
-                        octree.textures.brick_pool_colors[2],
-                        gl::LINEAR as i32,
-                    ),
-                    (
-                        c_str!("brickPoolColorsYNeg"),
-                        octree.textures.brick_pool_colors[3],
-                        gl::LINEAR as i32,
-                    ),
-                    (
-                        c_str!("brickPoolColorsZ"),
-                        octree.textures.brick_pool_colors[4],
-                        gl::LINEAR as i32,
-                    ),
-                    (
-                        c_str!("brickPoolColorsZNeg"),
-                        octree.textures.brick_pool_colors[5],
-                        gl::LINEAR as i32,
-                    ),
-                    (
-                        c_str!("brickPoolNormals"),
-                        octree.textures.brick_pool_normals,
-                        gl::NEAREST as i32,
-                    ),
-                    // Irradiance textures
-                    (
-                        c_str!("brickPoolIrradianceX"),
-                        octree.textures.brick_pool_irradiance[0],
-                        gl::NEAREST as i32,
-                    ),
-                    (
-                        c_str!("brickPoolIrradianceXNeg"),
-                        octree.textures.brick_pool_irradiance[1],
-                        gl::NEAREST as i32,
-                    ),
-                    (
-                        c_str!("brickPoolIrradianceY"),
-                        octree.textures.brick_pool_irradiance[2],
-                        gl::NEAREST as i32,
-                    ),
-                    (
-                        c_str!("brickPoolIrradianceYNeg"),
-                        octree.textures.brick_pool_irradiance[3],
-                        gl::NEAREST as i32,
-                    ),
-                    (
-                        c_str!("brickPoolIrradianceZ"),
-                        octree.textures.brick_pool_irradiance[4],
-                        gl::NEAREST as i32,
-                    ),
-                    (
-                        c_str!("brickPoolIrradianceZNeg"),
-                        octree.textures.brick_pool_irradiance[5],
-                        gl::NEAREST as i32,
-                    ),
-                ];
-
-                let mut texture_counter = 0;
-
-                for &(texture_name, texture, sample_interpolation) in brick_pool_textures.iter() {
-                    gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
-                    gl::BindTexture(gl::TEXTURE_3D, texture);
-                    voxel_cone_tracing_shader.set_int(texture_name, texture_counter as i32);
-                    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-                    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
-                    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
-                    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, sample_interpolation);
-                    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, sample_interpolation);
-                    texture_counter += 1;
-                }
-
-                // let g_buffer_textures = vec![
-                //     (c_str!("gBufferColors"), eye_view_map_colors),
-                //     (c_str!("gBufferPositions"), eye_view_map),
-                //     (c_str!("gBufferNormals"), eye_view_map_normals),
-                // ];
-                let g_buffer_textures = vec![
-                    (c_str!("gBufferColors"), camera_view_map_colors),
-                    (c_str!("gBufferPositions"), camera_view_map_positions),
-                    (c_str!("gBufferNormals"), camera_view_map_normals),
-                ];
-
-                for &(texture_name, texture) in g_buffer_textures.iter() {
-                    gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
-                    gl::BindTexture(gl::TEXTURE_2D, texture);
-                    voxel_cone_tracing_shader.set_int(texture_name, texture_counter as i32);
-                    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-                    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
-                    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-                    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
-                    texture_counter += 1;
-                }
-
-                gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
-                gl::BindTexture(gl::TEXTURE_2D, light_maps.2);
-                voxel_cone_tracing_shader.set_int(c_str!("shadowMap"), texture_counter as i32);
-                gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-                gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
-                gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-                gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
-
-                let quad_vao = quad.get_vao();
-
-                if should_show_final_image_quad {
-                    gl::BindVertexArray(quad_vao);
-                    gl::DrawElements(
-                        gl::TRIANGLES,
-                        quad.get_num_indices() as i32,
-                        gl::UNSIGNED_INT,
-                        std::ptr::null(),
-                    );
-                    gl::BindVertexArray(0);
-                }
-
-                // let (debug, buffer) = helpers::generate_texture_buffer(100, gl::R32F, 69f32);
-                // helpers::bind_image_texture(4, debug, gl::WRITE_ONLY, gl::R32F);
-                // our_model.draw(&voxel_cone_tracing_shader);
-                // let debug_values = helpers::get_values_from_texture_buffer(buffer, 100, 420f32);
-                // dbg!(&debug_values[..20]);
-
-                // Show normals
-                // render_normals_shader.use_program();
-                // render_normals_shader.set_mat4(c_str!("projection"), &projection);
-                // render_normals_shader.set_mat4(c_str!("view"), &view);
-                // render_normals_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
-                // our_model.draw(&render_normals_shader);
-            }
+            cone_tracing::voxel_cone_trace(
+                &voxel_cone_tracing_shader,
+                should_show_color,
+                should_show_direct,
+                should_show_indirect,
+                should_show_indirect_specular,
+                should_show_ambient_occlusion,
+                &light,
+                cone_angle,
+                &octree.textures,
+                camera_view_map_positions,
+                camera_view_map_normals,
+                camera_view_map_colors,
+                light_maps,
+                &quad,
+                &camera,
+                should_show_final_image_quad,
+            );
 
             {
                 //////////////////////////////////// Debug stuff //////////////////////////////
