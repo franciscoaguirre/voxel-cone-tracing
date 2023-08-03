@@ -20,7 +20,7 @@ pub use visualize::{BrickAttribute, BricksToShow};
 use self::lighting::PhotonsToIrradiance;
 
 pub struct Octree {
-    geometry_data: OctreeData,
+    pub geometry_data: OctreeData,
     pub border_data: OctreeData,
     pub textures: OctreeTextures,
     renderer: Renderer,
@@ -93,6 +93,7 @@ struct Renderer {
     light_view_map_shader: Shader,
     store_photons_shader: Shader,
     clear_bricks_shader: Shader,
+    clear_bricks_float_shader: Shader,
 }
 
 struct Builder {
@@ -202,6 +203,9 @@ impl Octree {
                 "assets/shaders/octree/storePhotons.comp.glsl",
             ),
             clear_bricks_shader: Shader::new_compute("assets/shaders/octree/clearBricks.comp.glsl"),
+            clear_bricks_float_shader: Shader::new_compute(
+                "assets/shaders/octree/clearBricksFloat.comp.glsl",
+            ),
         };
         let builder = Builder {
             neighbor_pointers_pass: NeighborPointersPass::init(),
