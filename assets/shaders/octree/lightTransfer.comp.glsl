@@ -3,7 +3,6 @@
 #include "./_constants.glsl"
 #include "./_helpers.glsl"
 
-// layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 layout (local_size_x = WORKING_GROUP_SIZE, local_size_y = 1, local_size_z = 1) in;
 
 uniform layout(binding = 0, r32ui) uimageBuffer nodePoolNeighbors;
@@ -24,29 +23,34 @@ uniform uint voxelDimension;
 
 // Doing it this way can have concurrency problems if we run all three axis concurrently (not sure if posible, but paper does it in two passes)
 
+uint getFinalValue(uint borderPhotons, uint neighborBorderPhotons) {
+    return borderPhotons + neighborBorderPhotons;
+}
+
 void main() {
     // TODO: Optimize with the 2D node map
-    uvec3 queryCoordinates = texelFetch(
-        lightViewMap,
-        ivec2(gl_GlobalInvocationID.xy),
-        0
-    ).xyz;
-    if (queryCoordinates == uvec3(0)) {
-        return;
-    }
-    vec3 normalizedQueryCoordinates = vec3(queryCoordinates.xyz / (float(voxelDimension) * 2.0));
+    int nodeID = getThreadNode();
+    // uvec3 queryCoordinates = texelFetch(
+    //     lightViewMap,
+    //     ivec2(gl_GlobalInvocationID.xy),
+    //     0
+    // ).xyz;
+    // if (queryCoordinates == uvec3(0)) {
+    //     return;
+    // }
+    // vec3 normalizedQueryCoordinates = vec3(queryCoordinates.xyz / (float(voxelDimension) * 2.0));
 
-    float halfNodeSize;
-    vec3 nodeCoordinates;
-    int nodeID = traverseOctree(
-        normalizedQueryCoordinates,
-        octreeLevel,
-        nodeCoordinates,
-        halfNodeSize
-    );
-    if (nodeID == NODE_NOT_FOUND) {
-        return;
-    }
+    // float halfNodeSize;
+    // vec3 nodeCoordinates;
+    // int nodeID = traverseOctree(
+    //     normalizedQueryCoordinates,
+    //     octreeLevel,
+    //     nodeCoordinates,
+    //     halfNodeSize
+    // );
+    // if (nodeID == NODE_NOT_FOUND) {
+    //     return;
+    // }
 
     int neighborID = int(imageLoad(nodePoolNeighbors, nodeID).r);
     if (neighborID == 0) {
@@ -66,8 +70,7 @@ void main() {
                 uint neighborBorderPhotons = imageLoad(photonValues, neighborBrickAddress + neighborOffset).r;
                 memoryBarrier();
 
-                uint photonsFinalValue = borderPhotons + neighborBorderPhotons;
-
+                uint photonsFinalValue = getFinalValue(borderPhotons, neighborBorderPhotons);
                 imageStore(photonValues, brickAddress + offset, uvec4(photonsFinalValue, 0, 0, 0));
                 imageStore(photonValues, neighborBrickAddress + neighborOffset, uvec4(photonsFinalValue, 0, 0, 0));
             }
@@ -80,13 +83,13 @@ void main() {
                 ivec3 neighborOffset = ivec3(x, 0, z);
                 ivec3 offset = ivec3(x, 2, z);
 
-                uvec4 borderPhotons = imageLoad(photonValues, brickAddress + offset);
-                uvec4 neighborBorderPhotons = imageLoad(photonValues, neighborBrickAddress + neighborOffset);
+                uint borderPhotons = imageLoad(photonValues, brickAddress + offset).r;
+                uint neighborBorderPhotons = imageLoad(photonValues, neighborBrickAddress + neighborOffset).r;
                 memoryBarrier();
 
-                uvec4 photonsFinalValue = borderPhotons + neighborBorderPhotons;
-                imageStore(photonValues, brickAddress + offset, photonsFinalValue);
-                imageStore(photonValues, neighborBrickAddress + neighborOffset, photonsFinalValue);
+                uint photonsFinalValue = getFinalValue(borderPhotons, neighborBorderPhotons);
+                imageStore(photonValues, brickAddress + offset, uvec4(photonsFinalValue, 0, 0, 0));
+                imageStore(photonValues, neighborBrickAddress + neighborOffset, uvec4(photonsFinalValue, 0, 0, 0));
             }
         }
     }
@@ -97,13 +100,13 @@ void main() {
                 ivec3 neighborOffset = ivec3(x, y, 0);
                 ivec3 offset = ivec3(x, y, 2);
 
-                uvec4 borderPhotons = imageLoad(photonValues, brickAddress + offset);
-                uvec4 neighborBorderPhotons = imageLoad(photonValues, neighborBrickAddress + neighborOffset);
+                uint borderPhotons = imageLoad(photonValues, brickAddress + offset).r;
+                uint neighborBorderPhotons = imageLoad(photonValues, neighborBrickAddress + neighborOffset).r;
                 memoryBarrier();
 
-                uvec4 photonsFinalValue = borderPhotons + neighborBorderPhotons;
-                imageStore(photonValues, brickAddress + offset, photonsFinalValue);
-                imageStore(photonValues, neighborBrickAddress + neighborOffset, photonsFinalValue);
+                uint photonsFinalValue = getFinalValue(borderPhotons, neighborBorderPhotons);
+                imageStore(photonValues, brickAddress + offset, uvec4(photonsFinalValue, 0, 0, 0));
+                imageStore(photonValues, neighborBrickAddress + neighborOffset, uvec4(photonsFinalValue, 0, 0, 0));
             }
         }
     }
