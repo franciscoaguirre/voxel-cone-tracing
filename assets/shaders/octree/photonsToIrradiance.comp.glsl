@@ -48,5 +48,5 @@ void main() {
     vec4 voxelColor = texelFetch(brickPoolColors, brickCoordinates + brickOffset, 0);
     uint numberOfPhotons = texelFetch(brickPoolPhotons, brickCoordinates + brickOffset, 0).r;
     vec4 irradiance = numberOfPhotons * vec4(1.0 / 20.0);
-    imageStore(brickPoolIrradiance, brickCoordinates + brickOffset, irradiance);
+    imageStore(brickPoolIrradiance, brickCoordinates + brickOffset, vec4(vec3(numberOfPhotons / 1150.0), 1.0));
 }

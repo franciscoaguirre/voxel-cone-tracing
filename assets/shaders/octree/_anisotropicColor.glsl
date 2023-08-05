@@ -1,10 +1,10 @@
 // Requires:
-// - uniform sampler3D brickPoolColorsX
-// - uniform sampler3D brickPoolColorsXNeg
-// - uniform sampler3D brickPoolColorsY
-// - uniform sampler3D brickPoolColorsYNeg
-// - uniform sampler3D brickPoolColorsZ
-// - uniform sampler3D brickPoolColorsZNeg
+// - uniform sampler3D brickPoolIrradianceX
+// - uniform sampler3D brickPoolIrradianceXNeg
+// - uniform sampler3D brickPoolIrradianceY
+// - uniform sampler3D brickPoolIrradianceYNeg
+// - uniform sampler3D brickPoolIrradianceZ
+// - uniform sampler3D brickPoolIrradianceZNeg
 
 vec4 getAnisotropicColor(vec3 coordinates, vec3 direction) {
     float weightX = dot(direction, vec3(1, 0, 0));
@@ -17,8 +17,8 @@ vec4 getAnisotropicColor(vec3 coordinates, vec3 direction) {
     weightY /= weightSum;
     weightZ /= weightSum;
 
-    vec4 colorX = weightX > 0 ? texture(brickPoolColorsX, coordinates) : texture(brickPoolColorsXNeg, coordinates);
-    vec4 colorY = weightY > 0 ? texture(brickPoolColorsY, coordinates) : texture(brickPoolColorsYNeg, coordinates);
-    vec4 colorZ = weightZ > 0 ? texture(brickPoolColorsZ, coordinates) : texture(brickPoolColorsZNeg, coordinates);
+    vec4 colorX = weightX > 0 ? texture(brickPoolIrradianceX, coordinates) : texture(brickPoolIrradianceXNeg, coordinates);
+    vec4 colorY = weightY > 0 ? texture(brickPoolIrradianceY, coordinates) : texture(brickPoolIrradianceYNeg, coordinates);
+    vec4 colorZ = weightZ > 0 ? texture(brickPoolIrradianceZ, coordinates) : texture(brickPoolIrradianceZNeg, coordinates);
     return colorX * abs(weightX) + colorY * abs(weightY) + colorZ * abs(weightZ);
 }

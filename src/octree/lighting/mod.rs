@@ -78,7 +78,7 @@ impl Octree {
             .photons_to_irradiance_pass
             .run(&self.textures, light_view_map);
 
-        self.mipmap_photons(light_view_map);
+        // self.mipmap_photons(light_view_map);
 
         (light_view_map, light_view_map_view, shadow_map)
     }
