@@ -17,9 +17,7 @@ uniform uint octreeLevel;
 uniform uint voxelDimension;
 
 #include "./_threadNodeUtil.glsl"
-#include "./_traversalHelpers.glsl"
-#include "./_octreeTraversal.glsl"
-#include "./_brickCoordinates.glsl"
+#include "assets/shaders/octree/_brickCoordinates.glsl"
 
 // Doing it this way can have concurrency problems if we run all three axis concurrently (not sure if posible, but paper does it in two passes)
 
