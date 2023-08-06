@@ -55,7 +55,7 @@ fn main() {
     let mut camera = Camera::default();
     // camera.transform.position = point3(0.0, -0.25, 0.0);
     // camera.transform.position = point3(0.0, 0.0, -2.0);
-    camera.transform.position = point3(0.0, 0.0, 3.0);
+    camera.transform.position = point3(0.0, -2.0, 4.0);
     camera.transform.set_rotation_y(-90.0);
     let mut first_mouse = true;
     let mut last_x: f32 = CONFIG.viewport_width as f32 / 2.0;
@@ -166,8 +166,8 @@ fn main() {
     //light.transform.position = point3(0.0, 1.0, -0.4);
 
     // From below
-    light.transform.position = point3(0.0, -1.0, 0.0);
-    light.transform.set_rotation_x(70.0);
+    light.transform.position = point3(0.0, -1.0, -1.0);
+    light.transform.set_rotation_x(45.0);
 
     let light_framebuffer = unsafe { Framebuffer::new_light() };
     let mut light_maps = unsafe {
