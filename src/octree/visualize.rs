@@ -1,4 +1,5 @@
 use std::{ffi::c_void, mem::size_of};
+use log;
 
 use c_str_macro::c_str;
 use cgmath::{vec3, Matrix4, Vector3};
@@ -300,40 +301,23 @@ impl Octree {
 
         let all_bricks_to_show: u32 = self.renderer.bricks_to_show.into();
 
-        if (all_bricks_to_show & 1) > 0 {
-            self.renderer
-                .bricks_shader
-                .set_uint(c_str!("bricksToShow"), all_bricks_to_show & 1);
 
-            gl::DrawArrays(
-                gl::POINTS,
-                0,
-                self.geometry_data.node_data.nodes_per_level[octree_level as usize] as i32,
-            );
-        }
+        for z_layer in 0..3 {
+            let mask = 2u32.pow(z_layer);
+            let brick_layer_to_show: u32 = self.renderer.bricks_to_show.into();
+            if(brick_layer_to_show & mask != 0) {
+                for x_layer in 0..3 {
+                    self.renderer
+                        .bricks_shader
+                        .set_uint(c_str!("bricksToShow"), z_layer * 3 + x_layer);
 
-        if (all_bricks_to_show & 2) > 0 {
-            self.renderer
-                .bricks_shader
-                .set_uint(c_str!("bricksToShow"), all_bricks_to_show & 2);
-
-            gl::DrawArrays(
-                gl::POINTS,
-                0,
-                self.geometry_data.node_data.nodes_per_level[octree_level as usize] as i32,
-            );
-        }
-
-        if (all_bricks_to_show & 4) > 0 {
-            self.renderer
-                .bricks_shader
-                .set_uint(c_str!("bricksToShow"), all_bricks_to_show & 4);
-
-            gl::DrawArrays(
-                gl::POINTS,
-                0,
-                self.geometry_data.node_data.nodes_per_level[octree_level as usize] as i32,
-            );
+                    gl::DrawArrays(
+                        gl::POINTS,
+                        0,
+                        self.geometry_data.node_data.nodes_per_level[octree_level as usize] as i32,
+                    );
+                }
+            }
         }
     }
 
@@ -619,12 +603,17 @@ impl Octree {
         for z_layer in 0..3 {
             let mask = 2u32.pow(z_layer);
             let brick_layer_to_show: u32 = self.renderer.bricks_to_show.into();
-            self.renderer
-                .node_bricks_shader
-                .set_uint(c_str!("bricksToShow"), brick_layer_to_show & mask);
+            if(brick_layer_to_show & mask != 0) {
+                for x_layer in 0..3 {
+                    self.renderer
+                        .node_bricks_shader
+                        .set_uint(c_str!("bricksToShow"), z_layer * 3 + x_layer);
 
-            gl::BindVertexArray(self.renderer.vao);
-            gl::DrawArrays(gl::POINTS, 0, self.renderer.node_count as i32);
+                    gl::BindVertexArray(self.renderer.vao);
+                    gl::DrawArrays(gl::POINTS, 0, self.renderer.node_count as i32);
+                    
+                }
+            }
         }
     }
 
