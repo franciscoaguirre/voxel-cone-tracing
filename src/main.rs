@@ -165,7 +165,11 @@ fn main() {
     //light.transform.set_rotation_x(-60.0);
     //light.transform.position = point3(0.0, 1.0, -0.4);
 
-    // From below
+    //// From below
+    //light.transform.position = point3(0.0, -1.0, 0.0);
+    //light.transform.set_rotation_x(90.0);
+
+    // From below at angle
     light.transform.position = point3(0.0, -1.0, -1.0);
     light.transform.set_rotation_x(45.0);
 
