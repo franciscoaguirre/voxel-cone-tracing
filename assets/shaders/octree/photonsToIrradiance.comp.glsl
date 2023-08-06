@@ -51,8 +51,9 @@ void main() {
     // TODO: Use also total photon hits here for the multiplier.
     // Every octree level added separates the current surface touched by photons in
     // 4 (2D section of a voxel is separated in 4 new voxels, each with a fourth of the amount of photons)
-    float multiplier = pow(4, octreeLevel) / float(262144); 
-    vec4 irradiance = vec4(vec3(numberOfPhotons * multiplier), 1.0);
+    // float multiplier = numberOfPhotons * pow(4, octreeLevel) / float(262144); 
+    float multiplier = clamp(float(numberOfPhotons), 0.0, 1.0);
+    vec4 irradiance = vec4(voxelColor.xyz * multiplier, 1.0);
 
     imageStore(brickPoolIrradiance, brickCoordinates + brickOffset, irradiance);
 }
