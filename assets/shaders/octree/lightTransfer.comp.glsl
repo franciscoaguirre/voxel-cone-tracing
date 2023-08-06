@@ -59,15 +59,17 @@ void main() {
     ivec3 neighborBrickAddress = calculateBrickCoordinates(neighborID);
     for (int i = 0; i <= 2; i++) {
        for (int j = 0; j <= 2; j++) {
+         ivec3 neighborOffset;
+         ivec3 offset;
          if(axis == 0) {
-           ivec3 neighborOffset = ivec3(0, i, j);
-           ivec3 offset = ivec3(2, i, j);
+           neighborOffset = ivec3(0, i, j);
+           offset = ivec3(2, i, j);
          } else if (axis == 1) {
-           ivec3 neighborOffset = ivec3(i, 0, j);
-           ivec3 offset = ivec3(i, 2, j);
+           neighborOffset = ivec3(i, 0, j);
+           offset = ivec3(i, 2, j);
          } else {
-           ivec3 neighborOffset = ivec3(i, j, 0);
-           ivec3 offset = ivec3(i, j, 2);
+           neighborOffset = ivec3(i, j, 0);
+           offset = ivec3(i, j, 2);
          }
 
          uint borderPhotons = imageLoad(photonValues, brickAddress + offset).r;
