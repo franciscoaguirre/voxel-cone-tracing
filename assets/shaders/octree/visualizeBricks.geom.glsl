@@ -1,7 +1,7 @@
 #version 460 core
 
 layout (points) in;
-layout (triangle_strip, max_vertices = 256) out;
+layout (triangle_strip, max_vertices = 128) out;
 
 in VertexData {
     vec4 nodePosition;
@@ -67,7 +67,7 @@ void main() {
     vec3 maxCorner = (nodePosition.xyz + vec3(In[0].halfNodeSize * (1 - brickPadding)));
     vec4 cubeCenter, cubeColor;
     vec3 start, normal;
-    if (bricksToShow == 1) {
+    if (bricksToShow == 0) {
         // Show z = 0
         
         // (0, 0, 0)
@@ -84,6 +84,7 @@ void main() {
         cubeCenter = vec4(nodePosition.x - brickDistance, nodePosition.y + brickDistance, nodePosition.z - brickDistance, nodePosition.w);
         cubeColor = showProp(In[0].brickCoordinates + ivec3(0, 2, 0), mode);
         drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor, minCorner, maxCorner);
+    } else if (bricksToShow == 1) {
 
         // (2, 0, 0)
         cubeCenter = vec4(nodePosition.x + brickDistance, nodePosition.yz - brickDistance, nodePosition.w);
@@ -99,6 +100,7 @@ void main() {
         cubeCenter = vec4(nodePosition.xy, nodePosition.z - brickDistance, nodePosition.w);
         cubeColor = showProp(In[0].brickCoordinates + ivec3(1, 1, 0), mode);
         drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor, minCorner, maxCorner);
+    } else if (bricksToShow == 2) {
 
         // (1, 0, 0)
         cubeCenter = vec4(nodePosition.x, nodePosition.yz - brickDistance, nodePosition.w);
@@ -114,7 +116,7 @@ void main() {
         cubeCenter = vec4(nodePosition.x + brickDistance, nodePosition.y, nodePosition.z - brickDistance, nodePosition.w);
         cubeColor = showProp(In[0].brickCoordinates + ivec3(2, 1, 0), mode);
         drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor, minCorner, maxCorner);
-    } else if (bricksToShow == 2) {
+    } else if (bricksToShow == 3) {
         // Show z = 1
         
         // (0, 1, 1)
@@ -131,6 +133,7 @@ void main() {
         cubeCenter = vec4(nodePosition.xy - brickDistance, nodePosition.z, nodePosition.w);
         cubeColor = showProp(In[0].brickCoordinates + ivec3(0, 0, 1), mode);
         drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor, minCorner, maxCorner);
+    } else if (bricksToShow == 4) {
 
         // (1, 1, 1)
         cubeCenter = vec4(nodePosition.xyz, nodePosition.w);
@@ -146,6 +149,7 @@ void main() {
         cubeCenter = vec4(nodePosition.x, nodePosition.y + brickDistance, nodePosition.z, nodePosition.w);
         cubeColor = showProp(In[0].brickCoordinates + ivec3(1, 2, 1), mode);
         drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor, minCorner, maxCorner);
+    } else if (bricksToShow == 5) {
 
         // (2, 1, 1)
         cubeCenter = vec4(nodePosition.x + brickDistance, nodePosition.yz, nodePosition.w);
@@ -162,7 +166,7 @@ void main() {
         cubeColor = showProp(In[0].brickCoordinates + ivec3(2, 2, 1), mode);
         drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor, minCorner, maxCorner);
 
-    } else if (bricksToShow == 4) {
+    } else if (bricksToShow == 6) {
         // Show z = 2
 
         // (0, 0, 2)
@@ -179,6 +183,7 @@ void main() {
         cubeCenter = vec4(nodePosition.x + brickDistance, nodePosition.y - brickDistance, nodePosition.z + brickDistance, nodePosition.w);
         cubeColor = showProp(In[0].brickCoordinates + ivec3(2, 0, 2), mode);
         drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor, minCorner, maxCorner);
+    } else if (bricksToShow == 7) {
 
         // (2, 2, 2)
         cubeCenter = vec4(nodePosition.xyz + brickDistance, nodePosition.w);
@@ -194,6 +199,7 @@ void main() {
         cubeCenter = vec4(nodePosition.xy, nodePosition.z + brickDistance, nodePosition.w);
         cubeColor = showProp(In[0].brickCoordinates + ivec3(1, 1, 2), mode);
         drawCubeFilled(cubeCenter, voxelBrickSize, canonizationMatrix, cubeColor, minCorner, maxCorner);
+    } else if (bricksToShow == 8) {
 
         // (0, 1, 2)
         cubeCenter = vec4(nodePosition.x - brickDistance, nodePosition.y, nodePosition.z + brickDistance, nodePosition.w);
