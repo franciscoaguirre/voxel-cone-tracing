@@ -331,7 +331,8 @@ pub fn get_brick_coordinates(node_id: u32) -> Vector3<u32> {
 pub unsafe fn load_model(name: &str) -> Model {
     let previous_current_dir = env::current_dir().unwrap();
     env::set_current_dir(Path::new("assets/models")).unwrap();
-    let model = Model::new(name);
+    let model_file = format!("{name}.obj");
+    let model = Model::new(&model_file);
     env::set_current_dir(previous_current_dir).unwrap();
     model
 }

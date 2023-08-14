@@ -24,6 +24,7 @@ mod helpers;
 mod menu;
 mod octree;
 mod rendering;
+mod scene;
 mod types;
 mod voxelization;
 
@@ -31,6 +32,7 @@ use cli_arguments::Options;
 use config::CONFIG;
 use menu::Menu;
 use rendering::{camera::Camera, common, gizmo::RenderGizmo, light::SpotLight, shader::Shader};
+use scene::SCENE;
 use voxelization::visualize::RenderVoxelFragmentsShader;
 
 use octree::{BricksToShow, Octree};
@@ -149,33 +151,7 @@ fn main() {
     let mut photons: Vec<u32> = Vec::new();
     let mut children: Vec<u32> = Vec::new();
 
-    let mut light = unsafe {
-        SpotLight::new(
-            2.0,
-            2.0,
-            Point3 {
-                x: 1.0,
-                y: 1.0,
-                z: 1.0,
-            },
-            1_000_000.0,
-        )
-    };
-    // light.transform.position = point3(0.0, 0.00, 2.0);
-    // light.transform.set_rotation_y(-90.0);
-    // light.transform.set_rotation_x(-75.0);
-
-    // From above at angle
-    light.transform.set_rotation_x(-60.0);
-    light.transform.position = point3(0.0, 1.0, -0.4);
-
-    //// From below
-    //light.transform.position = point3(0.0, -1.0, 0.0);
-    //light.transform.set_rotation_x(90.0);
-
-    // From below at angle
-    // light.transform.position = point3(0.0, -1.0, -1.0);
-    // light.transform.set_rotation_x(45.0);
+    let mut light = SCENE.light.clone();
 
     let light_framebuffer = unsafe { Framebuffer::new_light() };
     let mut light_maps = unsafe {
@@ -196,15 +172,6 @@ fn main() {
         0.0001,
         10000.0,
     );
-    let eye_geometry_buffers = unsafe {
-        static_eye.take_photo(
-            &[&our_model],
-            &projection,
-            &model_normalization_matrix,
-            &camera_framebuffer,
-            None,
-        )
-    };
 
     let mut current_voxel_fragment_count: u32 = 0;
     let mut current_octree_level: u32 = 0;

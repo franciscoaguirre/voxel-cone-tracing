@@ -1,13 +1,12 @@
 use std::fs::File;
 
-use log::info;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 #[serde(default)]
 pub struct Config {
-    // Viewport settings
+    /// Viewport settings
     pub viewport_width: u32,
     pub viewport_height: u32,
 
@@ -17,13 +16,13 @@ pub struct Config {
     pub voxel_dimension: u32,
     pub brick_pool_resolution: u32,
 
-    // Octree settings
+    /// Octree settings
     #[serde(skip_deserializing)] // Gets calculated based on voxel_dimension
     pub octree_levels: u32, // First level is level 0
     #[serde(skip_deserializing)]
     pub last_octree_level: u32,
 
-    // Compute shader settings
+    /// Compute shader settings
     pub working_group_size: u32,
 }
 
@@ -50,6 +49,6 @@ fn load_config() -> Config {
     config.voxel_dimension = 2u32.pow(config.voxel_dimension);
     config.octree_levels = config.voxel_dimension.pow(3).ilog2() / 8_u32.ilog2();
     config.last_octree_level = config.octree_levels - 1;
-    info!("Configuration used: {:#?}", config);
+    log::info!("Configuration used: {:#?}", config);
     config
 }
