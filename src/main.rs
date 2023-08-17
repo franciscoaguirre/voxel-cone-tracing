@@ -162,16 +162,16 @@ fn main() {
     // light.transform.set_rotation_x(-75.0);
 
     // From above at angle
-    //light.transform.set_rotation_x(-60.0);
-    //light.transform.position = point3(0.0, 1.0, -0.4);
+    light.transform.set_rotation_x(-60.0);
+    light.transform.position = point3(0.0, 1.0, -0.4);
 
     //// From below
     //light.transform.position = point3(0.0, -1.0, 0.0);
     //light.transform.set_rotation_x(90.0);
 
     // From below at angle
-    light.transform.position = point3(0.0, -1.0, -1.0);
-    light.transform.set_rotation_x(45.0);
+    // light.transform.position = point3(0.0, -1.0, -1.0);
+    // light.transform.set_rotation_x(45.0);
 
     let light_framebuffer = unsafe { Framebuffer::new_light() };
     let mut light_maps = unsafe {
@@ -440,7 +440,7 @@ fn main() {
                     &model,
                     color_direction,
                     brick_attribute,
-                    brick_padding
+                    brick_padding,
                 );
             }
 
