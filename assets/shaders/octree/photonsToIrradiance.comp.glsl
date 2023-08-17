@@ -43,7 +43,8 @@ void main() {
     }
 
     ivec3 brickCoordinates = calculateBrickCoordinates(nodeID);
-    ivec3 brickOffset = ivec3(calculateBrickVoxel(nodeCoordinates, halfNodeSize, normalizedQueryCoordinates));
+    uint offset = calculateChildLocalID(nodeCoordinates, halfNodeSize, normalizedQueryCoordinates);
+    ivec3 brickOffset = 2 * ivec3(CHILD_OFFSETS[offset]);
 
     vec4 voxelColor = texelFetch(brickPoolColors, brickCoordinates + brickOffset, 0);
     uint numberOfPhotons = texelFetch(brickPoolPhotons, brickCoordinates + brickOffset, 0).r;
@@ -52,8 +53,8 @@ void main() {
     // Every octree level added separates the current surface touched by photons in
     // 4 (2D section of a voxel is separated in 4 new voxels, each with a fourth of the amount of photons)
     // float multiplier = numberOfPhotons * pow(4, octreeLevel) / float(262144); 
-    float multiplier = clamp(float(numberOfPhotons), 0.0, 1.0);
-    vec4 irradiance = vec4(voxelColor.xyz * multiplier, 1.0);
+    // float multiplier = clamp(float(numberOfPhotons), 0.0, 1.0);
+    vec4 irradiance = vec4(voxelColor.xyz * numberOfPhotons, 1.0);
 
     imageStore(brickPoolIrradiance, brickCoordinates + brickOffset, irradiance);
 }

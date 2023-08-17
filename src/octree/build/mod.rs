@@ -72,18 +72,18 @@ impl Octree {
             &self.geometry_data.node_data,
             BrickPoolValues::Colors,
         );
-        self.builder.spread_leaf_bricks_pass.run(
-            &self.textures,
-            &self.geometry_data.node_data,
-            BrickPoolValues::Normals,
-        );
+        // self.builder.spread_leaf_bricks_pass.run(
+        //     &self.textures,
+        //     &self.geometry_data.node_data,
+        //     BrickPoolValues::Normals,
+        // );
 
-        self.builder.leaf_border_transfer_pass.run(
-            &self.textures,
-            &self.geometry_data.node_data,
-            &self.border_data.node_data,
-            BrickPoolValues::Colors,
-        );
+        // self.builder.leaf_border_transfer_pass.run(
+        //     &self.textures,
+        //     &self.geometry_data.node_data,
+        //     &self.border_data.node_data,
+        //     BrickPoolValues::Colors,
+        // );
 
         #[cfg(debug_assertions)]
         self.run_mipmap(BrickPoolValues::Colors);

@@ -42,8 +42,9 @@ void main() {
     }
 
     ivec3 brickCoordinates = calculateBrickCoordinates(nodeID);
-    ivec3 brickOffset = ivec3(calculateBrickVoxel(nodeCoordinates, halfNodeSize, normalizedQueryCoordinates));
+    uint offset = calculateChildLocalID(nodeCoordinates, halfNodeSize, normalizedQueryCoordinates);
+    ivec3 brickOffset = 2 * ivec3(CHILD_OFFSETS[offset]);
 
-    imageAtomicAdd(brickPoolPhotons, brickCoordinates + brickOffset, uint(1));
-    imageAtomicAdd(totalPhotonHits, 0, uint(1));
+    // Write a photon in brick's corners
+    imageStore(brickPoolPhotons, brickCoordinates + brickOffset, uvec4(1, 0, 0, 0));
 }

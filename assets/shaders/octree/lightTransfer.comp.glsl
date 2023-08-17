@@ -22,7 +22,7 @@ uniform uint voxelDimension;
 // Doing it this way can have concurrency problems if we run all three axis concurrently (not sure if posible, but paper does it in two passes)
 
 uint getFinalValue(uint borderPhotons, uint neighborBorderPhotons) {
-    return borderPhotons + neighborBorderPhotons;
+    return max(borderPhotons, neighborBorderPhotons);
 }
 
 void main() {

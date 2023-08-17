@@ -67,16 +67,26 @@ impl Octree {
         let (light_view_map, light_view_map_view, shadow_map) =
             self.create_light_view_map(models, light, model, framebuffer);
         self.store_photons(light_view_map, light_view_map_view);
-        self.border_transfer(light_view_map); // TODO: Should maybe take border nodes into account
-
-        // TODO: Visualizar los fotones "puros" también así veo si el problema de que esté todo pixelado
-        // es por `store_photons` o por `photons_to_irradiance`.
+        self.border_transfer(light_view_map);
 
         // TODO: Refactorear todos estos métodos a su propia stage.
 
         self.builder
             .photons_to_irradiance_pass
             .run(&self.textures, light_view_map);
+
+        self.builder.spread_leaf_bricks_pass.run(
+            &self.textures,
+            &self.geometry_data.node_data,
+            BrickPoolValues::Irradiance,
+        );
+
+        self.builder.leaf_border_transfer_pass.run(
+            &self.textures,
+            &self.geometry_data.node_data,
+            &self.border_data.node_data,
+            BrickPoolValues::Irradiance,
+        );
 
         self.mipmap_photons(light_view_map);
 
@@ -98,54 +108,7 @@ impl Octree {
 
     unsafe fn mipmap_photons(&self, light_view_map: GLuint) {
         let mipmap = MipmapAnisotropicPass::init();
-
-        // let mipmap_centers = MipmapCentersPass::init(light_view_map);
-        // let mipmap_faces = MipmapFacesPass::init(light_view_map);
-        // let mipmap_corners = MipmapCornersPass::init(light_view_map);
-        // let mipmap_edges = MipmapEdgesPass::init(light_view_map);
-
-        self.builder.leaf_border_transfer_pass.run(
-            &self.textures,
-            &self.geometry_data.node_data,
-            &self.border_data.node_data,
-            BrickPoolValues::Irradiance,
-        );
-
         self.run_mipmap(BrickPoolValues::Irradiance);
-
-        // for axis in all_axis.iter() {
-        //     border_transfer.run(
-        //         &self.textures,
-        //         CONFIG.octree_levels - 1,
-        //         &self.geometry_data.node_data,
-        //         *axis,
-        //     );
-        //     border_transfer.run(
-        //         &self.textures,
-        //         CONFIG.octree_levels - 1,
-        //         &self.border_data.node_data,
-        //         *axis,
-        //     );
-        // }
-
-        // for level in (0..CONFIG.octree_levels - 1).rev() {
-        //     mipmap_centers.run(&self.textures, level);
-        //     mipmap_faces.run(&self.textures, level);
-        //     mipmap_corners.run(&self.textures, level);
-        //     mipmap_edges.run(&self.textures, level);
-
-        //     if level > 0 {
-        //         for axis in all_axis.iter() {
-        //             border_transfer.run(
-        //                 &self.textures,
-        //                 level,
-        //                 &self.geometry_data.node_data,
-        //                 *axis,
-        //             );
-        //             border_transfer.run(&self.textures, level, &self.border_data.node_data, *axis);
-        //         }
-        //     }
-        // }
     }
 
     unsafe fn store_photons(&self, light_view_map: GLuint, light_view_map_view: GLuint) {
