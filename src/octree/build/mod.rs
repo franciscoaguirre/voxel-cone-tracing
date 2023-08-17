@@ -36,18 +36,18 @@ impl Octree {
         );
         let number_of_nodes = self.number_of_nodes() as u32;
 
-        self.builder.append_border_voxel_fragments_pass.run(
-            &self.geometry_data,
-            &mut self.border_data,
-            &self.textures,
-            number_of_nodes,
-        );
+        //self.builder.append_border_voxel_fragments_pass.run(
+        //&self.geometry_data,
+        //&mut self.border_data,
+        //&self.textures,
+        //number_of_nodes,
+        //);
 
-        self.voxels_to_nodes(
-            OctreeDataType::Border,
-            &mut first_free_node,
-            allocated_nodes_counter,
-        );
+        //self.voxels_to_nodes(
+        //OctreeDataType::Border,
+        //&mut first_free_node,
+        //allocated_nodes_counter,
+        //);
 
         self.builder
             .write_leaf_nodes_pass
@@ -75,8 +75,8 @@ impl Octree {
         //     BrickPoolValues::Colors,
         // );
 
-        #[cfg(debug_assertions)]
-        self.run_mipmap(BrickPoolValues::Colors);
+        //#[cfg(debug_assertions)]
+        //self.run_mipmap(BrickPoolValues::Colors);
     }
 
     pub unsafe fn run_mipmap(&self, brick_pool_values: BrickPoolValues) {
