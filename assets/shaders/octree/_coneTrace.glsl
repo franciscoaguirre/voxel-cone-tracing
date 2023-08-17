@@ -111,7 +111,8 @@ vec4 coneTrace(
         float c1 = 1.0;
         float c2 = 0.09;
         float c3 = 0.032;
-        float distance = (distanceAlongCone - firstStep) * 29;
+        float arbitraryMultiplier = 29; // TODO: Find out what value to use
+        float distance = (distanceAlongCone - firstStep) * arbitraryMultiplier;
         float distanceFactor = c1 + c2 * distance + c3 * distance * distance;
 
         vec3 childVoxelCoordinates = findVoxel(queryCoordinates, node);
@@ -125,6 +126,7 @@ vec4 coneTrace(
         }
         parentColor = getAnisotropicIrradiance(parentVoxelCoordinates, coneDirection);
         vec4 newColor = mix(childColor, parentColor, parentWeight); // Quadrilinear interpolation
+        newColor.rgb /= distanceFactor;
 
         returnColor += (1 - returnColor.a) * newColor;
 
