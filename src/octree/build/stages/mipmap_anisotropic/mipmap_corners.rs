@@ -72,7 +72,7 @@ impl MipmapCornersPass {
         );
         helpers::bind_image_texture(2, node_data.level_start_indices.0, gl::READ_ONLY, gl::R32UI);
 
-        let read_texture_index = if level == CONFIG.last_octree_level {
+        let read_texture_index = if level == CONFIG.last_octree_level - 1 {
             0
         } else {
             neighbors_texture_number
