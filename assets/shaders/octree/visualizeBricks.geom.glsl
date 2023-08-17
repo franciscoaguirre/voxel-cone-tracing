@@ -17,7 +17,9 @@ uniform mat4 view;
 uniform mat4 projection;
 
 uniform uint bricksToShow;
+
 uniform uint mode;
+
 uniform float brickPadding = 0.0;
 uniform vec3 colorDirection;
 

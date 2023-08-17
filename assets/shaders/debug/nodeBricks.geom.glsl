@@ -3,6 +3,10 @@
 layout (points) in;
 layout (triangle_strip, max_vertices = 128) out;
 
+uniform layout(binding = 2, rgba8) image3D brickPoolColors;
+uniform layout(binding = 3, r32ui) uimage3D brickPoolPhotons;
+uniform layout(binding = 4, rgba8) image3D brickPoolNormals;
+
 in vec4 geom_nodePosition[];
 in float geom_halfNodeSize[];
 in ivec3 geom_brickCoordinates[];
@@ -18,31 +22,45 @@ uniform uint bricksToShow;
 
 uniform uint mode;
 
-uniform layout(binding = 2, rgba8) image3D brickPoolColors;
-uniform layout(binding = 3, r32ui) uimage3D brickPoolPhotons;
-uniform layout(binding = 4, rgba8) image3D brickPoolNormals;
+uniform float brickPadding = 0.0;
+uniform vec3 colorDirection = vec3(1.0, 0.0, 0.0);
 
-#include "assets/shaders/octree/_drawCubeFilled.glsl"
-#include "assets/shaders/octree/_drawNormal.glsl"
+uniform sampler3D brickPoolColorsX;
+uniform sampler3D brickPoolColorsXNeg;
+uniform sampler3D brickPoolColorsY;
+uniform sampler3D brickPoolColorsYNeg;
+uniform sampler3D brickPoolColorsZ;
+uniform sampler3D brickPoolColorsZNeg;
+
+uniform sampler3D brickPoolIrradianceX;
+uniform sampler3D brickPoolIrradianceXNeg;
+uniform sampler3D brickPoolIrradianceY;
+uniform sampler3D brickPoolIrradianceYNeg;
+uniform sampler3D brickPoolIrradianceZ;
+uniform sampler3D brickPoolIrradianceZNeg;
 
 mat4 canonizationMatrix = projection * view * model;
+
+#include "assets/shaders/octree/_drawCubeFilled.glsl"
+#include "assets/shaders/octree/_anisotropicColor.glsl"
+#include "assets/shaders/octree/_anisotropicIrradiance.glsl"
+#include "assets/shaders/octree/_helpers.glsl"
+#include "assets/shaders/octree/_drawNormal.glsl"
 
 const uint BY_NONE = 0;
 const uint BY_COLOR = 1;
 const uint BY_PHOTONS = 2;
 
-// TODO: Use the same one as in `visualizeBricks`
+// TODO: Use the **exact** same as in `visualizeBricks.glsl`
 vec4 showProp(ivec3 coordinates, uint type) {
     if (type == BY_NONE) {
       return vec4(0); // Will be discarded
     } else if (type == BY_PHOTONS) {
-      uint photonCount = imageLoad(brickPoolPhotons, coordinates).r;
-      if (photonCount > 0) {
-          return vec4(1.0, 1.0, 1.0, 1.0);
-      }
-      return vec4(0.0, 0.0, 0.0, 1.0);
+      vec3 normalizedCoordinates = normalizedFromIntCoordinates(coordinates, 384.0);
+      return getAnisotropicIrradiance(normalizedCoordinates, colorDirection);
     } else if (type == BY_COLOR) {
-      return imageLoad(brickPoolColors, coordinates);
+      vec3 normalizedCoordinates = normalizedFromIntCoordinates(coordinates, 384.0);
+      return getAnisotropicColor(normalizedCoordinates, colorDirection);
     }
 }
 
