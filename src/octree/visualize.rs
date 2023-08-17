@@ -1,5 +1,5 @@
-use std::{ffi::c_void, mem::size_of};
 use log;
+use std::{ffi::c_void, mem::size_of};
 
 use c_str_macro::c_str;
 use cgmath::{vec3, Matrix4, Vector3};
@@ -301,11 +301,10 @@ impl Octree {
 
         let all_bricks_to_show: u32 = self.renderer.bricks_to_show.into();
 
-
         for z_layer in 0..3 {
             let mask = 2u32.pow(z_layer);
             let brick_layer_to_show: u32 = self.renderer.bricks_to_show.into();
-            if(brick_layer_to_show & mask != 0) {
+            if (brick_layer_to_show & mask != 0) {
                 for x_layer in 0..3 {
                     self.renderer
                         .bricks_shader
@@ -535,12 +534,24 @@ impl Octree {
         model: &Matrix4<f32>,
         color_direction: Vector3<f32>,
         brick_attribute: BrickAttribute,
+        brick_padding: f32, // Between 0 and 1
     ) {
         if self.renderer.node_count == 0 {
             return;
         }
 
         self.renderer.node_bricks_shader.use_program();
+
+        self.renderer
+            .node_bricks_shader
+            .set_float(c_str!("brickPadding"), brick_padding);
+
+        self.renderer.node_bricks_shader.set_vec3(
+            c_str!("colorDirection"),
+            color_direction.x,
+            color_direction.y,
+            color_direction.z,
+        );
 
         self.renderer
             .node_bricks_shader
@@ -581,6 +592,74 @@ impl Octree {
             gl::READ_ONLY,
             gl::RGBA8,
         );
+
+        let color_textures = vec![
+            (
+                c_str!("brickPoolColorsX"),
+                self.textures.brick_pool_colors[0],
+            ),
+            (
+                c_str!("brickPoolColorsXNeg"),
+                self.textures.brick_pool_colors[1],
+            ),
+            (
+                c_str!("brickPoolColorsY"),
+                self.textures.brick_pool_colors[2],
+            ),
+            (
+                c_str!("brickPoolColorsYNeg"),
+                self.textures.brick_pool_colors[3],
+            ),
+            (
+                c_str!("brickPoolColorsZ"),
+                self.textures.brick_pool_colors[4],
+            ),
+            (
+                c_str!("brickPoolColorsZNeg"),
+                self.textures.brick_pool_colors[5],
+            ),
+            // Irradiance textures
+            (
+                c_str!("brickPoolIrradianceX"),
+                self.textures.brick_pool_irradiance[0],
+            ),
+            (
+                c_str!("brickPoolIrradianceXNeg"),
+                self.textures.brick_pool_irradiance[1],
+            ),
+            (
+                c_str!("brickPoolIrradianceY"),
+                self.textures.brick_pool_irradiance[2],
+            ),
+            (
+                c_str!("brickPoolIrradianceYNeg"),
+                self.textures.brick_pool_irradiance[3],
+            ),
+            (
+                c_str!("brickPoolIrradianceZ"),
+                self.textures.brick_pool_irradiance[4],
+            ),
+            (
+                c_str!("brickPoolIrradianceZNeg"),
+                self.textures.brick_pool_irradiance[5],
+            ),
+        ];
+
+        let mut texture_counter = 0;
+        for &(texture_name, texture) in color_textures.iter() {
+            gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
+            gl::BindTexture(gl::TEXTURE_3D, texture);
+            self.renderer
+                .node_bricks_shader
+                .set_int(texture_name, texture_counter as i32);
+            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
+            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
+            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+            texture_counter += 1;
+        }
+
         helpers::bind_3d_image_texture(
             3,
             self.textures.brick_pool_photons,
@@ -603,7 +682,7 @@ impl Octree {
         for z_layer in 0..3 {
             let mask = 2u32.pow(z_layer);
             let brick_layer_to_show: u32 = self.renderer.bricks_to_show.into();
-            if(brick_layer_to_show & mask != 0) {
+            if (brick_layer_to_show & mask != 0) {
                 for x_layer in 0..3 {
                     self.renderer
                         .node_bricks_shader
@@ -611,7 +690,6 @@ impl Octree {
 
                     gl::BindVertexArray(self.renderer.vao);
                     gl::DrawArrays(gl::POINTS, 0, self.renderer.node_count as i32);
-                    
                 }
             }
         }
