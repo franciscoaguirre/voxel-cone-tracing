@@ -80,18 +80,18 @@ fn main() {
 
     let mut menu = Menu::new(&mut window);
 
-    let render_model_shader = Shader::with_geometry_shader(
+    let render_model_shader = compile_shaders!(
         "assets/shaders/model/modelLoading.vert.glsl",
         "assets/shaders/model/modelLoading.frag.glsl",
         "assets/shaders/model/modelLoading.geom.glsl",
     );
-    let render_normals_shader = Shader::with_geometry_shader(
+    let render_normals_shader = compile_shaders!(
         "assets/shaders/model/renderNormals.vert.glsl",
         "assets/shaders/model/renderNormals.frag.glsl",
         "assets/shaders/model/renderNormals.geom.glsl",
     );
     let mut cone_tracer = ConeTracer::init();
-    let debug_cone_shader = Shader::new_single("assets/shaders/debug/debugConeTracing.glsl");
+    let debug_cone_shader = compile_shaders!("assets/shaders/debug/debugConeTracing.glsl");
     let our_model = unsafe { helpers::load_model(&options.model) };
 
     let scene_aabb = &our_model.aabb;
@@ -240,7 +240,7 @@ fn main() {
         octree.border_data.voxel_data.voxel_colors.0,
         octree.border_data.voxel_data.number_of_voxel_fragments,
     );
-    let render_depth_buffer_shader = Shader::new_single("assets/shaders/renderDepthQuad.glsl");
+    let render_depth_buffer_shader = compile_shaders!("assets/shaders/renderDepthQuad.glsl");
 
     let photon_power = light.intensity / (CONFIG.viewport_width * CONFIG.viewport_height) as f32;
 
@@ -466,79 +466,79 @@ fn main() {
             {
                 //////////////////////////////////// Debug stuff //////////////////////////////
 
-                //debug_cone_shader.use_program();
-                //let mut vao = 0;
-                //gl::GenVertexArrays(1, &mut vao);
-                //gl::BindVertexArray(vao);
+                debug_cone_shader.use_program();
+                let mut vao = 0;
+                gl::GenVertexArrays(1, &mut vao);
+                gl::BindVertexArray(vao);
 
-                //helpers::bind_image_texture(0, nodes_queried_texture, gl::WRITE_ONLY, gl::R32UI);
-                //helpers::bind_image_texture(
-                //1,
-                //octree.textures.node_pool.0,
-                //gl::READ_ONLY,
-                //gl::R32UI,
-                //);
+                helpers::bind_image_texture(0, nodes_queried_texture, gl::WRITE_ONLY, gl::R32UI);
+                helpers::bind_image_texture(
+                    1,
+                    octree.textures.node_pool.0,
+                    gl::READ_ONLY,
+                    gl::R32UI,
+                );
 
-                //let nodes_queried_counter = helpers::generate_atomic_counter_buffer();
-                //gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, nodes_queried_counter);
+                let nodes_queried_counter = helpers::generate_atomic_counter_buffer();
+                gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, nodes_queried_counter);
 
-                //gl::ActiveTexture(gl::TEXTURE0);
-                //gl::BindTexture(gl::TEXTURE_3D, octree.textures.brick_pool_colors);
-                //debug_cone_shader.set_int(c_str!("brickPoolColors"), 0 as i32);
-                //gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-                //gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
-                //gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
-                //gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-                //gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+                gl::ActiveTexture(gl::TEXTURE0);
+                gl::BindTexture(gl::TEXTURE_3D, octree.textures.brick_pool_colors);
+                debug_cone_shader.set_int(c_str!("brickPoolColors"), 0 as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
 
-                //gl::ActiveTexture(gl::TEXTURE1);
-                //gl::BindTexture(gl::TEXTURE_3D, octree.textures.brick_pool_photons);
+                gl::ActiveTexture(gl::TEXTURE1);
+                gl::BindTexture(gl::TEXTURE_3D, octree.textures.brick_pool_photons);
 
-                //debug_cone_shader.set_int(c_str!("brickPoolPhotons"), 1 as i32);
-                //gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-                //gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
-                //gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
-                //gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-                //gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
-                //debug_cone_shader.set_float(c_str!("photonPower"), photon_power as f32);
+                debug_cone_shader.set_int(c_str!("brickPoolPhotons"), 1 as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+                debug_cone_shader.set_float(c_str!("photonPower"), photon_power as f32);
 
-                //debug_cone_shader.set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
-                //debug_cone_shader.set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels - 1);
-                //debug_cone_shader.set_mat4(c_str!("projection"), &projection);
-                //debug_cone_shader.set_mat4(c_str!("view"), &view);
-                //debug_cone_shader.set_vec3(
-                //c_str!("position"),
-                //debug_cone_transform.position.x,
-                //debug_cone_transform.position.y,
-                //debug_cone_transform.position.z,
-                //);
-                //debug_cone_shader.set_vec3(
-                //c_str!("axis"),
-                //debug_cone_direction.x,
-                //debug_cone_direction.y,
-                //debug_cone_direction.z,
-                //);
-                //debug_cone_shader.set_float(c_str!("coneAngle"), cone_angle as f32);
+                debug_cone_shader.set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
+                debug_cone_shader.set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels - 1);
+                debug_cone_shader.set_mat4(c_str!("projection"), &projection);
+                debug_cone_shader.set_mat4(c_str!("view"), &view);
+                debug_cone_shader.set_vec3(
+                    c_str!("position"),
+                    debug_cone_transform.position.x,
+                    debug_cone_transform.position.y,
+                    debug_cone_transform.position.z,
+                );
+                debug_cone_shader.set_vec3(
+                    c_str!("axis"),
+                    debug_cone_direction.x,
+                    debug_cone_direction.y,
+                    debug_cone_direction.z,
+                );
+                debug_cone_shader.set_float(c_str!("coneAngle"), cone_angle as f32);
 
-                //gl::DrawArrays(gl::POINTS, 0, 4);
-                //
-                //let values = helpers::get_values_from_texture_buffer(
-                //nodes_queried_texture_buffer,
-                //1000,
-                //42u32,
-                //);
-                //let values_set = HashSet::from_iter(values.iter().cloned());
-                //let total_nodes_queried =
-                //helpers::get_value_from_atomic_counter(nodes_queried_counter) as usize;
+                gl::DrawArrays(gl::POINTS, 0, 4);
 
-                //if previous_values != values_set {
-                //dbg!(&values[..total_nodes_queried]);
-                //selected_debug_nodes = (&values[..total_nodes_queried])
-                //.iter()
-                //.map(|&index| DebugNode::new(index, "picked by cone".to_string()))
-                //.collect();
-                //previous_values = values_set;
-                //}
+                let values = helpers::get_values_from_texture_buffer(
+                    nodes_queried_texture_buffer,
+                    1000,
+                    42u32,
+                );
+                let values_set = HashSet::from_iter(values.iter().cloned());
+                let total_nodes_queried =
+                    helpers::get_value_from_atomic_counter(nodes_queried_counter) as usize;
+
+                if previous_values != values_set {
+                    dbg!(&values[..total_nodes_queried]);
+                    selected_debug_nodes = (&values[..total_nodes_queried])
+                        .iter()
+                        .map(|&index| DebugNode::new(index, "picked by cone".to_string()))
+                        .collect();
+                    previous_values = values_set;
+                }
 
                 gl::BindVertexArray(0);
             }

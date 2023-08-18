@@ -10,7 +10,7 @@ pub struct FlagNodesPass {
 impl FlagNodesPass {
     pub fn init() -> Self {
         Self {
-            shader: Shader::new_compute("assets/shaders/octree/flagNodes.comp.glsl"),
+            shader: compile_compute!("assets/shaders/octree/flagNodes.comp.glsl"),
         }
     }
 

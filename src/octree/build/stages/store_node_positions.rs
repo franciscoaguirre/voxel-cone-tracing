@@ -14,7 +14,7 @@ pub struct StoreNodePositions {
 impl StoreNodePositions {
     pub fn init() -> Self {
         Self {
-            shader: Shader::new_compute("assets/shaders/octree/storeNodePositions.comp.glsl"),
+            shader: compile_compute!("assets/shaders/octree/storeNodePositions.comp.glsl"),
         }
     }
 

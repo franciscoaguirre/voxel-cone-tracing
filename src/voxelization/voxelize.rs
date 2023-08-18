@@ -115,7 +115,7 @@ pub unsafe fn build_voxel_fragment_list(
 ) -> (BufferTexture, u32, BufferTexture, BufferTexture) {
     let mut atomic_counter: u32 = helpers::generate_atomic_counter_buffer();
 
-    let voxelization_shader = Shader::with_geometry_shader(
+    let voxelization_shader = compile_shaders!(
         "assets/shaders/voxel_fragment/voxelize.vert.glsl",
         "assets/shaders/voxel_fragment/voxelize.frag.glsl",
         "assets/shaders/voxel_fragment/voxelize.geom.glsl",

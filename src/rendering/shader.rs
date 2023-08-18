@@ -20,16 +20,16 @@ enum ShaderStage {
 }
 
 impl Shader {
-    pub fn new(vertex_path: &str, fragment_path: &str) -> Shader {
-        let mut shader = Shader::default();
+    pub fn new(vertex_path: &str, fragment_path: &str, is_debug: bool) -> Shader {
+        let mut shader = Self::default();
 
-        let vertex_code = Shader::process_shader_file(vertex_path);
-        let fragment_code = Shader::process_shader_file(fragment_path);
+        let vertex_code = Self::process_shader_file(vertex_path, is_debug);
+        let fragment_code = Self::process_shader_file(fragment_path, is_debug);
 
         let short_vertex_path = &vertex_path[15..];
         trace!("Compiling shader in path {short_vertex_path}");
         unsafe {
-            shader.id = Shader::compile_shaders(&vertex_code, &fragment_code, None);
+            shader.id = Self::compile_shaders(&vertex_code, &fragment_code, None);
         }
 
         shader
@@ -39,51 +39,51 @@ impl Shader {
         vertex_path: &str,
         fragment_path: &str,
         geometry_path: &str,
+        is_debug: bool,
     ) -> Self {
-        let mut shader = Shader::default();
+        let mut shader = Self::default();
 
-        let vertex_code = Shader::process_shader_file(vertex_path);
-        let fragment_code = Shader::process_shader_file(fragment_path);
-        let geometry_code = Shader::process_shader_file(geometry_path);
+        let vertex_code = Self::process_shader_file(vertex_path, is_debug);
+        let fragment_code = Self::process_shader_file(fragment_path, is_debug);
+        let geometry_code = Self::process_shader_file(geometry_path, is_debug);
 
         let short_vertex_path = &vertex_path[15..];
         trace!("Compiling shader in path {short_vertex_path}");
         unsafe {
-            shader.id = Shader::compile_shaders(&vertex_code, &fragment_code, Some(&geometry_code));
+            shader.id = Self::compile_shaders(&vertex_code, &fragment_code, Some(&geometry_code));
         }
 
         shader
     }
 
-    pub fn new_compute(shader_path: &str) -> Self {
+    pub fn new_compute(shader_path: &str, is_debug: bool) -> Self {
         let mut shader = Shader {
             id: 0,
             is_compute: true,
         };
 
-        let shader_code = Shader::process_shader_file(shader_path);
+        let shader_code = Self::process_shader_file(shader_path, is_debug);
 
         let short_shader_path = &shader_path[15..];
         trace!("Compiling shader in path {short_shader_path}");
         unsafe {
-            shader.id = Shader::compile_compute(&shader_code);
+            shader.id = Self::compile_compute(&shader_code);
         }
 
         shader
     }
 
-    pub fn new_single(shader_path: &str) -> Self {
-        let mut shader = Shader::default();
+    pub fn new_single(shader_path: &str, is_debug: bool) -> Self {
+        let mut shader = Self::default();
 
-        let shader_code = Shader::process_shader_file(shader_path);
+        let shader_code = Self::process_shader_file(shader_path, is_debug);
         let (vertex_code, fragment_code, geometry_code) =
-            Shader::split_shader_file(shader_code.to_str().unwrap().to_string());
+            Self::split_shader_file(shader_code.to_str().unwrap().to_string());
 
         let short_shader_path = &shader_path[15..];
         trace!("Compiling shader in path {short_shader_path}");
         unsafe {
-            shader.id =
-                Shader::compile_shaders(&vertex_code, &fragment_code, geometry_code.as_ref());
+            shader.id = Self::compile_shaders(&vertex_code, &fragment_code, geometry_code.as_ref());
         }
 
         shader
@@ -158,7 +158,7 @@ impl Shader {
         );
     }
 
-    fn process_shader_file(file_path: &str) -> CString {
+    fn process_shader_file(file_path: &str, is_debug: bool) -> CString {
         let mut shader_file =
             File::open(file_path).unwrap_or_else(|_| panic!("Failed to open {}", file_path));
         let mut shader_code = String::new();
@@ -168,7 +168,8 @@ impl Shader {
         let file_directory = std::path::Path::new(file_path)
             .parent()
             .unwrap_or_else(|| panic!("Couldn't get parent of {}", file_path));
-        shader_code = Shader::process_include_directive(shader_code, file_directory);
+        shader_code = Self::process_include_directive(shader_code, file_directory);
+        shader_code = Self::process_conditional_directive(shader_code, file_path, is_debug);
         CString::new(shader_code.as_bytes()).unwrap()
     }
 
@@ -180,12 +181,12 @@ impl Shader {
         let vertex = gl::CreateShader(gl::VERTEX_SHADER);
         gl::ShaderSource(vertex, 1, &vertex_code.as_ptr(), ptr::null());
         gl::CompileShader(vertex);
-        Shader::check_compile_errors(vertex, "VERTEX");
+        Self::check_compile_errors(vertex, "VERTEX");
         // fragment Shader
         let fragment = gl::CreateShader(gl::FRAGMENT_SHADER);
         gl::ShaderSource(fragment, 1, &fragment_code.as_ptr(), ptr::null());
         gl::CompileShader(fragment);
-        Shader::check_compile_errors(fragment, "FRAGMENT");
+        Self::check_compile_errors(fragment, "FRAGMENT");
 
         let mut geometry = 0;
 
@@ -194,7 +195,7 @@ impl Shader {
             geometry = gl::CreateShader(gl::GEOMETRY_SHADER);
             gl::ShaderSource(geometry, 1, &geometry_code.as_ptr(), ptr::null());
             gl::CompileShader(geometry);
-            Shader::check_compile_errors(geometry, "GEOMETRY");
+            Self::check_compile_errors(geometry, "GEOMETRY");
         }
 
         // shader Program
@@ -207,7 +208,7 @@ impl Shader {
         }
 
         gl::LinkProgram(id);
-        Shader::check_compile_errors(id, "PROGRAM");
+        Self::check_compile_errors(id, "PROGRAM");
         // delete the shaders as they're linked into our program now and no longer necessary
         gl::DeleteShader(vertex);
         gl::DeleteShader(fragment);
@@ -223,18 +224,21 @@ impl Shader {
         let shader_id = gl::CreateShader(gl::COMPUTE_SHADER);
         gl::ShaderSource(shader_id, 1, &shader_code.as_ptr(), ptr::null());
         gl::CompileShader(shader_id);
-        Shader::check_compile_errors(shader_id, "COMPUTE");
+        Self::check_compile_errors(shader_id, "COMPUTE");
 
         let program_id = gl::CreateProgram();
         gl::AttachShader(program_id, shader_id);
         gl::LinkProgram(program_id);
-        Shader::check_compile_errors(program_id, "PROGRAM");
+        Self::check_compile_errors(program_id, "PROGRAM");
 
         gl::DeleteShader(shader_id);
 
         program_id
     }
 
+    /// Processes the `#include` directive.
+    /// This directive includes the whole source code from the path.
+    /// It does not support nested `#include`s.
     fn process_include_directive(shader_code: String, file_directory: &std::path::Path) -> String {
         let directive = "#include ";
         let previous_current_directory = env::current_dir().unwrap();
@@ -263,6 +267,50 @@ impl Shader {
             .collect::<Vec<_>>()
             .join("\n");
 
+        processed_shader_code
+    }
+
+    /// Process `#if` directive.
+    /// This directive allows for conditional compilation.
+    /// It does not support nested `#if`s.
+    fn process_conditional_directive(
+        shader_code: String,
+        file_path: &str,
+        is_debug: bool, // Value of the `debug` condition. We could support other conditions.
+    ) -> String {
+        let open_directive = "#if";
+        let close_directive = "#endif";
+        let processed_shader_code = shader_code.lines().fold(
+            (String::new(), true, false),
+            |((mut new_shader_code, should_include, inside_if), line)| {
+                if line.contains(close_directive) && inside_if {
+                    return (new_shader_code, true, false);
+                }
+
+                if line.contains(open_directive) && !inside_if {
+                    let condition = &line[directive.len()..line.len()].to_string().trim();
+                    match condition.to_slice() {
+                        "debug" => is_debug,
+                        _ => {
+                            panic!(
+                                "Unknown condition in #if directive in {}, was {}, expected {}",
+                                file_path,
+                                condition,
+                                "debug" // We could support other conditions
+                            )
+                        }
+                    };
+                    return (new_shader_code, is_debug, true);
+                }
+
+                if should_include {
+                    new_shader_code.push_str("\n");
+                    new_shader_code.push_str(line);
+                }
+
+                (new_shader_code, should_include, inside_if)
+            },
+        );
         processed_shader_code
     }
 
@@ -349,4 +397,25 @@ impl Shader {
             }
         }
     }
+}
+
+macro_rules! compile_shaders {
+    ($single_path:lit) => {
+        compile_shaders!($single_path, false)
+    },
+    ($vertex_path:lit, $fragment_path:lit) => {
+        compile_shaders!($vertex_path, $fragment_path, false)
+    },
+    ($vertex_path:lit, $fragment_path:lit, $geometry_path:lit) => {
+        compile_shaders!($vertex_path, $fragment_path, $geometry_path, false)
+    },
+    ($single_path:lit, debug = $value:expr) => {
+        compile_shaders!($single_path, $value)
+    },
+}
+
+macro_rules! compile_compute_shader {
+    ($compute_path:lit) => {
+        compile_compute!($compute_path, false)
+    };
 }

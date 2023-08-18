@@ -15,7 +15,7 @@ pub struct AnisotropicBorderTransferPass {
 impl AnisotropicBorderTransferPass {
     pub fn init() -> Self {
         Self {
-            shader: Shader::new_compute(
+            shader: compile_compute!(
                 "assets/shaders/octree/anisotropicBorderTransfer.comp.glsl",
             ),
         }

@@ -161,49 +161,49 @@ impl Octree {
         let renderer = Renderer {
             vao: 0,
             node_count: 0,
-            shader: Shader::with_geometry_shader(
+            shader: compile_shaders!(
                 "assets/shaders/octree/visualize.vert.glsl",
                 "assets/shaders/octree/visualize.frag.glsl",
                 "assets/shaders/octree/visualize.geom.glsl",
             ),
-            normals_shader: Shader::with_geometry_shader(
+            normals_shader: compile_shaders!(
                 "assets/shaders/octree/visualizeBrickNormals.vert.glsl",
                 "assets/shaders/octree/visualizeBrickNormals.frag.glsl",
                 "assets/shaders/octree/visualizeBrickNormals.geom.glsl",
             ),
-            bricks_shader: Shader::with_geometry_shader(
+            bricks_shader: compile_shaders!(
                 "assets/shaders/octree/visualizeBricks.vert.glsl",
                 "assets/shaders/octree/visualizeBricks.frag.glsl",
                 "assets/shaders/octree/visualizeBricks.geom.glsl",
             ),
             bricks_to_show: BricksToShow::default(),
-            node_positions_shader: Shader::with_geometry_shader(
+            node_positions_shader: compile_shaders!(
                 "assets/shaders/debug/nodePositions.vert.glsl",
                 "assets/shaders/debug/nodePositions.frag.glsl",
                 "assets/shaders/debug/nodePositions.geom.glsl",
             ),
-            node_neighbors_shader: Shader::with_geometry_shader(
+            node_neighbors_shader: compile_shaders!(
                 "assets/shaders/debug/nodeNeighbors.vert.glsl",
                 "assets/shaders/debug/nodeNeighbors.frag.glsl",
                 "assets/shaders/debug/nodeNeighbors.geom.glsl",
             ),
-            node_bricks_shader: Shader::with_geometry_shader(
+            node_bricks_shader: compile_shaders!(
                 "assets/shaders/debug/nodeBricks.vert.glsl",
                 "assets/shaders/debug/nodeBricks.frag.glsl",
                 "assets/shaders/debug/nodeBricks.geom.glsl",
             ),
-            get_photons_shader: Shader::new_compute("assets/shaders/debug/getPhotons.comp.glsl"),
-            get_children_shader: Shader::new_compute("assets/shaders/debug/getChildren.comp.glsl"),
-            eye_ray_shader: Shader::new_single("assets/shaders/debug/eyeRay.glsl"),
-            get_colors_quad_shader: Shader::new_single(
+            get_photons_shader: compile_compute!("assets/shaders/debug/getPhotons.comp.glsl"),
+            get_children_shader: compile_compute!("assets/shaders/debug/getChildren.comp.glsl"),
+            eye_ray_shader: compile_shaders!("assets/shaders/debug/eyeRay.glsl"),
+            get_colors_quad_shader: compile_shaders!(
                 "assets/shaders/debug/debugInterpolation.glsl",
             ),
-            light_view_map_shader: Shader::new_single("assets/shaders/octree/lightViewMap.glsl"),
-            store_photons_shader: Shader::new_compute(
+            light_view_map_shader: compile_shaders!("assets/shaders/octree/lightViewMap.glsl"),
+            store_photons_shader: compile_compute!(
                 "assets/shaders/octree/storePhotons.comp.glsl",
             ),
-            clear_bricks_shader: Shader::new_compute("assets/shaders/octree/clearBricks.comp.glsl"),
-            clear_bricks_float_shader: Shader::new_compute(
+            clear_bricks_shader: compile_compute!("assets/shaders/octree/clearBricks.comp.glsl"),
+            clear_bricks_float_shader: compile_compute!(
                 "assets/shaders/octree/clearBricksFloat.comp.glsl",
             ),
         };
