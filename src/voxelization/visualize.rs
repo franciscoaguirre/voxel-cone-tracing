@@ -20,7 +20,7 @@ impl RenderVoxelFragmentsShader {
         number_of_voxel_fragments: u32,
     ) -> Self {
         Self {
-            shader: Shader::with_geometry_shader(
+            shader: compile_shaders!(
                 "assets/shaders/voxel_fragment/renderVoxel.vert.glsl",
                 "assets/shaders/voxel_fragment/renderVoxel.frag.glsl",
                 "assets/shaders/voxel_fragment/renderVoxel.geom.glsl",

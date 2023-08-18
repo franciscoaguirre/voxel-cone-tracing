@@ -14,7 +14,7 @@ pub struct MipmapCornersPass {
 impl MipmapCornersPass {
     pub fn init() -> Self {
         Self {
-            shader: Shader::new_compute(
+            shader: compile_compute!(
                 "assets/shaders/octree/isotropicMipMaps/mipmapCorners.comp.glsl",
             ),
         }

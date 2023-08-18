@@ -8,6 +8,9 @@
 // - _traversalHelpers
 // - _octreeTraversal
 // - _brickCoordinates
+// if debug
+// - uniform (r32ui) nodesQueried
+// - uniform atomic_uint queriedNodesCounter
 
 float brickPoolResolutionf = float(textureSize(brickPoolColorsX, 0).x);
 float brickPoolBrickSize = 3.0 / brickPoolResolutionf;
@@ -103,6 +106,10 @@ vec4 coneTrace(
                 //break;
                 continue;
             }
+            #if debug
+                int nodesCount = int(atomicCounterIncrement(queriedNodesCounter));
+                imageStore(nodesQueried, nodesCount, uvec4(uint(node.id), 0, 0, 0));
+            #endif
         } else {
             node = previousNode;
             parentNode = previousParentNode;

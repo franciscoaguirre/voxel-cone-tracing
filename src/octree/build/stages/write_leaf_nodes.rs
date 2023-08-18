@@ -14,7 +14,7 @@ pub struct WriteLeafNodesPass {
 impl WriteLeafNodesPass {
     pub fn init() -> Self {
         Self {
-            shader: Shader::new_compute("assets/shaders/octree/writeLeafNodes.comp.glsl"),
+            shader: compile_compute!("assets/shaders/octree/writeLeafNodes.comp.glsl"),
         }
     }
 

@@ -19,7 +19,7 @@ pub struct ConeTracer {
 impl ConeTracer {
     pub fn init() -> Self {
         Self {
-            shader: Shader::new_single("assets/shaders/octree/coneTracing.glsl"),
+            shader: compile_shaders!("assets/shaders/octree/coneTracing.glsl"),
             toggles: Toggles::default(),
         }
     }

@@ -14,7 +14,7 @@ pub struct SpreadLeafBricksPass {
 impl SpreadLeafBricksPass {
     pub fn init() -> Self {
         Self {
-            shader: Shader::new_compute("assets/shaders/octree/spreadLeafBricks.comp.glsl"),
+            shader: compile_compute!("assets/shaders/octree/spreadLeafBricks.comp.glsl"),
         }
     }
 

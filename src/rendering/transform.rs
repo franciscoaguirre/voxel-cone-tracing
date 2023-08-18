@@ -51,12 +51,12 @@ impl Default for Transform {
             right: Vector3::zero(), // Initialized later
             vao: 0,                 // Initialized later
             movement_speed: 1.0,
-            shader: Shader::with_geometry_shader(
+            shader: compile_shaders!(
                 "assets/shaders/debug/cubicGizmo.vert.glsl",
                 "assets/shaders/debug/cubicGizmo.frag.glsl",
                 "assets/shaders/debug/cubicGizmo.geom.glsl",
             ),
-            view_map_shader: Shader::new_single("assets/shaders/octree/viewMap.glsl"),
+            view_map_shader: compile_shaders!("assets/shaders/octree/viewMap.glsl"),
         };
         this.update_vectors();
         unsafe {

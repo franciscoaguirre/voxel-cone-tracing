@@ -12,7 +12,7 @@ pub struct MipmapCornersPass {
 impl MipmapCornersPass {
     pub fn init(light_view_map: GLuint) -> Self {
         Self {
-            shader: Shader::new_compute("assets/shaders/octree/mipmapCornerPhotons.comp.glsl"),
+            shader: compile_compute!("assets/shaders/octree/mipmapCornerPhotons.comp.glsl"),
             light_view_map,
         }
     }
