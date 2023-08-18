@@ -282,14 +282,15 @@ impl Shader {
         let close_directive = "#endif";
         let processed_shader_code = shader_code.lines().fold(
             (String::new(), true, false),
-            |((mut new_shader_code, should_include, inside_if), line)| {
+            |(mut new_shader_code, should_include, inside_if), line| {
                 if line.contains(close_directive) && inside_if {
                     return (new_shader_code, true, false);
                 }
 
                 if line.contains(open_directive) && !inside_if {
-                    let condition = &line[directive.len()..line.len()].to_string().trim();
-                    match condition.to_slice() {
+                    let trimmed_line = line.trim();
+                    let condition = trimmed_line[open_directive.len()..trimmed_line.len()].trim();
+                    match condition {
                         "debug" => is_debug,
                         _ => {
                             panic!(
@@ -311,7 +312,7 @@ impl Shader {
                 (new_shader_code, should_include, inside_if)
             },
         );
-        processed_shader_code
+        processed_shader_code.0
     }
 
     /// Reads a unified shader file and returns the individual shader stages
@@ -400,22 +401,25 @@ impl Shader {
 }
 
 macro_rules! compile_shaders {
-    ($single_path:lit) => {
-        compile_shaders!($single_path, false)
-    },
-    ($vertex_path:lit, $fragment_path:lit) => {
-        compile_shaders!($vertex_path, $fragment_path, false)
-    },
-    ($vertex_path:lit, $fragment_path:lit, $geometry_path:lit) => {
-        compile_shaders!($vertex_path, $fragment_path, $geometry_path, false)
-    },
-    ($single_path:lit, debug = $value:expr) => {
-        compile_shaders!($single_path, $value)
-    },
-}
-
-macro_rules! compile_compute_shader {
-    ($compute_path:lit) => {
-        compile_compute!($compute_path, false)
+    ($single_path:literal$(,)?) => {
+        Shader::new_single($single_path, false)
+    };
+    ($vertex_path:literal, $fragment_path:literal$(,)?) => {
+        Shader::new($vertex_path, $fragment_path, false)
+    };
+    ($vertex_path:literal, $fragment_path:literal, $geometry_path:literal$(,)?) => {
+        Shader::with_geometry_shader($vertex_path, $fragment_path, $geometry_path, false)
+    };
+    ($single_path:literal, debug = $value:expr$(,)?) => {
+        Shader::new_single($single_path, $value)
     };
 }
+
+macro_rules! compile_compute {
+    ($compute_path:literal$(,)?) => {
+        Shader::new_compute($compute_path, false)
+    };
+}
+
+pub(crate) use compile_compute;
+pub(crate) use compile_shaders;

@@ -6,6 +6,7 @@ use crate::{
     octree::{OctreeTextures, VoxelData},
     rendering::shader::Shader,
 };
+use crate::rendering::shader::{compile_compute, compile_shaders};
 
 pub struct WriteLeafNodesPass {
     shader: Shader,

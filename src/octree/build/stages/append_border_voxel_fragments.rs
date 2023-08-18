@@ -6,6 +6,7 @@ use crate::{
     octree::{OctreeData, OctreeTextures},
     rendering::shader::Shader,
 };
+use crate::rendering::shader::{compile_compute, compile_shaders};
 
 pub struct AppendBorderVoxelFragmentsPass {
     shader: Shader,

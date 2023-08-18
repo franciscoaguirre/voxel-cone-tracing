@@ -5,6 +5,7 @@ use cgmath::{Matrix4, Point3};
 use gl::types::GLuint;
 
 use super::{gizmo::RenderGizmo, shader::Shader, transform::Transform};
+use crate::rendering::shader::{compile_compute, compile_shaders};
 
 #[derive(Debug)]
 pub struct SpotLight {

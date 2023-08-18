@@ -11,6 +11,7 @@ use super::{
     framebuffer::Framebuffer, geometry_buffers::GeometryBuffers, gizmo::RenderGizmo, model::Model,
     shader::Shader,
 };
+use crate::rendering::shader::{compile_compute, compile_shaders};
 
 /// Struct that handles `position`, `rotation` and `scale` for an entity
 #[derive(Debug)]

@@ -5,8 +5,8 @@ use crate::{
     constants::Axis,
     helpers,
     octree::{build::BrickPoolValues, NodeData, OctreeTextures},
-    rendering::shader::Shader,
 };
+use crate::rendering::shader::{Shader, compile_compute, compile_shaders};
 
 pub struct LeafBorderTransferPass {
     shader: Shader,

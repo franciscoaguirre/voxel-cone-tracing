@@ -7,6 +7,7 @@ use crate::{
     types::BufferTexture,
 };
 use c_str_macro::c_str;
+use crate::rendering::shader::{compile_compute, compile_shaders};
 
 use cgmath::point3;
 use gl::types::*;
