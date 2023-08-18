@@ -3,7 +3,7 @@ use c_str_macro::c_str;
 use crate::{
     config::CONFIG,
     octree::{OctreeTextures, VoxelData},
-    rendering::shader::Shader,
+    rendering::shader::{Shader, compile_compute, compile_shaders},
 };
 
 pub struct AllocateNodesPass {
