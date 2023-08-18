@@ -3,6 +3,7 @@ use cgmath::vec3;
 use gl::types::GLuint;
 
 use crate::{config::CONFIG, helpers, octree::OctreeTextures, rendering::shader::Shader};
+use crate::rendering::shader::{compile_compute, compile_shaders};
 
 pub struct MipmapFacesPass {
     shader: Shader,

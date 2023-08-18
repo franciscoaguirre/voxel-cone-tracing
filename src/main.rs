@@ -8,6 +8,7 @@ use egui_glfw_gl::glfw::{self, Context};
 extern crate gl;
 use cgmath::{perspective, point3, vec3, Deg, InnerSpace, Matrix4, Point3};
 use log::info;
+use crate::rendering::shader::{compile_compute, compile_shaders};
 
 use rendering::quad::Quad;
 use structopt::StructOpt;
@@ -91,7 +92,7 @@ fn main() {
         "assets/shaders/model/renderNormals.geom.glsl",
     );
     let mut cone_tracer = ConeTracer::init();
-    let debug_cone_shader = compile_shaders!("assets/shaders/debug/debugConeTracing.glsl");
+    let debug_cone_shader = compile_shaders!("assets/shaders/debug/debugConeTracing.glsl", debug = true);
     let our_model = unsafe { helpers::load_model(&options.model) };
 
     let scene_aabb = &our_model.aabb;
@@ -483,7 +484,7 @@ fn main() {
                 gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, nodes_queried_counter);
 
                 gl::ActiveTexture(gl::TEXTURE0);
-                gl::BindTexture(gl::TEXTURE_3D, octree.textures.brick_pool_colors);
+                gl::BindTexture(gl::TEXTURE_3D, octree.textures.brick_pool_colors[0]);
                 debug_cone_shader.set_int(c_str!("brickPoolColors"), 0 as i32);
                 gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
                 gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);

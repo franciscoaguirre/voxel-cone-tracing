@@ -10,6 +10,7 @@ use crate::{
         shader::Shader,
     },
 };
+use crate::rendering::shader::{compile_compute, compile_shaders};
 
 pub struct ConeTracer {
     shader: Shader,

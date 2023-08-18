@@ -8,6 +8,7 @@ use crate::{
     octree::{build::BrickPoolValues, NodeData, OctreeTextures},
     rendering::shader::Shader,
 };
+use crate::rendering::shader::{compile_compute, compile_shaders};
 
 pub struct MipmapFacesPass {
     shader: Shader,

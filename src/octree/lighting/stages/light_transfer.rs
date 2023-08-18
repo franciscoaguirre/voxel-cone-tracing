@@ -8,6 +8,7 @@ use crate::{
     octree::{NodeData, OctreeTextures},
     rendering::shader::Shader,
 };
+use crate::rendering::shader::{compile_compute, compile_shaders};
 
 pub struct BorderTransferPass {
     shader: Shader,

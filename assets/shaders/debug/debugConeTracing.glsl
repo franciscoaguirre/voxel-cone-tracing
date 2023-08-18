@@ -39,7 +39,6 @@ uniform sampler3D brickPoolIrradianceZNeg;
 #include "assets/shaders/octree/_anisotropicColor.glsl"
 #include "assets/shaders/octree/_anisotropicIrradiance.glsl"
 #include "assets/shaders/octree/_coneTrace.glsl"
-#include "assets/shaders/octree/_debugConeTrace.glsl"
 
 uniform vec3 position;
 uniform vec3 axis;

@@ -2,6 +2,7 @@ use c_str_macro::c_str;
 
 use super::super::super::{OctreeTextures, VoxelData};
 use crate::{config::CONFIG, helpers, octree::NodeData, rendering::shader::Shader};
+use crate::rendering::shader::{compile_compute, compile_shaders};
 
 pub struct NeighborPointersPass {
     shader: Shader,

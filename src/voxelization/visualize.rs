@@ -4,6 +4,7 @@ use gl::types::*;
 
 use crate::config::CONFIG;
 use crate::rendering::shader::Shader;
+use crate::rendering::shader::{compile_compute, compile_shaders};
 
 pub struct RenderVoxelFragmentsShader {
     shader: Shader,

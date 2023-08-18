@@ -9,6 +9,7 @@ use crate::{
     rendering::shader::Shader,
     types::{BufferTexture, Texture2D, Texture3D},
 };
+use crate::rendering::shader::{compile_compute, compile_shaders};
 
 mod build;
 mod lighting;
