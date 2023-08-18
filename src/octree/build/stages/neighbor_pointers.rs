@@ -10,7 +10,7 @@ pub struct NeighborPointersPass {
 impl NeighborPointersPass {
     pub fn init() -> Self {
         Self {
-            shader: Shader::new_compute("assets/shaders/octree/neighborPointers.comp.glsl"),
+            shader: compile_compute!("assets/shaders/octree/neighborPointers.comp.glsl"),
         }
     }
 

@@ -15,7 +15,7 @@ pub struct LeafBorderTransferPass {
 impl LeafBorderTransferPass {
     pub fn init() -> Self {
         Self {
-            shader: Shader::new_compute("assets/shaders/octree/leafBorderTransfer.comp.glsl"),
+            shader: compile_compute!("assets/shaders/octree/leafBorderTransfer.comp.glsl"),
         }
     }
 

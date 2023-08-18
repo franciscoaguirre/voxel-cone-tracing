@@ -12,7 +12,7 @@ pub struct MipmapCentersPass {
 impl MipmapCentersPass {
     pub fn init(light_view_map: GLuint) -> Self {
         Self {
-            shader: Shader::new_compute("assets/shaders/octree/mipmapCenterPhotons.comp.glsl"),
+            shader: compile_compute!("assets/shaders/octree/mipmapCenterPhotons.comp.glsl"),
             light_view_map,
         }
     }

@@ -72,7 +72,7 @@ impl Quad {
             (3 * size_of::<f32>()) as *const c_void,
         );
 
-        let shader = Shader::new_single("assets/shaders/renderQuad.glsl");
+        let shader = compile_shaders!("assets/shaders/renderQuad.glsl");
 
         Self {
             vao,

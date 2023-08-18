@@ -11,7 +11,7 @@ pub struct PhotonsToIrradiance {
 impl PhotonsToIrradiance {
     pub fn init() -> Self {
         Self {
-            shader: Shader::new_compute("assets/shaders/octree/photonsToIrradiance.comp.glsl"),
+            shader: compile_compute!("assets/shaders/octree/photonsToIrradiance.comp.glsl"),
         }
     }
 

@@ -13,7 +13,7 @@ pub struct AllocateNodesPass {
 impl AllocateNodesPass {
     pub fn init() -> Self {
         Self {
-            shader: Shader::new_compute("assets/shaders/octree/allocateNodes.comp.glsl"),
+            shader: compile_compute!("assets/shaders/octree/allocateNodes.comp.glsl"),
         }
     }
 

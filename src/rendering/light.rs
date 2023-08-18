@@ -25,7 +25,7 @@ impl SpotLight {
             color,
             intensity,
             vao: 0,
-            shader: Shader::with_geometry_shader(
+            shader: compile_shaders!(
                 "assets/shaders/debug/gizmo.vert.glsl",
                 "assets/shaders/debug/gizmo.frag.glsl",
                 "assets/shaders/debug/gizmo.geom.glsl",
