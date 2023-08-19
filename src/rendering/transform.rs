@@ -21,7 +21,7 @@ pub struct Transform {
     forward: Vector3<f32>,
     up: Vector3<f32>,
     right: Vector3<f32>,
-    movement_speed: f32,
+    pub movement_speed: f32,
     pub vao: GLuint,
     shader: Shader,
     // TODO: This is kind of ugly
