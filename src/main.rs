@@ -406,7 +406,7 @@ fn main() {
                     should_show_normals,
                     brick_attribute,
                     brick_padding,
-                    &octree.geometry_data.node_data,
+                    &octree.geometry_data.node_data, // TODO: Option in menu to switch between geometry and border
                 );
             }
 
@@ -453,12 +453,13 @@ fn main() {
                 &camera,
             );
 
-            debug_cone.run(
-                &octree.textures,
-                &projection,
-                &view,
-                &mut selected_debug_nodes,
-            );
+            // TODO: Add toggle to menu
+            // debug_cone.run(
+            //     &octree.textures,
+            //     &projection,
+            //     &view,
+            //     &mut selected_debug_nodes,
+            // );
             static_eye.draw_gizmo(&projection, &view);
             light.draw_gizmo(&projection, &view);
             // quad.render(light_maps.1);
