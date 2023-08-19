@@ -1,8 +1,8 @@
 use c_str_macro::c_str;
 
 use super::super::super::{OctreeTextures, VoxelData};
+use crate::rendering::shader::compile_compute;
 use crate::{config::CONFIG, helpers, octree::NodeData, rendering::shader::Shader};
-use crate::rendering::shader::{compile_compute, compile_shaders};
 
 pub struct NeighborPointersPass {
     shader: Shader,
@@ -29,8 +29,7 @@ impl NeighborPointersPass {
             .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension as u32);
         self.shader
             .set_uint(c_str!("octreeLevel"), current_octree_level);
-        self.shader
-            .set_int(c_str!("axis"), 0);
+        self.shader.set_int(c_str!("axis"), 0);
 
         // Bind images
         helpers::bind_image_texture(0, textures.node_pool.0, gl::WRITE_ONLY, gl::R32UI);
@@ -48,16 +47,14 @@ impl NeighborPointersPass {
         self.shader.dispatch(groups_count);
         self.shader.wait();
 
-        self.shader
-            .set_int(c_str!("axis"), 1);
+        self.shader.set_int(c_str!("axis"), 1);
         helpers::bind_image_texture(2, textures.neighbors[2].0, gl::WRITE_ONLY, gl::R32UI);
         helpers::bind_image_texture(3, textures.neighbors[3].0, gl::WRITE_ONLY, gl::R32UI);
 
         self.shader.dispatch(groups_count);
         self.shader.wait();
 
-        self.shader
-            .set_int(c_str!("axis"), 2);
+        self.shader.set_int(c_str!("axis"), 2);
         helpers::bind_image_texture(2, textures.neighbors[4].0, gl::WRITE_ONLY, gl::R32UI);
         helpers::bind_image_texture(3, textures.neighbors[5].0, gl::WRITE_ONLY, gl::R32UI);
 

@@ -1,4 +1,3 @@
-use log;
 use std::{ffi::c_void, mem::size_of};
 
 use c_str_macro::c_str;
@@ -304,7 +303,7 @@ impl Octree {
         for z_layer in 0..3 {
             let mask = 2u32.pow(z_layer);
             let brick_layer_to_show: u32 = self.renderer.bricks_to_show.into();
-            if (brick_layer_to_show & mask != 0) {
+            if brick_layer_to_show & mask != 0 {
                 for x_layer in 0..3 {
                     self.renderer
                         .bricks_shader
@@ -682,7 +681,7 @@ impl Octree {
         for z_layer in 0..3 {
             let mask = 2u32.pow(z_layer);
             let brick_layer_to_show: u32 = self.renderer.bricks_to_show.into();
-            if (brick_layer_to_show & mask != 0) {
+            if brick_layer_to_show & mask != 0 {
                 for x_layer in 0..3 {
                     self.renderer
                         .node_bricks_shader

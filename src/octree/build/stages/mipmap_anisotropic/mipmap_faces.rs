@@ -1,5 +1,6 @@
 use c_str_macro::c_str;
 
+use crate::rendering::shader::compile_compute;
 use crate::{
     config::CONFIG,
     constants::Sign,
@@ -8,7 +9,6 @@ use crate::{
     octree::{build::BrickPoolValues, NodeData, OctreeTextures},
     rendering::shader::Shader,
 };
-use crate::rendering::shader::{compile_compute, compile_shaders};
 
 pub struct MipmapFacesPass {
     shader: Shader,
