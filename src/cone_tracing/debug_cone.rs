@@ -31,9 +31,12 @@ impl DebugCone {
         let mut vao = 0;
         gl::GenVertexArrays(1, &mut vao);
 
+        let mut transform = Transform::default();
+        transform.movement_speed = 0.25;
+
         Self {
             shader: compile_shaders!("assets/shaders/debug/debugConeTracing.glsl", debug = true),
-            transform: Transform::default(),
+            transform,
             direction: vec3(0.0, 0.0, 1.0),
             previous_values: HashSet::new(),
             nodes_queried: helpers::generate_texture_buffer(1000, gl::R32UI, 69u32),
@@ -112,7 +115,8 @@ impl DebugCone {
 
         if self.previous_values != values_set {
             dbg!(&values[..total_nodes_queried]);
-            *selected_debug_nodes = (&values[..total_nodes_queried])
+            let set_vector: Vec<_> = values_set.iter().cloned().collect();
+            *selected_debug_nodes = (&set_vector[..])
                 .iter()
                 .map(|&index| DebugNode::new(index, "picked by cone".to_string()))
                 .collect();
