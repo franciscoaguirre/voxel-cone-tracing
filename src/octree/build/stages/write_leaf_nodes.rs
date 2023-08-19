@@ -1,12 +1,12 @@
 use c_str_macro::c_str;
 
+use crate::rendering::shader::compile_compute;
 use crate::{
     config::CONFIG,
     helpers,
     octree::{OctreeTextures, VoxelData},
     rendering::shader::Shader,
 };
-use crate::rendering::shader::{compile_compute, compile_shaders};
 
 pub struct WriteLeafNodesPass {
     shader: Shader,

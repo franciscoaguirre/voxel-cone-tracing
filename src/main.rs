@@ -6,9 +6,12 @@ use std::iter::FromIterator;
 use c_str_macro::c_str;
 use egui_glfw_gl::glfw::{self, Context};
 extern crate gl;
+use crate::{
+    cone_tracing::DebugCone,
+    rendering::shader::{compile_compute, compile_shaders},
+};
 use cgmath::{perspective, point3, vec3, Deg, InnerSpace, Matrix4, Point3};
 use log::info;
-use crate::rendering::shader::{compile_compute, compile_shaders};
 
 use rendering::quad::Quad;
 use structopt::StructOpt;
@@ -92,7 +95,7 @@ fn main() {
         "assets/shaders/model/renderNormals.geom.glsl",
     );
     let mut cone_tracer = ConeTracer::init();
-    let debug_cone_shader = compile_shaders!("assets/shaders/debug/debugConeTracing.glsl", debug = true);
+    let mut debug_cone = unsafe { DebugCone::new() };
     let our_model = unsafe { helpers::load_model(&options.model) };
 
     let scene_aabb = &our_model.aabb;
@@ -214,20 +217,6 @@ fn main() {
 
     let mut should_move_light = false;
 
-    // let mut cone_angle = 0.453599;
-    let mut cone_angle = 0.263599;
-    let mut show_indirect_light = false;
-
-    let mut debug_cone_transform = Transform::default();
-    debug_cone_transform.position.x = 0.5;
-    debug_cone_transform.position.y = 0.5;
-    debug_cone_transform.position.z = 0.43;
-    let mut debug_cone_direction = vec3(0.0, 0.0, 1.0).normalize();
-
-    let mut previous_values: HashSet<u32> = HashSet::new();
-    let (nodes_queried_texture, nodes_queried_texture_buffer) =
-        unsafe { helpers::generate_texture_buffer(1000, gl::R32UI, 69u32) };
-
     let mut should_show_neighbors = false;
     let mut bricks_to_show = BricksToShow::default();
 
@@ -296,7 +285,7 @@ fn main() {
                 common::handle_show_model(&event, &mut show_model);
                 common::handle_show_voxel_fragment_list(&event, &mut show_voxel_fragment_list);
                 common::handle_light_movement(&event, &mut should_move_light);
-                common::handle_cone_angle(&event, &mut cone_angle);
+                common::handle_cone_angle(&event, &mut debug_cone.cone_angle);
             }
             menu.handle_event(event);
         }
@@ -366,20 +355,20 @@ fn main() {
         // Input
         if !menu.is_showing() {
             let transform = if should_move_light {
-                unsafe {
-                    octree.clear_light();
-                }
-                light_maps = unsafe {
-                    // TODO: This takes too long, optimize
-                    octree.inject_light(
-                        &[&our_model],
-                        &light,
-                        &model_normalization_matrix,
-                        &light_framebuffer,
-                    )
-                };
-                &mut light.transform
-                // &mut debug_cone_transform
+                // unsafe {
+                //     octree.clear_light();
+                // }
+                // light_maps = unsafe {
+                //     // TODO: This takes too long, optimize
+                //     octree.inject_light(
+                //         &[&our_model],
+                //         &light,
+                //         &model_normalization_matrix,
+                //         &light_framebuffer,
+                //     )
+                // };
+                // &mut light.transform
+                &mut debug_cone.transform
             } else {
                 &mut camera.transform
             };
@@ -456,7 +445,7 @@ fn main() {
 
             cone_tracer.run(
                 &light,
-                cone_angle,
+                debug_cone.cone_angle,
                 &octree.textures,
                 &geometry_buffers,
                 light_maps,
@@ -464,86 +453,12 @@ fn main() {
                 &camera,
             );
 
-            {
-                //////////////////////////////////// Debug stuff //////////////////////////////
-
-                debug_cone_shader.use_program();
-                let mut vao = 0;
-                gl::GenVertexArrays(1, &mut vao);
-                gl::BindVertexArray(vao);
-
-                helpers::bind_image_texture(0, nodes_queried_texture, gl::WRITE_ONLY, gl::R32UI);
-                helpers::bind_image_texture(
-                    1,
-                    octree.textures.node_pool.0,
-                    gl::READ_ONLY,
-                    gl::R32UI,
-                );
-
-                let nodes_queried_counter = helpers::generate_atomic_counter_buffer();
-                gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, nodes_queried_counter);
-
-                gl::ActiveTexture(gl::TEXTURE0);
-                gl::BindTexture(gl::TEXTURE_3D, octree.textures.brick_pool_colors[0]);
-                debug_cone_shader.set_int(c_str!("brickPoolColors"), 0 as i32);
-                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
-                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
-                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
-
-                gl::ActiveTexture(gl::TEXTURE1);
-                gl::BindTexture(gl::TEXTURE_3D, octree.textures.brick_pool_photons);
-
-                debug_cone_shader.set_int(c_str!("brickPoolPhotons"), 1 as i32);
-                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
-                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
-                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-                gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
-                debug_cone_shader.set_float(c_str!("photonPower"), photon_power as f32);
-
-                debug_cone_shader.set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
-                debug_cone_shader.set_uint(c_str!("maxOctreeLevel"), CONFIG.octree_levels - 1);
-                debug_cone_shader.set_mat4(c_str!("projection"), &projection);
-                debug_cone_shader.set_mat4(c_str!("view"), &view);
-                debug_cone_shader.set_vec3(
-                    c_str!("position"),
-                    debug_cone_transform.position.x,
-                    debug_cone_transform.position.y,
-                    debug_cone_transform.position.z,
-                );
-                debug_cone_shader.set_vec3(
-                    c_str!("axis"),
-                    debug_cone_direction.x,
-                    debug_cone_direction.y,
-                    debug_cone_direction.z,
-                );
-                debug_cone_shader.set_float(c_str!("coneAngle"), cone_angle as f32);
-
-                gl::DrawArrays(gl::POINTS, 0, 4);
-
-                let values = helpers::get_values_from_texture_buffer(
-                    nodes_queried_texture_buffer,
-                    1000,
-                    42u32,
-                );
-                let values_set = HashSet::from_iter(values.iter().cloned());
-                let total_nodes_queried =
-                    helpers::get_value_from_atomic_counter(nodes_queried_counter) as usize;
-
-                if previous_values != values_set {
-                    dbg!(&values[..total_nodes_queried]);
-                    selected_debug_nodes = (&values[..total_nodes_queried])
-                        .iter()
-                        .map(|&index| DebugNode::new(index, "picked by cone".to_string()))
-                        .collect();
-                    previous_values = values_set;
-                }
-
-                gl::BindVertexArray(0);
-            }
-
+            debug_cone.run(
+                &octree.textures,
+                &projection,
+                &view,
+                &mut selected_debug_nodes,
+            );
             static_eye.draw_gizmo(&projection, &view);
             light.draw_gizmo(&projection, &view);
             // quad.render(light_maps.1);

@@ -100,7 +100,7 @@ vec4 coneTrace(
                 octreeLevel,
                 node,
                 parentNode
-            );
+            ); // TODO: We are visiting the same node twice for some reason
             if (node.id == NODE_NOT_FOUND) {
                 distanceAlongCone += sampleStep;
                 //break;

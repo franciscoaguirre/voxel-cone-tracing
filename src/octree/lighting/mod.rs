@@ -10,7 +10,7 @@ use crate::{
 };
 
 use super::{
-    build::{AnisotropicBorderTransferPass, BrickPoolValues, MipmapAnisotropicPass},
+    build::{BrickPoolValues, MipmapAnisotropicPass},
     Octree,
 };
 

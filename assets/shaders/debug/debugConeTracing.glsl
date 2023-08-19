@@ -12,7 +12,6 @@ uniform mat4 projection;
 uniform mat4 view;
 uniform uint voxelDimension;
 uniform uint maxOctreeLevel;
-uniform float photonPower;
 
 uniform sampler3D brickPoolColorsX;
 uniform sampler3D brickPoolColorsXNeg;
@@ -65,23 +64,23 @@ void main() {
     vec3 bitangent = cross(axis, tangent);
 
     if (threadIndex == 0) {
-        direction = sinAngle * axis + cosAngle * tangent;
-        debugConeTrace(position, direction, coneAngle, maxDistance, false);
+        direction = axis;
+        coneTrace(position, direction, coneAngle, maxDistance, false);
     }
 
     if (threadIndex == 1) {
         direction = sinAngle * axis - cosAngle * tangent;
-        debugConeTrace(position, direction, coneAngle, maxDistance, false);
+        coneTrace(position, direction, coneAngle, maxDistance, false);
     }
 
     if (threadIndex == 2) {
         direction = sinAngle * axis + cosAngle * bitangent;
-        debugConeTrace(position, direction, coneAngle, maxDistance, false);
+        coneTrace(position, direction, coneAngle, maxDistance, false);
     }
 
     if (threadIndex == 3) {
         direction = sinAngle * axis - cosAngle * bitangent;
-        debugConeTrace(position, direction, coneAngle, maxDistance, false);
+        coneTrace(position, direction, coneAngle, maxDistance, false);
     }
 }
 
