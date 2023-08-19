@@ -2,8 +2,8 @@ use c_str_macro::c_str;
 use cgmath::vec3;
 use gl::types::GLuint;
 
+use crate::rendering::shader::compile_compute;
 use crate::{config::CONFIG, helpers, octree::OctreeTextures, rendering::shader::Shader};
-use crate::rendering::shader::{compile_compute, compile_shaders};
 
 pub struct MipmapFacesPass {
     shader: Shader,

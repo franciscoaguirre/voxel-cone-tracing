@@ -3,7 +3,6 @@ use std::{ffi::c_void, mem::size_of};
 use c_str_macro::c_str;
 use cgmath::{point3, vec3, Deg, Euler, InnerSpace, Matrix4, Point3, Vector3, Zero};
 use gl::types::GLuint;
-use log;
 
 use crate::config::CONFIG;
 
@@ -11,7 +10,7 @@ use super::{
     framebuffer::Framebuffer, geometry_buffers::GeometryBuffers, gizmo::RenderGizmo, model::Model,
     shader::Shader,
 };
-use crate::rendering::shader::{compile_compute, compile_shaders};
+use crate::rendering::shader::compile_shaders;
 
 /// Struct that handles `position`, `rotation` and `scale` for an entity
 #[derive(Debug)]
@@ -203,27 +202,21 @@ impl Transform {
         let velocity = self.movement_speed * delta_time;
         if direction == Forward {
             self.position += self.get_forward() * velocity;
-            //            log::debug!("Position = ({}, {}, {})", self.position.x, self.position.y, self.position.z);
         }
         if direction == Backward {
             self.position += -(self.get_forward() * velocity);
-            //           log::debug!("Position = ({}, {}, {})", self.position.x, self.position.y, self.position.z);
         }
         if direction == Left {
             self.position += -(self.get_right() * velocity);
-            //          log::debug!("Position = ({}, {}, {})", self.position.x, self.position.y, self.position.z);
         }
         if direction == Right {
             self.position += self.get_right() * velocity;
-            //         log::debug!("Position = ({}, {}, {})", self.position.x, self.position.y, self.position.z);
         }
         if direction == Up {
             self.position += self.get_up() * velocity;
-            //        log::debug!("Position = ({}, {}, {})", self.position.x, self.position.y, self.position.z);
         }
         if direction == Down {
             self.position += -(self.get_up() * velocity);
-            //       log::debug!("Position = ({}, {}, {})", self.position.x, self.position.y, self.position.z);
         }
     }
 }

@@ -1,6 +1,7 @@
 use c_str_macro::c_str;
 use cgmath::vec3;
 
+use crate::rendering::shader::{compile_compute, compile_shaders};
 use crate::{
     config::CONFIG,
     helpers,
@@ -10,7 +11,6 @@ use crate::{
         shader::Shader,
     },
 };
-use crate::rendering::shader::{compile_compute, compile_shaders};
 
 pub struct ConeTracer {
     shader: Shader,
