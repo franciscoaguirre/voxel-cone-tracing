@@ -30,3 +30,6 @@ pub use write_leaf_nodes::WriteLeafNodesPass;
 
 mod append_border_voxel_fragments;
 pub use append_border_voxel_fragments::AppendBorderVoxelFragmentsPass;
+
+mod process_raw_brick_pool_colors;
+pub use process_raw_brick_pool_colors::ProcessRawBrickPoolColors;

@@ -19,8 +19,10 @@ vec4[8] loadVoxelValues(in ivec3 brickAddress) {
   // accumulatorlect the original voxel accumulatorors (from voxelfragmentlist-voxels)
   // which were stored at the corners of the brick texture.
   for(int i = 0; i < 8; ++i) {
-    voxelValues[i] = imageLoad(brickPoolValues, 
-                               brickAddress + 2 * ivec3(CHILD_OFFSETS[i]));
+    voxelValues[i] = imageLoad(
+      brickPoolValues,
+      brickAddress + 2 * ivec3(CHILD_OFFSETS[i])
+    );
   }
 
   return voxelValues;

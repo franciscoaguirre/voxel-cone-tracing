@@ -19,20 +19,6 @@ pub enum BrickPoolValues {
     Irradiance,
 }
 
-struct ShaderPasses {
-    neighbor_pointers_pass: NeighborPointersPass,
-    flag_nodes_pass: FlagNodesPass,
-    allocate_nodes_pass: AllocateNodesPass,
-    store_node_positions_pass: StoreNodePositions,
-    write_leaf_nodes_pass: WriteLeafNodesPass,
-    spread_leaf_bricks_pass: SpreadLeafBricksPass,
-    leaf_border_transfer_pass: LeafBorderTransferPass,
-    anisotropic_border_transfer_pass: AnisotropicBorderTransferPass,
-    mipmap_anisotropic_pass: MipmapAnisotropicPass,
-    mipmap_isotropic_pass: MipmapIsotropicPass,
-    append_border_voxel_fragments_pass: AppendBorderVoxelFragmentsPass,
-}
-
 impl Octree {
     pub unsafe fn build(&mut self) {
         let allocated_nodes_counter = helpers::generate_atomic_counter_buffer();
@@ -66,6 +52,10 @@ impl Octree {
         self.builder
             .write_leaf_nodes_pass
             .run(&self.geometry_data.voxel_data, &self.textures);
+
+        self.builder
+            .process_raw_brick_pool_colors
+            .run(&self.geometry_data.node_data, &self.textures);
 
         self.builder.spread_leaf_bricks_pass.run(
             &self.textures,

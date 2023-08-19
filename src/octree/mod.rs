@@ -3,13 +3,13 @@ use std::{ffi::c_void, mem::size_of};
 use gl::types::GLuint;
 use log;
 
+use crate::rendering::shader::{compile_compute, compile_shaders};
 use crate::{
     config::CONFIG,
     constants, helpers,
     rendering::shader::Shader,
     types::{BufferTexture, Texture2D, Texture3D},
 };
-use crate::rendering::shader::{compile_compute, compile_shaders};
 
 mod build;
 mod lighting;
@@ -34,6 +34,7 @@ pub struct OctreeTextures {
     pub node_positions: BufferTexture,
     neighbors: [BufferTexture; 6],
     pub brick_pool_colors: [Texture3D; 6], // Anisotropic voxels, one texture per main direction
+    pub brick_pool_colors_raw: Texture3D,  // Raw colors, they are then moved to `brick_pool_colors`
     pub brick_pool_irradiance: [Texture3D; 6], // Anisotropic voxels
     pub brick_pool_normals: Texture3D,
     pub brick_pool_photons: Texture3D,
@@ -110,6 +111,7 @@ struct Builder {
     mipmap_isotropic_pass: MipmapIsotropicPass,
     append_border_voxel_fragments_pass: AppendBorderVoxelFragmentsPass,
     photons_to_irradiance_pass: PhotonsToIrradiance,
+    process_raw_brick_pool_colors: ProcessRawBrickPoolColors,
 }
 
 impl Octree {
@@ -200,9 +202,7 @@ impl Octree {
                 "assets/shaders/debug/debugInterpolation.glsl",
             ),
             light_view_map_shader: compile_shaders!("assets/shaders/octree/lightViewMap.glsl"),
-            store_photons_shader: compile_compute!(
-                "assets/shaders/octree/storePhotons.comp.glsl",
-            ),
+            store_photons_shader: compile_compute!("assets/shaders/octree/storePhotons.comp.glsl",),
             clear_bricks_shader: compile_compute!("assets/shaders/octree/clearBricks.comp.glsl"),
             clear_bricks_float_shader: compile_compute!(
                 "assets/shaders/octree/clearBricksFloat.comp.glsl",
@@ -221,6 +221,7 @@ impl Octree {
             mipmap_isotropic_pass: MipmapIsotropicPass::init(),
             append_border_voxel_fragments_pass: AppendBorderVoxelFragmentsPass::init(),
             photons_to_irradiance_pass: PhotonsToIrradiance::init(),
+            process_raw_brick_pool_colors: ProcessRawBrickPoolColors::init(),
         };
 
         let mut octree = Self {
@@ -277,6 +278,7 @@ impl Octree {
                 helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // Z
                 helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // -Z
             ],
+            brick_pool_colors_raw: helpers::generate_3d_r32ui_texture(CONFIG.brick_pool_resolution),
             brick_pool_colors: [
                 helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (X, +), also used for lower level
                 helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (X, -)
