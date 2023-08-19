@@ -1,6 +1,22 @@
 const float fourThirds = 1.33333333;
 const float twoThirds = 0.6666666;
 
+vec4 convR32UIToVec4(uint val) {
+    return vec4(
+        float((val & 0x000000FF)),
+        float((val & 0x0000FF00) >> 8U),
+        float((val & 0x00FF0000) >> 16U),
+        float((val & 0xFF000000) >> 24U)
+    );
+}
+
+uint convVec4ToR32UI(vec4 val) {
+    return (uint(val.w) & 0x000000FF) << 24U |
+           (uint(val.z) & 0x000000FF) << 16U |
+           (uint(val.y) & 0x000000FF) << 8U |
+           (uint(val.x) & 0x000000FF);
+}
+
 uint vec3ToUintXYZ10(uvec3 val) {
     return (uint(val.z) & 0x000003FF)   << 20U
             |(uint(val.y) & 0x000003FF) << 10U 

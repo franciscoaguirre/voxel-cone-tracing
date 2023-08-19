@@ -21,7 +21,7 @@ impl WriteLeafNodesPass {
 
     pub unsafe fn run(&self, voxel_data: &VoxelData, textures: &OctreeTextures) {
         self.shader.use_program();
-        let octree_level = CONFIG.octree_levels - 1;
+        let octree_level = CONFIG.last_octree_level;
 
         self.shader
             .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
@@ -38,7 +38,12 @@ impl WriteLeafNodesPass {
             gl::RGB10_A2UI,
         );
         helpers::bind_image_texture(1, voxel_data.voxel_colors.0, gl::READ_WRITE, gl::RGBA8);
-        helpers::bind_3d_image_texture(2, textures.brick_pool_colors[0], gl::READ_WRITE, gl::RGBA8); // We use +X texture for lowest level, TODO: For now -X
+        helpers::bind_3d_image_texture(
+            2,
+            textures.brick_pool_colors_raw,
+            gl::READ_WRITE,
+            gl::R32UI,
+        );
         helpers::bind_image_texture(3, textures.node_pool.0, gl::READ_WRITE, gl::R32UI);
         helpers::bind_image_texture(4, voxel_data.voxel_normals.0, gl::READ_ONLY, gl::RGBA32F);
         helpers::bind_3d_image_texture(5, textures.brick_pool_normals, gl::WRITE_ONLY, gl::RGBA32F);
