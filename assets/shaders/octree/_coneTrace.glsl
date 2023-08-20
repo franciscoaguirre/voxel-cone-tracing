@@ -11,6 +11,7 @@
 // if debug
 // - uniform (r32ui) nodesQueried
 // - uniform atomic_uint queriedNodesCounter
+// - uniform (r32f) sampledColor
 
 float brickPoolResolutionf = float(textureSize(brickPoolColorsX, 0).x);
 float brickPoolBrickSize = 3.0 / brickPoolResolutionf;
@@ -145,7 +146,18 @@ vec4 coneTrace(
         previousParentNode = parentNode;
     }
 
+    #if debug
+        imageStore(sampledColor, 0, vec4(returnColor.r, 0, 0, 0));
+        imageStore(sampledColor, 1, vec4(returnColor.g, 0, 0, 0));
+        imageStore(sampledColor, 2, vec4(returnColor.b, 0, 0, 0));
+        imageStore(sampledColor, 4, vec4(returnColor.a, 0, 0, 0));
+    #endif
+
     returnColor.a = min(returnColor.a, 1.0);
+
+    #if debug
+        imageStore(sampledColor, 5, vec4(returnColor.a, 0, 0, 0));
+    #endif
 
     return returnColor;
 }
