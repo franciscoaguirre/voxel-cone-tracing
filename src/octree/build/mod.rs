@@ -106,14 +106,14 @@ impl Octree {
                 // );
 
                 if level > 0 {
-                    self.builder.anisotropic_border_transfer_pass.run(
-                        &self.textures,
-                        &self.geometry_data.node_data,
-                        &self.border_data.node_data,
-                        level,
-                        brick_pool_values,
-                        *direction,
-                    );
+                    // self.builder.anisotropic_border_transfer_pass.run(
+                    //     &self.textures,
+                    //     &self.geometry_data.node_data,
+                    //     &self.border_data.node_data,
+                    //     level,
+                    //     brick_pool_values,
+                    //     *direction,
+                    // );
                     // self.builder.border_transfer_pass.run(
                     //     &self.textures,
                     //     &self.geometry_data.node_data,

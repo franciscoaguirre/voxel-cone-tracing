@@ -21,8 +21,6 @@ uniform sampler3D brickPoolColorsYNeg;
 uniform sampler3D brickPoolColorsZ;
 uniform sampler3D brickPoolColorsZNeg;
 
-uniform usampler3D brickPoolPhotons;
-
 // Irradiance
 uniform sampler3D brickPoolIrradianceX;
 uniform sampler3D brickPoolIrradianceXNeg;

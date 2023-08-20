@@ -41,17 +41,23 @@ impl DebugCone {
             transform,
             direction: vec3(0.0, 0.0, 1.0),
             previous_values: HashSet::new(),
-            nodes_queried: helpers::generate_texture_buffer4(1000, gl::R32UI, 69u32, gl::DYNAMIC_READ),
-            sampled_color_texture: helpers::generate_texture_buffer4(5, gl::R32F, 69f32, gl::DYNAMIC_READ),
+            nodes_queried: helpers::generate_texture_buffer4(
+                1000,
+                gl::R32UI,
+                69u32,
+                gl::DYNAMIC_READ,
+            ),
+            sampled_color_texture: helpers::generate_texture_buffer4(
+                5,
+                gl::R32F,
+                69f32,
+                gl::DYNAMIC_READ,
+            ),
             nodes_queried_counter: helpers::generate_atomic_counter_buffer1(gl::DYNAMIC_READ),
             cone_angle: 0.263599,
             vao,
         }
     }
-
-    // self.transform.position.x = 0.5;
-    // self.transform.position.y = 0.5;
-    // self.transform.position.z = 0.43;
 
     pub unsafe fn run(
         &mut self,
@@ -70,23 +76,88 @@ impl DebugCone {
 
         gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, self.nodes_queried_counter);
 
-        gl::ActiveTexture(gl::TEXTURE0);
-        gl::BindTexture(gl::TEXTURE_3D, textures.brick_pool_colors[0]);
-        self.shader.set_int(c_str!("brickPoolColors"), 0 as i32);
-        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
-        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
-        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+        let brick_pool_textures = vec![
+            (
+                c_str!("brickPoolColorsX"),
+                textures.brick_pool_colors[0],
+                gl::LINEAR as i32,
+            ),
+            (
+                c_str!("brickPoolColorsXNeg"),
+                textures.brick_pool_colors[1],
+                gl::LINEAR as i32,
+            ),
+            (
+                c_str!("brickPoolColorsY"),
+                textures.brick_pool_colors[2],
+                gl::LINEAR as i32,
+            ),
+            (
+                c_str!("brickPoolColorsYNeg"),
+                textures.brick_pool_colors[3],
+                gl::LINEAR as i32,
+            ),
+            (
+                c_str!("brickPoolColorsZ"),
+                textures.brick_pool_colors[4],
+                gl::LINEAR as i32,
+            ),
+            (
+                c_str!("brickPoolColorsZNeg"),
+                textures.brick_pool_colors[5],
+                gl::LINEAR as i32,
+            ),
+            (
+                c_str!("brickPoolNormals"),
+                textures.brick_pool_normals,
+                gl::NEAREST as i32,
+            ),
+            // Irradiance textures
+            (
+                c_str!("brickPoolIrradianceX"),
+                textures.brick_pool_irradiance[0],
+                gl::LINEAR as i32,
+            ),
+            (
+                c_str!("brickPoolIrradianceXNeg"),
+                textures.brick_pool_irradiance[1],
+                gl::LINEAR as i32,
+            ),
+            (
+                c_str!("brickPoolIrradianceY"),
+                textures.brick_pool_irradiance[2],
+                gl::LINEAR as i32,
+            ),
+            (
+                c_str!("brickPoolIrradianceYNeg"),
+                textures.brick_pool_irradiance[3],
+                gl::LINEAR as i32,
+            ),
+            (
+                c_str!("brickPoolIrradianceZ"),
+                textures.brick_pool_irradiance[4],
+                gl::LINEAR as i32,
+            ),
+            (
+                c_str!("brickPoolIrradianceZNeg"),
+                textures.brick_pool_irradiance[5],
+                gl::LINEAR as i32,
+            ),
+        ];
 
-        gl::ActiveTexture(gl::TEXTURE1);
-        gl::BindTexture(gl::TEXTURE_3D, textures.brick_pool_photons);
-        self.shader.set_int(c_str!("brickPoolPhotons"), 1 as i32);
-        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
-        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
-        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+        let mut texture_counter = 0;
+
+        for &(texture_name, texture, sample_interpolation) in brick_pool_textures.iter() {
+            gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
+            gl::BindTexture(gl::TEXTURE_3D, texture);
+            self.shader.set_int(texture_name, texture_counter as i32);
+            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
+            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
+            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, sample_interpolation);
+            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, sample_interpolation);
+            texture_counter += 1;
+        }
 
         self.shader
             .set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
@@ -113,12 +184,13 @@ impl DebugCone {
         gl::DrawArrays(gl::POINTS, 0, 1);
 
         let values = helpers::get_values_from_texture_buffer(self.nodes_queried.1, 1000, 42u32);
-        let sampled_color = helpers::get_values_from_texture_buffer(self.sampled_color_texture.1, 5, 32f32);
+        let sampled_color =
+            helpers::get_values_from_texture_buffer(self.sampled_color_texture.1, 5, 32f32);
         dbg!(sampled_color);
 
-        let values_set = HashSet::from_iter(values.iter().cloned());
         let total_nodes_queried =
             helpers::get_value_from_atomic_counter(self.nodes_queried_counter) as usize;
+        let values_set = HashSet::from_iter(values[..total_nodes_queried].iter().cloned());
 
         if self.previous_values != values_set {
             dbg!(&values[..total_nodes_queried]);

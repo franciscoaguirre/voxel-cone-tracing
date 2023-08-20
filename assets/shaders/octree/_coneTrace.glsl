@@ -1,7 +1,6 @@
 // Requires:
 // - uniform uint voxelDimension
 // - uniform uint maxOctreeLevel
-// - uniform sampler3D brickPoolPhotons
 // - uniform sampler3D brickPoolNormals
 // - _anisotropicColor
 // - _anisotropicIrradiance
@@ -55,7 +54,7 @@ vec4 getLeafColor(vec3 voxelCoordinates) {
 }
 
 vec4 getLeafIrradiance(vec3 voxelCoordinates) {
-    return texture(brickPoolIrradianceX, voxelCoordinates);
+    return texelFetch(brickPoolIrradianceZ, ivec3(floor(voxelCoordinates * 384.0)), 0);
 }
 
 // rayOrigin should be between 0 and 1
@@ -76,7 +75,7 @@ vec4 coneTrace(
     Node previousNode = Node(0, vec3(0), 0.0);
     Node previousParentNode;
     int steps = 0;
-    float firstStep = voxelSize;
+    float firstStep = 0;
 
     distanceAlongCone += firstStep;
     while (distanceAlongCone < maxDistance && returnColor.a < 1.0) {
@@ -133,6 +132,7 @@ vec4 coneTrace(
             childColor = getAnisotropicIrradiance(childVoxelCoordinates, coneDirection);
         }
         parentColor = getAnisotropicIrradiance(parentVoxelCoordinates, coneDirection);
+        // parentColor = getLeafIrradiance(parentVoxelCoordinates);
         vec4 newColor = mix(childColor, parentColor, parentWeight); // Quadrilinear interpolation
         newColor.rgb /= distanceFactor;
 
@@ -150,14 +150,11 @@ vec4 coneTrace(
         imageStore(sampledColor, 0, vec4(returnColor.r, 0, 0, 0));
         imageStore(sampledColor, 1, vec4(returnColor.g, 0, 0, 0));
         imageStore(sampledColor, 2, vec4(returnColor.b, 0, 0, 0));
-        imageStore(sampledColor, 4, vec4(returnColor.a, 0, 0, 0));
+        imageStore(sampledColor, 3, vec4(returnColor.a, 0, 0, 0));
+        // imageStore(sampledColor, 4, vec4(float(octreeLevel), 0, 0, 0));
     #endif
 
     returnColor.a = min(returnColor.a, 1.0);
-
-    #if debug
-        imageStore(sampledColor, 5, vec4(returnColor.a, 0, 0, 0));
-    #endif
 
     return returnColor;
 }

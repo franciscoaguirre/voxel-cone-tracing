@@ -26,6 +26,9 @@ void main() {
 		ivec3 offset = 2 * ivec3(CHILD_OFFSETS[corner]);
 		uint rawColor = imageLoad(brickPoolColorsRaw, brickCoordinates + offset).r;
 		vec4 color = convR32UIToVec4(rawColor) / 255.0f; // We multiplied by `255.0f` in `write_leaf`
+		if (color.a != 0) {
+			color.a = 1;
+		}
 		imageStore(brickPoolColors, brickCoordinates + offset, color);
 	}
 }
