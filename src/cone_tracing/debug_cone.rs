@@ -41,17 +41,23 @@ impl DebugCone {
             transform,
             direction: vec3(0.0, 0.0, 1.0),
             previous_values: HashSet::new(),
-            nodes_queried: helpers::generate_texture_buffer4(1000, gl::R32UI, 69u32, gl::DYNAMIC_READ),
-            sampled_color_texture: helpers::generate_texture_buffer4(5, gl::R32F, 69f32, gl::DYNAMIC_READ),
+            nodes_queried: helpers::generate_texture_buffer4(
+                1000,
+                gl::R32UI,
+                69u32,
+                gl::DYNAMIC_READ,
+            ),
+            sampled_color_texture: helpers::generate_texture_buffer4(
+                5,
+                gl::R32F,
+                69f32,
+                gl::DYNAMIC_READ,
+            ),
             nodes_queried_counter: helpers::generate_atomic_counter_buffer1(gl::DYNAMIC_READ),
             cone_angle: 0.263599,
             vao,
         }
     }
-
-    // self.transform.position.x = 0.5;
-    // self.transform.position.y = 0.5;
-    // self.transform.position.z = 0.43;
 
     pub unsafe fn run(
         &mut self,
@@ -113,7 +119,8 @@ impl DebugCone {
         gl::DrawArrays(gl::POINTS, 0, 1);
 
         let values = helpers::get_values_from_texture_buffer(self.nodes_queried.1, 1000, 42u32);
-        let sampled_color = helpers::get_values_from_texture_buffer(self.sampled_color_texture.1, 5, 32f32);
+        let sampled_color =
+            helpers::get_values_from_texture_buffer(self.sampled_color_texture.1, 5, 32f32);
         dbg!(sampled_color);
 
         let values_set = HashSet::from_iter(values.iter().cloned());

@@ -40,7 +40,15 @@ void setup(int nodeID) {
   for(int x = 0; x < 3; x++) {
     for(int y = 0; y < 3; y++) { 
       for(int z = 0; z < 3; z++) {
-        adjacentVoxels[x][y][z] = vec4(0);
+        float alpha;
+        if (z == 0) {
+            alpha = 1;
+        } else if (z == 1) {
+            alpha = 0.5;
+        } else {
+            alpha = 0.0;
+        }
+        adjacentVoxels[x][y][z] = vec4(0, 0, 0, alpha);
       }
     }
   }
@@ -187,7 +195,7 @@ void loadAdjacentVoxels(ivec3 position, Direction direction) {
 //vec4 mipmapAnisotropic(ivec3 position, Direction direction) {
 // Encontrar una base de 9 voxels, dirección abajo hacia arriba agarramos los de abajo
 vec4 mipmapAnisotropic(ivec3 position) {
-    loadAdjacentVoxels(position, direction);
+    // loadAdjacentVoxels(position, direction);
     vec4 color = vec4(0);
     int baseOffset = direction.sign == -1 ? 2 : 0;
     float weightSum = 0;

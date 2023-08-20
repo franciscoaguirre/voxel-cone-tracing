@@ -53,7 +53,8 @@ vec4 showProp(ivec3 coordinates, uint type) {
       return vec4(0); // Will be discarded
     } else if (type == BY_PHOTONS) {
       vec3 normalizedCoordinates = normalizedFromIntCoordinates(coordinates, 384.0);
-      return getAnisotropicIrradiance(normalizedCoordinates, colorDirection);
+      vec4 irradiance = getAnisotropicIrradiance(normalizedCoordinates, colorDirection);
+      return vec4(irradiance.aaa, 1.0);
     } else if (type == BY_COLOR) {
       vec3 normalizedCoordinates = normalizedFromIntCoordinates(coordinates, 384.0);
       return getAnisotropicColor(normalizedCoordinates, colorDirection);
