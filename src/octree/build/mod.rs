@@ -179,7 +179,7 @@ impl Octree {
             }
 
             let nodes_allocated = helpers::get_value_from_atomic_counter(allocated_nodes_counter);
-            log::info!(
+            log::debug!(
                 "{octree_data_type:?} nodes allocated for {}: {}",
                 octree_level + 1,
                 nodes_allocated

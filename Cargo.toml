@@ -16,6 +16,6 @@ structopt = "0.3"
 ron = "0.8.0"
 serde = { version = "1", features = ["derive"] }
 once_cell = "1.16.0"
-log = { version = "0.4", features = ["max_level_trace", "release_max_level_warn"] }
+log = { version = "0.4", features = ["max_level_trace", "release_max_level_info"] }
 simple_logger = "4.0"
 egui_glfw_gl = { git = "https://github.com/cohaereo/egui_glfw_gl", branch = "master" }

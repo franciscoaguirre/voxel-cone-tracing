@@ -152,5 +152,5 @@ pub unsafe fn log_device_information() {
 
     let mut max_3d_texture_size = 0;
     unsafe { gl::GetIntegerv(gl::MAX_3D_TEXTURE_SIZE, &mut max_3d_texture_size) };
-    log::info!("Maximum 3D texture size (by dimension): {max_3d_texture_size}");
+    log::debug!("Maximum 3D texture size (by dimension): {max_3d_texture_size}");
 }

@@ -242,7 +242,7 @@ impl Octree {
             .map(|exponent| 8_usize.pow(exponent))
             .sum::<usize>();
         let max_node_pool_size = number_of_nodes * constants::CHILDREN_PER_NODE as usize;
-        log::info!(
+        log::debug!(
             "Max node pool size based on tree height: {}",
             max_node_pool_size
         );
@@ -253,11 +253,11 @@ impl Octree {
 
         let max_node_pool_size =
             max_node_pool_size.min((max_texture_buffer_size).try_into().unwrap());
-        log::info!(
+        log::debug!(
             "Max node pool size based on memory max: {}",
             max_texture_buffer_size
         );
-        log::info!(
+        log::debug!(
             "Final node pool size based on tree height: {}",
             max_node_pool_size
         );
