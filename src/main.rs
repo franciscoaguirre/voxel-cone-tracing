@@ -423,12 +423,12 @@ fn main() {
             );
 
             // TODO: Add toggle to menu
-            // debug_cone.run(
-            //     &octree.textures,
-            //     &projection,
-            //     &view,
-            //     &mut selected_debug_nodes,
-            // );
+             debug_cone.run(
+                 &octree.textures,
+                 &projection,
+                 &view,
+                 &mut selected_debug_nodes,
+             );
             static_eye.draw_gizmo(&projection, &view);
             light.draw_gizmo(&projection, &view);
             // quad.render(light_maps.1);
