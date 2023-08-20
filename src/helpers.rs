@@ -11,6 +11,10 @@ use std::{
 use crate::{config::CONFIG, rendering::model::Model, voxelization::aabb::Aabb};
 
 pub unsafe fn generate_atomic_counter_buffer() -> GLuint {
+    generate_atomic_counter_buffer1(gl::STATIC_DRAW)
+}
+
+pub unsafe fn generate_atomic_counter_buffer1(usage_hint: GLuint) -> GLuint {
     let mut buffer: u32 = 0;
     let initial_value: u32 = 0;
 
@@ -20,18 +24,30 @@ pub unsafe fn generate_atomic_counter_buffer() -> GLuint {
         gl::ATOMIC_COUNTER_BUFFER,
         size_of::<GLuint>() as isize,
         initial_value as *const c_void,
-        gl::STATIC_DRAW,
+        gl::DYNAMIC_READ,
     );
     gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, 0);
 
     buffer
 }
 
-/// Generates a buffer texture initialized with a default value
 pub unsafe fn generate_texture_buffer<T>(
     size: usize,
     format: GLenum,
     default_value: T,
+    ) -> (GLuint, GLuint) 
+    where
+    T: Clone,
+{
+    generate_texture_buffer4(size, format, default_value, gl::STATIC_DRAW)
+}
+
+/// Generates a buffer texture initialized with a default value
+pub unsafe fn generate_texture_buffer4<T>(
+    size: usize,
+    format: GLenum,
+    default_value: T,
+    usage_hint: GLuint,
 ) -> (GLuint, GLuint)
 where
     T: Clone,
@@ -48,7 +64,7 @@ where
     gl::TexBuffer(gl::TEXTURE_BUFFER, format, texture_buffer);
     gl::BindBuffer(gl::TEXTURE_BUFFER, 0);
 
-    clear_texture_buffer(texture_buffer, size, default_value);
+    clear_texture_buffer(texture_buffer, size, default_value, usage_hint);
 
     (texture, texture_buffer)
 }
@@ -149,7 +165,6 @@ pub fn get_mutable_pointer(number: &mut u32) -> *mut c_void {
 /// Gets the value from the atomic counter passed in AND resets it
 pub unsafe fn get_value_from_atomic_counter(counter: u32) -> GLuint {
     let mut value: GLuint = 0;
-    let reset: GLuint = 0;
     gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, counter);
     gl::GetBufferSubData(
         gl::ATOMIC_COUNTER_BUFFER,
@@ -157,6 +172,15 @@ pub unsafe fn get_value_from_atomic_counter(counter: u32) -> GLuint {
         size_of::<GLuint>() as isize,
         get_mutable_pointer(&mut value),
     );
+    gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, 0);
+    reset_atomic_counter(counter);
+
+    value
+}
+
+pub unsafe fn reset_atomic_counter(counter: u32) {
+    let reset: GLuint = 0;
+    gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, counter);
     gl::BufferSubData(
         gl::ATOMIC_COUNTER_BUFFER,
         0,
@@ -164,8 +188,6 @@ pub unsafe fn get_value_from_atomic_counter(counter: u32) -> GLuint {
         get_constant_pointer(&reset),
     );
     gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, 0);
-
-    value
 }
 
 pub unsafe fn get_values_from_texture_buffer<T>(
@@ -188,7 +210,7 @@ where
     values
 }
 
-pub unsafe fn clear_texture_buffer<T>(texture_buffer: GLuint, size: usize, default_value: T)
+pub unsafe fn clear_texture_buffer<T>(texture_buffer: GLuint, size: usize, default_value: T, usage_hint: GLuint)
 where
     T: Clone,
 {
@@ -198,7 +220,7 @@ where
         gl::TEXTURE_BUFFER,
         (size_of::<T>() * size) as isize,
         data.as_ptr() as *const c_void,
-        gl::STATIC_DRAW,
+        usage_hint,
     );
     gl::BindBuffer(gl::TEXTURE_BUFFER, 0);
 }

@@ -23,6 +23,7 @@ pub struct DebugCone {
     direction: Vector3<f32>,
     previous_values: HashSet<u32>,
     nodes_queried: BufferTexture,
+    nodes_queried_counter: GLuint,
     vao: GLuint,
 }
 
@@ -39,7 +40,8 @@ impl DebugCone {
             transform,
             direction: vec3(0.0, 0.0, 1.0),
             previous_values: HashSet::new(),
-            nodes_queried: helpers::generate_texture_buffer(1000, gl::R32UI, 69u32),
+            nodes_queried: helpers::generate_texture_buffer4(1000, gl::R32UI, 69u32, gl::DYNAMIC_READ),
+            nodes_queried_counter: helpers::generate_atomic_counter_buffer1(gl::DYNAMIC_READ),
             cone_angle: 0.263599,
             vao,
         }
@@ -63,8 +65,7 @@ impl DebugCone {
         helpers::bind_image_texture(0, self.nodes_queried.0, gl::WRITE_ONLY, gl::R32UI);
         helpers::bind_image_texture(1, textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
 
-        let nodes_queried_counter = helpers::generate_atomic_counter_buffer();
-        gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, nodes_queried_counter);
+        gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, self.nodes_queried_counter);
 
         gl::ActiveTexture(gl::TEXTURE0);
         gl::BindTexture(gl::TEXTURE_3D, textures.brick_pool_colors[0]);
@@ -111,7 +112,7 @@ impl DebugCone {
         let values = helpers::get_values_from_texture_buffer(self.nodes_queried.1, 1000, 42u32);
         let values_set = HashSet::from_iter(values.iter().cloned());
         let total_nodes_queried =
-            helpers::get_value_from_atomic_counter(nodes_queried_counter) as usize;
+            helpers::get_value_from_atomic_counter(self.nodes_queried_counter) as usize;
 
         if self.previous_values != values_set {
             dbg!(&values[..total_nodes_queried]);
