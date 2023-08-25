@@ -5,8 +5,9 @@ use egui_backend::{
     glfw::{Action, CursorMode, Key, Window, WindowEvent},
 };
 use egui_glfw_gl as egui_backend;
+use serde::Deserialize;
 
-use crate::config::CONFIG;
+use crate::{config::CONFIG, preset::PRESET};
 
 pub mod submenus;
 use submenus::*;
@@ -25,7 +26,8 @@ pub struct MenuInternals {
     native_pixels_per_point: f32,
 }
 
-#[derive(Default)]
+#[derive(Debug, Default, Deserialize, Clone)]
+#[serde(default)]
 pub struct SubMenus {
     all_nodes: AllNodesMenu,
     node_search: NodeSearchMenu,
@@ -58,7 +60,13 @@ type SubMenuOutputs<'a> = (
 
 impl Menu {
     pub fn new(window: &mut Window) -> Self {
-        Self::setup_egui(window)
+        let mut menu = Self::setup_egui(window);
+        menu.process_preset();
+        menu
+    }
+
+    fn process_preset(&mut self) {
+        self.sub_menus = PRESET.submenus.clone();
     }
 
     pub fn toggle_showing(&mut self, window: &mut Window, last_x: &mut f32, last_y: &mut f32) {
@@ -133,11 +141,8 @@ impl Menu {
 
     fn setup_egui(window: &mut Window) -> Menu {
         let painter = egui_backend::Painter::new(window);
-
         let context = egui::Context::default();
-
         let native_pixels_per_point = window.get_content_scale().0;
-
         let input_state = egui_backend::EguiInputState::new(egui::RawInput {
             screen_rect: Some(Rect::from_min_size(
                 Pos2::new(0_f32, 0_f32),
@@ -147,9 +152,7 @@ impl Menu {
             pixels_per_point: Some(native_pixels_per_point),
             ..Default::default()
         });
-
         let modifier_keys = egui::Modifiers::default();
-
         let internals = MenuInternals {
             painter,
             context,
@@ -157,7 +160,6 @@ impl Menu {
             modifier_keys,
             native_pixels_per_point,
         };
-
         let sub_menus = SubMenus::default();
 
         Self {
@@ -253,7 +255,7 @@ impl Menu {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct DebugNode {
     index: u32,
     text: String,

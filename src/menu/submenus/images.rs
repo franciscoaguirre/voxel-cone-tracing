@@ -1,4 +1,5 @@
 use egui_glfw_gl::egui;
+use serde::Deserialize;
 
 use super::SubMenu;
 use crate::{
@@ -6,13 +7,13 @@ use crate::{
     menu::{get_button_text, MenuInternals},
 };
 
-#[derive(Default)]
+#[derive(Debug, Default, Deserialize, Clone)]
 pub struct ImagesMenu {
     is_showing: bool,
     output: ImagesMenuOutput,
 }
 
-#[derive(Default)]
+#[derive(Debug, Default, Deserialize, Clone)]
 pub struct ImagesMenuOutput {
     pub toggles: Toggles,
 }

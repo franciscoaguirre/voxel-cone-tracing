@@ -1,18 +1,20 @@
 use egui_glfw_gl::egui;
-
-use crate::config::CONFIG;
-use crate::menu::MenuInternals;
+use serde::Deserialize;
 
 use super::super::get_button_text;
 use super::SubMenu;
+use crate::config::CONFIG;
+use crate::menu::MenuInternals;
 
-#[derive(Default)]
+#[derive(Debug, Default, Deserialize, Clone)]
+#[serde(default)]
 pub struct AllNodesMenu {
     is_showing: bool,
-    output: AllNodesMenuOutput,
+    pub output: AllNodesMenuOutput,
 }
 
-#[derive(Default)]
+#[derive(Debug, Default, Deserialize, Clone)]
+#[serde(default)]
 pub struct AllNodesMenuOutput {
     pub should_render_octree: bool,
     pub current_octree_level: u32,

@@ -9,13 +9,21 @@ use crate::{cli_arguments::Options, rendering::light::SpotLight};
 #[derive(Debug, Deserialize)]
 #[serde(default)]
 pub struct Scene {
+    /// Model for the scene
+    #[serde(default = "default_model")]
+    pub model: String,
     /// Light of the scene for both direct and indirect illumination
     pub light: SpotLight,
+}
+
+fn default_model() -> String {
+    "triangle".to_string()
 }
 
 impl Default for Scene {
     fn default() -> Self {
         Self {
+            model: "triangle".to_string(),
             light: SpotLight::default(),
         }
     }

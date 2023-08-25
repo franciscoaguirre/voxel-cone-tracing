@@ -3,6 +3,7 @@ use std::{ffi::c_void, mem::size_of};
 use c_str_macro::c_str;
 use cgmath::{vec3, Matrix4, Vector3};
 use gl::types::GLuint;
+use serde::Deserialize;
 
 use crate::{
     config::CONFIG,
@@ -829,7 +830,7 @@ impl Octree {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Deserialize, Clone, Copy, PartialEq, Eq)]
 pub enum BrickAttribute {
     None,
     Color,
@@ -864,7 +865,7 @@ impl BrickAttribute {
     }
 }
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Default, Deserialize, Clone, Copy)]
 pub struct BricksToShow {
     show_z0: bool,
     show_z1: bool,

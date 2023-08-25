@@ -32,7 +32,6 @@ mod scene;
 mod types;
 mod voxelization;
 
-use cli_arguments::Options;
 use config::CONFIG;
 use menu::Menu;
 use rendering::{camera::Camera, common, gizmo::RenderGizmo, shader::Shader};
@@ -49,7 +48,6 @@ use crate::{
 };
 
 fn main() {
-    let options = Options::from_args();
     simple_logger::init().unwrap();
 
     // NOTE: This is true if the binary was compiled in debug mode
@@ -102,7 +100,7 @@ fn main() {
     );
     let mut cone_tracer = ConeTracer::init();
     let mut debug_cone = unsafe { DebugCone::new() };
-    let our_model = unsafe { helpers::load_model(&options.model) };
+    let our_model = unsafe { helpers::load_model() };
 
     let scene_aabb = &our_model.aabb;
     let aabb_middle_point = scene_aabb.middle_point();

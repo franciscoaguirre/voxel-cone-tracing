@@ -1,9 +1,10 @@
 use egui_glfw_gl::egui;
+use serde::Deserialize;
 
 use super::SubMenu;
 use crate::menu::MenuInternals;
 
-#[derive(Default)]
+#[derive(Debug, Default, Deserialize, Clone)]
 pub struct ChildrenMenu {
     is_showing: bool,
 }

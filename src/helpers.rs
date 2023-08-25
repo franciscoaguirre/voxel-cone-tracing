@@ -8,7 +8,7 @@ use std::{
     path::Path,
 };
 
-use crate::{config::CONFIG, rendering::model::Model, voxelization::aabb::Aabb};
+use crate::{config::CONFIG, rendering::model::Model, scene::SCENE, voxelization::aabb::Aabb};
 
 pub unsafe fn generate_atomic_counter_buffer() -> GLuint {
     let mut buffer: u32 = 0;
@@ -328,7 +328,8 @@ pub fn get_brick_coordinates(node_id: u32) -> Vector3<u32> {
 
 /// Load a model with a given `name`.
 /// Already goes to "assets/models/" to find it and its textures.
-pub unsafe fn load_model(name: &str) -> Model {
+pub unsafe fn load_model() -> Model {
+    let name = &SCENE.model;
     let previous_current_dir = env::current_dir().unwrap();
     env::set_current_dir(Path::new("assets/models")).unwrap();
     let model_file = format!("{name}.obj");

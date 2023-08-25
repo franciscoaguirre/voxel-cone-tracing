@@ -1,9 +1,11 @@
 use egui_glfw_gl::egui;
+use serde::Deserialize;
 
 use super::SubMenu;
 use crate::menu::{get_button_text, DebugNode, MenuInternals};
 
-#[derive(Default)]
+#[derive(Debug, Default, Deserialize, Clone)]
+#[serde(default)]
 pub struct NodeSearchMenu {
     is_showing: bool,
     output: NodeSearchMenuOutput,
@@ -19,7 +21,8 @@ impl NodeSearchMenuInput {
     }
 }
 
-#[derive(Default)]
+#[derive(Debug, Default, Deserialize, Clone)]
+#[serde(default)]
 pub struct NodeSearchMenuOutput {
     pub selected_items: Vec<DebugNode>,
     pub filter_text: String,

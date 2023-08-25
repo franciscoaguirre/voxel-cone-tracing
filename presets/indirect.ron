@@ -1,0 +1,14 @@
+(
+    submenus: (
+        images: (
+            is_showing: true,
+            output: (
+                toggles: (
+                    should_show_color: true,
+                    should_show_direct: true,
+                    should_show_indirect: true,
+                ),
+            ),
+        ),
+    ),
+)

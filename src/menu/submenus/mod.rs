@@ -20,10 +20,11 @@ pub use node_search::{NodeSearchMenu, NodeSearchMenuInput};
 
 mod photons;
 pub use photons::{PhotonsMenu, PhotonsMenuInput};
+use serde::Deserialize;
 
-pub trait SubMenu {
+pub trait SubMenu: std::fmt::Debug + Default + for<'a> Deserialize<'a> + Clone {
     type InputData;
-    type OutputData;
+    type OutputData: std::fmt::Debug + Default + for<'a> Deserialize<'a> + Clone;
 
     fn is_showing(&self) -> bool;
     fn toggle_showing(&mut self);

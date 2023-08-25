@@ -1,5 +1,6 @@
 use cgmath::{vec3, InnerSpace, Vector3};
 use egui_glfw_gl::egui;
+use serde::Deserialize;
 
 use super::SubMenu;
 use crate::{
@@ -7,18 +8,19 @@ use crate::{
     octree::{BrickAttribute, BricksToShow},
 };
 
-#[derive(Default)]
+#[derive(Debug, Default, Deserialize, Clone)]
 pub struct BricksMenu {
     is_showing: bool,
     output: BricksMenuOutput,
 }
 
+#[derive(Debug, Deserialize, Clone)]
 pub struct BricksMenuOutput {
-    pub bricks_to_show: BricksToShow,
     pub brick_attribute: BrickAttribute,
-    pub should_show_brick_normals: bool,
-    pub color_direction: Vector3<f32>,
     pub brick_padding: f32,
+    pub bricks_to_show: BricksToShow,
+    pub color_direction: Vector3<f32>,
+    pub should_show_brick_normals: bool,
 }
 
 impl Default for BricksMenuOutput {
