@@ -5,6 +5,7 @@ use super::super::get_button_text;
 use super::SubMenu;
 use crate::config::CONFIG;
 use crate::menu::MenuInternals;
+use crate::octree::OctreeDataType;
 
 #[derive(Debug, Default, Deserialize, Clone)]
 #[serde(default)]
@@ -18,6 +19,7 @@ pub struct AllNodesMenu {
 pub struct AllNodesMenuOutput {
     pub should_render_octree: bool,
     pub current_octree_level: u32,
+    pub octree_nodes_to_visualize: OctreeDataType,
 }
 
 impl SubMenu for AllNodesMenu {

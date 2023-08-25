@@ -11,6 +11,7 @@ use crate::{
         },
         MenuInternals, SubMenus,
     },
+    octree::OctreeDataType,
     rendering::shader::compile_shaders,
 };
 use cgmath::{perspective, point3, vec3, Deg, Matrix4};
@@ -180,6 +181,7 @@ fn main() {
     let mut show_model = false;
     let mut show_voxel_fragment_list = false;
     let mut show_octree = false;
+    let mut octree_nodes_to_visualize = OctreeDataType::Geometry;
 
     let mut node_filter_text = String::new();
     let mut should_show_final_image_quad = false;
@@ -278,6 +280,7 @@ fn main() {
             // All nodes
             show_octree = outputs.0.should_render_octree;
             current_octree_level = outputs.0.current_octree_level;
+            octree_nodes_to_visualize = outputs.0.octree_nodes_to_visualize.clone();
 
             // Node search
             selected_debug_nodes = outputs.1.selected_items.clone();
@@ -363,6 +366,11 @@ fn main() {
                 }
             }
 
+            let node_data_to_visualize = match octree_nodes_to_visualize {
+                OctreeDataType::Geometry => &octree.geometry_data.node_data,
+                OctreeDataType::Border => &octree.border_data.node_data,
+            };
+
             if show_octree {
                 octree.render(
                     &model,
@@ -373,7 +381,7 @@ fn main() {
                     should_show_normals,
                     brick_attribute,
                     brick_padding,
-                    &octree.geometry_data.node_data, // TODO: Option in menu to switch between geometry and border
+                    node_data_to_visualize,
                 );
             }
 
