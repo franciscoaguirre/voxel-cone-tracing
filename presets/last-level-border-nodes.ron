@@ -5,6 +5,7 @@
             output: (
                 should_render_octree: true,
                 current_octree_level: 6,
+                octree_nodes_to_visualize: Border,
             ),
         ),
     ),
