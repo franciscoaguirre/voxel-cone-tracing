@@ -55,6 +55,16 @@ pub enum OctreeDataType {
     Border,
 }
 
+impl OctreeDataType {
+    pub fn next(&self) -> Self {
+        use OctreeDataType::*;
+        match self {
+            Geometry => Border,
+            Border => Geometry,
+        }
+    }
+}
+
 impl Default for OctreeDataType {
     fn default() -> Self {
         Self::Geometry

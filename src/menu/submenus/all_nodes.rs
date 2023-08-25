@@ -53,6 +53,17 @@ impl SubMenu for AllNodesMenu {
             {
                 self.output.should_render_octree = !self.output.should_render_octree;
             }
+            ui.horizontal(|ui| {
+                ui.label("Node type:");
+                let button_text = match self.output.octree_nodes_to_visualize {
+                    OctreeDataType::Geometry => "Geometry",
+                    OctreeDataType::Border => "Border",
+                };
+                if ui.button(button_text).clicked() {
+                    self.output.octree_nodes_to_visualize =
+                        self.output.octree_nodes_to_visualize.next();
+                }
+            });
             ui.add(
                 egui::Slider::new(
                     &mut self.output.current_octree_level,
