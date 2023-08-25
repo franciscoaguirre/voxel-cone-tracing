@@ -836,6 +836,12 @@ pub enum BrickAttribute {
     Photons,
 }
 
+impl Default for BrickAttribute {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
 impl Into<u32> for BrickAttribute {
     fn into(self) -> u32 {
         use BrickAttribute::*;

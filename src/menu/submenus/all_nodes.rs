@@ -1,16 +1,21 @@
-use egui_backend::egui;
+use egui_glfw_gl::egui;
+
+use crate::config::CONFIG;
+use crate::menu::MenuInternals;
 
 use super::super::get_button_text;
 use super::SubMenu;
 
+#[derive(Default)]
 pub struct AllNodesMenu {
     is_showing: bool,
     output: AllNodesMenuOutput,
 }
 
+#[derive(Default)]
 pub struct AllNodesMenuOutput {
-    should_render_octree: bool,
-    current_octree_level: u32,
+    pub should_render_octree: bool,
+    pub current_octree_level: u32,
 }
 
 impl SubMenu for AllNodesMenu {
@@ -25,16 +30,20 @@ impl SubMenu for AllNodesMenu {
         self.is_showing = !self.is_showing;
     }
 
-    fn get_data(&self) -> Self::OutputData {
+    fn get_data(&self) -> &Self::OutputData {
         &self.output
     }
 
-    fn render(&self, context: egui::Context, _: &Self::InputData) {
-        egui::Window::new("All Nodes").show(&context, |ui| {
+    fn render(&mut self, internals: &MenuInternals, _: &Self::InputData) {
+        if !self.is_showing() {
+            return;
+        }
+
+        egui::Window::new("All Nodes").show(&internals.context, |ui| {
             if ui
                 .button(get_button_text(
                     "Show octree",
-                    *self.output.should_render_octree,
+                    self.output.should_render_octree,
                 ))
                 .clicked()
             {

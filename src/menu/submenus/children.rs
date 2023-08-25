@@ -1,14 +1,21 @@
-use egui_backend::egui;
+use egui_glfw_gl::egui;
 
 use super::SubMenu;
-use crate::menu::{get_button_text, MenuInternals};
+use crate::menu::MenuInternals;
 
+#[derive(Default)]
 pub struct ChildrenMenu {
     is_showing: bool,
 }
 
 pub struct ChildrenMenuInput {
     children: Vec<u32>,
+}
+
+impl ChildrenMenuInput {
+    pub fn new(children: Vec<u32>) -> Self {
+        Self { children }
+    }
 }
 
 impl SubMenu for ChildrenMenu {
@@ -27,15 +34,19 @@ impl SubMenu for ChildrenMenu {
         &()
     }
 
-    fn render(&self, internals: MenuInternals, _: &Self::InputData) {
+    fn render(&mut self, internals: &MenuInternals, input: &Self::InputData) {
+        if !self.is_showing() {
+            return;
+        }
+
         egui::Window::new("Children").show(&internals.context, |ui| {
-            if children.is_empty() {
+            if input.children.is_empty() {
                 ui.label("No children data. Pick a node!");
                 return;
             }
 
             ui.vertical(|ui| {
-                for child in children.iter() {
+                for child in input.children.iter() {
                     ui.label(child.to_string());
                 }
             });

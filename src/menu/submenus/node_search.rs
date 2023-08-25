@@ -1,8 +1,9 @@
-use egui_backend::egui;
+use egui_glfw_gl::egui;
 
 use super::SubMenu;
-use crate::menu::{get_button_text, MenuInternals};
+use crate::menu::{get_button_text, DebugNode, MenuInternals};
 
+#[derive(Default)]
 pub struct NodeSearchMenu {
     is_showing: bool,
     output: NodeSearchMenuOutput,
@@ -12,11 +13,18 @@ pub struct NodeSearchMenuInput {
     items: Vec<DebugNode>,
 }
 
+impl NodeSearchMenuInput {
+    pub fn new(items: Vec<DebugNode>) -> Self {
+        Self { items }
+    }
+}
+
+#[derive(Default)]
 pub struct NodeSearchMenuOutput {
-    selected_items: Vec<DebugNode>,
-    filter_text: String,
-    should_show_neighbors: bool,
-    selected_items_updated: bool,
+    pub selected_items: Vec<DebugNode>,
+    pub filter_text: String,
+    pub should_show_neighbors: bool,
+    pub selected_items_updated: bool,
 }
 
 impl SubMenu for NodeSearchMenu {
@@ -35,7 +43,11 @@ impl SubMenu for NodeSearchMenu {
         &self.output
     }
 
-    fn render(&self, internals: MenuInternals, input: &Self::InputData) {
+    fn render(&mut self, internals: &MenuInternals, input: &Self::InputData) {
+        if !self.is_showing() {
+            return;
+        }
+
         // Variables for handling modifications to `selected_items`
         let mut should_clear = false;
         let mut index_to_push = None;
@@ -54,42 +66,46 @@ impl SubMenu for NodeSearchMenu {
                             self.output.should_show_neighbors = !self.output.should_show_neighbors;
                         }
                     });
-                    ui.text_edit_singleline(&mut output.filter_text);
+                    ui.text_edit_singleline(&mut self.output.filter_text);
                     egui::ScrollArea::vertical()
                         .max_height(200.)
                         .show(ui, |ui| {
-                            for selected_index in 0..output.selected_items.len() {
+                            for selected_index in 0..self.output.selected_items.len() {
                                 let button_text =
-                                    format!("{}", output.selected_items[selected_index]);
+                                    format!("{}", self.output.selected_items[selected_index]);
                                 if ui.button(get_button_text(&button_text, true)).clicked() {
-                                    let selected_item = &output.selected_items[selected_index];
+                                    let selected_item = &self.output.selected_items[selected_index];
                                     index_to_remove = Some(
-                                        output
+                                        self.output
                                             .selected_items
                                             .iter()
                                             .position(|item| item.index == selected_item.index)
                                             .expect("Selected item was clicked"),
                                     );
-                                    output.selected_items_updated = true;
+                                    self.output.selected_items_updated = true;
                                 }
                             }
                         });
                     ui.separator();
                     for item_index in (0..input.items.len())
                         .filter(|&item_index| {
-                            (0..output.selected_items.len())
+                            (0..self.output.selected_items.len())
                                 .find(|&selected_index| {
-                                    output.selected_items[selected_index].index == item_index as u32
+                                    self.output.selected_items[selected_index].index
+                                        == item_index as u32
                                 })
                                 .is_none()
-                                && (item_index.to_string().starts_with(&output.filter_text)
-                                    || input.items[item_index].text.contains(&output.filter_text))
+                                && (item_index.to_string().starts_with(&self.output.filter_text)
+                                    || input.items[item_index]
+                                        .text
+                                        .contains(&self.output.filter_text))
                         })
                         .take(20)
                     {
                         let button_text = format!("{}", &input.items[item_index]);
                         let button = ui.button(button_text.clone());
-                        let clicking_selected_item = output
+                        let clicking_selected_item = self
+                            .output
                             .selected_items
                             .iter()
                             .find(|selected_item| selected_item.index == item_index as u32)
@@ -103,22 +119,22 @@ impl SubMenu for NodeSearchMenu {
                             } else {
                                 index_to_push = Some(item_index);
                             }
-                            output.selected_items_updated = true;
+                            self.output.selected_items_updated = true;
                         }
                     }
 
                     if should_clear {
-                        output.selected_items.clear();
+                        self.output.selected_items.clear();
                         should_clear = false;
                     }
 
                     if let Some(index) = index_to_push {
-                        output.selected_items.push(items[index].clone());
+                        self.output.selected_items.push(input.items[index].clone());
                         index_to_push = None;
                     }
 
                     if let Some(index) = index_to_remove {
-                        output.selected_items.remove(index);
+                        self.output.selected_items.remove(index);
                         index_to_remove = None;
                     }
                 });

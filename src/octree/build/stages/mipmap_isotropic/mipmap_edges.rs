@@ -4,7 +4,7 @@ use crate::rendering::shader::compile_compute;
 use crate::{
     config::CONFIG,
     helpers,
-    octree::{build::BrickPoolValues, NodeData, OctreeTextures},
+    octree::{NodeData, OctreeTextures},
     rendering::shader::Shader,
 };
 

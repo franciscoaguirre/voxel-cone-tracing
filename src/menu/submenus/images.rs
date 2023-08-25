@@ -1,15 +1,20 @@
-use egui_backend::egui;
+use egui_glfw_gl::egui;
 
 use super::SubMenu;
-use crate::menu::{get_button_text, MenuInternals};
+use crate::{
+    cone_tracing::Toggles,
+    menu::{get_button_text, MenuInternals},
+};
 
+#[derive(Default)]
 pub struct ImagesMenu {
     is_showing: bool,
     output: ImagesMenuOutput,
 }
 
+#[derive(Default)]
 pub struct ImagesMenuOutput {
-    toggles: Toggles,
+    pub toggles: Toggles,
 }
 
 impl SubMenu for ImagesMenu {
@@ -28,7 +33,11 @@ impl SubMenu for ImagesMenu {
         &self.output
     }
 
-    fn render(&self, internals: MenuInternals, _: &Self::InputData) {
+    fn render(&mut self, internals: &MenuInternals, _: &Self::InputData) {
+        if !self.is_showing() {
+            return;
+        }
+
         egui::Window::new("Images").show(&internals.context, |ui| {
             if ui
                 .button(get_button_text(
@@ -49,7 +58,7 @@ impl SubMenu for ImagesMenu {
                 self.output.toggles.toggle_direct();
             }
             if ui
-                .button(Self::get_button_text(
+                .button(get_button_text(
                     "Indirect diffuse",
                     self.output.toggles.should_show_indirect(),
                 ))
@@ -58,7 +67,7 @@ impl SubMenu for ImagesMenu {
                 self.output.toggles.toggle_indirect();
             }
             if ui
-                .button(Self::get_button_text(
+                .button(get_button_text(
                     "Indirect specular",
                     self.output.toggles.should_show_indirect_specular(),
                 ))
@@ -67,7 +76,7 @@ impl SubMenu for ImagesMenu {
                 self.output.toggles.toggle_indirect_specular();
             }
             if ui
-                .button(Self::get_button_text(
+                .button(get_button_text(
                     "Ambient occlusion",
                     self.output.toggles.should_show_ambient_occlusion(),
                 ))

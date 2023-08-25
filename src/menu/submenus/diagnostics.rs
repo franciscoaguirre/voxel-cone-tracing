@@ -1,14 +1,19 @@
-use egui_backend::egui;
+use egui_glfw_gl::egui;
 
 use super::SubMenu;
-use crate::menu::{get_button_text, MenuInternals};
+use crate::menu::MenuInternals;
 
-pub struct DiagnosticsMenu {
-    is_showing: bool,
-}
+#[derive(Default)]
+pub struct DiagnosticsMenu;
 
 pub struct DiagnosticsMenuInput {
     fps: f64,
+}
+
+impl DiagnosticsMenuInput {
+    pub fn new(fps: f64) -> Self {
+        Self { fps }
+    }
 }
 
 impl SubMenu for DiagnosticsMenu {
@@ -16,20 +21,22 @@ impl SubMenu for DiagnosticsMenu {
     type OutputData = ();
 
     fn is_showing(&self) -> bool {
-        self.is_showing
+        true
     }
 
-    fn toggle_showing(&mut self) {
-        self.is_showing = !self.is_showing;
-    }
+    fn toggle_showing(&mut self) {}
 
     fn get_data(&self) -> &Self::OutputData {
         &()
     }
 
-    fn render(&self, internals: MenuInternals, input: &Self::InputData) {
+    fn render(&mut self, internals: &MenuInternals, input: &Self::InputData) {
+        if !self.is_showing() {
+            return;
+        }
+
         egui::Window::new("Diagnostics").show(&internals.context, |ui| {
-            let fps_text = format!("FPS: {fps:.2}");
+            let fps_text = format!("FPS: {:.2}", input.fps);
             ui.label(fps_text);
         });
     }

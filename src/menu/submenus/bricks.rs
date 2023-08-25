@@ -1,19 +1,36 @@
-use egui_backend::egui;
+use cgmath::{vec3, InnerSpace, Vector3};
+use egui_glfw_gl::egui;
 
 use super::SubMenu;
-use crate::menu::{get_button_text, MenuInternals};
+use crate::{
+    menu::{get_button_text, MenuInternals},
+    octree::{BrickAttribute, BricksToShow},
+};
 
+#[derive(Default)]
 pub struct BricksMenu {
     is_showing: bool,
     output: BricksMenuOutput,
 }
 
 pub struct BricksMenuOutput {
-    bricks_to_show: BricksToShow,
-    brick_attribute: BrickAttribute,
-    should_show_brick_normals: bool,
-    color_direction: Vector3<f32>,
-    brick_padding: f32,
+    pub bricks_to_show: BricksToShow,
+    pub brick_attribute: BrickAttribute,
+    pub should_show_brick_normals: bool,
+    pub color_direction: Vector3<f32>,
+    pub brick_padding: f32,
+}
+
+impl Default for BricksMenuOutput {
+    fn default() -> Self {
+        Self {
+            bricks_to_show: BricksToShow::default(),
+            brick_attribute: BrickAttribute::default(),
+            should_show_brick_normals: false,
+            color_direction: vec3(1.0, 0.0, 0.0),
+            brick_padding: 0.0,
+        }
+    }
 }
 
 impl SubMenu for BricksMenu {
@@ -32,24 +49,28 @@ impl SubMenu for BricksMenu {
         &self.output
     }
 
-    fn render(&self, internals: MenuInternals, _: &Self::InputData) {
+    fn render(&mut self, internals: &MenuInternals, _: &Self::InputData) {
+        if !self.is_showing() {
+            return;
+        }
+
         egui::Window::new("Bricks").show(&internals.context, |ui| {
             ui.horizontal(|ui| {
                 ui.label("Bricks: ");
                 if ui
-                    .button(Self::get_button_text("Z0", self.output.bricks_to_show.z0()))
+                    .button(get_button_text("Z0", self.output.bricks_to_show.z0()))
                     .clicked()
                 {
                     self.output.bricks_to_show.toggle_z0();
                 }
                 if ui
-                    .button(Self::get_button_text("Z1", self.output.bricks_to_show.z1()))
+                    .button(get_button_text("Z1", self.output.bricks_to_show.z1()))
                     .clicked()
                 {
                     self.output.bricks_to_show.toggle_z1();
                 }
                 if ui
-                    .button(Self::get_button_text("Z2", self.output.bricks_to_show.z2()))
+                    .button(get_button_text("Z2", self.output.bricks_to_show.z2()))
                     .clicked()
                 {
                     self.output.bricks_to_show.toggle_z2();
@@ -67,7 +88,7 @@ impl SubMenu for BricksMenu {
                 }
             });
             if ui
-                .button(Self::get_button_text(
+                .button(get_button_text(
                     "Show normals",
                     self.output.should_show_brick_normals,
                 ))
@@ -92,7 +113,9 @@ impl SubMenu for BricksMenu {
             } else {
                 self.output.color_direction = self.output.color_direction.normalize();
             }
-            ui.add(egui::Slider::new(self.output.brick_padding, 0.0..=1.0).text("Brick padding"));
+            ui.add(
+                egui::Slider::new(&mut self.output.brick_padding, 0.0..=1.0).text("Brick padding"),
+            );
         });
     }
 }

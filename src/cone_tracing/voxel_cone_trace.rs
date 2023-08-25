@@ -1,7 +1,7 @@
 use c_str_macro::c_str;
 use cgmath::vec3;
 
-use crate::rendering::shader::{compile_compute, compile_shaders};
+use crate::rendering::shader::compile_shaders;
 use crate::{
     config::CONFIG,
     helpers,
@@ -225,7 +225,7 @@ impl ConeTracer {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct Toggles {
     should_show_color: bool,
     should_show_direct: bool,

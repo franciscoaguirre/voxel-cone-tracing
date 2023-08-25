@@ -1,16 +1,19 @@
 extern crate c_str_macro;
 
-use std::collections::HashSet;
-use std::iter::FromIterator;
-
 use c_str_macro::c_str;
 use egui_glfw_gl::glfw::{self, Context};
 extern crate gl;
 use crate::{
     cone_tracing::DebugCone,
-    rendering::shader::{compile_compute, compile_shaders},
+    menu::{
+        submenus::{
+            ChildrenMenuInput, DiagnosticsMenuInput, NodeSearchMenuInput, PhotonsMenuInput,
+        },
+        MenuInternals, SubMenus,
+    },
+    rendering::shader::compile_shaders,
 };
-use cgmath::{perspective, point3, vec3, Deg, InnerSpace, Matrix4, Point3};
+use cgmath::{perspective, point3, vec3, Deg, Matrix4};
 use log::info;
 
 use rendering::quad::Quad;
@@ -23,6 +26,7 @@ mod constants;
 mod helpers;
 mod menu;
 mod octree;
+mod preset;
 mod rendering;
 mod scene;
 mod types;
@@ -31,7 +35,7 @@ mod voxelization;
 use cli_arguments::Options;
 use config::CONFIG;
 use menu::Menu;
-use rendering::{camera::Camera, common, gizmo::RenderGizmo, light::SpotLight, shader::Shader};
+use rendering::{camera::Camera, common, gizmo::RenderGizmo, shader::Shader};
 use scene::SCENE;
 use voxelization::visualize::RenderVoxelFragmentsShader;
 
@@ -261,39 +265,37 @@ fn main() {
 
         // egui render
         if menu.is_showing() {
-            // Always show diagnostics
-            menu.create_diagnostics_window(fps);
             menu.show_main_window();
-            if menu.is_showing_all_nodes_window() {
-                menu.create_all_nodes_window(&mut show_octree, &mut current_octree_level);
-            }
-            if menu.is_showing_node_search_window() {
-                menu.create_node_search_window(
-                    &debug_nodes,
-                    &mut selected_debug_nodes,
-                    &mut node_filter_text,
-                    &mut should_show_neighbors,
-                    &mut selected_debug_nodes_updated,
-                );
-            }
-            if menu.is_showing_bricks_window() {
-                menu.create_bricks_window(
-                    &mut bricks_to_show,
-                    &mut brick_attribute,
-                    &mut should_show_normals,
-                    &mut color_direction,
-                    &mut brick_padding,
-                );
-            }
-            if menu.is_showing_photons_window() {
-                menu.create_photons_window(&photons);
-            }
-            if menu.is_showing_children_window() {
-                menu.create_children_window(&children);
-            }
-            if menu.is_showing_images_window() {
-                menu.create_images_window(&mut cone_tracer.toggles);
-            }
+            menu.render((
+                (),
+                NodeSearchMenuInput::new(debug_nodes.clone()),
+                (),
+                ChildrenMenuInput::new(children.clone()),
+                DiagnosticsMenuInput::new(fps),
+                (),
+                PhotonsMenuInput::new(photons.clone()),
+            ));
+            let outputs = menu.get_data();
+
+            // All nodes
+            show_octree = outputs.0.should_render_octree;
+            current_octree_level = outputs.0.current_octree_level;
+
+            // Node search
+            selected_debug_nodes = outputs.1.selected_items.clone();
+            node_filter_text = outputs.1.filter_text.clone();
+            should_show_neighbors = outputs.1.should_show_neighbors;
+            selected_debug_nodes_updated = outputs.1.selected_items_updated;
+
+            // Bricks
+            bricks_to_show = outputs.2.bricks_to_show;
+            brick_attribute = outputs.2.brick_attribute;
+            should_show_normals = outputs.2.should_show_brick_normals;
+            color_direction = outputs.2.color_direction;
+            brick_padding = outputs.2.brick_padding;
+
+            // Images
+            cone_tracer.toggles = outputs.5.toggles.clone();
         }
 
         // This is for debugging

@@ -6,11 +6,9 @@ use structopt::StructOpt;
 
 use crate::cli_arguments::Options;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 #[serde(default)]
-pub struct Preset {
-    pub 
-}
+pub struct Preset {}
 
 pub static PRESET: Lazy<Preset> = Lazy::new(load_preset);
 

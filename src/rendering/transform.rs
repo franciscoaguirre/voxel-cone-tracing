@@ -3,7 +3,6 @@ use std::{ffi::c_void, mem::size_of};
 use c_str_macro::c_str;
 use cgmath::{point3, vec3, Deg, Euler, InnerSpace, Matrix4, Point3, Vector3, Zero};
 use gl::types::GLuint;
-use log;
 use serde::Deserialize;
 
 use crate::config::CONFIG;

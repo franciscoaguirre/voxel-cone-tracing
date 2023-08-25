@@ -1,5 +1,6 @@
 use c_str_macro::c_str;
 
+use crate::rendering::shader::compile_compute;
 use crate::{
     config::CONFIG,
     constants::{Axis, Direction, Sign},
@@ -7,7 +8,6 @@ use crate::{
     octree::{build::BrickPoolValues, NodeData, OctreeTextures},
     rendering::shader::Shader,
 };
-use crate::rendering::shader::{compile_compute, compile_shaders};
 
 pub struct AnisotropicBorderTransferPass {
     shader: Shader,
@@ -16,9 +16,7 @@ pub struct AnisotropicBorderTransferPass {
 impl AnisotropicBorderTransferPass {
     pub fn init() -> Self {
         Self {
-            shader: compile_compute!(
-                "assets/shaders/octree/anisotropicBorderTransfer.comp.glsl",
-            ),
+            shader: compile_compute!("assets/shaders/octree/anisotropicBorderTransfer.comp.glsl",),
         }
     }
 
