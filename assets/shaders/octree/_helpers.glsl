@@ -50,7 +50,6 @@ uvec3 calculateBrickVoxel(vec3 nodeCoordinates, float halfNodeSize, vec3 queryCo
     float quarterNodeSize = halfNodeSize / 2.0;
     uint xOffset = findQuarter(nodeCoordinates.x, quarterNodeSize, queryCoordinates.x);
     uint yOffset = findQuarter(nodeCoordinates.y, quarterNodeSize, queryCoordinates.y);
-    //uint yOffset = 1;
     uint zOffset = findQuarter(nodeCoordinates.z, quarterNodeSize, queryCoordinates.z);
     return uvec3(xOffset, yOffset, zOffset);
 }

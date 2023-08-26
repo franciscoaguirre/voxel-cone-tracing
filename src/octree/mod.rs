@@ -2,6 +2,7 @@ use std::{ffi::c_void, mem::size_of};
 
 use gl::types::GLuint;
 use log;
+use serde::Deserialize;
 
 use crate::rendering::shader::{compile_compute, compile_shaders};
 use crate::{
@@ -48,10 +49,26 @@ pub struct OctreeData {
     pub voxel_data: VoxelData,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Clone)]
 pub enum OctreeDataType {
     Geometry,
     Border,
+}
+
+impl OctreeDataType {
+    pub fn next(&self) -> Self {
+        use OctreeDataType::*;
+        match self {
+            Geometry => Border,
+            Border => Geometry,
+        }
+    }
+}
+
+impl Default for OctreeDataType {
+    fn default() -> Self {
+        Self::Geometry
+    }
 }
 
 impl OctreeData {

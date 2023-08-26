@@ -1,16 +1,21 @@
 extern crate c_str_macro;
 
-use std::collections::HashSet;
-use std::iter::FromIterator;
-
 use c_str_macro::c_str;
 use egui_glfw_gl::glfw::{self, Context};
 extern crate gl;
 use crate::{
     cone_tracing::DebugCone,
-    rendering::shader::{compile_compute, compile_shaders},
+    menu::{
+        submenus::{
+            ChildrenMenuInput, DiagnosticsMenuInput, NodeSearchMenuInput, PhotonsMenuInput,
+        },
+        MenuInternals, SubMenus,
+    },
+    octree::OctreeDataType,
+    preset::PRESET,
+    rendering::shader::compile_shaders,
 };
-use cgmath::{perspective, point3, vec3, Deg, InnerSpace, Matrix4, Point3};
+use cgmath::{perspective, point3, vec3, Deg, Matrix4};
 use log::info;
 
 use rendering::quad::Quad;
@@ -23,14 +28,16 @@ mod constants;
 mod helpers;
 mod menu;
 mod octree;
+mod preset;
 mod rendering;
+mod scene;
 mod types;
 mod voxelization;
 
-use cli_arguments::Options;
 use config::CONFIG;
 use menu::Menu;
-use rendering::{camera::Camera, common, gizmo::RenderGizmo, light::SpotLight, shader::Shader};
+use rendering::{camera::Camera, common, gizmo::RenderGizmo, shader::Shader};
+use scene::SCENE;
 use voxelization::visualize::RenderVoxelFragmentsShader;
 
 use octree::{BricksToShow, Octree};
@@ -43,7 +50,6 @@ use crate::{
 };
 
 fn main() {
-    let options = Options::from_args();
     simple_logger::init().unwrap();
 
     // NOTE: This is true if the binary was compiled in debug mode
@@ -56,21 +62,14 @@ fn main() {
     let (mut glfw, mut window, events) = unsafe { common::setup_glfw(debug) };
 
     // Camera setup
-    let mut camera = Camera::default();
-    // camera.transform.position = point3(0.0, -0.25, 0.0);
-    // camera.transform.position = point3(0.0, 0.0, -2.0);
-    camera.transform.position = point3(0.0, -2.0, 4.0);
-    camera.transform.set_rotation_y(-90.0);
+    let mut camera = PRESET.camera.clone();
     let mut first_mouse = true;
     let mut last_x: f32 = CONFIG.viewport_width as f32 / 2.0;
     let mut last_y: f32 = CONFIG.viewport_height as f32 / 2.0;
 
     // Static eye
     let mut static_eye = Transform::default();
-    // static_eye.position = point3(0.0, -0.25, 0.0);
     static_eye.position = point3(0.0, 0.0, -2.0);
-    // static_eye.set_rotation_x(-60.0);
-    // static_eye.set_rotation_y(0.0);
 
     // FPS variables
     let mut frame_count = 0;
@@ -96,7 +95,7 @@ fn main() {
     );
     let mut cone_tracer = ConeTracer::init();
     let mut debug_cone = unsafe { DebugCone::new() };
-    let our_model = unsafe { helpers::load_model(&options.model) };
+    let our_model = unsafe { helpers::load_model() };
 
     let scene_aabb = &our_model.aabb;
     let aabb_middle_point = scene_aabb.middle_point();
@@ -149,33 +148,7 @@ fn main() {
     let mut photons: Vec<u32> = Vec::new();
     let mut children: Vec<u32> = Vec::new();
 
-    let mut light = unsafe {
-        SpotLight::new(
-            2.0,
-            2.0,
-            Point3 {
-                x: 1.0,
-                y: 1.0,
-                z: 1.0,
-            },
-            1_000_000.0,
-        )
-    };
-    // light.transform.position = point3(0.0, 0.00, 2.0);
-    // light.transform.set_rotation_y(-90.0);
-    // light.transform.set_rotation_x(-75.0);
-
-    // From above at angle
-    light.transform.set_rotation_x(-60.0);
-    light.transform.position = point3(0.0, 1.0, -0.4);
-
-    //// From below
-    //light.transform.position = point3(0.0, -1.0, 0.0);
-    //light.transform.set_rotation_x(90.0);
-
-    // From below at angle
-    // light.transform.position = point3(0.0, -1.0, -1.0);
-    // light.transform.set_rotation_x(45.0);
+    let mut light = SCENE.light.clone();
 
     let light_framebuffer = unsafe { Framebuffer::new_light() };
     let mut light_maps = unsafe {
@@ -196,21 +169,13 @@ fn main() {
         0.0001,
         10000.0,
     );
-    let eye_geometry_buffers = unsafe {
-        static_eye.take_photo(
-            &[&our_model],
-            &projection,
-            &model_normalization_matrix,
-            &camera_framebuffer,
-            None,
-        )
-    };
 
     let mut current_voxel_fragment_count: u32 = 0;
     let mut current_octree_level: u32 = 0;
     let mut show_model = false;
     let mut show_voxel_fragment_list = false;
     let mut show_octree = false;
+    let mut octree_nodes_to_visualize = OctreeDataType::Geometry;
 
     let mut node_filter_text = String::new();
     let mut should_show_final_image_quad = false;
@@ -294,39 +259,38 @@ fn main() {
 
         // egui render
         if menu.is_showing() {
-            // Always show diagnostics
-            menu.create_diagnostics_window(fps);
             menu.show_main_window();
-            if menu.is_showing_all_nodes_window() {
-                menu.create_all_nodes_window(&mut show_octree, &mut current_octree_level);
-            }
-            if menu.is_showing_node_search_window() {
-                menu.create_node_search_window(
-                    &debug_nodes,
-                    &mut selected_debug_nodes,
-                    &mut node_filter_text,
-                    &mut should_show_neighbors,
-                    &mut selected_debug_nodes_updated,
-                );
-            }
-            if menu.is_showing_bricks_window() {
-                menu.create_bricks_window(
-                    &mut bricks_to_show,
-                    &mut brick_attribute,
-                    &mut should_show_normals,
-                    &mut color_direction,
-                    &mut brick_padding,
-                );
-            }
-            if menu.is_showing_photons_window() {
-                menu.create_photons_window(&photons);
-            }
-            if menu.is_showing_children_window() {
-                menu.create_children_window(&children);
-            }
-            if menu.is_showing_images_window() {
-                menu.create_images_window(&mut cone_tracer.toggles);
-            }
+            menu.render((
+                (),
+                NodeSearchMenuInput::new(debug_nodes.clone()),
+                (),
+                ChildrenMenuInput::new(children.clone()),
+                DiagnosticsMenuInput::new(fps),
+                (),
+                PhotonsMenuInput::new(photons.clone()),
+            ));
+            let outputs = menu.get_data();
+
+            // All nodes
+            show_octree = outputs.0.should_render_octree;
+            current_octree_level = outputs.0.current_octree_level;
+            octree_nodes_to_visualize = outputs.0.octree_nodes_to_visualize.clone();
+
+            // Node search
+            selected_debug_nodes = outputs.1.selected_items.clone();
+            node_filter_text = outputs.1.filter_text.clone();
+            should_show_neighbors = outputs.1.should_show_neighbors;
+            selected_debug_nodes_updated = outputs.1.selected_items_updated;
+
+            // Bricks
+            bricks_to_show = outputs.2.bricks_to_show;
+            brick_attribute = outputs.2.brick_attribute;
+            should_show_normals = outputs.2.should_show_brick_normals;
+            color_direction = outputs.2.color_direction;
+            brick_padding = outputs.2.brick_padding;
+
+            // Images
+            cone_tracer.toggles = outputs.5.toggles.clone();
         }
 
         // This is for debugging
@@ -396,6 +360,11 @@ fn main() {
                 }
             }
 
+            let node_data_to_visualize = match octree_nodes_to_visualize {
+                OctreeDataType::Geometry => &octree.geometry_data.node_data,
+                OctreeDataType::Border => &octree.border_data.node_data,
+            };
+
             if show_octree {
                 octree.render(
                     &model,
@@ -406,7 +375,7 @@ fn main() {
                     should_show_normals,
                     brick_attribute,
                     brick_padding,
-                    &octree.geometry_data.node_data, // TODO: Option in menu to switch between geometry and border
+                    node_data_to_visualize,
                 );
             }
 

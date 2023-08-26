@@ -1,12 +1,12 @@
 use c_str_macro::c_str;
 
+use crate::rendering::shader::{compile_compute, Shader};
 use crate::{
     config::CONFIG,
     constants::Axis,
     helpers,
     octree::{build::BrickPoolValues, NodeData, OctreeTextures},
 };
-use crate::rendering::shader::{Shader, compile_compute, compile_shaders};
 
 pub struct LeafBorderTransferPass {
     shader: Shader,
@@ -28,7 +28,7 @@ impl LeafBorderTransferPass {
     ) {
         self.shader.use_program();
 
-        let last_octree_level = CONFIG.octree_levels - 1;
+        let last_octree_level = CONFIG.last_octree_level;
         self.shader
             .set_uint(c_str!("octreeLevel"), last_octree_level);
 

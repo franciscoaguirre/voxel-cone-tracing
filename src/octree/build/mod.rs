@@ -75,8 +75,8 @@ impl Octree {
         //     BrickPoolValues::Colors,
         // );
 
-        #[cfg(debug_assertions)]
-        self.run_mipmap(BrickPoolValues::Colors);
+        //#[cfg(debug_assertions)]
+        //self.run_mipmap(BrickPoolValues::Colors);
     }
 
     pub unsafe fn run_mipmap(&self, brick_pool_values: BrickPoolValues) {

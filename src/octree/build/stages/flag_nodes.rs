@@ -1,8 +1,8 @@
 use c_str_macro::c_str;
 
 use super::super::super::{OctreeTextures, VoxelData};
+use crate::rendering::shader::compile_compute;
 use crate::{config::CONFIG, helpers, rendering::shader::Shader};
-use crate::rendering::shader::{compile_compute, compile_shaders};
 
 pub struct FlagNodesPass {
     shader: Shader,

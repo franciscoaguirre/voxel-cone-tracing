@@ -3,6 +3,7 @@ use std::{ffi::c_void, mem::size_of};
 use c_str_macro::c_str;
 use cgmath::{point3, vec3, Deg, Euler, InnerSpace, Matrix4, Point3, Vector3, Zero};
 use gl::types::GLuint;
+use serde::Deserialize;
 
 use crate::config::CONFIG;
 
@@ -13,19 +14,39 @@ use super::{
 use crate::rendering::shader::compile_shaders;
 
 /// Struct that handles `position`, `rotation` and `scale` for an entity
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Transform {
     pub position: Point3<f32>,
+    #[serde(default = "default_scale")]
     pub scale: Vector3<f32>,
+    #[serde(default = "default_rotation")]
     rotation: Euler<f32>,
+    #[serde(skip_deserializing, default = "Vector3::unit_z")]
     forward: Vector3<f32>,
+    #[serde(skip_deserializing, default = "Vector3::unit_y")]
     up: Vector3<f32>,
+    #[serde(skip_deserializing, default = "Vector3::unit_x")]
     right: Vector3<f32>,
+    #[serde(default = "default_movement_speed")]
     pub movement_speed: f32,
+    #[serde(skip_deserializing)]
     pub vao: GLuint,
+    #[serde(skip_deserializing, default = "default_gizmo_shader")]
     shader: Shader,
-    // TODO: This is kind of ugly
-    view_map_shader: Shader,
+    #[serde(skip_deserializing, default = "default_view_map_shader")]
+    view_map_shader: Shader, // TODO: It's kind of ugly to store this here
+}
+
+const fn default_scale() -> Vector3<f32> {
+    vec3(1.0, 1.0, 1.0)
+}
+
+const fn default_rotation() -> Euler<f32> {
+    Euler::new(0.0, 90.0, 0.0)
+}
+
+const fn default_movement_speed() -> f32 {
+    1.0
 }
 
 // Defines several possible options for movement. Used as abstraction to stay away from window-system specific input methods
@@ -45,25 +66,33 @@ impl Default for Transform {
         let mut this = Self {
             position: point3(0.0, 0.0, 0.0),
             scale: vec3(1.0, 1.0, 1.0),
-            rotation: Euler::new(0.0, 90.0, 0.0),
+            rotation: default_rotation(),
             forward: vec3(0.0, 0.0, 1.0),
             up: Vector3::zero(),    // Initialized later
             right: Vector3::zero(), // Initialized later
             vao: 0,                 // Initialized later
             movement_speed: 1.0,
-            shader: compile_shaders!(
-                "assets/shaders/debug/cubicGizmo.vert.glsl",
-                "assets/shaders/debug/cubicGizmo.frag.glsl",
-                "assets/shaders/debug/cubicGizmo.geom.glsl",
-            ),
-            view_map_shader: compile_shaders!("assets/shaders/octree/viewMap.glsl"),
+            shader: default_gizmo_shader(),
+            view_map_shader: default_view_map_shader(),
         };
-        this.update_vectors();
         unsafe {
             this.setup_vao();
-        };
+        }
+        this.update_vectors();
         this
     }
+}
+
+fn default_gizmo_shader() -> Shader {
+    compile_shaders!(
+        "assets/shaders/debug/cubicGizmo.vert.glsl",
+        "assets/shaders/debug/cubicGizmo.frag.glsl",
+        "assets/shaders/debug/cubicGizmo.geom.glsl",
+    )
+}
+
+fn default_view_map_shader() -> Shader {
+    compile_shaders!("assets/shaders/octree/viewMap.glsl")
 }
 
 impl RenderGizmo for Transform {
@@ -112,9 +141,17 @@ impl Transform {
         self.up
     }
 
+    pub fn rotation_x(&self) -> f32 {
+        self.rotation.x
+    }
+
     pub fn set_rotation_x(&mut self, x: f32) {
         self.rotation.x = x;
         self.update_vectors();
+    }
+
+    pub fn rotation_y(&self) -> f32 {
+        self.rotation.y
     }
 
     pub fn set_rotation_y(&mut self, y: f32) {
@@ -122,12 +159,16 @@ impl Transform {
         self.update_vectors();
     }
 
+    pub fn rotation_z(&self) -> f32 {
+        self.rotation.z
+    }
+
     pub fn set_rotation_z(&mut self, z: f32) {
         self.rotation.z = z;
         self.update_vectors();
     }
 
-    fn update_vectors(&mut self) {
+    pub fn update_vectors(&mut self) {
         let forward = Vector3 {
             x: self.rotation.y.to_radians().cos() * self.rotation.x.to_radians().cos(),
             y: self.rotation.x.to_radians().sin(),
@@ -138,14 +179,15 @@ impl Transform {
         self.up = self.right.cross(self.forward).normalize();
     }
 
-    unsafe fn setup_vao(&mut self) {
+    pub unsafe fn setup_vao(&mut self) {
         gl::GenVertexArrays(1, &mut self.vao);
         let mut vbo = 0;
         gl::GenBuffers(1, &mut vbo);
         gl::BindVertexArray(self.vao);
         gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
         let size = size_of::<Point3<f32>>() as isize;
-        let data = &[self.position][0] as *const Point3<f32> as *const c_void;
+        let local_position = point3(0_f32, 0_f32, 0_f32);
+        let data = &[local_position][0] as *const Point3<f32> as *const c_void;
         gl::BufferData(gl::ARRAY_BUFFER, size, data, gl::STATIC_DRAW);
         gl::EnableVertexAttribArray(0);
         gl::VertexAttribPointer(

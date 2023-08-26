@@ -1,36 +1,72 @@
-use std::fmt::Display;
+use std::fmt;
 
-use cgmath::{vec3, InnerSpace, Vector3};
 use egui_backend::{
     egui::{self, vec2, Color32, Pos2, Rect},
     glfw::{Action, CursorMode, Key, Window, WindowEvent},
 };
 use egui_glfw_gl as egui_backend;
+use serde::Deserialize;
 
-use crate::{
-    cone_tracing::Toggles,
-    config::CONFIG,
-    octree::{BrickAttribute, BricksToShow},
-};
+use crate::{config::CONFIG, preset::PRESET};
+
+pub mod submenus;
+use submenus::*;
 
 pub struct Menu {
     is_showing: bool,
+    internals: MenuInternals,
+    sub_menus: SubMenus,
+}
+
+pub struct MenuInternals {
     painter: egui_backend::Painter,
     context: egui::Context,
     input_state: egui_backend::EguiInputState,
     modifier_keys: egui::Modifiers,
     native_pixels_per_point: f32,
-    is_showing_all_nodes_window: bool,
-    is_showing_node_search_window: bool,
-    is_showing_bricks_window: bool,
-    is_showing_photons_window: bool,
-    is_showing_children_window: bool,
-    is_showing_images_window: bool,
 }
+
+#[derive(Debug, Default, Deserialize, Clone)]
+#[serde(default)]
+pub struct SubMenus {
+    all_nodes: AllNodesMenu,
+    node_search: NodeSearchMenu,
+    bricks: BricksMenu,
+    children: ChildrenMenu,
+    diagnostics: DiagnosticsMenu,
+    images: ImagesMenu,
+    photons: PhotonsMenu,
+}
+
+type SubMenuInputs = (
+    <AllNodesMenu as SubMenu>::InputData,
+    <NodeSearchMenu as SubMenu>::InputData,
+    <BricksMenu as SubMenu>::InputData,
+    <ChildrenMenu as SubMenu>::InputData,
+    <DiagnosticsMenu as SubMenu>::InputData,
+    <ImagesMenu as SubMenu>::InputData,
+    <PhotonsMenu as SubMenu>::InputData,
+);
+
+type SubMenuOutputs<'a> = (
+    &'a <AllNodesMenu as SubMenu>::OutputData,
+    &'a <NodeSearchMenu as SubMenu>::OutputData,
+    &'a <BricksMenu as SubMenu>::OutputData,
+    &'a <ChildrenMenu as SubMenu>::OutputData,
+    &'a <DiagnosticsMenu as SubMenu>::OutputData,
+    &'a <ImagesMenu as SubMenu>::OutputData,
+    &'a <PhotonsMenu as SubMenu>::OutputData,
+);
 
 impl Menu {
     pub fn new(window: &mut Window) -> Self {
-        Self::setup_egui(window)
+        let mut menu = Self::setup_egui(window);
+        menu.process_preset();
+        menu
+    }
+
+    fn process_preset(&mut self) {
+        self.sub_menus = PRESET.submenus.clone();
     }
 
     pub fn toggle_showing(&mut self, window: &mut Window, last_x: &mut f32, last_y: &mut f32) {
@@ -52,42 +88,18 @@ impl Menu {
         self.is_showing
     }
 
-    pub fn is_showing_all_nodes_window(&self) -> bool {
-        self.is_showing_all_nodes_window
-    }
-
-    pub fn is_showing_node_search_window(&self) -> bool {
-        self.is_showing_node_search_window
-    }
-
-    pub fn is_showing_bricks_window(&self) -> bool {
-        self.is_showing_bricks_window
-    }
-
-    pub fn is_showing_photons_window(&self) -> bool {
-        self.is_showing_photons_window
-    }
-
-    pub fn is_showing_children_window(&self) -> bool {
-        self.is_showing_children_window
-    }
-
-    pub fn is_showing_images_window(&self) -> bool {
-        self.is_showing_images_window
-    }
-
     pub fn handle_event(&mut self, event: WindowEvent) {
         if !self.is_showing {
             return;
         }
 
         if let WindowEvent::Key(Key::LeftShift, _, Action::Press, _) = event {
-            self.modifier_keys.shift = true;
+            self.internals.modifier_keys.shift = true;
         } else if let WindowEvent::Key(Key::LeftShift, _, Action::Release, _) = event {
-            self.modifier_keys.shift = false;
+            self.internals.modifier_keys.shift = false;
         }
 
-        egui_backend::handle_event(event, &mut self.input_state);
+        egui_backend::handle_event(event, &mut self.internals.input_state);
     }
 
     pub fn begin_frame(&mut self, current_frame: f64) {
@@ -95,10 +107,13 @@ impl Menu {
             return;
         }
 
-        self.input_state.input.time = Some(current_frame);
-        self.input_state.input.modifiers = self.modifier_keys;
-        self.context.begin_frame(self.input_state.input.take());
-        self.input_state.input.pixels_per_point = Some(self.native_pixels_per_point);
+        self.internals.input_state.input.time = Some(current_frame);
+        self.internals.input_state.input.modifiers = self.internals.modifier_keys;
+        self.internals
+            .context
+            .begin_frame(self.internals.input_state.input.take());
+        self.internals.input_state.input.pixels_per_point =
+            Some(self.internals.native_pixels_per_point);
     }
 
     pub fn end_frame(&mut self) {
@@ -111,21 +126,23 @@ impl Menu {
             repaint_after: _,
             textures_delta,
             shapes,
-        } = self.context.end_frame();
+        } = self.internals.context.end_frame();
         if !platform_output.copied_text.is_empty() {
-            egui_backend::copy_to_clipboard(&mut self.input_state, platform_output.copied_text);
+            egui_backend::copy_to_clipboard(
+                &mut self.internals.input_state,
+                platform_output.copied_text,
+            );
         }
-        let clipped_shapes = self.context.tessellate(shapes);
-        self.painter
+        let clipped_shapes = self.internals.context.tessellate(shapes);
+        self.internals
+            .painter
             .paint_and_update_textures(1.0, &clipped_shapes, &textures_delta);
     }
 
     fn setup_egui(window: &mut Window) -> Menu {
         let painter = egui_backend::Painter::new(window);
         let context = egui::Context::default();
-
         let native_pixels_per_point = window.get_content_scale().0;
-
         let input_state = egui_backend::EguiInputState::new(egui::RawInput {
             screen_rect: Some(Rect::from_min_size(
                 Pos2::new(0_f32, 0_f32),
@@ -135,360 +152,110 @@ impl Menu {
             pixels_per_point: Some(native_pixels_per_point),
             ..Default::default()
         });
-
         let modifier_keys = egui::Modifiers::default();
-
-        Self {
-            is_showing: false,
-            is_showing_all_nodes_window: false,
-            is_showing_node_search_window: false,
-            is_showing_bricks_window: false,
-            is_showing_photons_window: false,
-            is_showing_children_window: false,
-            is_showing_images_window: false,
+        let internals = MenuInternals {
             painter,
             context,
             input_state,
             modifier_keys,
             native_pixels_per_point,
+        };
+        let sub_menus = SubMenus::default();
+
+        Self {
+            is_showing: false,
+            internals,
+            sub_menus,
         }
+    }
+
+    pub fn render(&mut self, inputs: SubMenuInputs) {
+        self.sub_menus.all_nodes.render(&self.internals, &inputs.0);
+        self.sub_menus
+            .node_search
+            .render(&self.internals, &inputs.1);
+        self.sub_menus.bricks.render(&self.internals, &inputs.2);
+        self.sub_menus.children.render(&self.internals, &inputs.3);
+        self.sub_menus
+            .diagnostics
+            .render(&self.internals, &inputs.4);
+        self.sub_menus.images.render(&self.internals, &inputs.5);
+        self.sub_menus.photons.render(&self.internals, &inputs.6);
+    }
+
+    pub fn get_data(&self) -> SubMenuOutputs {
+        (
+            self.sub_menus.all_nodes.get_data(),
+            self.sub_menus.node_search.get_data(),
+            self.sub_menus.bricks.get_data(),
+            self.sub_menus.children.get_data(),
+            self.sub_menus.diagnostics.get_data(),
+            self.sub_menus.images.get_data(),
+            self.sub_menus.photons.get_data(),
+        )
     }
 
     pub fn show_main_window(&mut self) {
-        egui::Window::new("Menu").show(&self.context, |ui| {
+        egui::Window::new("Menu").show(&self.internals.context, |ui| {
             if ui
-                .button(Self::get_button_text(
+                .button(get_button_text(
                     "All nodes",
-                    self.is_showing_all_nodes_window,
+                    self.sub_menus.all_nodes.is_showing(),
                 ))
                 .clicked()
             {
-                self.is_showing_all_nodes_window = !self.is_showing_all_nodes_window;
+                self.sub_menus.all_nodes.toggle_showing();
             }
             if ui
-                .button(Self::get_button_text(
+                .button(get_button_text(
                     "Node search",
-                    self.is_showing_node_search_window,
+                    self.sub_menus.node_search.is_showing(),
                 ))
                 .clicked()
             {
-                self.is_showing_node_search_window = !self.is_showing_node_search_window;
+                self.sub_menus.node_search.toggle_showing();
             }
             if ui
-                .button(Self::get_button_text(
+                .button(get_button_text(
                     "Bricks",
-                    self.is_showing_bricks_window,
+                    self.sub_menus.bricks.is_showing(),
                 ))
                 .clicked()
             {
-                self.is_showing_bricks_window = !self.is_showing_bricks_window;
+                self.sub_menus.bricks.toggle_showing();
             }
             if ui
-                .button(Self::get_button_text(
+                .button(get_button_text(
                     "Photons",
-                    self.is_showing_photons_window,
+                    self.sub_menus.photons.is_showing(),
                 ))
                 .clicked()
             {
-                self.is_showing_photons_window = !self.is_showing_photons_window;
+                self.sub_menus.photons.toggle_showing();
             }
             if ui
-                .button(Self::get_button_text(
+                .button(get_button_text(
                     "Children",
-                    self.is_showing_children_window,
+                    self.sub_menus.children.is_showing(),
                 ))
                 .clicked()
             {
-                self.is_showing_children_window = !self.is_showing_children_window;
+                self.sub_menus.children.toggle_showing();
             }
             if ui
-                .button(Self::get_button_text(
+                .button(get_button_text(
                     "Images",
-                    self.is_showing_images_window,
+                    self.sub_menus.images.is_showing(),
                 ))
                 .clicked()
             {
-                self.is_showing_images_window = !self.is_showing_images_window;
+                self.sub_menus.images.toggle_showing();
             }
-        });
-    }
-
-    pub fn create_diagnostics_window(&self, fps: f64) {
-        egui::Window::new("Diagnostics").show(&self.context, |ui| {
-            let fps_text = format!("FPS: {fps:.2}");
-            ui.label(fps_text);
-        });
-    }
-
-    pub fn create_photons_window(&self, photons: &[u32]) {
-        egui::Window::new("Photons").show(&self.context, |ui| {
-            if photons.is_empty() {
-                ui.label("No photon data. Pick a node!");
-                return;
-            }
-
-            ui.vertical(|ui| {
-                for (index, photon) in photons.iter().enumerate() {
-                    let x = index % 3;
-                    let y = (index / 3) % 3;
-                    let z = index / (3 * 3);
-                    let label_text = format!("({x}, {y}, {z}): {photon}");
-                    ui.label(label_text);
-                }
-            });
-        });
-    }
-
-    pub fn create_children_window(&self, children: &[u32]) {
-        egui::Window::new("Children").show(&self.context, |ui| {
-            if children.is_empty() {
-                ui.label("No children data. Pick a node!");
-                return;
-            }
-
-            ui.vertical(|ui| {
-                for child in children.iter() {
-                    ui.label(child.to_string());
-                }
-            });
-        });
-    }
-
-    pub fn create_images_window(&self, toggles: &mut Toggles) {
-        egui::Window::new("Images").show(&self.context, |ui| {
-            if ui
-                .button(Self::get_button_text("Color", toggles.should_show_color()))
-                .clicked()
-            {
-                toggles.toggle_color();
-            }
-            if ui
-                .button(Self::get_button_text(
-                    "Direct light",
-                    toggles.should_show_direct(),
-                ))
-                .clicked()
-            {
-                toggles.toggle_direct();
-            }
-            if ui
-                .button(Self::get_button_text(
-                    "Indirect diffuse",
-                    toggles.should_show_indirect(),
-                ))
-                .clicked()
-            {
-                toggles.toggle_indirect();
-            }
-            if ui
-                .button(Self::get_button_text(
-                    "Indirect specular",
-                    toggles.should_show_indirect_specular(),
-                ))
-                .clicked()
-            {
-                toggles.toggle_indirect_specular();
-            }
-            if ui
-                .button(Self::get_button_text(
-                    "Ambient occlusion",
-                    toggles.should_show_ambient_occlusion(),
-                ))
-                .clicked()
-            {
-                toggles.toggle_ambient_occlusion();
-            }
-        });
-    }
-
-    fn get_button_text(text: &str, clicked: bool) -> egui::RichText {
-        let mut button_text = egui::RichText::new(text);
-        if clicked {
-            button_text = button_text.color(Color32::RED);
-        }
-        button_text
-    }
-
-    pub fn create_all_nodes_window(
-        &self,
-        should_render_octree: &mut bool,
-        current_octree_level: &mut u32,
-    ) {
-        egui::Window::new("All nodes").show(&self.context, |ui| {
-            if ui
-                .button(Self::get_button_text("Show octree", *should_render_octree))
-                .clicked()
-            {
-                *should_render_octree = !*should_render_octree;
-            }
-            ui.add(
-                egui::Slider::new(current_octree_level, 0..=CONFIG.octree_levels - 1)
-                    .text("Octree level"),
-            );
-        });
-    }
-
-    pub fn create_node_search_window(
-        &self,
-        items: &Vec<DebugNode>,
-        selected_items: &mut Vec<DebugNode>,
-        filter_text: &mut String,
-        should_show_neighbors: &mut bool,
-        selected_items_updated: &mut bool,
-    ) {
-        // Variables for handling modifications to `selected_items`
-        let mut should_clear = false;
-        let mut index_to_push = None;
-        let mut index_to_remove = None;
-
-        egui::Window::new("Node search")
-            .resize(|r| r.fixed_size((200., 400.)))
-            .show(&self.context, |ui| {
-                ui.vertical(|ui| {
-                    ui.horizontal(|ui| {
-                        ui.label("Neighbors: ");
-                        if ui
-                            .button(Self::get_button_text("Toggle", *should_show_neighbors))
-                            .clicked()
-                        {
-                            *should_show_neighbors = !*should_show_neighbors;
-                        }
-                    });
-                    ui.text_edit_singleline(filter_text);
-                    egui::ScrollArea::vertical()
-                        .max_height(200.)
-                        .show(ui, |ui| {
-                            for selected_index in 0..selected_items.len() {
-                                let button_text = format!("{}", selected_items[selected_index]);
-                                if ui
-                                    .button(Self::get_button_text(&button_text, true))
-                                    .clicked()
-                                {
-                                    let selected_item = &selected_items[selected_index];
-                                    index_to_remove = Some(
-                                        selected_items
-                                            .iter()
-                                            .position(|item| item.index == selected_item.index)
-                                            .expect("Selected item was clicked"),
-                                    );
-                                    *selected_items_updated = true;
-                                }
-                            }
-                        });
-                    ui.separator();
-                    for item_index in (0..items.len())
-                        .filter(|&item_index| {
-                            (0..selected_items.len())
-                                .find(|&selected_index| {
-                                    selected_items[selected_index].index == item_index as u32
-                                })
-                                .is_none()
-                                && (item_index.to_string().starts_with(&*filter_text)
-                                    || items[item_index].text.contains(&*filter_text))
-                        })
-                        .take(20)
-                    {
-                        let button_text = format!("{}", &items[item_index]);
-                        let button = ui.button(button_text.clone());
-                        let clicking_selected_item = selected_items
-                            .iter()
-                            .find(|selected_item| selected_item.index == item_index as u32)
-                            .is_some();
-                        if button.clicked() {
-                            if clicking_selected_item {
-                                index_to_remove = Some(item_index);
-                            } else if !self.input_state.input.modifiers.shift {
-                                should_clear = true;
-                                index_to_push = Some(item_index);
-                            } else {
-                                index_to_push = Some(item_index);
-                            }
-                            *selected_items_updated = true;
-                        }
-                    }
-
-                    if should_clear {
-                        selected_items.clear();
-                        should_clear = false;
-                    }
-
-                    if let Some(index) = index_to_push {
-                        selected_items.push(items[index].clone());
-                        index_to_push = None;
-                    }
-
-                    if let Some(index) = index_to_remove {
-                        selected_items.remove(index);
-                        index_to_remove = None;
-                    }
-                });
-            });
-    }
-
-    pub fn create_bricks_window(
-        &self,
-        bricks_to_show: &mut BricksToShow,
-        brick_attribute: &mut BrickAttribute,
-        should_show_brick_normals: &mut bool,
-        color_direction: &mut Vector3<f32>,
-        brick_padding: &mut f32,
-    ) {
-        egui::Window::new("Bricks").show(&self.context, |ui| {
-            ui.horizontal(|ui| {
-                ui.label("Bricks: ");
-                if ui
-                    .button(Self::get_button_text("Z0", bricks_to_show.z0()))
-                    .clicked()
-                {
-                    bricks_to_show.toggle_z0();
-                }
-                if ui
-                    .button(Self::get_button_text("Z1", bricks_to_show.z1()))
-                    .clicked()
-                {
-                    bricks_to_show.toggle_z1();
-                }
-                if ui
-                    .button(Self::get_button_text("Z2", bricks_to_show.z2()))
-                    .clicked()
-                {
-                    bricks_to_show.toggle_z2();
-                }
-            });
-            ui.horizontal(|ui| {
-                ui.label("Brick attribute: ");
-                let button_text = match *brick_attribute {
-                    BrickAttribute::None => "None",
-                    BrickAttribute::Color => "Color",
-                    BrickAttribute::Photons => "Photons",
-                };
-                if ui.button(button_text).clicked() {
-                    *brick_attribute = brick_attribute.next();
-                }
-            });
-            if ui
-                .button(Self::get_button_text(
-                    "Show normals",
-                    *should_show_brick_normals,
-                ))
-                .clicked()
-            {
-                *should_show_brick_normals = !*should_show_brick_normals;
-            }
-            ui.add(egui::Slider::new(&mut color_direction.x, -1.0..=1.0).text("Color direction X"));
-            ui.add(egui::Slider::new(&mut color_direction.y, -1.0..=1.0).text("Color direction Y"));
-            ui.add(egui::Slider::new(&mut color_direction.z, -1.0..=1.0).text("Color direction Z"));
-            if color_direction.magnitude2() == 0.0 {
-                *color_direction = vec3(1.0, 0.0, 0.0);
-            } else {
-                *color_direction = color_direction.normalize();
-            }
-            ui.add(egui::Slider::new(brick_padding, 0.0..=1.0).text("Brick padding"));
         });
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct DebugNode {
     index: u32,
     text: String,
@@ -504,8 +271,16 @@ impl DebugNode {
     }
 }
 
-impl Display for DebugNode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for DebugNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}: {}", self.index, self.text)
     }
+}
+
+pub fn get_button_text(text: &str, clicked: bool) -> egui::RichText {
+    let mut button_text = egui::RichText::new(text);
+    if clicked {
+        button_text = button_text.color(Color32::RED);
+    }
+    button_text
 }
