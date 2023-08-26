@@ -19,6 +19,7 @@ pub struct Transform {
     pub position: Point3<f32>,
     #[serde(default = "default_scale")]
     pub scale: Vector3<f32>,
+    #[serde(default = "default_rotation")]
     rotation: Euler<f32>,
     #[serde(skip_deserializing, default = "Vector3::unit_z")]
     forward: Vector3<f32>,

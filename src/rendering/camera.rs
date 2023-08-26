@@ -1,3 +1,5 @@
+use serde::Deserialize;
+
 use super::transform::Transform;
 
 // Default camera values
@@ -5,14 +7,37 @@ const SPEED: f32 = 1.0;
 const SENSITIVITY: f32 = 0.1;
 const ZOOM: f32 = 45.0;
 
+#[derive(Debug, Deserialize, Clone)]
+#[serde(default)]
 pub struct Camera {
     pub transform: Transform,
+    #[serde(skip_deserializing, default = "default_yaw")]
     yaw: f32,
+    #[serde(skip_deserializing)]
     pitch: f32,
     // Camera options
+    #[serde(default = "default_speed")]
     pub movement_speed: f32,
+    #[serde(default = "default_sensitivity")]
     pub mouse_sensitivity: f32,
+    #[serde(default = "default_zoom")]
     pub zoom: f32,
+}
+
+const fn default_yaw() -> f32 {
+    90.0
+}
+
+const fn default_speed() -> f32 {
+    SPEED
+}
+
+const fn default_sensitivity() -> f32 {
+    SENSITIVITY
+}
+
+const fn default_zoom() -> f32 {
+    ZOOM
 }
 
 impl Default for Camera {

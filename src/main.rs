@@ -12,6 +12,7 @@ use crate::{
         MenuInternals, SubMenus,
     },
     octree::OctreeDataType,
+    preset::PRESET,
     rendering::shader::compile_shaders,
 };
 use cgmath::{perspective, point3, vec3, Deg, Matrix4};
@@ -61,11 +62,11 @@ fn main() {
     let (mut glfw, mut window, events) = unsafe { common::setup_glfw(debug) };
 
     // Camera setup
-    let mut camera = Camera::default();
+    let mut camera = PRESET.camera.clone();
     // camera.transform.position = point3(0.0, -0.25, 0.0);
     // camera.transform.position = point3(0.0, 0.0, -2.0);
-    camera.transform.position = point3(0.0, -2.0, 4.0);
-    camera.transform.set_rotation_y(-90.0);
+    // camera.transform.position = point3(0.0, -2.0, 4.0);
+    // camera.transform.set_rotation_y(-90.0);
     let mut first_mouse = true;
     let mut last_x: f32 = CONFIG.viewport_width as f32 / 2.0;
     let mut last_y: f32 = CONFIG.viewport_height as f32 / 2.0;
