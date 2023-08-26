@@ -50,25 +50,8 @@ uvec3 calculateBrickVoxel(vec3 nodeCoordinates, float halfNodeSize, vec3 queryCo
     float quarterNodeSize = halfNodeSize / 2.0;
     uint xOffset = findQuarter(nodeCoordinates.x, quarterNodeSize, queryCoordinates.x);
     uint yOffset = findQuarter(nodeCoordinates.y, quarterNodeSize, queryCoordinates.y);
-    //uint yOffset = 1;
     uint zOffset = findQuarter(nodeCoordinates.z, quarterNodeSize, queryCoordinates.z);
     return uvec3(xOffset, yOffset, zOffset);
-}
-
-uint findHalf(float min, float halfNodeSize, float queryCoordinate) {
-    if (queryCoordinate < min + halfNodeSize) {
-        return 0;
-    } else {
-        return 2;
-    }
-}
-
-uvec3 calculateNodeVoxel(vec3 nodeCoordinates, float halfNodeSize, vec3 queryCoordinates) {
-    uint xOffset = findHalf(nodeCoordinates.x, halfNodeSize, queryCoordinates.x);
-    uint yOffset = findHalf(nodeCoordinates.y, halfNodeSize, queryCoordinates.y);
-    //uint yOffset = 1;
-    uint zOffset = findHalf(nodeCoordinates.z, halfNodeSize, queryCoordinates.z);
-    return uvec3(0, 0, 0);
 }
 
 vec3 calculateNormalizedBrickVoxel(vec3 nodeCoordinates, float halfNodeSize, vec3 queryCoordinates) {

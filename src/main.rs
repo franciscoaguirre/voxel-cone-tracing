@@ -63,20 +63,13 @@ fn main() {
 
     // Camera setup
     let mut camera = PRESET.camera.clone();
-    // camera.transform.position = point3(0.0, -0.25, 0.0);
-    // camera.transform.position = point3(0.0, 0.0, -2.0);
-    // camera.transform.position = point3(0.0, -2.0, 4.0);
-    // camera.transform.set_rotation_y(-90.0);
     let mut first_mouse = true;
     let mut last_x: f32 = CONFIG.viewport_width as f32 / 2.0;
     let mut last_y: f32 = CONFIG.viewport_height as f32 / 2.0;
 
     // Static eye
     let mut static_eye = Transform::default();
-    // static_eye.position = point3(0.0, -0.25, 0.0);
     static_eye.position = point3(0.0, 0.0, -2.0);
-    // static_eye.set_rotation_x(-60.0);
-    // static_eye.set_rotation_y(0.0);
 
     // FPS variables
     let mut frame_count = 0;
