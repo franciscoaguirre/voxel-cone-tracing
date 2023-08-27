@@ -91,7 +91,7 @@ void main() {
     vec3 positionRaw = texture(gBufferPositions, In.textureCoordinates).xyz;
     vec3 position = positionRaw * 0.5 + 0.5;
 
-    vec3 eyeDirection = normalize(eyePosition - positionRaw);
+    vec3 eyeDirection = normalize(positionRaw - eyePosition);
 
     vec3 normal = texture(gBufferNormals, In.textureCoordinates).xyz;
     vec3 helper = normal - vec3(0.1, 0, 0); // Random vector
@@ -113,11 +113,13 @@ void main() {
 
     vec3 indirectLight = vec3(0);
     if (shouldShowIndirect) {
+      // We should pre-multiply by alpha probably? Instead of just ignoring it
         indirectLight = gatherIndirectLight(position, normal, tangent, useLighting).rgb;
     }
 
     vec3 specularIndirectLight = vec3(0);
     if (shouldShowIndirectSpecular) {
+      // We should pre-multiply by alpha probably? Instead of just ignoring it
         specularIndirectLight = gatherSpecularIndirectLight(position, eyeDirection, normal).rgb;
     }
 
@@ -137,17 +139,17 @@ void main() {
     if (shouldShowIndirect) {
         finalImage += vec4(indirectLight, 1.0);
     }
-    if (shouldShowIndirectSpecular) {
-        finalImage += vec4(specularIndirectLight, 1.0);
-    }
     if (shouldShowAmbientOcclusion) {
         finalImage += vec4(vec3(1.0 - ambientOcclusion), 1.0);
     }
     if (shouldShowColor) {
         finalImage *= color;
     }
+    if (shouldShowIndirectSpecular) {
+        finalImage += vec4(specularIndirectLight, 1.0);
+    }
     
-    outColor = finalImage;
+    outColor = vec4(finalImage.xyz, 1.0);
     // FragColor = vec4(texture(texture_diffuse1, frag_textureCoordinates).xyz - vec3(AO), 1);
     // outColor = vec4(vec3(ambientOcclusion), 1.0);
     //outColor = vec4(1.0 - vec3(ambientOcclusion), 1.0);
@@ -207,9 +209,10 @@ float visibilityCalculation(vec4 positionInLightSpace, vec3 normal) {
 }
 
 vec4 gatherSpecularIndirectLight(vec3 position, vec3 eyeDirection, vec3 normal) {
-    vec3 reflectDirection = reflect(eyeDirection, normal);
-    float coneAngle = 0.05;
-    float maxDistance = 1;
+    vec3 reflectDirection = normalize(reflect(eyeDirection, normalize(normal)));
+    //vec3 reflectDirection = normalize(reflect(eyeDirection, vec3(0, 0, -1)));
+    float coneAngle = 0.005;
+    float maxDistance = 5;
     bool useLighting = true;
 
     return coneTrace(position, reflectDirection, coneAngle, maxDistance, useLighting);
