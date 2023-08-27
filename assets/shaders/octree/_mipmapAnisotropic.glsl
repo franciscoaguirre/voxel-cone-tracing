@@ -185,7 +185,6 @@ void loadAdjacentVoxels(ivec3 position, Direction direction) {
 /// - `sign`: -1 or 1 to indicate direction going forward or backwards
 /// We should never call this function on parent voxels that are on the base of the direction
 //vec4 mipmapAnisotropic(ivec3 position, Direction direction) {
-// Encontrar una base de 9 voxels, dirección abajo hacia arriba agarramos los de abajo
 vec4 mipmapAnisotropic(ivec3 position) {
     loadAdjacentVoxels(position, direction);
     vec4 color = vec4(0);
@@ -235,7 +234,6 @@ vec4 mipmapAnisotropic(ivec3 position) {
                     continue;
                 }
 
-                // Partial weight that will be fixed by borderTransfer
                 float partialWeight = 1;
 
                 // On the edge with left or right brick

@@ -1,7 +1,6 @@
 // Requires:
 // - uniform uint voxelDimension
 // - uniform uint maxOctreeLevel
-// - uniform sampler3D brickPoolPhotons
 // - uniform sampler3D brickPoolNormals
 // - _anisotropicColor
 // - _anisotropicIrradiance
@@ -11,6 +10,7 @@
 // if debug
 // - uniform (r32ui) nodesQueried
 // - uniform atomic_uint queriedNodesCounter
+// - uniform (r32f) sampledColor
 
 float brickPoolResolutionf = float(textureSize(brickPoolColorsX, 0).x);
 float brickPoolBrickSize = 3.0 / brickPoolResolutionf;
@@ -131,7 +131,16 @@ vec4 coneTrace(
         } else {
             childColor = getAnisotropicIrradiance(childVoxelCoordinates, coneDirection);
         }
+        #if debug
+            int aux = 5;
+            imageStore(sampledColor, steps * aux + 0 + 5, vec4(childColor.r, 0, 0, 0));
+            imageStore(sampledColor, steps * aux + 1 + 5, vec4(childColor.g, 0, 0, 0));
+            imageStore(sampledColor, steps * aux + 2 + 5, vec4(childColor.b, 0, 0, 0));
+            imageStore(sampledColor, steps * aux + 3 + 5, vec4(childColor.a, 0, 0, 0));
+            imageStore(sampledColor, steps * aux + 4 + 5, vec4(octreeLevel, 0, 0, 0));
+        #endif
         parentColor = getAnisotropicIrradiance(parentVoxelCoordinates, coneDirection);
+        // parentColor = getLeafIrradiance(parentVoxelCoordinates);
         vec4 newColor = mix(childColor, parentColor, parentWeight); // Quadrilinear interpolation
         newColor.rgb /= distanceFactor;
 
@@ -145,7 +154,19 @@ vec4 coneTrace(
         previousParentNode = parentNode;
     }
 
+    #if debug
+        imageStore(sampledColor, 0, vec4(returnColor.r, 0, 0, 0));
+        imageStore(sampledColor, 1, vec4(returnColor.g, 0, 0, 0));
+        imageStore(sampledColor, 2, vec4(returnColor.b, 0, 0, 0));
+        imageStore(sampledColor, 3, vec4(returnColor.a, 0, 0, 0));
+        // imageStore(sampledColor, 4, vec4(float(octreeLevel), 0, 0, 0));
+    #endif
+
     returnColor.a = min(returnColor.a, 1.0);
+
+    #if debug
+        imageStore(sampledColor, 4, vec4(returnColor.a, 0, 0, 0));
+    #endif
 
     return returnColor;
 }

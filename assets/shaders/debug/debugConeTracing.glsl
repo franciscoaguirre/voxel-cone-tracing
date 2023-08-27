@@ -4,6 +4,7 @@
 
 uniform layout(binding = 0, r32ui) uimageBuffer nodesQueried;
 uniform layout(binding = 1, r32ui) readonly uimageBuffer nodePool;
+uniform layout(binding = 2, r32f) imageBuffer sampledColor;
 
 uniform layout(binding = 0, offset = 0) atomic_uint queriedNodesCounter;
 
@@ -19,8 +20,6 @@ uniform sampler3D brickPoolColorsY;
 uniform sampler3D brickPoolColorsYNeg;
 uniform sampler3D brickPoolColorsZ;
 uniform sampler3D brickPoolColorsZNeg;
-
-uniform usampler3D brickPoolPhotons;
 
 // Irradiance
 uniform sampler3D brickPoolIrradianceX;

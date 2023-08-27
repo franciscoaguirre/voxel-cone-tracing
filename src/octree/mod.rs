@@ -34,8 +34,9 @@ pub struct OctreeTextures {
     brick_pointers: BufferTexture,
     pub node_positions: BufferTexture,
     neighbors: [BufferTexture; 6],
+    pub brick_pool_colors_raw: Texture3D, // Raw colors, they are then moved to `brick_pool_colors`
     pub brick_pool_colors: [Texture3D; 6], // Anisotropic voxels, one texture per main direction
-    pub brick_pool_colors_raw: Texture3D,  // Raw colors, they are then moved to `brick_pool_colors`
+    pub brick_pool_alpha: Texture3D,
     pub brick_pool_irradiance: [Texture3D; 6], // Anisotropic voxels
     pub brick_pool_normals: Texture3D,
     pub brick_pool_photons: Texture3D,
@@ -129,6 +130,7 @@ struct Builder {
     append_border_voxel_fragments_pass: AppendBorderVoxelFragmentsPass,
     photons_to_irradiance_pass: PhotonsToIrradiance,
     process_raw_brick_pool_colors: ProcessRawBrickPoolColors,
+    create_alpha_map: CreateAlphaMap,
 }
 
 impl Octree {
@@ -239,6 +241,7 @@ impl Octree {
             append_border_voxel_fragments_pass: AppendBorderVoxelFragmentsPass::init(),
             photons_to_irradiance_pass: PhotonsToIrradiance::init(),
             process_raw_brick_pool_colors: ProcessRawBrickPoolColors::init(),
+            create_alpha_map: CreateAlphaMap::init(),
         };
 
         let mut octree = Self {
@@ -304,6 +307,7 @@ impl Octree {
                 helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (Z, +)
                 helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (Z, -)
             ],
+            brick_pool_alpha: helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution),
             brick_pool_irradiance: [
                 helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (X, +), also used for lower level
                 helpers::generate_3d_rgba_texture(CONFIG.brick_pool_resolution), // (X, -)
