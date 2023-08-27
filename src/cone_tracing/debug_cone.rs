@@ -215,15 +215,15 @@ impl DebugCone {
         let values = helpers::get_values_from_texture_buffer(self.nodes_queried.1, 1000, 42u32);
         let sampled_colors =
             helpers::get_values_from_texture_buffer(self.sampled_colors_texture.1, 100, 32f32);
-        dbg!(&sampled_colors[0..5]);
-        pretty_print_data(&sampled_colors[5..]);
+        // dbg!(&sampled_colors[0..5]);
+        // pretty_print_data(&sampled_colors[5..]);
 
         let total_nodes_queried =
             helpers::get_value_from_atomic_counter(self.nodes_queried_counter) as usize;
         let values_set = HashSet::from_iter(values[..total_nodes_queried].iter().cloned());
 
         if self.previous_values != values_set {
-            dbg!(&values[..total_nodes_queried]);
+            // dbg!(&values[..total_nodes_queried]);
             let set_vector: Vec<_> = values_set.iter().cloned().collect();
             *selected_debug_nodes = (&set_vector[..])
                 .iter()
