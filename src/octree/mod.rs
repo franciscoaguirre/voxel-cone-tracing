@@ -380,7 +380,7 @@ impl Octree {
         for node in 0..number_of_nodes {
             let lower_limit: usize = (node + offset) * constants::CHILDREN_PER_NODE as usize;
             let upper_limit: usize = lower_limit + constants::CHILDREN_PER_NODE as usize;
-            log::debug!("{:?}", &values[lower_limit..upper_limit]);
+            log::debug!("{}: {:?}", node, &values[lower_limit..upper_limit]);
         }
     }
 }

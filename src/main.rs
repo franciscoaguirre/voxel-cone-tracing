@@ -311,7 +311,7 @@ fn main() {
                         8, // Children in a node
                         42_u32,
                     );
-                    octree.run_colors_quad_shader(last_debug_node.index());
+                    // octree.run_colors_quad_shader(last_debug_node.index());
                 };
             }
         }

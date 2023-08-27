@@ -14,7 +14,6 @@ uniform layout(binding = 0, offset = 0) atomic_uint nextVoxelFragmentCounter;
 uniform uint octreeLevel;
 uniform uint callOffset;
 uniform uint voxelDimension;
-uniform bool shouldStore;
 
 const ivec4 NEIGHBOR_OFFSETS[6] = {
     ivec4(2, 0, 0, 0),
@@ -50,11 +49,7 @@ void main() {
             }
 
             uint nextVoxelFragment = atomicCounterIncrement(nextVoxelFragmentCounter);
-            memoryBarrier();
-
-            if (shouldStore) {
-                imageStore(borderVoxelFragments, int(nextVoxelFragment), borderVoxelFragmentPosition);
-            }
+            imageStore(borderVoxelFragments, int(nextVoxelFragment), borderVoxelFragmentPosition);
         }
     }
 }

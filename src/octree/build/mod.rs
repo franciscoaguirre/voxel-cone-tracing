@@ -40,7 +40,6 @@ impl Octree {
             &self.geometry_data,
             &mut self.border_data,
             &self.textures,
-            number_of_nodes,
         );
 
         self.voxels_to_nodes(
@@ -159,7 +158,7 @@ impl Octree {
                 .flag_nodes_pass
                 .run(&voxel_data, &self.textures, octree_level);
             self.builder.allocate_nodes_pass.run(
-                &voxel_data,
+                &self.geometry_data.voxel_data, // TODO: Pass in the actual number of nodes
                 &self.textures,
                 allocated_nodes_counter,
                 first_node_in_level,
@@ -175,7 +174,7 @@ impl Octree {
                     geometry_level_start_indices[octree_level as usize];
 
                 self.builder.allocate_nodes_pass.run(
-                    &voxel_data,
+                    &self.geometry_data.voxel_data, // TODO: Pass in the actual number of nodes
                     &self.textures,
                     allocated_nodes_counter,
                     geometry_first_node_in_level as i32,
