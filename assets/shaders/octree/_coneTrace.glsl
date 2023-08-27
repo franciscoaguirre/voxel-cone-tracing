@@ -1,7 +1,6 @@
 // Requires:
 // - uniform uint voxelDimension
 // - uniform uint maxOctreeLevel
-// - uniform sampler3D brickPoolPhotons
 // - uniform sampler3D brickPoolNormals
 // - _anisotropicColor
 // - _anisotropicIrradiance

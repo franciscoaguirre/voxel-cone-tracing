@@ -71,6 +71,26 @@ impl Octree {
 
         // TODO: Refactorear todos estos métodos a su propia stage.
 
+        gl::CopyImageSubData(
+            self.textures.brick_pool_alpha,
+            gl::TEXTURE_3D,
+            0,
+            0,
+            0,
+            0,
+            self.textures.brick_pool_irradiance[0],
+            gl::TEXTURE_3D,
+            0,
+            0,
+            0,
+            0,
+            CONFIG.brick_pool_resolution as i32,
+            CONFIG.brick_pool_resolution as i32,
+            CONFIG.brick_pool_resolution as i32,
+        );
+        let error = gl::GetError();
+        dbg!(&error);
+
         self.builder
             .photons_to_irradiance_pass
             .run(&self.textures, light_view_map);

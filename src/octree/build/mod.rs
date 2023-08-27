@@ -57,11 +57,16 @@ impl Octree {
             .process_raw_brick_pool_colors
             .run(&self.geometry_data.node_data, &self.textures);
 
-        self.builder.spread_leaf_bricks_pass.run(
-            &self.textures,
-            &self.geometry_data.node_data,
-            BrickPoolValues::Colors,
-        );
+        self.builder
+            .create_alpha_map
+            .run(&self.textures, &self.geometry_data.node_data);
+
+        // self.builder.spread_leaf_bricks_pass.run(
+        //     &self.textures,
+        //     &self.geometry_data.node_data,
+        //     BrickPoolValues::Colors,
+        // );
+
         // self.builder.spread_leaf_bricks_pass.run(
         //     &self.textures,
         //     &self.geometry_data.node_data,
@@ -106,14 +111,14 @@ impl Octree {
                 // );
 
                 if level > 0 {
-                    self.builder.anisotropic_border_transfer_pass.run(
-                        &self.textures,
-                        &self.geometry_data.node_data,
-                        &self.border_data.node_data,
-                        level,
-                        brick_pool_values,
-                        *direction,
-                    );
+                    // self.builder.anisotropic_border_transfer_pass.run(
+                    //     &self.textures,
+                    //     &self.geometry_data.node_data,
+                    //     &self.border_data.node_data,
+                    //     level,
+                    //     brick_pool_values,
+                    //     *direction,
+                    // );
                     // self.builder.border_transfer_pass.run(
                     //     &self.textures,
                     //     &self.geometry_data.node_data,
