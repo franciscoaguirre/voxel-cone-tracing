@@ -88,8 +88,6 @@ impl Octree {
             CONFIG.brick_pool_resolution as i32,
             CONFIG.brick_pool_resolution as i32,
         );
-        let error = gl::GetError();
-        dbg!(&error);
 
         self.builder
             .photons_to_irradiance_pass
