@@ -42,6 +42,9 @@ impl AllocateNodesPass {
         );
         gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, allocated_nodes_counter);
 
+        // TODO: The number of nodes should be `nodes_per_level` but for that
+        // `voxel_data` and `node_data` need to be the top level split instead of
+        // `geometry_data` and `border_data`
         let groups_count = (voxel_data.number_of_voxel_fragments as f32
             / CONFIG.working_group_size as f32)
             .ceil() as u32;

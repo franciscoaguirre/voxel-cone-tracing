@@ -16,14 +16,14 @@ pub unsafe fn generate_atomic_counter_buffer() -> GLuint {
 
 pub unsafe fn generate_atomic_counter_buffer1(usage_hint: GLuint) -> GLuint {
     let mut buffer: u32 = 0;
-    let initial_value: u32 = 0;
+    let initial_value: [u32; 1] = [0];
 
     gl::GenBuffers(1, &mut buffer);
     gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, buffer);
     gl::BufferData(
         gl::ATOMIC_COUNTER_BUFFER,
         size_of::<GLuint>() as isize,
-        initial_value as *const c_void,
+        initial_value.as_ptr() as *const c_void,
         gl::DYNAMIC_READ,
     );
     gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, 0);
@@ -35,8 +35,8 @@ pub unsafe fn generate_texture_buffer<T>(
     size: usize,
     format: GLenum,
     default_value: T,
-    ) -> (GLuint, GLuint) 
-    where
+) -> (GLuint, GLuint)
+where
     T: Clone,
 {
     generate_texture_buffer4(size, format, default_value, gl::STATIC_DRAW)
@@ -210,8 +210,12 @@ where
     values
 }
 
-pub unsafe fn clear_texture_buffer<T>(texture_buffer: GLuint, size: usize, default_value: T, usage_hint: GLuint)
-where
+pub unsafe fn clear_texture_buffer<T>(
+    texture_buffer: GLuint,
+    size: usize,
+    default_value: T,
+    usage_hint: GLuint,
+) where
     T: Clone,
 {
     gl::BindBuffer(gl::TEXTURE_BUFFER, texture_buffer);
