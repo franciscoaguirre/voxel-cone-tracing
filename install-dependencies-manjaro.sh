@@ -7,3 +7,4 @@ sudo pacman -S --noconfirm libxinerama
 sudo pacman -S --noconfirm libxcursor
 sudo pacman -S --noconfirm libxi
 sudo pacman -S --noconfirm pkgconf alsa-lib openssl cmake freetype2 expat
+cp example.config.ron config.ron
