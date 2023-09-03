@@ -75,10 +75,10 @@ vec4 coneTrace(
     Node previousNode = Node(0, vec3(0), 0.0);
     Node previousParentNode;
     int steps = 0;
-    float firstStep = voxelSize;
-
-    distanceAlongCone += firstStep;
-    while (distanceAlongCone < maxDistance && returnColor.a < 1.0) {
+    
+    // Move the cone origin so it doesn't intersect with own voxels
+    vec3 offsetedConeOrigin = coneOrigin + coneDirection * voxelSize * 2;
+    while (distanceAlongCone < maxDistance && returnColor.a < 0.97) {
         float coneDiameter = clamp(coneDiameterCoefficient * distanceAlongCone, 0.0009765625, 100.0);
         float lod = calculateLod(coneDiameter);
         uint octreeLevel = uint(ceil(lod));
@@ -90,7 +90,7 @@ vec4 coneTrace(
             sampleStep *= 2; // Increase sampleStep, same as increasing voxelSize by 2
         }
 
-        vec3 queryCoordinates = coneOrigin + distanceAlongCone * coneDirection;
+        vec3 queryCoordinates = offsetedConeOrigin + distanceAlongCone * coneDirection;
         bool changedNode = steps == 0 || fallsOutsideNode(queryCoordinates, previousNode); // Should be true on first iteration
 
         Node node, parentNode;
@@ -119,7 +119,7 @@ vec4 coneTrace(
         float c2 = 0.09;
         float c3 = 0.032;
         float magicNumber = 60; // TODO: Find out what value to use
-        float distance = (distanceAlongCone - firstStep) * magicNumber;
+        float distance = distanceAlongCone * magicNumber;
         float distanceFactor = c1 + c2 * distance + c3 * distance * distance;
 
         vec3 childVoxelCoordinates = findVoxel(queryCoordinates, node);
