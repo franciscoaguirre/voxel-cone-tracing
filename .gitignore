@@ -14,7 +14,6 @@ Cargo.lock
 
 # Local configuration
 config.ron
-presets
 
 # Debug capture files
 *.cap

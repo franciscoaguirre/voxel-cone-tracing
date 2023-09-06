@@ -1,6 +1,6 @@
 use c_str_macro::c_str;
 use cgmath::vec3;
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 
 use crate::rendering::shader::compile_shaders;
 use crate::{
@@ -226,7 +226,7 @@ impl ConeTracer {
     }
 }
 
-#[derive(Debug, Default, Deserialize, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
 #[serde(default)]
 pub struct Toggles {
     should_show_color: bool,

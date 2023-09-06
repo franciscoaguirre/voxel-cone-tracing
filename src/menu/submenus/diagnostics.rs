@@ -1,10 +1,10 @@
 use egui_glfw_gl::egui;
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 
 use super::SubMenu;
 use crate::menu::MenuInternals;
 
-#[derive(Debug, Default, Deserialize, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct DiagnosticsMenu;
 
 pub struct DiagnosticsMenuInput {
@@ -17,8 +17,8 @@ impl DiagnosticsMenuInput {
     }
 }
 
-impl SubMenu for DiagnosticsMenu {
-    type InputData = DiagnosticsMenuInput;
+impl<'a> SubMenu for DiagnosticsMenu {
+    type InputData<'b> = DiagnosticsMenuInput;
     type OutputData = ();
 
     fn is_showing(&self) -> bool {
@@ -31,7 +31,7 @@ impl SubMenu for DiagnosticsMenu {
         &()
     }
 
-    fn render(&mut self, internals: &MenuInternals, input: &Self::InputData) {
+    fn render<'b>(&mut self, internals: &MenuInternals, input: &Self::InputData<'b>) {
         if !self.is_showing() {
             return;
         }

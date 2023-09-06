@@ -3,7 +3,7 @@ use std::{ffi::c_void, mem::size_of};
 use c_str_macro::c_str;
 use cgmath::{point3, vec3, Deg, Euler, InnerSpace, Matrix4, Point3, Vector3, Zero};
 use gl::types::GLuint;
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 
 use crate::config::CONFIG;
 
@@ -14,26 +14,26 @@ use super::{
 use crate::rendering::shader::compile_shaders;
 
 /// Struct that handles `position`, `rotation` and `scale` for an entity
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Transform {
     pub position: Point3<f32>,
     #[serde(default = "default_scale")]
     pub scale: Vector3<f32>,
     #[serde(default = "default_rotation")]
     rotation: Euler<f32>,
-    #[serde(skip_deserializing, default = "Vector3::unit_z")]
+    #[serde(skip, default = "Vector3::unit_z")]
     forward: Vector3<f32>,
-    #[serde(skip_deserializing, default = "Vector3::unit_y")]
+    #[serde(skip, default = "Vector3::unit_y")]
     up: Vector3<f32>,
-    #[serde(skip_deserializing, default = "Vector3::unit_x")]
+    #[serde(skip, default = "Vector3::unit_x")]
     right: Vector3<f32>,
     #[serde(default = "default_movement_speed")]
     pub movement_speed: f32,
-    #[serde(skip_deserializing)]
+    #[serde(skip)]
     pub vao: GLuint,
-    #[serde(skip_deserializing, default = "default_gizmo_shader")]
+    #[serde(skip, default = "default_gizmo_shader")]
     shader: Shader,
-    #[serde(skip_deserializing, default = "default_view_map_shader")]
+    #[serde(skip, default = "default_view_map_shader")]
     view_map_shader: Shader, // TODO: It's kind of ugly to store this here
 }
 

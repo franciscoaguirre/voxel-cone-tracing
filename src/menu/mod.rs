@@ -5,7 +5,7 @@ use egui_backend::{
     glfw::{Action, CursorMode, Key, Window, WindowEvent},
 };
 use egui_glfw_gl as egui_backend;
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 
 use crate::{config::CONFIG, preset::PRESET};
 
@@ -15,7 +15,7 @@ use submenus::*;
 pub struct Menu {
     is_showing: bool,
     internals: MenuInternals,
-    sub_menus: SubMenus,
+    pub sub_menus: SubMenus,
 }
 
 pub struct MenuInternals {
@@ -26,7 +26,7 @@ pub struct MenuInternals {
     native_pixels_per_point: f32,
 }
 
-#[derive(Debug, Default, Deserialize, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
 #[serde(default)]
 pub struct SubMenus {
     all_nodes: AllNodesMenu,
@@ -36,16 +36,18 @@ pub struct SubMenus {
     diagnostics: DiagnosticsMenu,
     images: ImagesMenu,
     photons: PhotonsMenu,
+    save_preset: SavePresetMenu,
 }
 
-type SubMenuInputs = (
-    <AllNodesMenu as SubMenu>::InputData,
-    <NodeSearchMenu as SubMenu>::InputData,
-    <BricksMenu as SubMenu>::InputData,
-    <ChildrenMenu as SubMenu>::InputData,
-    <DiagnosticsMenu as SubMenu>::InputData,
-    <ImagesMenu as SubMenu>::InputData,
-    <PhotonsMenu as SubMenu>::InputData,
+type SubMenuInputs<'a> = (
+    <AllNodesMenu as SubMenu>::InputData<'a>,
+    <NodeSearchMenu as SubMenu>::InputData<'a>,
+    <BricksMenu as SubMenu>::InputData<'a>,
+    <ChildrenMenu as SubMenu>::InputData<'a>,
+    <DiagnosticsMenu as SubMenu>::InputData<'a>,
+    <ImagesMenu as SubMenu>::InputData<'a>,
+    <PhotonsMenu as SubMenu>::InputData<'a>,
+    <SavePresetMenu as SubMenu>::InputData<'a>,
 );
 
 type SubMenuOutputs<'a> = (
@@ -56,6 +58,7 @@ type SubMenuOutputs<'a> = (
     &'a <DiagnosticsMenu as SubMenu>::OutputData,
     &'a <ImagesMenu as SubMenu>::OutputData,
     &'a <PhotonsMenu as SubMenu>::OutputData,
+    &'a <SavePresetMenu as SubMenu>::OutputData,
 );
 
 impl Menu {
@@ -181,6 +184,7 @@ impl Menu {
             .render(&self.internals, &inputs.4);
         self.sub_menus.images.render(&self.internals, &inputs.5);
         self.sub_menus.photons.render(&self.internals, &inputs.6);
+        self.sub_menus.save_preset.render(&self.internals, &inputs.7);
     }
 
     pub fn get_data(&self) -> SubMenuOutputs {
@@ -192,6 +196,7 @@ impl Menu {
             self.sub_menus.diagnostics.get_data(),
             self.sub_menus.images.get_data(),
             self.sub_menus.photons.get_data(),
+            self.sub_menus.save_preset.get_data(),
         )
     }
 
@@ -255,7 +260,7 @@ impl Menu {
     }
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DebugNode {
     index: u32,
     text: String,

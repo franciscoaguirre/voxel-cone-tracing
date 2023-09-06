@@ -1,5 +1,5 @@
 use egui_glfw_gl::egui;
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 
 use super::super::get_button_text;
 use super::SubMenu;
@@ -7,14 +7,14 @@ use crate::config::CONFIG;
 use crate::menu::MenuInternals;
 use crate::octree::OctreeDataType;
 
-#[derive(Debug, Default, Deserialize, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
 #[serde(default)]
 pub struct AllNodesMenu {
     is_showing: bool,
     pub output: AllNodesMenuOutput,
 }
 
-#[derive(Debug, Default, Deserialize, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
 #[serde(default)]
 pub struct AllNodesMenuOutput {
     pub should_render_octree: bool,
@@ -22,8 +22,8 @@ pub struct AllNodesMenuOutput {
     pub octree_nodes_to_visualize: OctreeDataType,
 }
 
-impl SubMenu for AllNodesMenu {
-    type InputData = ();
+impl<'a> SubMenu for AllNodesMenu {
+    type InputData<'b> = ();
     type OutputData = AllNodesMenuOutput;
 
     fn is_showing(&self) -> bool {
@@ -38,7 +38,7 @@ impl SubMenu for AllNodesMenu {
         &self.output
     }
 
-    fn render(&mut self, internals: &MenuInternals, _: &Self::InputData) {
+    fn render<'b>(&mut self, internals: &MenuInternals, _: &Self::InputData<'b>) {
         if !self.is_showing() {
             return;
         }

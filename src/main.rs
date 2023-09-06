@@ -8,6 +8,7 @@ use crate::{
     menu::{
         submenus::{
             ChildrenMenuInput, DiagnosticsMenuInput, NodeSearchMenuInput, PhotonsMenuInput,
+            SavePresetMenuInput,
         },
         MenuInternals, SubMenus,
     },
@@ -268,6 +269,7 @@ fn main() {
                 DiagnosticsMenuInput::new(fps),
                 (),
                 PhotonsMenuInput::new(photons.clone()),
+                SavePresetMenuInput::new(&camera, menu.sub_menus.clone()), // TODO: Remove clone
             ));
             let outputs = menu.get_data();
 
