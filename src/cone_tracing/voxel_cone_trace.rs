@@ -35,6 +35,7 @@ impl ConeTracer {
         light_maps: (u32, u32, u32),
         quad: &Quad,
         camera: &Camera,
+        nearest: bool,
     ) {
         self.shader.use_program();
 
@@ -90,78 +91,66 @@ impl ConeTracer {
             .set_float(c_str!("coneAngle"), cone_angle as f32);
         helpers::bind_image_texture(0, textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
 
+        let sample_interpolation = if nearest { gl::NEAREST as i32 } else { gl::LINEAR as i32 };
         let brick_pool_textures = vec![
             (
                 c_str!("brickPoolColorsX"),
                 textures.brick_pool_colors[0],
-                gl::LINEAR as i32,
             ),
             (
                 c_str!("brickPoolColorsXNeg"),
                 textures.brick_pool_colors[1],
-                gl::LINEAR as i32,
             ),
             (
                 c_str!("brickPoolColorsY"),
                 textures.brick_pool_colors[2],
-                gl::LINEAR as i32,
             ),
             (
                 c_str!("brickPoolColorsYNeg"),
                 textures.brick_pool_colors[3],
-                gl::LINEAR as i32,
             ),
             (
                 c_str!("brickPoolColorsZ"),
                 textures.brick_pool_colors[4],
-                gl::LINEAR as i32,
             ),
             (
                 c_str!("brickPoolColorsZNeg"),
                 textures.brick_pool_colors[5],
-                gl::LINEAR as i32,
             ),
             (
                 c_str!("brickPoolNormals"),
                 textures.brick_pool_normals,
-                gl::NEAREST as i32,
             ),
             // Irradiance textures
             (
                 c_str!("brickPoolIrradianceX"),
                 textures.brick_pool_irradiance[0],
-                gl::LINEAR as i32,
             ),
             (
                 c_str!("brickPoolIrradianceXNeg"),
                 textures.brick_pool_irradiance[1],
-                gl::LINEAR as i32,
             ),
             (
                 c_str!("brickPoolIrradianceY"),
                 textures.brick_pool_irradiance[2],
-                gl::LINEAR as i32,
             ),
             (
                 c_str!("brickPoolIrradianceYNeg"),
                 textures.brick_pool_irradiance[3],
-                gl::LINEAR as i32,
             ),
             (
                 c_str!("brickPoolIrradianceZ"),
                 textures.brick_pool_irradiance[4],
-                gl::LINEAR as i32,
             ),
             (
                 c_str!("brickPoolIrradianceZNeg"),
                 textures.brick_pool_irradiance[5],
-                gl::LINEAR as i32,
             ),
         ];
 
         let mut texture_counter = 0;
 
-        for &(texture_name, texture, sample_interpolation) in brick_pool_textures.iter() {
+        for &(texture_name, texture) in brick_pool_textures.iter() {
             gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
             gl::BindTexture(gl::TEXTURE_3D, texture);
             self.shader.set_int(texture_name, texture_counter as i32);

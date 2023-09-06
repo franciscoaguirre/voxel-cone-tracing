@@ -103,6 +103,18 @@ impl Octree {
                     brick_pool_values,
                 );
 
+                // Mipmap on border voxels too, because when we mipmap on a direction (let's say X+) we assume that the voxel on X0 for node (x, y, z)
+                // will be filled by the voxels on X2 of node (x - 1, y, z). We are grossly
+                // overcalculating voxels by doing this, but let us get consistency and later think
+                // about performance
+                self.builder.mipmap_anisotropic_pass.run(
+                    &self.textures,
+                    &self.border_data.node_data,
+                    level,
+                    *direction,
+                    brick_pool_values,
+                );
+
                 // self.builder.mipmap_isotropic_pass.run(
                 //     &self.textures,
                 //     &self.geometry_data.node_data,
@@ -110,14 +122,14 @@ impl Octree {
                 // );
 
                 if level > 0 {
-                    // self.builder.anisotropic_border_transfer_pass.run(
-                    //     &self.textures,
-                    //     &self.geometry_data.node_data,
-                    //     &self.border_data.node_data,
-                    //     level,
-                    //     brick_pool_values,
-                    //     *direction,
-                    // );
+                    self.builder.anisotropic_border_transfer_pass.run(
+                        &self.textures,
+                        &self.geometry_data.node_data,
+                        &self.border_data.node_data,
+                        level,
+                        brick_pool_values,
+                        *direction,
+                    );
                     // self.builder.border_transfer_pass.run(
                     //     &self.textures,
                     //     &self.geometry_data.node_data,

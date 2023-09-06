@@ -94,7 +94,8 @@ void main() {
     vec3 eyeDirection = normalize(positionRaw - eyePosition);
 
     vec3 normal = texture(gBufferNormals, In.textureCoordinates).xyz;
-    vec3 helper = normal - vec3(0.1, 0, 0); // Random vector
+    // If normal is paralel to the random vector we got trouble in our hands
+    vec3 helper = normal - vec3(0.1, 0.1, 0); // Random vector
     vec3 tangent = normalize(helper - dot(normal, helper) * normal);
 
     vec4 color = texture(gBufferColors, In.textureCoordinates);
@@ -232,6 +233,7 @@ vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, bool useLight
 
     float coneWeight = (PI / 2) - angleFromAxis; // TODO: Shouldn't it be a cosine?
 
+//    direction = normal;
     direction = sinAngle * normal + cosAngle * tangent;
     
     indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);

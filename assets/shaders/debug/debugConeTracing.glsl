@@ -58,7 +58,7 @@ void main() {
     float sinAngle = sin(angle);
     float cosAngle = cos(angle);
 
-    vec3 helper = axis - vec3(0.1, 0, 0); // Random vector
+    vec3 helper = axis - vec3(0.0, 0.32, 0); // Random vector
     vec3 tangent = normalize(helper - dot(axis, helper) * axis);
     vec3 bitangent = cross(axis, tangent);
 

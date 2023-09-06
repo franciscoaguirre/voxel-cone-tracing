@@ -38,8 +38,11 @@ in VertexData {
     vec2 textureCoordinates;
 } In;
 
+uniform vec3 materialDiffuse;
 uniform uint voxelDimension;
-uniform sampler2D texture_diffuse1;
+uniform sampler2D textureDiffuse1;
+uniform bool hasTexture;
+uniform bool hasDiffuse;
 
 void main() {
     vec4 normalizedGlobalPosition = vec4(
@@ -50,7 +53,12 @@ void main() {
     
     viewMapPositions = vec4(In.position.xyz / In.position.w, 1);
     viewMapNormals = vec4(In.normal, 1);
-    viewMapColors = texture(texture_diffuse1, In.textureCoordinates);
+
+    if (hasDiffuse) {
+      viewMapColors = vec4(materialDiffuse, 1);
+    } else {
+      viewMapColors = texture(textureDiffuse1, In.textureCoordinates);
+    }
 
     viewMapViewOutput = normalizedGlobalPosition;
 }

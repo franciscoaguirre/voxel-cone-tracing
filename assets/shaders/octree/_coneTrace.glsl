@@ -21,6 +21,7 @@ float calculateLod(float coneDiameter) {
     // Shouldn't this be log2(1 / coneDiameter) + 1 or something similar?
     //return max(maxOctreeLevel - log2(1 + coneDiameter * voxelDimension), 0);
     return clamp(log2(1 / coneDiameter) - 1, 0, maxOctreeLevel);
+    // return maxOctreeLevel - 1;
 }
 
 // Brick marching
@@ -77,7 +78,10 @@ vec4 coneTrace(
     int steps = 0;
     
     // Move the cone origin so it doesn't intersect with own voxels
+    //vec3 offsetedConeOrigin = coneOrigin;
     vec3 offsetedConeOrigin = coneOrigin + coneDirection * voxelSize * 2;
+    //while (distanceAlongCone < maxDistance && steps < 6) {
+
     while (distanceAlongCone < maxDistance && returnColor.a < 0.97) {
         float coneDiameter = clamp(coneDiameterCoefficient * distanceAlongCone, 0.0009765625, 100.0);
         float lod = calculateLod(coneDiameter);
@@ -85,10 +89,6 @@ vec4 coneTrace(
         float parentWeight = octreeLevel - lod; // Non-linear, we should approximate the log with many lines
 
         bool changedOctreeLevel = octreeLevel != previousOctreeLevel;
-        if (changedOctreeLevel) {
-            // To account for the larger voxelSize in the new level
-            sampleStep *= 2; // Increase sampleStep, same as increasing voxelSize by 2
-        }
 
         vec3 queryCoordinates = offsetedConeOrigin + distanceAlongCone * coneDirection;
         bool changedNode = steps == 0 || fallsOutsideNode(queryCoordinates, previousNode); // Should be true on first iteration
@@ -101,6 +101,12 @@ vec4 coneTrace(
                 node,
                 parentNode
             ); // TODO: We are visiting the same node twice for some reason
+            if (changedOctreeLevel) {
+                // To account for the larger voxelSize in the new level
+                //sampleStep *= 2; // Increase sampleStep, same as increasing voxelSize by 2
+                sampleStep = 1 / pow(2, octreeLevel + 1);
+            }
+
             if (node.id == NODE_NOT_FOUND) {
                 distanceAlongCone += sampleStep;
                 //break;
@@ -131,20 +137,22 @@ vec4 coneTrace(
         } else {
             childColor = getAnisotropicIrradiance(childVoxelCoordinates, coneDirection);
         }
-        #if debug
-            int aux = 5;
-            imageStore(sampledColor, steps * aux + 0 + 5, vec4(childColor.r, 0, 0, 0));
-            imageStore(sampledColor, steps * aux + 1 + 5, vec4(childColor.g, 0, 0, 0));
-            imageStore(sampledColor, steps * aux + 2 + 5, vec4(childColor.b, 0, 0, 0));
-            imageStore(sampledColor, steps * aux + 3 + 5, vec4(childColor.a, 0, 0, 0));
-            imageStore(sampledColor, steps * aux + 4 + 5, vec4(octreeLevel, 0, 0, 0));
-        #endif
         parentColor = getAnisotropicIrradiance(parentVoxelCoordinates, coneDirection);
         // parentColor = getLeafIrradiance(parentVoxelCoordinates);
         vec4 newColor = mix(childColor, parentColor, parentWeight); // Quadrilinear interpolation
-        newColor.rgb /= distanceFactor;
+        #if debug
+            int aux = 5;
+            imageStore(sampledColor, steps * aux + 0 + 5, vec4(newColor.r, 0, 0, 0));
+            imageStore(sampledColor, steps * aux + 1 + 5, vec4(newColor.g, 0, 0, 0));
+            imageStore(sampledColor, steps * aux + 2 + 5, vec4(newColor.b, 0, 0, 0));
+            imageStore(sampledColor, steps * aux + 3 + 5, vec4(newColor.a, 0, 0, 0));
+            imageStore(sampledColor, steps * aux + 4 + 5, vec4(octreeLevel, 0, 0, 0));
+        #endif
 
-        returnColor += (1 - returnColor.a) * newColor;
+    //    newColor.rgb /= distanceFactor;
+
+        returnColor += (1 - returnColor.a) * childColor;
+        break;
 
         // Prepare for next iteration
         distanceAlongCone += sampleStep;

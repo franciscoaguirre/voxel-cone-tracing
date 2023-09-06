@@ -123,6 +123,7 @@ pub fn process_movement_input(
     }
 }
 
+toggle_boolean!(N, handle_nearest);
 toggle_boolean!(C, handle_light_movement);
 toggle_boolean!(Num1, handle_show_model);
 toggle_boolean!(Num2, handle_show_voxel_fragment_list);

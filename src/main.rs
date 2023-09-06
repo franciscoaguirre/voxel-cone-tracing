@@ -176,6 +176,7 @@ fn main() {
     let mut should_show_final_image_quad = false;
 
     let mut should_move_light = false;
+    let mut should_use_nearest = false;
 
     let mut should_show_neighbors = false;
     let mut bricks_to_show = BricksToShow::default();
@@ -225,8 +226,8 @@ fn main() {
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
             gl::Enable(gl::DEPTH_TEST);
             gl::Disable(gl::BLEND);
-            // gl::Enable(gl::BLEND);
-            // gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
+             //gl::Enable(gl::BLEND);
+             //gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
         }
 
         for (_, event) in glfw::flush_messages(&events) {
@@ -245,6 +246,7 @@ fn main() {
                 common::handle_show_model(&event, &mut show_model);
                 common::handle_show_voxel_fragment_list(&event, &mut show_voxel_fragment_list);
                 common::handle_light_movement(&event, &mut should_move_light);
+                common::handle_nearest(&event, &mut should_use_nearest);
                 common::handle_cone_angle(&event, &mut debug_cone.cone_angle);
             }
             menu.handle_event(event);
@@ -422,15 +424,16 @@ fn main() {
                 light_maps,
                 &quad,
                 &camera,
+                should_use_nearest,
             );
 
             // TODO: Add toggle to menu
-            // debug_cone.run(
-            //     &octree.textures,
-            //     &projection,
-            //     &view,
-            //     &mut selected_debug_nodes,
-            // );
+             debug_cone.run(
+                 &octree.textures,
+                 &projection,
+                 &view,
+                 &mut selected_debug_nodes,
+             );
             static_eye.draw_gizmo(&projection, &view);
             light.draw_gizmo(&projection, &view);
             // quad.render(light_maps.1);

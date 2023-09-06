@@ -67,6 +67,7 @@ impl Octree {
         let (light_view_map, light_view_map_view, shadow_map) =
             self.create_light_view_map(models, light, model, framebuffer);
         self.store_photons(light_view_map, light_view_map_view);
+        // Transfer light, to get consistent colors across shared voxels later
         self.border_transfer(light_view_map);
 
         // TODO: Refactorear todos estos métodos a su propia stage.
@@ -99,12 +100,13 @@ impl Octree {
             BrickPoolValues::Irradiance,
         );
 
-        self.builder.leaf_border_transfer_pass.run(
-            &self.textures,
-            &self.geometry_data.node_data,
-            &self.border_data.node_data,
-            BrickPoolValues::Irradiance,
-        );
+        // The "usual" border transfer in the last level, to make shared voxels consistent
+        //self.builder.leaf_border_transfer_pass.run(
+            //&self.textures,
+            //&self.geometry_data.node_data,
+            //&self.border_data.node_data,
+            //BrickPoolValues::Irradiance,
+        //);
 
         self.mipmap_photons(light_view_map);
 
@@ -112,6 +114,7 @@ impl Octree {
     }
 
     unsafe fn border_transfer(&self, light_view_map: GLuint) {
+        // TODO: performance -- Doing compilation every time?
         let border_transfer = BorderTransferPass::init(light_view_map);
 
         for axis in Axis::all_axis().iter() {
@@ -125,6 +128,7 @@ impl Octree {
     }
 
     unsafe fn mipmap_photons(&self, light_view_map: GLuint) {
+        // TODO: performance -- Doing compilation every time?
         let mipmap = MipmapAnisotropicPass::init();
         self.run_mipmap(BrickPoolValues::Irradiance);
     }

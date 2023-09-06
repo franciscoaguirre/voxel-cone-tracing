@@ -1,0 +1,84 @@
+(
+    submenus: (
+        all_nodes: (
+            is_showing: true,
+            output: (
+                should_render_octree: true,
+                current_octree_level: 5,
+                octree_nodes_to_visualize: Geometry,
+            ),
+        ),
+        node_search: (
+            is_showing: false,
+            output: (
+                selected_items: [],
+                filter_text: "",
+                should_show_neighbors: false,
+                selected_items_updated: false,
+            ),
+        ),
+        bricks: (
+            is_showing: false,
+            output: (
+                brick_attribute: None,
+                brick_padding: 0.0,
+                bricks_to_show: (
+                    show_z0: false,
+                    show_z1: false,
+                    show_z2: false,
+                ),
+                color_direction: (
+                    x: 1.0,
+                    y: 0.0,
+                    z: 0.0,
+                ),
+                should_show_brick_normals: false,
+            ),
+        ),
+        children: (
+            is_showing: false,
+        ),
+        diagnostics: (),
+        images: (
+            is_showing: true,
+            output: (
+                toggles: (
+                    should_show_color: false,
+                    should_show_direct: false,
+                    should_show_indirect: false,
+                    should_show_indirect_specular: false,
+                    should_show_ambient_occlusion: true,
+                ),
+            ),
+        ),
+        photons: (
+            is_showing: false,
+        ),
+        save_preset: (
+            name: "AO",
+        ),
+    ),
+    camera: (
+        transform: (
+            position: (
+                x: -0.09751281,
+                y: -0.17672272,
+                z: 0.027293853,
+            ),
+            scale: (
+                x: 1.0,
+                y: 1.0,
+                z: 1.0,
+            ),
+            rotation: (
+                x: -25.9,
+                y: -10.899992,
+                z: 0.0,
+            ),
+            movement_speed: 1.0,
+        ),
+        movement_speed: 1.0,
+        mouse_sensitivity: 0.1,
+        zoom: 45.0,
+    ),
+)

@@ -28,6 +28,7 @@ pub struct DebugCone {
     nodes_queried: BufferTexture,
     nodes_queried_counter: GLuint,
     sampled_colors_texture: BufferTexture,
+    old_color: Vector3<f32>,
     vao: GLuint,
 }
 
@@ -67,7 +68,7 @@ impl DebugCone {
         Self {
             shader: compile_shaders!("assets/shaders/debug/debugConeTracing.glsl", debug = true),
             transform,
-            direction: vec3(0.0, 0.0, 1.0),
+            direction: vec3(1.0, 0.0, 0.0),
             previous_values: HashSet::new(),
             nodes_queried: helpers::generate_texture_buffer4(
                 1000,
@@ -83,6 +84,7 @@ impl DebugCone {
             ),
             nodes_queried_counter: helpers::generate_atomic_counter_buffer1(gl::DYNAMIC_READ),
             cone_angle: 0.263599,
+            old_color: vec3(0.0, 0.0, 0.0),
             vao,
         }
     }
@@ -215,12 +217,13 @@ impl DebugCone {
         let values = helpers::get_values_from_texture_buffer(self.nodes_queried.1, 1000, 42u32);
         let sampled_colors =
             helpers::get_values_from_texture_buffer(self.sampled_colors_texture.1, 100, 32f32);
-        // dbg!(&sampled_colors[0..5]);
-        // pretty_print_data(&sampled_colors[5..]);
 
         let total_nodes_queried =
             helpers::get_value_from_atomic_counter(self.nodes_queried_counter) as usize;
         let values_set = HashSet::from_iter(values[..total_nodes_queried].iter().cloned());
+
+        dbg!(&sampled_colors[0..5]);
+        pretty_print_data(&sampled_colors[5..]);
 
         if self.previous_values != values_set {
             // dbg!(&values[..total_nodes_queried]);
