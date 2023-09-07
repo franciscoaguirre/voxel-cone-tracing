@@ -90,9 +90,9 @@ impl Octree {
             CONFIG.brick_pool_resolution as i32,
         );
 
-        self.builder
-            .photons_to_irradiance_pass
-            .run(&self.textures, light_view_map);
+        //self.builder
+            //.photons_to_irradiance_pass
+            //.run(&self.textures, light_view_map);
 
         self.builder.spread_leaf_bricks_pass.run(
             &self.textures,
@@ -101,14 +101,14 @@ impl Octree {
         );
 
         // The "usual" border transfer in the last level, to make shared voxels consistent
-        //self.builder.leaf_border_transfer_pass.run(
-            //&self.textures,
-            //&self.geometry_data.node_data,
-            //&self.border_data.node_data,
-            //BrickPoolValues::Irradiance,
-        //);
+        self.builder.leaf_border_transfer_pass.run(
+            &self.textures,
+            &self.geometry_data.node_data,
+            &self.border_data.node_data,
+            BrickPoolValues::Irradiance,
+        );
 
-        self.mipmap_photons(light_view_map);
+        //self.mipmap_photons(light_view_map);
 
         (light_view_map, light_view_map_view, shadow_map)
     }

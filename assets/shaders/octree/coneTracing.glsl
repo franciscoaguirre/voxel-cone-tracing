@@ -233,21 +233,24 @@ vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, bool useLight
 
     float coneWeight = (PI / 2) - angleFromAxis; // TODO: Shouldn't it be a cosine?
 
-//    direction = normal;
-    direction = sinAngle * normal + cosAngle * tangent;
+    direction = normal;
     
-    indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    indirectLight += coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
-    direction = sinAngle * normal - cosAngle * tangent;
-    indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    //direction = sinAngle * normal + cosAngle * tangent;
+    
+    //indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
-    direction = sinAngle * normal + cosAngle * bitangent;
-    indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    //direction = sinAngle * normal - cosAngle * tangent;
+    //indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
-    direction = sinAngle * normal - cosAngle * bitangent;
-    indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    //direction = sinAngle * normal + cosAngle * bitangent;
+    //indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
-    indirectLight /= coneWeight * 4;
+    //direction = sinAngle * normal - cosAngle * bitangent;
+    //indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+
+    //indirectLight /= coneWeight * 4 + 1;
 
     return indirectLight;
 }

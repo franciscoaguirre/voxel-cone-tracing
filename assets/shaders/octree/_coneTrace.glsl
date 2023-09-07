@@ -20,8 +20,8 @@ float calculateLod(float coneDiameter) {
     // Could approximate log2 by lines between y = a and y = a + 1
     // Shouldn't this be log2(1 / coneDiameter) + 1 or something similar?
     //return max(maxOctreeLevel - log2(1 + coneDiameter * voxelDimension), 0);
-    return clamp(log2(1 / coneDiameter) - 1, 0, maxOctreeLevel);
-    // return maxOctreeLevel - 1;
+    //return clamp(log2(1 / coneDiameter) - 1, 0, maxOctreeLevel);
+    return maxOctreeLevel;
 }
 
 // Brick marching
@@ -78,8 +78,8 @@ vec4 coneTrace(
     int steps = 0;
     
     // Move the cone origin so it doesn't intersect with own voxels
-    //vec3 offsetedConeOrigin = coneOrigin;
-    vec3 offsetedConeOrigin = coneOrigin + coneDirection * voxelSize * 2;
+    vec3 offsetedConeOrigin = coneOrigin;
+    //vec3 offsetedConeOrigin = coneOrigin + coneDirection * voxelSize * 2;
     //while (distanceAlongCone < maxDistance && steps < 6) {
 
     while (distanceAlongCone < maxDistance && returnColor.a < 0.97) {

@@ -53,7 +53,7 @@ void main() {
 
                 vec4 finalValue;
                 if (direction.axis == X_AXIS) {
-                    finalValue = borderValue; // We copy the value to the neighbor
+                    finalValue = 0.5 * (borderValue + neighborBorderValue); // We average partial averages
                 } else {
                     finalValue = 0.5 * (borderValue + neighborBorderValue); // We average partial averages
                 }
@@ -75,7 +75,7 @@ void main() {
 
                 vec4 finalValue;
                 if (direction.axis == Y_AXIS) {
-                    finalValue = borderValue; // We copy the value to the neighbor
+                    finalValue = 0.5 * (borderValue + neighborBorderValue); // We average partial averages
                 } else {
                     finalValue = 0.5 * (borderValue + neighborBorderValue); // We average partial averages
                 }
@@ -97,7 +97,7 @@ void main() {
 
                 vec4 finalValue;
                 if (direction.axis == Z_AXIS) {
-                    finalValue = borderValue; // We copy the value to the neighbor
+                    finalValue = 0.5 * (borderValue + neighborBorderValue); // We average partial averages
                 } else {
                     finalValue = 0.5 * (borderValue + neighborBorderValue); // We average partial averages
                 }

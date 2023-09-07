@@ -39,6 +39,7 @@ impl Octree {
                 color_direction,
                 brick_attribute,
                 brick_padding,
+                node_data,
             );
         } else {
             self.renderer.shader.use_program();
@@ -177,6 +178,7 @@ impl Octree {
         color_direction: Vector3<f32>,
         brick_attribute: BrickAttribute,
         brick_padding: f32, // Between 0 and 1
+        node_data: &NodeData,
     ) {
         self.renderer.bricks_shader.use_program();
 
@@ -223,7 +225,7 @@ impl Octree {
         );
         helpers::bind_image_texture(
             1,
-            self.geometry_data.node_data.level_start_indices.0,
+            node_data.level_start_indices.0,
             gl::READ_ONLY,
             gl::R32UI,
         );
@@ -313,7 +315,7 @@ impl Octree {
                     gl::DrawArrays(
                         gl::POINTS,
                         0,
-                        self.geometry_data.node_data.nodes_per_level[octree_level as usize] as i32,
+                        node_data.nodes_per_level[octree_level as usize] as i32,
                     );
                 }
             }

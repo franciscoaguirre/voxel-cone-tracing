@@ -27,7 +27,8 @@ void main() {
 	ivec3 brickCoordinates = calculateBrickCoordinates(nodeID);
 	for (uint corner = 0; corner < CHILD_OFFSETS.length(); corner++) {
 		ivec3 offset = 2 * ivec3(CHILD_OFFSETS[corner]);
-		float alpha = imageLoad(brickPoolColors, brickCoordinates + offset).a;
-		imageStore(brickPoolAlpha, brickCoordinates + offset, vec4(0, 0, 0, alpha));
-    }
+		vec4 color = imageLoad(brickPoolColors, brickCoordinates + offset);
+		//imageStore(brickPoolAlpha, brickCoordinates + offset, vec4(0, 0, 0, color.a));
+		imageStore(brickPoolAlpha, brickCoordinates + offset, color);
+  }
 }
