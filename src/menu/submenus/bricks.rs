@@ -1,6 +1,6 @@
 use cgmath::{vec3, InnerSpace, Vector3};
 use egui_glfw_gl::egui;
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 
 use super::SubMenu;
 use crate::{
@@ -8,13 +8,13 @@ use crate::{
     octree::{BrickAttribute, BricksToShow},
 };
 
-#[derive(Debug, Default, Deserialize, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct BricksMenu {
     is_showing: bool,
     output: BricksMenuOutput,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BricksMenuOutput {
     pub brick_attribute: BrickAttribute,
     pub brick_padding: f32,
@@ -35,8 +35,8 @@ impl Default for BricksMenuOutput {
     }
 }
 
-impl SubMenu for BricksMenu {
-    type InputData = ();
+impl<'a> SubMenu for BricksMenu {
+    type InputData<'b> = ();
     type OutputData = BricksMenuOutput;
 
     fn is_showing(&self) -> bool {
@@ -51,7 +51,7 @@ impl SubMenu for BricksMenu {
         &self.output
     }
 
-    fn render(&mut self, internals: &MenuInternals, _: &Self::InputData) {
+    fn render<'b>(&mut self, internals: &MenuInternals, _: &Self::InputData<'b>) {
         if !self.is_showing() {
             return;
         }

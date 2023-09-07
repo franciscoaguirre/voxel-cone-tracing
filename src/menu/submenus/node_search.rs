@@ -1,10 +1,10 @@
 use egui_glfw_gl::egui;
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 
 use super::SubMenu;
 use crate::menu::{get_button_text, DebugNode, MenuInternals};
 
-#[derive(Debug, Default, Deserialize, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
 #[serde(default)]
 pub struct NodeSearchMenu {
     is_showing: bool,
@@ -21,7 +21,7 @@ impl NodeSearchMenuInput {
     }
 }
 
-#[derive(Debug, Default, Deserialize, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
 #[serde(default)]
 pub struct NodeSearchMenuOutput {
     pub selected_items: Vec<DebugNode>,
@@ -30,8 +30,8 @@ pub struct NodeSearchMenuOutput {
     pub selected_items_updated: bool,
 }
 
-impl SubMenu for NodeSearchMenu {
-    type InputData = NodeSearchMenuInput;
+impl<'a> SubMenu for NodeSearchMenu {
+    type InputData<'b> = NodeSearchMenuInput;
     type OutputData = NodeSearchMenuOutput;
 
     fn is_showing(&self) -> bool {
@@ -46,7 +46,7 @@ impl SubMenu for NodeSearchMenu {
         &self.output
     }
 
-    fn render(&mut self, internals: &MenuInternals, input: &Self::InputData) {
+    fn render<'b>(&mut self, internals: &MenuInternals, input: &Self::InputData<'b>) {
         if !self.is_showing() {
             return;
         }

@@ -20,14 +20,18 @@ pub use node_search::{NodeSearchMenu, NodeSearchMenuInput};
 
 mod photons;
 pub use photons::{PhotonsMenu, PhotonsMenuInput};
-use serde::Deserialize;
 
-pub trait SubMenu: std::fmt::Debug + Default + for<'a> Deserialize<'a> + Clone {
-    type InputData;
-    type OutputData: std::fmt::Debug + Default + for<'a> Deserialize<'a> + Clone;
+mod save_preset;
+pub use save_preset::{SavePresetMenu, SavePresetMenuInput};
+
+use serde::{Serialize, Deserialize};
+
+pub trait SubMenu: std::fmt::Debug + Default + for<'a> Deserialize<'a> + Serialize + Clone {
+    type InputData<'a>: 'a;
+    type OutputData: std::fmt::Debug + Default + for<'a> Deserialize<'a> + Serialize + Clone;
 
     fn is_showing(&self) -> bool;
     fn toggle_showing(&mut self);
     fn get_data(&self) -> &Self::OutputData;
-    fn render(&mut self, internals: &MenuInternals, input: &Self::InputData);
+    fn render<'a>(&mut self, internals: &MenuInternals, input: &Self::InputData<'a>);
 }

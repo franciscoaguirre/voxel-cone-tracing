@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 
 use super::transform::Transform;
 
@@ -7,13 +7,13 @@ const SPEED: f32 = 1.0;
 const SENSITIVITY: f32 = 0.1;
 const ZOOM: f32 = 45.0;
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(default)]
 pub struct Camera {
     pub transform: Transform,
-    #[serde(skip_deserializing, default = "default_yaw")]
+    #[serde(skip, default = "default_yaw")]
     yaw: f32,
-    #[serde(skip_deserializing)]
+    #[serde(skip)]
     pitch: f32,
     // Camera options
     #[serde(default = "default_speed")]

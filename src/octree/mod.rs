@@ -2,7 +2,7 @@ use std::{ffi::c_void, mem::size_of};
 
 use gl::types::GLuint;
 use log;
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 
 use crate::rendering::shader::{compile_compute, compile_shaders};
 use crate::{
@@ -50,7 +50,7 @@ pub struct OctreeData {
     pub voxel_data: VoxelData,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum OctreeDataType {
     Geometry,
     Border,
