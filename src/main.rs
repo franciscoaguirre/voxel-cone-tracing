@@ -16,7 +16,7 @@ use crate::{
     preset::PRESET,
     rendering::shader::compile_shaders,
 };
-use cgmath::{perspective, point3, vec3, Deg, Matrix4};
+use cgmath::{point3, vec3, Deg, Matrix4};
 use log::info;
 
 use rendering::quad::Quad;
@@ -164,12 +164,6 @@ fn main() {
     let camera_framebuffer = unsafe { Framebuffer::new() };
 
     let ortho = cgmath::ortho(-1.0, 1.0, -1.0, 1.0, 0.0001, 10_000.0);
-    let projection: Matrix4<f32> = perspective(
-        Deg(camera.zoom),
-        CONFIG.viewport_width as f32 / CONFIG.viewport_height as f32,
-        0.0001,
-        10000.0,
-    );
 
     let mut current_voxel_fragment_count: u32 = 0;
     let mut current_octree_level: u32 = 0;
@@ -219,7 +213,7 @@ fn main() {
         let geometry_buffers = unsafe {
             camera.transform.take_photo(
                 &[&our_model],
-                &projection,
+                &camera.get_projection_matrix(),
                 &model_normalization_matrix,
                 &camera_framebuffer,
                 None,
@@ -258,6 +252,8 @@ fn main() {
 
         menu.begin_frame(current_frame);
 
+        dbg!(&camera.orthographic);
+
         // egui render
         if menu.is_showing() {
             menu.show_main_window();
@@ -270,6 +266,7 @@ fn main() {
                 (),
                 PhotonsMenuInput::new(photons.clone()),
                 SavePresetMenuInput::new(&camera, menu.sub_menus.clone()), // TODO: Remove clone
+                (),
             ));
             let outputs = menu.get_data();
 
@@ -293,6 +290,9 @@ fn main() {
 
             // Images
             cone_tracer.toggles = outputs.5.toggles.clone();
+
+            // Camera
+            camera.orthographic = outputs.8.orthographic;
         }
 
         // This is for debugging
@@ -349,7 +349,7 @@ fn main() {
             //     0.0001,
             //     10000.0,
             // );
-            let projection = projection;
+            let projection = camera.get_projection_matrix();
             let view = camera.transform.get_view_matrix();
             let mut model = Matrix4::<f32>::from_translation(vec3(0.0, 0.0, 0.0));
             model = model * Matrix4::from_scale(1.);

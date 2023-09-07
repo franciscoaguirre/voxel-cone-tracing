@@ -1,6 +1,8 @@
 use serde::{Serialize, Deserialize};
+use cgmath::{Matrix4, Deg};
 
 use super::transform::Transform;
+use crate::config::CONFIG;
 
 // Default camera values
 const SPEED: f32 = 1.0;
@@ -11,6 +13,7 @@ const ZOOM: f32 = 45.0;
 #[serde(default)]
 pub struct Camera {
     pub transform: Transform,
+    pub orthographic: bool,
     #[serde(skip, default = "default_yaw")]
     yaw: f32,
     #[serde(skip)]
@@ -49,6 +52,7 @@ impl Default for Camera {
             movement_speed: SPEED,
             mouse_sensitivity: SENSITIVITY,
             zoom: ZOOM,
+            orthographic: false,
         }
     }
 }
@@ -92,5 +96,25 @@ impl Camera {
         if self.zoom >= 45.0 {
             self.zoom = 45.0;
         }
+    }
+
+    pub fn get_projection_matrix(&self) -> Matrix4<f32> {
+        if self.orthographic {
+            return cgmath::ortho(
+                -0.1,
+                0.1,
+                -0.1,
+                0.1,
+                0.0001,
+                2.0,
+            )
+        }
+
+        cgmath::perspective(
+            Deg(self.zoom),
+            CONFIG.viewport_width as f32 / CONFIG.viewport_height as f32,
+            0.0001,
+            10000.0,
+        )
     }
 }

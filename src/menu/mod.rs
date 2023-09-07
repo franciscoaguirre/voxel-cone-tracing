@@ -37,6 +37,7 @@ pub struct SubMenus {
     images: ImagesMenu,
     photons: PhotonsMenu,
     save_preset: SavePresetMenu,
+    camera: CameraMenu,
 }
 
 type SubMenuInputs<'a> = (
@@ -48,6 +49,7 @@ type SubMenuInputs<'a> = (
     <ImagesMenu as SubMenu>::InputData<'a>,
     <PhotonsMenu as SubMenu>::InputData<'a>,
     <SavePresetMenu as SubMenu>::InputData<'a>,
+    <CameraMenu as SubMenu>::InputData<'a>,
 );
 
 type SubMenuOutputs<'a> = (
@@ -59,6 +61,7 @@ type SubMenuOutputs<'a> = (
     &'a <ImagesMenu as SubMenu>::OutputData,
     &'a <PhotonsMenu as SubMenu>::OutputData,
     &'a <SavePresetMenu as SubMenu>::OutputData,
+    &'a <CameraMenu as SubMenu>::OutputData,
 );
 
 impl Menu {
@@ -185,6 +188,7 @@ impl Menu {
         self.sub_menus.images.render(&self.internals, &inputs.5);
         self.sub_menus.photons.render(&self.internals, &inputs.6);
         self.sub_menus.save_preset.render(&self.internals, &inputs.7);
+        self.sub_menus.camera.render(&self.internals, &inputs.8);
     }
 
     pub fn get_data(&self) -> SubMenuOutputs {
@@ -197,6 +201,7 @@ impl Menu {
             self.sub_menus.images.get_data(),
             self.sub_menus.photons.get_data(),
             self.sub_menus.save_preset.get_data(),
+            self.sub_menus.camera.get_data(),
         )
     }
 
@@ -255,6 +260,15 @@ impl Menu {
                 .clicked()
             {
                 self.sub_menus.images.toggle_showing();
+            }
+            if ui
+                .button(get_button_text(
+                    "Camera",
+                    self.sub_menus.camera.is_showing(),
+                ))
+                .clicked()
+            {
+                self.sub_menus.camera.toggle_showing();
             }
         });
     }

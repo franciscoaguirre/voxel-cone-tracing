@@ -24,6 +24,9 @@ pub use photons::{PhotonsMenu, PhotonsMenuInput};
 mod save_preset;
 pub use save_preset::{SavePresetMenu, SavePresetMenuInput};
 
+mod camera;
+pub use camera::{CameraMenu, CameraMenuOutput};
+
 use serde::{Serialize, Deserialize};
 
 pub trait SubMenu: std::fmt::Debug + Default + for<'a> Deserialize<'a> + Serialize + Clone {
