@@ -254,8 +254,6 @@ fn main() {
 
         menu.begin_frame(current_frame);
 
-        dbg!(&camera.orthographic);
-
         // egui render
         if menu.is_showing() {
             menu.show_main_window();
@@ -428,12 +426,14 @@ fn main() {
             );
 
             // TODO: Add toggle to menu
-            //debug_cone.run(
-                //&octree.textures,
-                //&projection,
-                //&view,
-                //&mut selected_debug_nodes,
-            //);
+            if debug {
+                debug_cone.run(
+                    &octree.textures,
+                    &projection,
+                    &view,
+                    &mut selected_debug_nodes,
+                );
+            }
             static_eye.draw_gizmo(&projection, &view);
             light.draw_gizmo(&projection, &view);
             // quad.render(light_maps.1);

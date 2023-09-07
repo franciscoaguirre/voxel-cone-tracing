@@ -4,7 +4,7 @@
             is_showing: true,
             output: (
                 should_render_octree: true,
-                current_octree_level: 6,
+                current_octree_level: 5,
                 octree_nodes_to_visualize: Geometry,
             ),
         ),
@@ -23,9 +23,9 @@
                 brick_attribute: Photons,
                 brick_padding: 0.0,
                 bricks_to_show: (
-                    show_z0: true,
-                    show_z1: true,
-                    show_z2: true,
+                    show_z0: false,
+                    show_z1: false,
+                    show_z2: false,
                 ),
                 color_direction: (
                     x: 1.0,
@@ -47,7 +47,7 @@
                     should_show_direct: false,
                     should_show_indirect: false,
                     should_show_indirect_specular: false,
-                    should_show_ambient_occlusion: false,
+                    should_show_ambient_occlusion: true,
                 ),
             ),
         ),
@@ -57,13 +57,19 @@
         save_preset: (
             name: "TEST",
         ),
+        camera: (
+            is_showing: false,
+            output: (
+                orthographic: false,
+            ),
+        ),
     ),
     camera: (
         transform: (
             position: (
-                x: -0.4820409,
-                y: 0.12932204,
-                z: 0.10134222,
+                x: -0.09751281,
+                y: -0.17672272,
+                z: 0.027293853,
             ),
             scale: (
                 x: 1.0,
@@ -71,12 +77,13 @@
                 z: 1.0,
             ),
             rotation: (
-                x: -25.9,
-                y: -10.899992,
+                x: 8.000001,
+                y: -38.799984,
                 z: 0.0,
             ),
             movement_speed: 1.0,
         ),
+        orthographic: false,
         movement_speed: 1.0,
         mouse_sensitivity: 0.1,
         zoom: 45.0,
