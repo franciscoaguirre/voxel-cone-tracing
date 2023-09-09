@@ -146,9 +146,9 @@ void main() {
     if (shouldShowColor) {
         finalImage *= color;
     }
-    if (shouldShowIndirectSpecular) {
-        finalImage += vec4(specularIndirectLight, 1.0);
-    }
+    // if (shouldShowIndirectSpecular) {
+    //     finalImage += vec4(specularIndirectLight, 1.0);
+    // }
     
     outColor = vec4(finalImage.xyz, 1.0);
     // FragColor = vec4(texture(texture_diffuse1, frag_textureCoordinates).xyz - vec3(AO), 1);
@@ -237,20 +237,20 @@ vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, bool useLight
     
     indirectLight += coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
-    //direction = sinAngle * normal + cosAngle * tangent;
+    direction = sinAngle * normal + cosAngle * tangent;
     
-    //indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
-    //direction = sinAngle * normal - cosAngle * tangent;
-    //indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    direction = sinAngle * normal - cosAngle * tangent;
+    indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
-    //direction = sinAngle * normal + cosAngle * bitangent;
-    //indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    direction = sinAngle * normal + cosAngle * bitangent;
+    indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
-    //direction = sinAngle * normal - cosAngle * bitangent;
-    //indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    direction = sinAngle * normal - cosAngle * bitangent;
+    indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
 
-    //indirectLight /= coneWeight * 4 + 1;
+    indirectLight /= coneWeight * 4 + 1;
 
     return indirectLight;
 }

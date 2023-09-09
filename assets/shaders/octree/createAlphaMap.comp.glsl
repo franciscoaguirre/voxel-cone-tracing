@@ -28,7 +28,7 @@ void main() {
 	for (uint corner = 0; corner < CHILD_OFFSETS.length(); corner++) {
 		ivec3 offset = 2 * ivec3(CHILD_OFFSETS[corner]);
 		vec4 color = imageLoad(brickPoolColors, brickCoordinates + offset);
-		//imageStore(brickPoolAlpha, brickCoordinates + offset, vec4(0, 0, 0, color.a));
+		// imageStore(brickPoolAlpha, brickCoordinates + offset, vec4(0, 0, 0, color.a));
     // TODO: revert before merging
 		imageStore(brickPoolAlpha, brickCoordinates + offset, color);
   }

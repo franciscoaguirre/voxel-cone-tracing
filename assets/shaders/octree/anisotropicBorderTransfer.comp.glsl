@@ -53,7 +53,8 @@ void main() {
 
                 vec4 finalValue;
                 if (direction.axis == X_AXIS) {
-                    finalValue = 0.5 * (borderValue + neighborBorderValue); // We average partial averages
+                    finalValue = borderValue; // We always go from current brick to neighbor
+                    // We set the neighbor uniform correctly to make this happen
                 } else {
                     finalValue = 0.5 * (borderValue + neighborBorderValue); // We average partial averages
                 }
@@ -75,7 +76,7 @@ void main() {
 
                 vec4 finalValue;
                 if (direction.axis == Y_AXIS) {
-                    finalValue = 0.5 * (borderValue + neighborBorderValue); // We average partial averages
+                    finalValue = borderValue;
                 } else {
                     finalValue = 0.5 * (borderValue + neighborBorderValue); // We average partial averages
                 }
@@ -97,7 +98,7 @@ void main() {
 
                 vec4 finalValue;
                 if (direction.axis == Z_AXIS) {
-                    finalValue = 0.5 * (borderValue + neighborBorderValue); // We average partial averages
+                    finalValue = borderValue;
                 } else {
                     finalValue = 0.5 * (borderValue + neighborBorderValue); // We average partial averages
                 }

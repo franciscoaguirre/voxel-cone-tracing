@@ -90,9 +90,9 @@ impl Octree {
             CONFIG.brick_pool_resolution as i32,
         );
 
-        //self.builder
-            //.photons_to_irradiance_pass
-            //.run(&self.textures, light_view_map);
+        self.builder
+          .photons_to_irradiance_pass
+          .run(&self.textures, light_view_map);
 
         self.builder.spread_leaf_bricks_pass.run(
             &self.textures,
@@ -108,7 +108,7 @@ impl Octree {
             BrickPoolValues::Irradiance,
         );
 
-        //self.mipmap_photons(light_view_map);
+        self.mipmap_photons(light_view_map);
 
         (light_view_map, light_view_map_view, shadow_map)
     }
@@ -129,7 +129,6 @@ impl Octree {
 
     unsafe fn mipmap_photons(&self, light_view_map: GLuint) {
         // TODO: performance -- Doing compilation every time?
-        let mipmap = MipmapAnisotropicPass::init();
         self.run_mipmap(BrickPoolValues::Irradiance);
     }
 

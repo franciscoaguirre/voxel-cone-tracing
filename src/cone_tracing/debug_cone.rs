@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::fmt;
 
 use c_str_macro::c_str;
-use cgmath::{point3, vec3, Matrix4, Vector3};
+use cgmath::{point3, vec3, Matrix4, Vector3, Deg};
 use colored::{customcolors, Colorize};
 
 use gl::types::GLuint;
@@ -83,7 +83,7 @@ impl DebugCone {
                 gl::DYNAMIC_READ,
             ),
             nodes_queried_counter: helpers::generate_atomic_counter_buffer1(gl::DYNAMIC_READ),
-            cone_angle: 0.263599,
+            cone_angle: 20f32.to_radians(),
             old_color: vec3(0.0, 0.0, 0.0),
             vao,
         }

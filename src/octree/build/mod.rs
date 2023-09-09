@@ -60,11 +60,11 @@ impl Octree {
             .create_alpha_map
             .run(&self.textures, &self.geometry_data.node_data);
 
-        // self.builder.spread_leaf_bricks_pass.run(
-        //     &self.textures,
-        //     &self.geometry_data.node_data,
-        //     BrickPoolValues::Colors,
-        // );
+        self.builder.spread_leaf_bricks_pass.run(
+            &self.textures,
+            &self.geometry_data.node_data,
+            BrickPoolValues::Colors,
+        );
 
         // self.builder.spread_leaf_bricks_pass.run(
         //     &self.textures,

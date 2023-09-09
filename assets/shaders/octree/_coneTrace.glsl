@@ -17,21 +17,9 @@ float brickPoolBrickSize = 3.0 / brickPoolResolutionf;
 
 // Returns values in [0, maxOctreeLevel]
 float calculateLod(float coneDiameter) {
-    // Could approximate log2 by lines between y = a and y = a + 1
-    // Shouldn't this be log2(1 / coneDiameter) + 1 or something similar?
-    //return max(maxOctreeLevel - log2(1 + coneDiameter * voxelDimension), 0);
-    //return clamp(log2(1 / coneDiameter) - 1, 0, maxOctreeLevel);
-    return maxOctreeLevel;
+    // return clamp(log2(1 / coneDiameter) - 1, 0, maxOctreeLevel);
+    return maxOctreeLevel - 1;
 }
-
-// Brick marching
-//float findVoxelOcclusion(vec3 queryCoordinates, Node node) {
-   //ivec3 brickCoordinates = calculateBrickCoordinates(node.id);
-   ////ivec3 brickOffset = ivec3(calculateBrickVoxel(node.coordinates, node.halfNodeSize, queryCoordinates));
-   //vec3 brickOffset = (queryCoordinates - node.coordinates) / (2.0 * node.halfNodeSize);
-   //vec4 color = texture(brickPoolColors, (brickCoordinates / brickPoolResolutionf + brickOffset * brickPoolBrickSize));
-   //return color.a;
-//}
 
 vec3 findVoxel(vec3 queryCoordinates, Node node) {
     // offset between 0 and 1
@@ -78,9 +66,7 @@ vec4 coneTrace(
     int steps = 0;
     
     // Move the cone origin so it doesn't intersect with own voxels
-    //vec3 offsetedConeOrigin = coneOrigin;
-    vec3 offsetedConeOrigin = coneOrigin + coneDirection * voxelSize;
-    //while (distanceAlongCone < maxDistance && steps < 6) {
+    vec3 offsetedConeOrigin = coneOrigin + coneDirection * voxelSize * 2;
 
     while (distanceAlongCone < maxDistance && returnColor.a < 1) {
         float coneDiameter = clamp(coneDiameterCoefficient * distanceAlongCone, 0.0009765625, 100.0);
@@ -100,16 +86,16 @@ vec4 coneTrace(
                 octreeLevel,
                 node,
                 parentNode
-            ); // TODO: We are visiting the same node twice for some reason
+            );
+
             if (changedOctreeLevel) {
                 // To account for the larger voxelSize in the new level
-                //sampleStep *= 2; // Increase sampleStep, same as increasing voxelSize by 2
-                sampleStep = 1 / pow(2, octreeLevel + 1);
+                sampleStep *= 2; // Increase sampleStep, same as increasing voxelSize by 2
+                // sampleStep = 1 / pow(2, octreeLevel + 1);
             }
 
             if (node.id == NODE_NOT_FOUND) {
                 distanceAlongCone += sampleStep;
-                //break;
                 continue;
             }
             #if debug
@@ -149,9 +135,9 @@ vec4 coneTrace(
             imageStore(sampledColor, steps * aux + 4 + 5, vec4(octreeLevel, 0, 0, 0));
         #endif
 
-    //    newColor.rgb /= distanceFactor;
+        newColor.rgb /= distanceFactor;
 
-        returnColor += (1 - returnColor.a) * childColor;
+        returnColor += (1 - returnColor.a) * newColor;
 
         // Prepare for next iteration
         distanceAlongCone += sampleStep;
