@@ -67,7 +67,7 @@ impl DebugCone {
         Self {
             shader: compile_shaders!("assets/shaders/debug/debugConeTracing.glsl", debug = true),
             transform,
-            direction: vec3(0.0, 0.0, 1.0),
+            direction: vec3(0.0, 1.0, 0.0),
             previous_values: HashSet::new(),
             nodes_queried: helpers::generate_texture_buffer4(
                 1000,

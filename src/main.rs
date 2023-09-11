@@ -244,6 +244,7 @@ fn main() {
                     &mut last_x,
                     &mut last_y,
                     &mut camera,
+                    &mut debug_cone,
                 );
                 common::handle_show_model(&event, &mut show_model);
                 common::handle_show_voxel_fragment_list(&event, &mut show_voxel_fragment_list);
