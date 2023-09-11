@@ -278,7 +278,7 @@ fn main() {
             octree_nodes_to_visualize = outputs.0.octree_nodes_to_visualize.clone();
 
             // Node search
-            selected_debug_nodes = outputs.1.selected_items.clone();
+            selected_debug_nodes = selected_debug_nodes.into_iter().chain(outputs.1.selected_items.clone()).collect();
             node_filter_text = outputs.1.filter_text.clone();
             should_show_neighbors = outputs.1.should_show_neighbors;
             selected_debug_nodes_updated = outputs.1.selected_items_updated;
@@ -300,6 +300,8 @@ fn main() {
             should_show_debug_cone = outputs.9.show_debug_cone;
             should_move_debug_cone = outputs.9.move_debug_cone;
             debug_cone.half_cone_angle = outputs.9.cone_angle_in_degrees.to_radians() / 2.0;
+            debug_cone.number_of_cones = if outputs.9.number_of_cones == 0 { 1 } else { outputs.9.number_of_cones };
+            debug_cone.max_distance = if outputs.9.max_distance == 0.0 { 0.1 } else { outputs.9.max_distance };
         }
 
         // This is for debugging
