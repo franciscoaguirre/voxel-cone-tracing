@@ -8,7 +8,7 @@ uniform layout(binding = 2, r32f) imageBuffer sampledColor;
 
 uniform layout(binding = 0, offset = 0) atomic_uint queriedNodesCounter;
 
-uniform float coneAngle;
+uniform float halfConeAngle;
 uniform mat4 projection;
 uniform mat4 view;
 uniform uint voxelDimension;
@@ -64,22 +64,22 @@ void main() {
 
     if (threadIndex == 0) {
         direction = axis;
-        coneTrace(position, direction, coneAngle, maxDistance, false);
+        coneTrace(position, direction, halfConeAngle, maxDistance, false);
     }
 
     if (threadIndex == 1) {
         direction = sinAngle * axis - cosAngle * tangent;
-        coneTrace(position, direction, coneAngle, maxDistance, false);
+        coneTrace(position, direction, halfConeAngle, maxDistance, false);
     }
 
     if (threadIndex == 2) {
         direction = sinAngle * axis + cosAngle * bitangent;
-        coneTrace(position, direction, coneAngle, maxDistance, false);
+        coneTrace(position, direction, halfConeAngle, maxDistance, false);
     }
 
     if (threadIndex == 3) {
         direction = sinAngle * axis - cosAngle * bitangent;
-        coneTrace(position, direction, coneAngle, maxDistance, false);
+        coneTrace(position, direction, halfConeAngle, maxDistance, false);
     }
 }
 
@@ -99,7 +99,7 @@ out vec4 frag_color;
 uniform mat4 projection;
 uniform mat4 view;
 
-uniform float coneAngle;
+uniform float halfConeAngle;
 
 const float PI = 3.14159;
 
@@ -110,7 +110,7 @@ void main() {
 
     frag_color = vec4(1, 1, 0, 1);
 
-    float angleFromPlane = (PI / 2) - coneAngle;
+    float angleFromPlane = (PI / 2) - halfConeAngle;
     drawCone(geom_position[0], direction[0], angleFromPlane, maxDistance[0]);
 }
 

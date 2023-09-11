@@ -21,7 +21,7 @@ use crate::{
 
 pub struct DebugCone {
     pub transform: Transform,
-    pub cone_angle: f32,
+    pub half_cone_angle: f32,
     shader: Shader,
     direction: Vector3<f32>,
     previous_values: HashSet<u32>,
@@ -82,7 +82,7 @@ impl DebugCone {
                 gl::DYNAMIC_READ,
             ),
             nodes_queried_counter: helpers::generate_atomic_counter_buffer1(gl::DYNAMIC_READ),
-            cone_angle: 0.263599,
+            half_cone_angle: 30f32.to_radians(),
             vao,
         }
     }
@@ -207,7 +207,7 @@ impl DebugCone {
             self.direction.z,
         );
         self.shader
-            .set_float(c_str!("coneAngle"), self.cone_angle as f32);
+            .set_float(c_str!("halfConeAngle"), self.half_cone_angle as f32);
 
         // Add more points if we want more debug cones
         gl::DrawArrays(gl::POINTS, 0, 1);

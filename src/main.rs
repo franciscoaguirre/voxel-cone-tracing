@@ -249,7 +249,6 @@ fn main() {
                 common::handle_show_model(&event, &mut show_model);
                 common::handle_show_voxel_fragment_list(&event, &mut show_voxel_fragment_list);
                 common::handle_light_movement(&event, &mut should_move_light);
-                common::handle_cone_angle(&event, &mut debug_cone.cone_angle);
             }
             menu.handle_event(event);
         }
@@ -300,6 +299,7 @@ fn main() {
             // Cone tracing
             should_show_debug_cone = outputs.9.show_debug_cone;
             should_move_debug_cone = outputs.9.move_debug_cone;
+            debug_cone.half_cone_angle = outputs.9.cone_angle_in_degrees.to_radians() / 2.0;
         }
 
         // This is for debugging
@@ -424,7 +424,7 @@ fn main() {
 
             cone_tracer.run(
                 &light,
-                debug_cone.cone_angle,
+                debug_cone.half_cone_angle,
                 &octree.textures,
                 &geometry_buffers,
                 light_maps,

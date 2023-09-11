@@ -68,7 +68,7 @@
             output: (
                 show_debug_cone: true,
                 move_debug_cone: true,
-                cone_angle_in_degrees: 0.0,
+                cone_angle_in_degrees: 30.0,
                 number_of_cones: 0,
             ),
         ),
@@ -76,9 +76,9 @@
     camera: (
         transform: (
             position: (
-                x: 0.3024207,
-                y: 0.04571815,
-                z: 0.013100186,
+                x: 0.30366376,
+                y: 0.1707336,
+                z: -0.014056869,
             ),
             scale: (
                 x: 1.0,
@@ -86,8 +86,8 @@
                 z: 1.0,
             ),
             rotation: (
-                x: -37.499996,
-                y: 551.4998,
+                x: -24.199987,
+                y: 180.59995,
                 z: 0.0,
             ),
             movement_speed: 1.0,

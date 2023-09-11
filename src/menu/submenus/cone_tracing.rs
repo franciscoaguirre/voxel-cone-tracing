@@ -19,7 +19,7 @@ pub struct ConeTracingMenu {
 pub struct ConeTracingMenuOutput {
     pub show_debug_cone: bool,
     pub move_debug_cone: bool,
-    cone_angle_in_degrees: f32,
+    pub cone_angle_in_degrees: f32,
     number_of_cones: u32,
 }
 
@@ -54,6 +54,10 @@ impl<'a> SubMenu for ConeTracingMenu {
                     self.output.move_debug_cone = !self.output.move_debug_cone;
                 }
             });
+            ui.label("Cone Angle (degrees):");
+            ui.add(
+                egui::Slider::new(&mut self.output.cone_angle_in_degrees, 1.0..=90.0),
+            );
         });
     }
 }
