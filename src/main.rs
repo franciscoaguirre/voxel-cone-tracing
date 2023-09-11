@@ -260,12 +260,12 @@ fn main() {
             menu.show_main_window();
             menu.render((
                 (),
-                NodeSearchMenuInput::new(debug_nodes.clone()),
+                NodeSearchMenuInput::new(&debug_nodes),
                 (),
-                ChildrenMenuInput::new(children.clone()),
+                ChildrenMenuInput::new(&children),
                 DiagnosticsMenuInput::new(fps),
                 (),
-                PhotonsMenuInput::new(photons.clone()),
+                PhotonsMenuInput::new(&photons),
                 SavePresetMenuInput::new(&camera, menu.sub_menus.clone()), // TODO: Remove clone
                 (),
                 (),

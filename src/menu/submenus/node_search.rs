@@ -11,12 +11,12 @@ pub struct NodeSearchMenu {
     output: NodeSearchMenuOutput,
 }
 
-pub struct NodeSearchMenuInput {
-    items: Vec<DebugNode>,
+pub struct NodeSearchMenuInput<'a> {
+    items: &'a [DebugNode],
 }
 
-impl NodeSearchMenuInput {
-    pub fn new(items: Vec<DebugNode>) -> Self {
+impl<'a> NodeSearchMenuInput<'a> {
+    pub fn new(items: &'a [DebugNode]) -> Self {
         Self { items }
     }
 }
@@ -31,7 +31,7 @@ pub struct NodeSearchMenuOutput {
 }
 
 impl<'a> SubMenu for NodeSearchMenu {
-    type InputData<'b> = NodeSearchMenuInput;
+    type InputData<'b> = NodeSearchMenuInput<'b>;
     type OutputData = NodeSearchMenuOutput;
 
     fn is_showing(&self) -> bool {
