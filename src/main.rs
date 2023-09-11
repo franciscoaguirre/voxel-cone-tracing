@@ -180,6 +180,9 @@ fn main() {
     let mut should_show_neighbors = false;
     let mut bricks_to_show = BricksToShow::default();
 
+    let mut should_show_debug_cone = false;
+    let mut should_move_debug_cone = false;
+
     let render_voxel_fragments_shader = RenderVoxelFragmentsShader::init(
         voxel_positions.0,
         voxel_colors.0,
@@ -252,8 +255,6 @@ fn main() {
 
         menu.begin_frame(current_frame);
 
-        dbg!(&camera.orthographic);
-
         // egui render
         if menu.is_showing() {
             menu.show_main_window();
@@ -266,6 +267,7 @@ fn main() {
                 (),
                 PhotonsMenuInput::new(photons.clone()),
                 SavePresetMenuInput::new(&camera, menu.sub_menus.clone()), // TODO: Remove clone
+                (),
                 (),
             ));
             let outputs = menu.get_data();
@@ -293,6 +295,10 @@ fn main() {
 
             // Camera
             camera.orthographic = outputs.8.orthographic;
+
+            // Cone tracing
+            should_show_debug_cone = outputs.9.show_debug_cone;
+            should_move_debug_cone = outputs.9.move_debug_cone;
         }
 
         // This is for debugging
@@ -333,7 +339,8 @@ fn main() {
                 //         &light_framebuffer,
                 //     )
                 // };
-                // &mut light.transform
+                &mut light.transform
+            } else if should_move_debug_cone {
                 &mut debug_cone.transform
             } else {
                 &mut camera.transform
@@ -424,13 +431,14 @@ fn main() {
                 &camera,
             );
 
-            // TODO: Add toggle to menu
-            // debug_cone.run(
-            //     &octree.textures,
-            //     &projection,
-            //     &view,
-            //     &mut selected_debug_nodes,
-            // );
+            if should_show_debug_cone {
+                debug_cone.run(
+                    &octree.textures,
+                    &projection,
+                    &view,
+                    &mut selected_debug_nodes,
+                );
+            }
             static_eye.draw_gizmo(&projection, &view);
             light.draw_gizmo(&projection, &view);
             // quad.render(light_maps.1);
