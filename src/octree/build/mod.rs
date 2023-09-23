@@ -107,13 +107,13 @@ impl Octree {
                 // will be filled by the voxels on X2 of node (x - 1, y, z). We are grossly
                 // overcalculating voxels by doing this, but let us get consistency and later think
                 // about performance
-                self.builder.mipmap_anisotropic_pass.run(
-                    &self.textures,
-                    &self.border_data.node_data,
-                    level,
-                    *direction,
-                    brick_pool_values,
-                );
+                //self.builder.mipmap_anisotropic_pass.run(
+                    //&self.textures,
+                    //&self.border_data.node_data,
+                    //level,
+                    //*direction,
+                    //brick_pool_values,
+                //);
 
                 // self.builder.mipmap_isotropic_pass.run(
                 //     &self.textures,

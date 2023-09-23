@@ -147,17 +147,17 @@ impl AnisotropicBorderTransferPass {
             gl::READ_ONLY,
             gl::R32UI,
         );
-        self.shader.dispatch(groups_count);
-        self.shader.wait();
+        //self.shader.dispatch(groups_count);
+        //self.shader.wait();
 
         // Run for border nodes
-        helpers::bind_image_texture(
-            2,
-            border_node_data.level_start_indices.0,
-            gl::READ_ONLY,
-            gl::R32UI,
-        );
-        self.shader.dispatch(border_groups_count);
-        self.shader.wait();
+        //helpers::bind_image_texture(
+            //2,
+            //border_node_data.level_start_indices.0,
+            //gl::READ_ONLY,
+            //gl::R32UI,
+        //);
+        //self.shader.dispatch(border_groups_count);
+        //self.shader.wait();
     }
 }
