@@ -12,6 +12,7 @@ use crate::{
         shader::Shader,
     },
 };
+use super::ConeTracingParameters;
 
 pub struct ConeTracer {
     shader: Shader,
@@ -29,7 +30,7 @@ impl ConeTracer {
     pub unsafe fn run(
         &self,
         light: &SpotLight,
-        cone_angle: f32,
+        parameters: &ConeTracingParameters,
         textures: &OctreeTextures,
         geometry_buffers: &GeometryBuffers,
         light_maps: (u32, u32, u32),
@@ -86,8 +87,7 @@ impl ConeTracer {
             c_str!("lightProjectionMatrix"),
             &light.get_projection_matrix(),
         );
-        self.shader
-            .set_float(c_str!("coneAngle"), cone_angle as f32);
+        parameters.set_uniforms(self.shader);
         helpers::bind_image_texture(0, textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
 
         let brick_pool_textures = vec![

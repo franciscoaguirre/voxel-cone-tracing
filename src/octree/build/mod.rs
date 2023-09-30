@@ -35,6 +35,7 @@ impl Octree {
             allocated_nodes_counter,
         );
         let number_of_nodes = self.number_of_nodes() as u32;
+        dbg!(&number_of_nodes);
 
         self.builder.append_border_voxel_fragments_pass.run(
             &self.geometry_data,
@@ -47,6 +48,8 @@ impl Octree {
             &mut first_free_node,
             allocated_nodes_counter,
         );
+        let number_of_nodes = self.number_of_nodes() as u32;
+        dbg!(&number_of_nodes);
 
         self.builder
             .write_leaf_nodes_pass

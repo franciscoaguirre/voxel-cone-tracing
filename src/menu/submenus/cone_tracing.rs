@@ -6,6 +6,7 @@ use super::SubMenu;
 use crate::config::CONFIG;
 use crate::menu::MenuInternals;
 use crate::octree::OctreeDataType;
+use crate::cone_tracing::ConeTracingParameters;
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 #[serde(default)]
@@ -19,9 +20,7 @@ pub struct ConeTracingMenu {
 pub struct ConeTracingMenuOutput {
     pub show_debug_cone: bool,
     pub move_debug_cone: bool,
-    pub cone_angle_in_degrees: f32,
-    pub number_of_cones: u32,
-    pub max_distance: f32,
+    pub parameters: ConeTracingParameters,
 }
 
 impl<'a> SubMenu for ConeTracingMenu {
@@ -55,18 +54,21 @@ impl<'a> SubMenu for ConeTracingMenu {
                     self.output.move_debug_cone = !self.output.move_debug_cone;
                 }
             });
-            ui.label("Cone Angle (degrees):");
+            ui.label("Cone Angle (degrees)");
             ui.add(
-                egui::Slider::new(&mut self.output.cone_angle_in_degrees, 1.0..=90.0),
+                egui::Slider::new(&mut self.output.parameters.cone_angle_in_degrees, 1.0..=90.0),
             );
-            ui.label("Number of cones:");
+            ui.label("Number of cones");
             ui.add(
-                egui::Slider::new(&mut self.output.number_of_cones, 1..=5),
+                egui::Slider::new(&mut self.output.parameters.number_of_cones, 1..=5),
             );
-            ui.label("Max distance:");
+            ui.label("Max distance");
             ui.add(
-                egui::Slider::new(&mut self.output.max_distance, 0.1..=1.0),
+                egui::Slider::new(&mut self.output.parameters.max_distance, 0.1..=1.0),
             );
+            if ui.button("Apply to image").clicked() {
+                println!("Let's go!");
+            }
         });
     }
 }

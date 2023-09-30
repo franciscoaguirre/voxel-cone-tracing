@@ -278,6 +278,7 @@ fn main() {
             octree_nodes_to_visualize = outputs.0.octree_nodes_to_visualize.clone();
 
             // Node search
+            // Chain in order to keep nodes selected by debug cone
             selected_debug_nodes = selected_debug_nodes.into_iter().chain(outputs.1.selected_items.clone()).collect();
             node_filter_text = outputs.1.filter_text.clone();
             should_show_neighbors = outputs.1.should_show_neighbors;
@@ -299,9 +300,10 @@ fn main() {
             // Cone tracing
             should_show_debug_cone = outputs.9.show_debug_cone;
             should_move_debug_cone = outputs.9.move_debug_cone;
-            debug_cone.half_cone_angle = outputs.9.cone_angle_in_degrees.to_radians() / 2.0;
-            debug_cone.number_of_cones = if outputs.9.number_of_cones == 0 { 1 } else { outputs.9.number_of_cones };
-            debug_cone.max_distance = if outputs.9.max_distance == 0.0 { 0.1 } else { outputs.9.max_distance };
+            debug_cone.parameters = outputs.9.parameters.clone();
+            // debug_cone.half_cone_angle = outputs.9.cone_angle_in_degrees.to_radians() / 2.0;
+            // debug_cone.number_of_cones = if outputs.9.number_of_cones == 0 { 1 } else { outputs.9.number_of_cones };
+            // debug_cone.max_distance = if outputs.9.max_distance == 0.0 { 0.1 } else { outputs.9.max_distance };
         }
 
         // This is for debugging
@@ -424,15 +426,15 @@ fn main() {
                 our_model.draw(&render_model_shader);
             }
 
-            cone_tracer.run(
-                &light,
-                debug_cone.half_cone_angle,
-                &octree.textures,
-                &geometry_buffers,
-                light_maps,
-                &quad,
-                &camera,
-            );
+            // cone_tracer.run(
+            //     &light,
+            //     &debug_cone.parameters,
+            //     &octree.textures,
+            //     &geometry_buffers,
+            //     light_maps,
+            //     &quad,
+            //     &camera,
+            // );
 
             if should_show_debug_cone {
                 debug_cone.run(

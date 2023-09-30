@@ -4,7 +4,6 @@ use std::fmt;
 use c_str_macro::c_str;
 use cgmath::{point3, vec3, Matrix4, Vector3};
 use colored::{customcolors, Colorize};
-
 use gl::types::GLuint;
 
 use crate::{
@@ -18,12 +17,11 @@ use crate::{
     },
     types::BufferTexture,
 };
+use super::ConeTracingParameters;
 
 pub struct DebugCone {
     pub transform: Transform,
-    pub half_cone_angle: f32,
-    pub number_of_cones: u32,
-    pub max_distance: f32,
+    pub parameters: ConeTracingParameters,
     shader: Shader,
     direction: Vector3<f32>,
     previous_values: HashSet<u32>,
@@ -69,8 +67,6 @@ impl DebugCone {
         Self {
             shader: compile_shaders!("assets/shaders/debug/debugConeTracing.glsl", debug = true),
             transform,
-            number_of_cones: 1,
-            max_distance: 1.0,
             direction: vec3(0.0, 1.0, 0.0),
             previous_values: HashSet::new(),
             nodes_queried: helpers::generate_texture_buffer4(
@@ -86,7 +82,11 @@ impl DebugCone {
                 gl::DYNAMIC_READ,
             ),
             nodes_queried_counter: helpers::generate_atomic_counter_buffer1(gl::DYNAMIC_READ),
-            half_cone_angle: 30f32.to_radians(),
+            parameters: ConeTracingParameters {
+                cone_angle_in_degrees: 30.0,
+                number_of_cones: 1,
+                max_distance: 1.0,
+            },
             vao,
         }
     }
@@ -210,12 +210,9 @@ impl DebugCone {
             self.direction.y,
             self.direction.z,
         );
-        self.shader
-            .set_float(c_str!("halfConeAngle"), self.half_cone_angle);
-        self.shader
-            .set_float(c_str!("maxDistance"), self.max_distance);
+        self.parameters.set_uniforms(self.shader);
 
-        gl::DrawArrays(gl::POINTS, 0, self.number_of_cones as i32);
+        gl::DrawArrays(gl::POINTS, 0, self.parameters.number_of_cones as i32);
 
         let values = helpers::get_values_from_texture_buffer(self.nodes_queried.1, 1000, 42u32);
         let sampled_colors =
