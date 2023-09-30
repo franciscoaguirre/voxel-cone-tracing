@@ -1,10 +1,10 @@
-use egui_glfw_gl::egui;
+use renderer::ui::prelude::*;
 use serde::{Serialize, Deserialize};
 
 use super::SubMenu;
 use crate::{
     cone_tracing::Toggles,
-    menu::{get_button_text, MenuInternals},
+    menu::get_button_text,
 };
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
@@ -34,12 +34,12 @@ impl<'a> SubMenu for ImagesMenu {
         &self.output
     }
 
-    fn render<'b>(&mut self, internals: &MenuInternals, _: &Self::InputData<'b>) {
+    fn render<'b>(&mut self, context: &egui::Context, _: &Self::InputData<'b>) {
         if !self.is_showing() {
             return;
         }
 
-        egui::Window::new("Images").show(&internals.context, |ui| {
+        egui::Window::new("Images").show(context, |ui| {
             if ui
                 .button(get_button_text(
                     "Color",

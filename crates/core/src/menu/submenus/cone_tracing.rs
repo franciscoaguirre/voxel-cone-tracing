@@ -1,11 +1,8 @@
-use egui_glfw_gl::egui;
+use renderer::ui::prelude::*;
 use serde::{Serialize, Deserialize};
 
 use super::super::get_button_text;
 use super::SubMenu;
-use crate::config::CONFIG;
-use crate::menu::MenuInternals;
-use crate::octree::OctreeDataType;
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 #[serde(default)]
@@ -40,12 +37,12 @@ impl<'a> SubMenu for ConeTracingMenu {
         &self.output
     }
 
-    fn render<'b>(&mut self, internals: &MenuInternals, _: &Self::InputData<'b>) {
+    fn render<'b>(&mut self, context: &egui::Context, _: &Self::InputData<'b>) {
         if !self.is_showing() {
             return;
         }
 
-        egui::Window::new("Cone Tracing").show(&internals.context, |ui| {
+        egui::Window::new("Cone Tracing").show(context, |ui| {
             ui.horizontal(|ui| {
                 ui.label("Debug cone:");
                 if ui.button(get_button_text("Show", self.output.show_debug_cone)).clicked() {

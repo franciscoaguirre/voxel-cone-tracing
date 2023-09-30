@@ -1,4 +1,4 @@
-use super::MenuInternals;
+use renderer::ui::prelude::*;
 
 mod all_nodes;
 pub use all_nodes::AllNodesMenu;
@@ -39,5 +39,5 @@ pub trait SubMenu: std::fmt::Debug + Default + for<'a> Deserialize<'a> + Seriali
     fn is_showing(&self) -> bool;
     fn toggle_showing(&mut self);
     fn get_data(&self) -> &Self::OutputData;
-    fn render<'a>(&mut self, internals: &MenuInternals, input: &Self::InputData<'a>);
+    fn render<'a>(&mut self, context: &egui::Context, input: &Self::InputData<'a>);
 }

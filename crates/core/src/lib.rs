@@ -3,11 +3,12 @@
 //! - Voxelization
 //! - SVO construction, filtering and updating
 //! - Proper cone tracing
-//! It also contains relevant constants and configuration parameters.
+//! A UI is provided to interact with the different algorithms and tweak parameters.
 
 pub mod voxelization;
 pub mod octree;
 pub mod cone_tracing;
+pub mod menu;
 
 mod constants;
 mod config;

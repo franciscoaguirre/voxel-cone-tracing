@@ -1,29 +1,15 @@
 use std::fmt;
+use std::fs::File;
 
-use egui_backend::{
-    egui::{self, vec2, Color32, Pos2, Rect},
-    glfw::{Action, CursorMode, Key, Window, WindowEvent},
-};
-use egui_glfw_gl as egui_backend;
+use renderer::ui::prelude::*;
 use serde::{Serialize, Deserialize};
-
-use crate::{config::CONFIG, preset::PRESET};
 
 pub mod submenus;
 use submenus::*;
 
 pub struct Menu {
     is_showing: bool,
-    internals: MenuInternals,
     pub sub_menus: SubMenus,
-}
-
-pub struct MenuInternals {
-    painter: egui_backend::Painter,
-    context: egui::Context,
-    input_state: egui_backend::EguiInputState,
-    modifier_keys: egui::Modifiers,
-    native_pixels_per_point: f32,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
@@ -68,23 +54,27 @@ type SubMenuOutputs<'a> = (
 );
 
 impl Menu {
-    pub fn new(window: &mut Window) -> Self {
-        let mut menu = Self::setup_egui(window);
-        menu.process_preset();
+    pub fn new(window: &mut egui::Window, preset: Preset) -> Self {
+        let sub_menus = SubMenus::default();
+        let mut menu = Menu {
+            is_showing: false,
+            sub_menus,
+        };
+        menu.process_preset(preset);
         menu
     }
 
-    fn process_preset(&mut self) {
-        self.sub_menus = PRESET.submenus.clone();
+    fn process_preset(&mut self, preset: Preset) {
+        self.sub_menus = preset.submenus.clone();
     }
 
-    pub fn toggle_showing(&mut self, window: &mut Window, last_x: &mut f32, last_y: &mut f32) {
+    pub fn toggle_showing(&mut self, window: &mut glfw::Window, last_x: &mut f32, last_y: &mut f32) {
         self.is_showing = !self.is_showing;
 
         if self.is_showing {
-            window.set_cursor_mode(CursorMode::Normal);
+            window.set_cursor_mode(glfw::CursorMode::Normal);
         } else {
-            window.set_cursor_mode(CursorMode::Disabled);
+            window.set_cursor_mode(glfw::CursorMode::Disabled);
 
             // So that we don't take into account mouse movements while using the menu
             let cursor_position = window.get_cursor_pos();
@@ -97,102 +87,38 @@ impl Menu {
         self.is_showing
     }
 
-    pub fn handle_event(&mut self, event: WindowEvent) {
+    pub fn handle_event(&mut self, event: glfw::WindowEvent) {
         if !self.is_showing {
             return;
         }
 
-        if let WindowEvent::Key(Key::LeftShift, _, Action::Press, _) = event {
-            self.internals.modifier_keys.shift = true;
-        } else if let WindowEvent::Key(Key::LeftShift, _, Action::Release, _) = event {
-            self.internals.modifier_keys.shift = false;
+        let mut ui = Ui::instance();
+
+        if let glfw::WindowEvent::Key(glfw::Key::LeftShift, _, glfw::Action::Press, _) = event {
+            ui.toggle_shift();
+        } else if let glfw::WindowEvent::Key(glfw::Key::LeftShift, _, glfw::Action::Release, _) = event {
+            ui.toggle_shift();
         }
 
-        egui_backend::handle_event(event, &mut self.internals.input_state);
-    }
-
-    pub fn begin_frame(&mut self, current_frame: f64) {
-        if !self.is_showing {
-            return;
-        }
-
-        self.internals.input_state.input.time = Some(current_frame);
-        self.internals.input_state.input.modifiers = self.internals.modifier_keys;
-        self.internals
-            .context
-            .begin_frame(self.internals.input_state.input.take());
-        self.internals.input_state.input.pixels_per_point =
-            Some(self.internals.native_pixels_per_point);
-    }
-
-    pub fn end_frame(&mut self) {
-        if !self.is_showing {
-            return;
-        }
-
-        let egui::FullOutput {
-            platform_output,
-            repaint_after: _,
-            textures_delta,
-            shapes,
-        } = self.internals.context.end_frame();
-        if !platform_output.copied_text.is_empty() {
-            egui_backend::copy_to_clipboard(
-                &mut self.internals.input_state,
-                platform_output.copied_text,
-            );
-        }
-        let clipped_shapes = self.internals.context.tessellate(shapes);
-        self.internals
-            .painter
-            .paint_and_update_textures(1.0, &clipped_shapes, &textures_delta);
-    }
-
-    fn setup_egui(window: &mut Window) -> Menu {
-        let painter = egui_backend::Painter::new(window);
-        let context = egui::Context::default();
-        let native_pixels_per_point = window.get_content_scale().0;
-        let input_state = egui_backend::EguiInputState::new(egui::RawInput {
-            screen_rect: Some(Rect::from_min_size(
-                Pos2::new(0_f32, 0_f32),
-                vec2(CONFIG.viewport_width as f32, CONFIG.viewport_height as f32)
-                    / native_pixels_per_point,
-            )),
-            pixels_per_point: Some(native_pixels_per_point),
-            ..Default::default()
-        });
-        let modifier_keys = egui::Modifiers::default();
-        let internals = MenuInternals {
-            painter,
-            context,
-            input_state,
-            modifier_keys,
-            native_pixels_per_point,
-        };
-        let sub_menus = SubMenus::default();
-
-        Self {
-            is_showing: false,
-            internals,
-            sub_menus,
-        }
+        egui_backend::handle_event(event, ui.input_state_mut());
     }
 
     pub fn render(&mut self, inputs: SubMenuInputs) {
-        self.sub_menus.all_nodes.render(&self.internals, &inputs.0);
+        let ui = Ui::instance();
+        self.sub_menus.all_nodes.render(ui.context(), &inputs.0);
         self.sub_menus
             .node_search
-            .render(&self.internals, &inputs.1);
-        self.sub_menus.bricks.render(&self.internals, &inputs.2);
-        self.sub_menus.children.render(&self.internals, &inputs.3);
+            .render(ui.context(), &inputs.1);
+        self.sub_menus.bricks.render(ui.context(), &inputs.2);
+        self.sub_menus.children.render(ui.context(), &inputs.3);
         self.sub_menus
             .diagnostics
-            .render(&self.internals, &inputs.4);
-        self.sub_menus.images.render(&self.internals, &inputs.5);
-        self.sub_menus.photons.render(&self.internals, &inputs.6);
-        self.sub_menus.save_preset.render(&self.internals, &inputs.7);
-        self.sub_menus.camera.render(&self.internals, &inputs.8);
-        self.sub_menus.cone_tracing.render(&self.internals, &inputs.9);
+            .render(ui.context(), &inputs.4);
+        self.sub_menus.images.render(ui.context(), &inputs.5);
+        self.sub_menus.photons.render(ui.context(), &inputs.6);
+        self.sub_menus.save_preset.render(ui.context(), &inputs.7);
+        self.sub_menus.camera.render(ui.context(), &inputs.8);
+        self.sub_menus.cone_tracing.render(ui.context(), &inputs.9);
     }
 
     pub fn get_data(&self) -> SubMenuOutputs {
@@ -211,7 +137,8 @@ impl Menu {
     }
 
     pub fn show_main_window(&mut self) {
-        egui::Window::new("Menu").show(&self.internals.context, |ui| {
+        let ui = Ui::instance();
+        egui::Window::new("Menu").show(ui.context(), |ui| {
             if ui
                 .button(get_button_text(
                     "All nodes",
@@ -313,7 +240,21 @@ impl fmt::Display for DebugNode {
 pub fn get_button_text(text: &str, clicked: bool) -> egui::RichText {
     let mut button_text = egui::RichText::new(text);
     if clicked {
-        button_text = button_text.color(Color32::RED);
+        button_text = button_text.color(egui::Color32::RED);
     }
     button_text
+}
+
+#[derive(Debug, Serialize, Deserialize, Default)]
+#[serde(default)]
+pub struct Preset {
+    pub submenus: SubMenus,
+    pub camera: renderer::camera::Camera,
+}
+
+pub fn save_preset(name: &str, preset: Preset) {
+    let path = format!("presets/{}.ron", name);
+    let mut file = File::create(&path).expect("Could not save preset file");
+    let pretty_config = ron::ser::PrettyConfig::new();
+    ron::ser::to_writer_pretty(&mut file, &preset, pretty_config).expect("Preset file malformed!");
 }

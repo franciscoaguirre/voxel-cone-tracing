@@ -1,8 +1,8 @@
-use egui_glfw_gl::egui;
+use renderer::ui::prelude::*;
 use serde::{Serialize, Deserialize};
 
 use super::SubMenu;
-use crate::menu::{get_button_text, DebugNode, MenuInternals};
+use crate::menu::{get_button_text, DebugNode};
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 #[serde(default)]
@@ -46,7 +46,7 @@ impl<'a> SubMenu for NodeSearchMenu {
         &self.output
     }
 
-    fn render<'b>(&mut self, internals: &MenuInternals, input: &Self::InputData<'b>) {
+    fn render<'b>(&mut self, context: &egui::Context, input: &Self::InputData<'b>) {
         if !self.is_showing() {
             return;
         }
@@ -56,9 +56,11 @@ impl<'a> SubMenu for NodeSearchMenu {
         let mut index_to_push = None;
         let mut index_to_remove = None;
 
+        let ui_manager = Ui::instance();
+
         egui::Window::new("Node search")
             .resize(|r| r.fixed_size((200., 400.)))
-            .show(&internals.context, |ui| {
+            .show(context, |ui| {
                 ui.vertical(|ui| {
                     ui.horizontal(|ui| {
                         ui.label("Neighbors: ");
@@ -116,7 +118,7 @@ impl<'a> SubMenu for NodeSearchMenu {
                         if button.clicked() {
                             if clicking_selected_item {
                                 index_to_remove = Some(item_index);
-                            } else if !internals.input_state.input.modifiers.shift {
+                            } else if !ui_manager.input_state().input.modifiers.shift {
                                 should_clear = true;
                                 index_to_push = Some(item_index);
                             } else {

@@ -1,8 +1,7 @@
-use egui_glfw_gl::egui;
+use renderer::ui::prelude::*;
 use serde::{Serialize, Deserialize};
 
 use super::SubMenu;
-use crate::menu::MenuInternals;
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct DiagnosticsMenu;
@@ -31,12 +30,12 @@ impl<'a> SubMenu for DiagnosticsMenu {
         &()
     }
 
-    fn render<'b>(&mut self, internals: &MenuInternals, input: &Self::InputData<'b>) {
+    fn render<'b>(&mut self, context: &egui::Context, input: &Self::InputData<'b>) {
         if !self.is_showing() {
             return;
         }
 
-        egui::Window::new("Diagnostics").show(&internals.context, |ui| {
+        egui::Window::new("Diagnostics").show(context, |ui| {
             let fps_text = format!("FPS: {:.2}", input.fps);
             ui.label(fps_text);
         });

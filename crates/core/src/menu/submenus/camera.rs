@@ -1,11 +1,8 @@
-use egui_glfw_gl::egui;
+use renderer::ui::prelude::*;
 use serde::{Serialize, Deserialize};
 
 use super::super::get_button_text;
 use super::SubMenu;
-use crate::config::CONFIG;
-use crate::menu::MenuInternals;
-use crate::octree::OctreeDataType;
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 #[serde(default)]
@@ -36,12 +33,12 @@ impl<'a> SubMenu for CameraMenu {
         &self.output
     }
 
-    fn render<'b>(&mut self, internals: &MenuInternals, _: &Self::InputData<'b>) {
+    fn render<'b>(&mut self, context: &egui::Context, _: &Self::InputData<'b>) {
         if !self.is_showing() {
             return;
         }
 
-        egui::Window::new("Camera").show(&internals.context, |ui| {
+        egui::Window::new("Camera").show(context, |ui| {
             if ui.button(get_button_text("Orthographic", self.output.orthographic)).clicked() {
                 self.output.orthographic = !self.output.orthographic;
             }

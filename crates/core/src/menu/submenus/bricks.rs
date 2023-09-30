@@ -1,10 +1,10 @@
 use cgmath::{vec3, InnerSpace, Vector3};
-use egui_glfw_gl::egui;
+use renderer::ui::prelude::*;
 use serde::{Serialize, Deserialize};
 
 use super::SubMenu;
 use crate::{
-    menu::{get_button_text, MenuInternals},
+    menu::get_button_text,
     octree::{BrickAttribute, BricksToShow},
 };
 
@@ -51,12 +51,12 @@ impl<'a> SubMenu for BricksMenu {
         &self.output
     }
 
-    fn render<'b>(&mut self, internals: &MenuInternals, _: &Self::InputData<'b>) {
+    fn render<'b>(&mut self, context: &egui::Context, _: &Self::InputData<'b>) {
         if !self.is_showing() {
             return;
         }
 
-        egui::Window::new("Bricks").show(&internals.context, |ui| {
+        egui::Window::new("Bricks").show(&context, |ui| {
             ui.horizontal(|ui| {
                 ui.label("Bricks: ");
                 if ui

@@ -14,6 +14,9 @@ pub mod aabb;
 pub mod helpers;
 pub mod types;
 
+#[cfg(feature = "ui")]
+pub mod ui;
+
 pub mod prelude {
     pub use super::{
         transform::Transform,

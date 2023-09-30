@@ -1,10 +1,9 @@
-use egui_glfw_gl::egui;
+use renderer::ui::prelude::*;
 use serde::{Serialize, Deserialize};
 
 use super::super::get_button_text;
 use super::SubMenu;
-use crate::config::CONFIG;
-use crate::menu::MenuInternals;
+use crate::config::Config;
 use crate::octree::OctreeDataType;
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
@@ -38,12 +37,14 @@ impl<'a> SubMenu for AllNodesMenu {
         &self.output
     }
 
-    fn render<'b>(&mut self, internals: &MenuInternals, _: &Self::InputData<'b>) {
+    fn render<'b>(&mut self, context: &egui::Context, _: &Self::InputData<'b>) {
         if !self.is_showing() {
             return;
         }
 
-        egui::Window::new("All Nodes").show(&internals.context, |ui| {
+        let config = Config::instance();
+
+        egui::Window::new("All Nodes").show(context, |ui| {
             if ui
                 .button(get_button_text(
                     "Show octree",
@@ -67,7 +68,7 @@ impl<'a> SubMenu for AllNodesMenu {
             ui.add(
                 egui::Slider::new(
                     &mut self.output.current_octree_level,
-                    0..=CONFIG.last_octree_level,
+                    0..=config.last_octree_level(),
                 )
                 .text("Octree level"),
             );

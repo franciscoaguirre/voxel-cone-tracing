@@ -1,6 +1,6 @@
 use std::{ffi::CStr, ptr, sync::{mpsc::Receiver}, cell::RefCell};
 
-use glfw::{self, Action, Context, Glfw, Key, Window, WindowEvent};
+use egui_glfw_gl::glfw::{self, Action, Context, Glfw, Key, Window, WindowEvent};
 use log;
 
 use super::{
@@ -8,6 +8,9 @@ use super::{
     transform::{Direction, Transform},
 };
 use crate::{helpers, toggle_boolean};
+
+#[cfg(feature = "ui")]
+use crate::ui::Ui;
 
 pub static mut WINDOW: RefCell<Option<glfw::Window>> = RefCell::new(None);
 
@@ -69,6 +72,9 @@ pub unsafe fn setup_glfw(viewport_width: u32, viewport_height: u32, debug: bool)
     } else {
         println!("Debug Context not active");
     }
+
+    #[cfg(feature = "ui")]
+    Ui::setup(&mut window);
 
     set_window(window);
 

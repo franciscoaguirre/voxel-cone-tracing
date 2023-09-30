@@ -1,13 +1,9 @@
-use egui_glfw_gl::egui;
 use serde::{Serialize, Deserialize};
+use renderer::prelude::*;
+use renderer::ui::prelude::*;
 
-use super::super::get_button_text;
 use super::SubMenu;
-use crate::Camera;
-use crate::config::CONFIG;
-use crate::menu::{MenuInternals, SubMenus};
-use crate::octree::OctreeDataType;
-use crate::preset::{Preset, save_preset};
+use crate::menu::{SubMenus, Preset, save_preset};
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 #[serde(default)]
@@ -41,8 +37,8 @@ impl<'a> SubMenu for SavePresetMenu {
         &()
     }
 
-    fn render<'b>(&mut self, internals: &MenuInternals, input: &Self::InputData<'b>) {
-        egui::Window::new("Save Preset").show(&internals.context, |ui| {
+    fn render<'b>(&mut self, context: &egui::Context, input: &Self::InputData<'b>) {
+        egui::Window::new("Save Preset").show(context, |ui| {
             ui.text_edit_singleline(&mut self.name);
             if ui.button("Save").clicked() {
                 let preset = Preset { camera: input.camera.clone(), submenus: input.submenus.clone() };

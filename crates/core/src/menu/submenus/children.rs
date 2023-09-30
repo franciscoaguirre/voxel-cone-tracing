@@ -1,8 +1,7 @@
-use egui_glfw_gl::egui;
+use renderer::ui::prelude::*;
 use serde::{Serialize, Deserialize};
 
 use super::SubMenu;
-use crate::menu::MenuInternals;
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct ChildrenMenu {
@@ -35,12 +34,12 @@ impl<'a> SubMenu for ChildrenMenu {
         &()
     }
 
-    fn render<'b>(&mut self, internals: &MenuInternals, input: &Self::InputData<'b>) {
+    fn render<'b>(&mut self, context: &egui::Context, input: &Self::InputData<'b>) {
         if !self.is_showing() {
             return;
         }
 
-        egui::Window::new("Children").show(&internals.context, |ui| {
+        egui::Window::new("Children").show(context, |ui| {
             if input.children.is_empty() {
                 ui.label("No children data. Pick a node!");
                 return;

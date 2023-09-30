@@ -10,20 +10,25 @@ pub struct Config {
     is_initialized: bool,
 }
 
-static mut INSTANCE: Config = Config::default();
+use once_cell::sync::OnceCell;
+
+static mut INSTANCE: OnceCell<Config> = OnceCell::new();
 
 impl Config {
     /// Get the single instance of this struct
     pub fn instance() -> &'static Self {
-        if !INSTANCE.is_initialized { panic!("Must initialize core config"); }
-        &INSTANCE
+        unsafe {
+            if let Some(config) = INSTANCE.get() {
+                &config
+            } else { panic!("Must initialize core config"); }
+        }
     }
 
     /// Initializes the config
     /// Must be called before any call to `instance`
-    pub fn initialize(config: Self) {
-        if INSTANCE.is_initialized { panic!("Can only initialize core config once"); }
-        INSTANCE = config;
+    pub unsafe fn initialize(config: Self) {
+        if INSTANCE.get().is_some() { panic!("Can only initialize core config once"); }
+        let _ = INSTANCE.set(config);
     }
 
     pub fn voxel_dimension(&self) -> u32 {
