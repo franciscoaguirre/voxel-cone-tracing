@@ -3,8 +3,9 @@ use std::fs::File;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 use structopt::StructOpt;
+use renderer::prelude::*;
 
-use crate::{cli_arguments::Options, rendering::light::SpotLight};
+use crate::cli_arguments::Options;
 
 #[derive(Debug, Deserialize)]
 #[serde(default)]

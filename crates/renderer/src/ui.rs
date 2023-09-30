@@ -11,6 +11,7 @@ pub mod prelude {
     };
 }
 
+use crate::common::WINDOW;
 use once_cell::sync::OnceCell;
 
 static mut INSTANCE: OnceCell<Ui> = OnceCell::new();
@@ -114,5 +115,21 @@ impl Ui {
         let clipped_shapes = self.context.tessellate(shapes);
         self.painter
             .paint_and_update_textures(1.0, &clipped_shapes, &textures_delta);
+    }
+
+    pub fn set_cursor_mode(mode: glfw::CursorMode) {
+        unsafe {
+            let mut binding = WINDOW.borrow_mut();
+            let window = binding.as_mut().unwrap();
+            window.set_cursor_mode(mode);
+        }
+    }
+
+    pub fn get_cursor_pos() -> (f64, f64) {
+        unsafe {
+            let binding = WINDOW.borrow();
+            let window = binding.as_ref().unwrap();
+            window.get_cursor_pos()
+        }
     }
 }

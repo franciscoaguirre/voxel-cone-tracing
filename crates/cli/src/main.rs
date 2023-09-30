@@ -1,57 +1,51 @@
 extern crate c_str_macro;
 
 use c_str_macro::c_str;
-use egui_glfw_gl::glfw::{self, Context};
 extern crate gl;
-use crate::{
-    cone_tracing::DebugCone,
+use core::{
+    config::Config as CoreConfig,
+    cone_tracing::{ConeTracer, DebugCone},
+    voxelization,
+    voxelization::visualize::RenderVoxelFragmentsShader,
     menu::{
+        Menu,
         submenus::{
             ChildrenMenuInput, DiagnosticsMenuInput, NodeSearchMenuInput, PhotonsMenuInput,
             SavePresetMenuInput,
         },
-        MenuInternals, SubMenus,
+        SubMenus, DebugNode,
     },
-    octree::OctreeDataType,
-    preset::PRESET,
-    rendering::shader::compile_shaders,
+    octree::{OctreeDataType, BricksToShow, BrickAttribute, Octree},
 };
+use renderer::prelude::*;
+use renderer::ui::glfw::{self, Context};
+use renderer::ui::Ui;
 use cgmath::{point3, vec3, Deg, Matrix4};
 use log::info;
-
-use rendering::quad::Quad;
 use structopt::StructOpt;
 
 mod cli_arguments;
-mod cone_tracing;
-mod config;
-mod constants;
-mod helpers;
-mod menu;
-mod octree;
+use cli_arguments::Options;
 mod preset;
-mod rendering;
 mod scene;
-mod types;
-mod voxelization;
 
-use config::CONFIG;
-use menu::Menu;
-use rendering::{camera::Camera, common, gizmo::RenderGizmo, shader::Shader};
 use scene::SCENE;
-use voxelization::visualize::RenderVoxelFragmentsShader;
-
-use octree::{BricksToShow, Octree};
-
-use crate::{
-    cone_tracing::ConeTracer,
-    menu::DebugNode,
-    octree::BrickAttribute,
-    rendering::{framebuffer::Framebuffer, transform::Transform},
-};
+use preset::PRESET;
 
 fn main() {
     simple_logger::init().unwrap();
+
+    use std::fs::File;
+    use ron;
+    let file = File::open("config.ron").expect("Missing config file!");
+    let raw_config: CoreConfig = ron::de::from_reader(file).expect("Config file malformed!");
+    log::info!("Configuration used: {:#?}", raw_config);
+
+    unsafe {
+        CoreConfig::initialize(raw_config);
+    }
+
+    let config = CoreConfig::instance();
 
     // NOTE: This is true if the binary was compiled in debug mode
     let debug = cfg!(debug_assertions);
@@ -60,13 +54,14 @@ fn main() {
     let mut delta_time: f64;
     let mut last_frame: f64 = 0.0;
 
-    let (mut glfw, mut window, events) = unsafe { common::setup_glfw(debug) };
+    let (viewport_width, viewport_height) = config.viewport_dimensions();
+    let (mut glfw, events) = unsafe { common::setup_glfw(viewport_width, viewport_height, debug) };
 
     // Camera setup
     let mut camera = PRESET.camera.clone();
     let mut first_mouse = true;
-    let mut last_x: f32 = CONFIG.viewport_width as f32 / 2.0;
-    let mut last_y: f32 = CONFIG.viewport_height as f32 / 2.0;
+    let mut last_x: f32 = viewport_width as f32 / 2.0;
+    let mut last_y: f32 = viewport_height as f32 / 2.0;
 
     // Static eye
     let mut static_eye = Transform::default();
@@ -82,7 +77,7 @@ fn main() {
         common::log_device_information();
     };
 
-    let mut menu = Menu::new(&mut window);
+    let mut menu = Menu::new((*PRESET).clone());
 
     let render_model_shader = compile_shaders!(
         "assets/shaders/model/modelLoading.vert.glsl",
@@ -96,7 +91,7 @@ fn main() {
     );
     let mut cone_tracer = ConeTracer::init();
     let mut debug_cone = unsafe { DebugCone::new() };
-    let our_model = unsafe { helpers::load_model() };
+    let our_model = unsafe { helpers::load_model(&SCENE.model) };
 
     let scene_aabb = &our_model.aabb;
     let aabb_middle_point = scene_aabb.middle_point();
@@ -163,8 +158,6 @@ fn main() {
     let quad = unsafe { Quad::new() };
     let camera_framebuffer = unsafe { Framebuffer::new() };
 
-    let ortho = cgmath::ortho(-1.0, 1.0, -1.0, 1.0, 0.0001, 10_000.0);
-
     let mut current_voxel_fragment_count: u32 = 0;
     let mut current_octree_level: u32 = 0;
     let mut show_model = false;
@@ -195,10 +188,12 @@ fn main() {
     );
     let render_depth_buffer_shader = compile_shaders!("assets/shaders/renderDepthQuad.glsl");
 
-    let photon_power = light.intensity / (CONFIG.viewport_width * CONFIG.viewport_height) as f32;
+    let photon_power = light.intensity / (viewport_width * viewport_height) as f32;
+
+    let ui = Ui::instance();
 
     // Render loop
-    while !window.should_close() {
+    while !common::should_close_window() {
         let current_frame = glfw.get_time();
 
         frame_count += 1;
@@ -235,16 +230,16 @@ fn main() {
         for (_, event) in glfw::flush_messages(&events) {
             // Events
             if let glfw::WindowEvent::Key(glfw::Key::Escape, _, glfw::Action::Press, _) = event {
-                menu.toggle_showing(&mut window, &mut last_x, &mut last_y);
+                menu.toggle_showing(&mut last_x, &mut last_y);
             };
-            if !menu.is_showing() {
+            if !ui.is_showing() {
                 common::process_events(
                     &event,
                     &mut first_mouse,
                     &mut last_x,
                     &mut last_y,
                     &mut camera,
-                    &mut debug_cone,
+                    // &mut debug_cone, // TODO: Bring back
                 );
                 common::handle_show_model(&event, &mut show_model);
                 common::handle_show_voxel_fragment_list(&event, &mut show_voxel_fragment_list);
@@ -253,10 +248,10 @@ fn main() {
             menu.handle_event(event);
         }
 
-        menu.begin_frame(current_frame);
+        ui.begin_frame(current_frame);
 
         // egui render
-        if menu.is_showing() {
+        if ui.is_showing() {
             menu.show_main_window();
             menu.render((
                 (),
@@ -328,7 +323,7 @@ fn main() {
         }
 
         // Input
-        if !menu.is_showing() {
+        if !ui.is_showing() {
             let transform = if should_move_light {
                 // unsafe {
                 //     octree.clear_light();
@@ -348,14 +343,14 @@ fn main() {
             } else {
                 &mut camera.transform
             };
-            common::process_movement_input(&mut window, delta_time as f32, transform);
+            unsafe { common::process_movement_input(delta_time as f32, transform); }
         }
 
         // Render
         unsafe {
             // let projection: Matrix4<f32> = perspective(
             //     Deg(camera.zoom),
-            //     CONFIG.viewport_width as f32 / CONFIG.viewport_height as f32,
+            //     viewport_width as f32 / viewport_height as f32,
             //     0.0001,
             //     10000.0,
             // );
@@ -466,13 +461,13 @@ fn main() {
             gl::Disable(gl::DEPTH_TEST);
         }
 
-        menu.end_frame();
+        ui.end_frame();
 
         current_voxel_fragment_count =
             (current_voxel_fragment_count + 10000).min(number_of_voxel_fragments);
 
         // Swap buffers and poll I/O events
-        window.swap_buffers();
+        common::swap_buffers();
         glfw.poll_events();
     }
 }

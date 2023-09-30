@@ -11,4 +11,4 @@ pub mod cone_tracing;
 pub mod menu;
 
 mod constants;
-mod config;
+pub mod config;

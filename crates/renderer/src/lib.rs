@@ -30,5 +30,7 @@ pub mod prelude {
         model::Model,
         quad::Quad,
         aabb::Aabb,
+        gizmo::RenderGizmo,
+        common,
     };
 }

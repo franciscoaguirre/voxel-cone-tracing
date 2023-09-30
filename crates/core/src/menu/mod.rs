@@ -8,7 +8,6 @@ pub mod submenus;
 use submenus::*;
 
 pub struct Menu {
-    is_showing: bool,
     pub sub_menus: SubMenus,
 }
 
@@ -54,10 +53,9 @@ type SubMenuOutputs<'a> = (
 );
 
 impl Menu {
-    pub fn new(window: &mut egui::Window, preset: Preset) -> Self {
+    pub fn new(preset: Preset) -> Self {
         let sub_menus = SubMenus::default();
         let mut menu = Menu {
-            is_showing: false,
             sub_menus,
         };
         menu.process_preset(preset);
@@ -68,31 +66,28 @@ impl Menu {
         self.sub_menus = preset.submenus.clone();
     }
 
-    pub fn toggle_showing(&mut self, window: &mut glfw::Window, last_x: &mut f32, last_y: &mut f32) {
-        self.is_showing = !self.is_showing;
+    pub fn toggle_showing(&mut self, last_x: &mut f32, last_y: &mut f32) {
+        let mut ui = Ui::instance();
+        ui.toggle_showing();
 
-        if self.is_showing {
-            window.set_cursor_mode(glfw::CursorMode::Normal);
+        if ui.is_showing() {
+            Ui::set_cursor_mode(glfw::CursorMode::Normal);
         } else {
-            window.set_cursor_mode(glfw::CursorMode::Disabled);
+            Ui::set_cursor_mode(glfw::CursorMode::Disabled);
 
             // So that we don't take into account mouse movements while using the menu
-            let cursor_position = window.get_cursor_pos();
+            let cursor_position = Ui::get_cursor_pos();
             *last_x = cursor_position.0 as f32;
             *last_y = cursor_position.1 as f32;
         };
     }
 
-    pub fn is_showing(&self) -> bool {
-        self.is_showing
-    }
-
     pub fn handle_event(&mut self, event: glfw::WindowEvent) {
-        if !self.is_showing {
+        let mut ui = Ui::instance();
+
+        if !ui.is_showing() {
             return;
         }
-
-        let mut ui = Ui::instance();
 
         if let glfw::WindowEvent::Key(glfw::Key::LeftShift, _, glfw::Action::Press, _) = event {
             ui.toggle_shift();
@@ -245,7 +240,7 @@ pub fn get_button_text(text: &str, clicked: bool) -> egui::RichText {
     button_text
 }
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
 #[serde(default)]
 pub struct Preset {
     pub submenus: SubMenus,

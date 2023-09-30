@@ -1,13 +1,16 @@
-#[derive(Debug, Default)]
+use serde::Deserialize;
+
+#[derive(Debug, Default, Deserialize)]
 pub struct Config {
     pub brick_pool_resolution: u32,
     // TODO: This could be different than the one in the shaders right now
     pub working_group_size: u32,
     viewport_dimensions: (i32, i32),
     voxel_dimension: u32,
+    #[serde(skip_deserializing)]
     octree_levels: u32,
+    #[serde(skip_deserializing)]
     last_octree_level: u32,
-    is_initialized: bool,
 }
 
 use once_cell::sync::OnceCell;
@@ -26,8 +29,9 @@ impl Config {
 
     /// Initializes the config
     /// Must be called before any call to `instance`
-    pub unsafe fn initialize(config: Self) {
+    pub unsafe fn initialize(mut config: Self) {
         if INSTANCE.get().is_some() { panic!("Can only initialize core config once"); }
+        config.set_voxel_dimension(config.voxel_dimension);
         let _ = INSTANCE.set(config);
     }
 
