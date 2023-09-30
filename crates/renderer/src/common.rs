@@ -1,15 +1,26 @@
-use std::{ffi::CStr, ptr, sync::mpsc::Receiver};
+use std::{ffi::CStr, ptr, sync::{mpsc::Receiver}, cell::RefCell};
 
-use egui_glfw_gl::glfw::{self, Action, Context, Glfw, Key, Window, WindowEvent};
+use glfw::{self, Action, Context, Glfw, Key, Window, WindowEvent};
 use log;
 
 use super::{
     camera::Camera,
     transform::{Direction, Transform},
 };
-use crate::{config::CONFIG, helpers, toggle_boolean, cone_tracing::DebugCone};
+use crate::{helpers, toggle_boolean};
 
-pub unsafe fn setup_glfw(debug: bool) -> (Glfw, Window, Receiver<(f64, WindowEvent)>) {
+pub static mut WINDOW: RefCell<Option<glfw::Window>> = RefCell::new(None);
+
+/// Panics if glfw hasn't been initialized yet
+pub unsafe fn get_framebuffer_size() -> (i32, i32) {
+    WINDOW.borrow().as_ref().unwrap().get_framebuffer_size()
+}
+
+unsafe fn set_window(window: Window) {
+    *WINDOW.borrow_mut() = Some(window);
+}
+
+pub unsafe fn setup_glfw(viewport_width: u32, viewport_height: u32, debug: bool) -> (Glfw, Receiver<(f64, WindowEvent)>) {
     // GLFW: Setup
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
     glfw.window_hint(glfw::WindowHint::ContextVersion(4, 6));
@@ -21,8 +32,8 @@ pub unsafe fn setup_glfw(debug: bool) -> (Glfw, Window, Receiver<(f64, WindowEve
     // GLFW: Window creation
     let (mut window, events) = glfw
         .create_window(
-            CONFIG.viewport_width as u32,
-            CONFIG.viewport_height as u32,
+            viewport_width as u32,
+            viewport_height as u32,
             "Voxel Cone Tracing",
             glfw::WindowMode::Windowed,
         )
@@ -59,7 +70,9 @@ pub unsafe fn setup_glfw(debug: bool) -> (Glfw, Window, Receiver<(f64, WindowEve
         println!("Debug Context not active");
     }
 
-    (glfw, window, events)
+    set_window(window);
+
+    (glfw, events)
 }
 
 pub fn process_events(
@@ -68,7 +81,8 @@ pub fn process_events(
     last_x: &mut f32,
     last_y: &mut f32,
     camera: &mut Camera,
-    debug_cone: &mut DebugCone,
+    // TODO: Bring back
+    // debug_cone: &mut DebugCone,
 ) {
     match *event {
         glfw::WindowEvent::FramebufferSize(width, height) => {
@@ -92,8 +106,9 @@ pub fn process_events(
 
             camera.process_mouse_movement(x_offset, y_offset, true);
 
+            // TODO: Bring back
             // To be able to move the debug cone with the camera's forward
-            debug_cone.transform.set_rotation_y(camera.transform.rotation_y());
+            // debug_cone.transform.set_rotation_y(camera.transform.rotation_y());
         }
         glfw::WindowEvent::Scroll(_x_offset, y_offset) => {
             camera.process_mouse_scroll(y_offset as f32);

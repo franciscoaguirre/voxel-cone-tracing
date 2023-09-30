@@ -2,8 +2,7 @@ use std::{ffi::c_void, mem::size_of};
 
 use gl::types::GLuint;
 
-use super::shader::Shader;
-use crate::rendering::shader::compile_shaders;
+use super::shader::{Shader, compile_shaders};
 
 /// Quad to display textures flat on-screen.
 pub struct Quad {

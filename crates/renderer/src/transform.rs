@@ -5,13 +5,10 @@ use cgmath::{point3, vec3, Deg, Euler, InnerSpace, Matrix4, Point3, Vector3, Zer
 use gl::types::GLuint;
 use serde::{Serialize, Deserialize};
 
-use crate::config::CONFIG;
-
 use super::{
     framebuffer::Framebuffer, geometry_buffers::GeometryBuffers, gizmo::RenderGizmo, model::Model,
-    shader::Shader,
+    shader::{Shader, compile_shaders},
 };
-use crate::rendering::shader::compile_shaders;
 
 /// Struct that handles `position`, `rotation` and `scale` for an entity
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -91,6 +88,7 @@ fn default_gizmo_shader() -> Shader {
     )
 }
 
+// TODO: Weird to have this here
 fn default_view_map_shader() -> Shader {
     compile_shaders!("assets/shaders/octree/viewMap.glsl")
 }
@@ -224,7 +222,7 @@ impl Transform {
         shader.set_mat4(c_str!("projection"), &projection);
         shader.set_mat4(c_str!("view"), &self.get_view_matrix());
         shader.set_mat4(c_str!("model"), &model);
-        shader.set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
+        // shader.set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
 
         gl::BindFramebuffer(gl::FRAMEBUFFER, framebuffer.fbo());
         gl::Enable(gl::DEPTH_TEST);

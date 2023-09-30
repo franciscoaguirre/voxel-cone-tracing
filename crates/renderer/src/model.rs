@@ -6,7 +6,7 @@ use image::DynamicImage::*;
 
 use super::mesh::{Mesh, Texture, Vertex};
 use super::shader::Shader;
-use crate::voxelization::aabb::Aabb;
+use crate::aabb::Aabb;
 
 #[derive(Default)]
 pub struct Model {

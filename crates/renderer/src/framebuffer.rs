@@ -1,8 +1,8 @@
 use gl::types::GLuint;
 
-use crate::config::CONFIG;
-
-use super::geometry_buffers::GeometryBuffers;
+use super::{
+    geometry_buffers::GeometryBuffers, common,
+};
 
 pub struct Framebuffer {
     fbo: GLuint,
@@ -18,13 +18,15 @@ impl Framebuffer {
         let mut textures = [0; 4]; // First one is rgb10_a2ui, second rgba8 for viewing, third is normals, fourth for colors
         gl::GenTextures(4, textures.as_mut_ptr());
 
+        let (width, height) = common::get_framebuffer_size();
+
         gl::BindTexture(gl::TEXTURE_2D, textures[0]);
         gl::TexImage2D(
             gl::TEXTURE_2D,
             0,
             gl::RGB32F as i32,
-            CONFIG.viewport_width as i32,
-            CONFIG.viewport_height as i32,
+            width as i32,
+            height as i32,
             0,
             gl::RGB,
             gl::FLOAT,
@@ -39,8 +41,8 @@ impl Framebuffer {
             gl::TEXTURE_2D,
             0,
             gl::RGBA8 as i32,
-            CONFIG.viewport_width as i32,
-            CONFIG.viewport_height as i32,
+            width as i32,
+            height as i32,
             0,
             gl::RGBA,
             gl::UNSIGNED_BYTE,
@@ -55,8 +57,8 @@ impl Framebuffer {
             gl::TEXTURE_2D,
             0,
             gl::RGB32F as i32,
-            CONFIG.viewport_width as i32,
-            CONFIG.viewport_height as i32,
+            width as i32,
+            height as i32,
             0,
             gl::RGB,
             gl::FLOAT,
@@ -71,8 +73,8 @@ impl Framebuffer {
             gl::TEXTURE_2D,
             0,
             gl::RGBA8 as i32,
-            CONFIG.viewport_width as i32,
-            CONFIG.viewport_height as i32,
+            width as i32,
+            height as i32,
             0,
             gl::RGBA,
             gl::UNSIGNED_BYTE,
@@ -88,8 +90,8 @@ impl Framebuffer {
         gl::RenderbufferStorage(
             gl::RENDERBUFFER,
             gl::DEPTH24_STENCIL8,
-            CONFIG.viewport_width as i32,
-            CONFIG.viewport_height as i32,
+            width as i32,
+            height as i32,
         );
         gl::FramebufferRenderbuffer(
             gl::FRAMEBUFFER,
@@ -156,13 +158,15 @@ impl Framebuffer {
         let mut textures = [0; 3]; // First one is rgb10_a2ui, second rgba8 for viewing, third for depth (shadow mapping)
         gl::GenTextures(3, textures.as_mut_ptr());
 
+        let (width, height) = common::get_framebuffer_size();
+
         gl::BindTexture(gl::TEXTURE_2D, textures[0]);
         gl::TexImage2D(
             gl::TEXTURE_2D,
             0,
             gl::RGB10_A2UI as i32,
-            CONFIG.viewport_width as i32,
-            CONFIG.viewport_height as i32,
+            width as i32,
+            height as i32,
             0,
             gl::RGBA_INTEGER,
             gl::UNSIGNED_INT_2_10_10_10_REV,
@@ -177,8 +181,8 @@ impl Framebuffer {
             gl::TEXTURE_2D,
             0,
             gl::RGBA8 as i32,
-            CONFIG.viewport_width as i32,
-            CONFIG.viewport_height as i32,
+            width as i32,
+            height as i32,
             0,
             gl::RGBA,
             gl::UNSIGNED_BYTE,
@@ -193,8 +197,8 @@ impl Framebuffer {
             gl::TEXTURE_2D,
             0,
             gl::DEPTH_COMPONENT as i32,
-            CONFIG.viewport_width as i32,
-            CONFIG.viewport_height as i32,
+            width as i32,
+            height as i32,
             0,
             gl::DEPTH_COMPONENT,
             gl::FLOAT,
@@ -228,14 +232,15 @@ impl Framebuffer {
             0,
         );
 
+        // let (width, height) = common::get_framebuffer_size();
         // let mut rbo = 0;
         // gl::GenRenderbuffers(1, &mut rbo);
         // gl::BindRenderbuffer(gl::RENDERBUFFER, rbo);
         // gl::RenderbufferStorage(
         //     gl::RENDERBUFFER,
         //     gl::DEPTH24_STENCIL8,
-        //     CONFIG.viewport_width as i32,
-        //     CONFIG.viewport_height as i32,
+        //     width as i32,
+        //     height as i32,
         // );
         // gl::FramebufferRenderbuffer(
         //     gl::FRAMEBUFFER,

@@ -5,8 +5,11 @@ use cgmath::{point3, Matrix4, Point3};
 use gl::types::GLuint;
 use serde::Deserialize;
 
-use super::{gizmo::RenderGizmo, shader::Shader, transform::Transform};
-use crate::rendering::shader::compile_shaders;
+use super::{
+    gizmo::RenderGizmo,
+    shader::{Shader, compile_shaders},
+    transform::Transform
+};
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(default)]
@@ -42,7 +45,7 @@ impl Default for SpotLight {
 
 impl SpotLight {
     pub unsafe fn new(width: f32, height: f32, color: Point3<f32>, intensity: f32) -> Self {
-        let mut light = Self {
+        let light = Self {
             width,
             height,
             color,

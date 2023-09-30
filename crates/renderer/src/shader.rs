@@ -400,6 +400,7 @@ impl Shader {
     }
 }
 
+#[macro_export]
 macro_rules! compile_shaders {
     ($single_path:literal$(,)?) => {
         Shader::new_single($single_path, false)
@@ -415,11 +416,12 @@ macro_rules! compile_shaders {
     };
 }
 
+#[macro_export]
 macro_rules! compile_compute {
     ($compute_path:literal$(,)?) => {
         Shader::new_compute($compute_path, false)
     };
 }
 
-pub(crate) use compile_compute;
-pub(crate) use compile_shaders;
+pub use compile_compute;
+pub use compile_shaders;

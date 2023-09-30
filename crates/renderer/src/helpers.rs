@@ -1,4 +1,4 @@
-use cgmath::{vec3, Matrix4, Vector3};
+use cgmath::Matrix4;
 use gl::types::*;
 use image::{GenericImageView, ImageFormat};
 use std::{
@@ -8,13 +8,13 @@ use std::{
     path::Path,
 };
 
-use crate::{config::CONFIG, rendering::model::Model, scene::SCENE, voxelization::aabb::Aabb};
+use crate::{model::Model, aabb::Aabb};
 
 pub unsafe fn generate_atomic_counter_buffer() -> GLuint {
-    generate_atomic_counter_buffer1(gl::STATIC_DRAW)
+    generate_atomic_counter_buffer1()
 }
 
-pub unsafe fn generate_atomic_counter_buffer1(usage_hint: GLuint) -> GLuint {
+pub unsafe fn generate_atomic_counter_buffer1() -> GLuint {
     let mut buffer: u32 = 0;
     let initial_value: [u32; 1] = [0];
 
@@ -341,21 +341,22 @@ pub fn r32ui_to_rgb10_a2ui(from: u32) -> (u32, u32, u32) {
     (from & mask, (from >> 10) & mask, (from >> 20) & mask)
 }
 
-#[allow(dead_code)]
-pub fn get_brick_coordinates(node_id: u32) -> Vector3<u32> {
-    let brick_pool_resolution_bricks = CONFIG.brick_pool_resolution / 3;
-    let mut coordinates = vec3(0u32, 0u32, 0u32);
-    coordinates.x = node_id % brick_pool_resolution_bricks;
-    coordinates.y = (node_id / brick_pool_resolution_bricks) % brick_pool_resolution_bricks;
-    coordinates.z = node_id / (brick_pool_resolution_bricks * brick_pool_resolution_bricks);
-    coordinates *= 3;
-    return coordinates;
-}
+// TODO: Bring back, elsewhere
+// #[allow(dead_code)]
+// pub fn get_brick_coordinates(node_id: u32) -> Vector3<u32> {
+//     let brick_pool_resolution_bricks = CONFIG.brick_pool_resolution / 3;
+//     let mut coordinates = vec3(0u32, 0u32, 0u32);
+//     coordinates.x = node_id % brick_pool_resolution_bricks;
+//     coordinates.y = (node_id / brick_pool_resolution_bricks) % brick_pool_resolution_bricks;
+//     coordinates.z = node_id / (brick_pool_resolution_bricks * brick_pool_resolution_bricks);
+//     coordinates *= 3;
+//     return coordinates;
+// }
 
 /// Load a model with a given `name`.
 /// Already goes to "assets/models/" to find it and its textures.
-pub unsafe fn load_model() -> Model {
-    let name = &SCENE.model;
+/// Only loads `.obj` files
+pub unsafe fn load_model(name: &str) -> Model {
     let previous_current_dir = env::current_dir().unwrap();
     env::set_current_dir(Path::new("assets/models")).unwrap();
     let model_file = format!("{name}.obj");

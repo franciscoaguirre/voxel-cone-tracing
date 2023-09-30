@@ -1,0 +1,15 @@
+[package]
+name = "renderer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cgmath = { version = "0.18.0", features = ["serde"] }
+gl = "0.14.0"
+image = "0.24.2"
+memoffset = "0.6.5"
+tobj = "3.2.2"
+c_str_macro = "1.0.3"
+serde = { version = "1", features = ["derive"] }
+log = { version = "0.4", features = ["max_level_trace", "release_max_level_info"] }
+glfw = "0.44.0"

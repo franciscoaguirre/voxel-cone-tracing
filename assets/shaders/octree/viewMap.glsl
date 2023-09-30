@@ -38,7 +38,8 @@ in VertexData {
     vec2 textureCoordinates;
 } In;
 
-uniform uint voxelDimension;
+// TODO: Bring back?
+// uniform uint voxelDimension;
 uniform sampler2D texture_diffuse1;
 
 void main() {

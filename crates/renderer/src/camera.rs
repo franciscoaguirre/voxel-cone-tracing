@@ -1,8 +1,9 @@
 use serde::{Serialize, Deserialize};
 use cgmath::{Matrix4, Deg};
 
-use super::transform::Transform;
-use crate::config::CONFIG;
+use super::{
+    transform::Transform, common,
+};
 
 // Default camera values
 const SPEED: f32 = 1.0;
@@ -110,9 +111,11 @@ impl Camera {
             )
         }
 
+        let (width, height) = unsafe { common::get_framebuffer_size() };
+
         cgmath::perspective(
             Deg(self.zoom),
-            CONFIG.viewport_width as f32 / CONFIG.viewport_height as f32,
+            width as f32 / height as f32,
             0.0001,
             10000.0,
         )
