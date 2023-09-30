@@ -1,3 +1,6 @@
+//! Simple rendering engine.
+//! Can handle the usual Transforms, Lights, Cameras, etc.
+
 pub mod camera;
 pub mod common;
 pub mod framebuffer;

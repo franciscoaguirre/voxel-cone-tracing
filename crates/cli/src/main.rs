@@ -1,3 +1,5 @@
+//! The entrypoint to the VCT application
+
 extern crate c_str_macro;
 
 use c_str_macro::c_str;
