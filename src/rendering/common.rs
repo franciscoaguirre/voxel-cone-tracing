@@ -7,7 +7,7 @@ use super::{
     camera::Camera,
     transform::{Direction, Transform},
 };
-use crate::{config::CONFIG, handle_increments, helpers, toggle_boolean};
+use crate::{config::CONFIG, helpers, toggle_boolean, cone_tracing::DebugCone};
 
 pub unsafe fn setup_glfw(debug: bool) -> (Glfw, Window, Receiver<(f64, WindowEvent)>) {
     // GLFW: Setup
@@ -68,6 +68,7 @@ pub fn process_events(
     last_x: &mut f32,
     last_y: &mut f32,
     camera: &mut Camera,
+    debug_cone: &mut DebugCone,
 ) {
     match *event {
         glfw::WindowEvent::FramebufferSize(width, height) => {
@@ -90,6 +91,9 @@ pub fn process_events(
             *last_y = y_position;
 
             camera.process_mouse_movement(x_offset, y_offset, true);
+
+            // To be able to move the debug cone with the camera's forward
+            debug_cone.transform.set_rotation_y(camera.transform.rotation_y());
         }
         glfw::WindowEvent::Scroll(_x_offset, y_offset) => {
             camera.process_mouse_scroll(y_offset as f32);
@@ -126,16 +130,6 @@ pub fn process_movement_input(
 toggle_boolean!(C, handle_light_movement);
 toggle_boolean!(Num1, handle_show_model);
 toggle_boolean!(Num2, handle_show_voxel_fragment_list);
-handle_increments!(
-    "Cone angle",
-    Up,
-    Down,
-    handle_cone_angle,
-    f32,
-    0.01,
-    0.0,
-    6.0
-);
 
 pub unsafe fn log_device_information() {
     let vendor = unsafe {

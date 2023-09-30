@@ -36,7 +36,7 @@ uniform vec3 lightDirection;
 uniform float shininess;
 uniform mat4 lightViewMatrix;
 uniform mat4 lightProjectionMatrix;
-uniform float coneAngle;
+uniform float halfConeAngle;
 uniform float photonPower;
 uniform bool showIndirectLight;
 uniform vec3 eyePosition;
@@ -211,17 +211,17 @@ float visibilityCalculation(vec4 positionInLightSpace, vec3 normal) {
 vec4 gatherSpecularIndirectLight(vec3 position, vec3 eyeDirection, vec3 normal) {
     vec3 reflectDirection = normalize(reflect(eyeDirection, normalize(normal)));
     //vec3 reflectDirection = normalize(reflect(eyeDirection, vec3(0, 0, -1)));
-    float coneAngle = 0.005;
+    float halfConeAngle = 0.005;
     float maxDistance = 5;
     bool useLighting = true;
 
-    return coneTrace(position, reflectDirection, coneAngle, maxDistance, useLighting);
+    return coneTrace(position, reflectDirection, halfConeAngle, maxDistance, useLighting);
 }
 
 vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, bool useLighting) {
     float maxDistance = useLighting ? 1.0 : 0.01;
-    // float coneAngle = 0.261799;
-    //float coneAngle = 0.0001;
+    // float halfConeAngle = 0.261799;
+    //float halfConeAngle = 0.0001;
     vec3 bitangent = cross(normal, tangent);
     vec3 direction;
     vec4 indirectLight = vec4(0);
@@ -234,16 +234,16 @@ vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, bool useLight
 
     direction = sinAngle * normal + cosAngle * tangent;
     
-    indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    indirectLight += coneWeight * coneTrace(position, direction, halfConeAngle, maxDistance, useLighting);
 
     direction = sinAngle * normal - cosAngle * tangent;
-    indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    indirectLight += coneWeight * coneTrace(position, direction, halfConeAngle, maxDistance, useLighting);
 
     direction = sinAngle * normal + cosAngle * bitangent;
-    indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    indirectLight += coneWeight * coneTrace(position, direction, halfConeAngle, maxDistance, useLighting);
 
     direction = sinAngle * normal - cosAngle * bitangent;
-    indirectLight += coneWeight * coneTrace(position, direction, coneAngle, maxDistance, useLighting);
+    indirectLight += coneWeight * coneTrace(position, direction, halfConeAngle, maxDistance, useLighting);
 
     indirectLight /= coneWeight * 4;
 

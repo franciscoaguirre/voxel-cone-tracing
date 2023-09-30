@@ -9,18 +9,18 @@ pub struct ChildrenMenu {
     is_showing: bool,
 }
 
-pub struct ChildrenMenuInput {
-    children: Vec<u32>,
+pub struct ChildrenMenuInput<'a> {
+    children: &'a [u32],
 }
 
-impl ChildrenMenuInput {
-    pub fn new(children: Vec<u32>) -> Self {
+impl<'a> ChildrenMenuInput<'a> {
+    pub fn new(children: &'a [u32]) -> Self {
         Self { children }
     }
 }
 
 impl<'a> SubMenu for ChildrenMenu {
-    type InputData<'b> = ChildrenMenuInput;
+    type InputData<'b> = ChildrenMenuInput<'b>;
     type OutputData = ();
 
     fn is_showing(&self) -> bool {

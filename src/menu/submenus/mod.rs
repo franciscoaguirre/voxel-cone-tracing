@@ -27,6 +27,9 @@ pub use save_preset::{SavePresetMenu, SavePresetMenuInput};
 mod camera;
 pub use camera::{CameraMenu, CameraMenuOutput};
 
+mod cone_tracing;
+pub use cone_tracing::{ConeTracingMenu, ConeTracingMenuOutput};
+
 use serde::{Serialize, Deserialize};
 
 pub trait SubMenu: std::fmt::Debug + Default + for<'a> Deserialize<'a> + Serialize + Clone {

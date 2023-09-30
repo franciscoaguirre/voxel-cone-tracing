@@ -38,6 +38,7 @@ pub struct SubMenus {
     photons: PhotonsMenu,
     save_preset: SavePresetMenu,
     camera: CameraMenu,
+    cone_tracing: ConeTracingMenu,
 }
 
 type SubMenuInputs<'a> = (
@@ -50,6 +51,7 @@ type SubMenuInputs<'a> = (
     <PhotonsMenu as SubMenu>::InputData<'a>,
     <SavePresetMenu as SubMenu>::InputData<'a>,
     <CameraMenu as SubMenu>::InputData<'a>,
+    <ConeTracingMenu as SubMenu>::InputData<'a>,
 );
 
 type SubMenuOutputs<'a> = (
@@ -62,6 +64,7 @@ type SubMenuOutputs<'a> = (
     &'a <PhotonsMenu as SubMenu>::OutputData,
     &'a <SavePresetMenu as SubMenu>::OutputData,
     &'a <CameraMenu as SubMenu>::OutputData,
+    &'a <ConeTracingMenu as SubMenu>::OutputData,
 );
 
 impl Menu {
@@ -189,6 +192,7 @@ impl Menu {
         self.sub_menus.photons.render(&self.internals, &inputs.6);
         self.sub_menus.save_preset.render(&self.internals, &inputs.7);
         self.sub_menus.camera.render(&self.internals, &inputs.8);
+        self.sub_menus.cone_tracing.render(&self.internals, &inputs.9);
     }
 
     pub fn get_data(&self) -> SubMenuOutputs {
@@ -202,6 +206,7 @@ impl Menu {
             self.sub_menus.photons.get_data(),
             self.sub_menus.save_preset.get_data(),
             self.sub_menus.camera.get_data(),
+            self.sub_menus.cone_tracing.get_data(),
         )
     }
 
@@ -269,6 +274,15 @@ impl Menu {
                 .clicked()
             {
                 self.sub_menus.camera.toggle_showing();
+            }
+            if ui
+                .button(get_button_text(
+                    "Cone Tracing",
+                    self.sub_menus.cone_tracing.is_showing(),
+                ))
+                .clicked()
+            {
+                self.sub_menus.cone_tracing.toggle_showing();
             }
         });
     }

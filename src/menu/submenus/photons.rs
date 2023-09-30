@@ -9,18 +9,18 @@ pub struct PhotonsMenu {
     is_showing: bool,
 }
 
-pub struct PhotonsMenuInput {
-    photons: Vec<u32>,
+pub struct PhotonsMenuInput<'a> {
+    photons: &'a [u32],
 }
 
-impl PhotonsMenuInput {
-    pub fn new(photons: Vec<u32>) -> Self {
+impl<'a> PhotonsMenuInput<'a> {
+    pub fn new(photons: &'a [u32]) -> Self {
         Self { photons }
     }
 }
 
 impl<'a> SubMenu for PhotonsMenu {
-    type InputData<'b> = PhotonsMenuInput;
+    type InputData<'b> = PhotonsMenuInput<'b>;
     type OutputData = ();
 
     fn is_showing(&self) -> bool {
