@@ -17,5 +17,5 @@ void main()
     } else if (hasDiffuse) {
         FragColor = vec4(materialDiffuse, 1);
     }
-    //FragColor = vec4((normalize(fragNormal) + vec3(1)) / 2.0, 1.0);
+    FragColor = vec4((normalize(fragNormal) + vec3(1)) / 2.0, 1.0);
 }

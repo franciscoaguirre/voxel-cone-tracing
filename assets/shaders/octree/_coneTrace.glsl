@@ -17,8 +17,8 @@ float brickPoolBrickSize = 3.0 / brickPoolResolutionf;
 
 // Returns values in [0, maxOctreeLevel]
 float calculateLod(float coneDiameter) {
-    // return clamp(log2(1 / coneDiameter) - 1, 0, maxOctreeLevel);
-    return maxOctreeLevel - 1;
+    return clamp(log2(1 / coneDiameter) - 1, 0, maxOctreeLevel);
+    //return maxOctreeLevel;
 }
 
 vec3 findVoxel(vec3 queryCoordinates, Node node) {
@@ -67,8 +67,7 @@ vec4 coneTrace(
     
     // Move the cone origin so it doesn't intersect with own voxels
     vec3 offsetedConeOrigin = coneOrigin + coneDirection * voxelSize * 1.4;
-
-    while (distanceAlongCone < maxDistance && returnColor.a < 1) {
+    while (distanceAlongCone < maxDistance && returnColor.a < 0.97) {
         float coneDiameter = clamp(coneDiameterCoefficient * distanceAlongCone, 0.0009765625, 100.0);
         float lod = calculateLod(coneDiameter);
         uint octreeLevel = uint(ceil(lod));
@@ -77,6 +76,9 @@ vec4 coneTrace(
         bool changedOctreeLevel = octreeLevel != previousOctreeLevel;
 
         vec3 queryCoordinates = offsetedConeOrigin + distanceAlongCone * coneDirection;
+        if(isOutsideRange(queryCoordinates, vec3(0), vec3(1))) {
+          break;
+        }
         bool changedNode = steps == 0 || fallsOutsideNode(queryCoordinates, previousNode); // Should be true on first iteration
 
         Node node, parentNode;
@@ -90,8 +92,8 @@ vec4 coneTrace(
 
             if (changedOctreeLevel) {
                 // To account for the larger voxelSize in the new level
-                sampleStep *= 2; // Increase sampleStep, same as increasing voxelSize by 2
-                // sampleStep = 1 / pow(2, octreeLevel + 1);
+                //sampleStep *= 2; // Increase sampleStep, same as increasing voxelSize by 2
+                sampleStep = 1 / pow(2, octreeLevel + 1);
             }
 
             if (node.id == NODE_NOT_FOUND) {

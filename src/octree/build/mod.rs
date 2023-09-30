@@ -36,17 +36,17 @@ impl Octree {
         );
         let number_of_nodes = self.number_of_nodes() as u32;
 
-        self.builder.append_border_voxel_fragments_pass.run(
-            &self.geometry_data,
-            &mut self.border_data,
-            &self.textures,
-        );
+        //self.builder.append_border_voxel_fragments_pass.run(
+            //&self.geometry_data,
+            //&mut self.border_data,
+            //&self.textures,
+        //);
 
-        self.voxels_to_nodes(
-            OctreeDataType::Border,
-            &mut first_free_node,
-            allocated_nodes_counter,
-        );
+        //self.voxels_to_nodes(
+            //OctreeDataType::Border,
+            //&mut first_free_node,
+            //allocated_nodes_counter,
+        //);
 
         self.builder
             .write_leaf_nodes_pass
@@ -60,11 +60,11 @@ impl Octree {
             .create_alpha_map
             .run(&self.textures, &self.geometry_data.node_data);
 
-        self.builder.spread_leaf_bricks_pass.run(
-            &self.textures,
-            &self.geometry_data.node_data,
-            BrickPoolValues::Colors,
-        );
+        //self.builder.spread_leaf_bricks_pass.run(
+            //&self.textures,
+            //&self.geometry_data.node_data,
+            //BrickPoolValues::Colors,
+        //);
 
         // self.builder.spread_leaf_bricks_pass.run(
         //     &self.textures,
@@ -122,14 +122,14 @@ impl Octree {
                 // );
 
                 if level > 0 {
-                    self.builder.anisotropic_border_transfer_pass.run(
-                        &self.textures,
-                        &self.geometry_data.node_data,
-                        &self.border_data.node_data,
-                        level,
-                        brick_pool_values,
-                        *direction,
-                    );
+                    //self.builder.anisotropic_border_transfer_pass.run(
+                        //&self.textures,
+                        //&self.geometry_data.node_data,
+                        //&self.border_data.node_data,
+                        //level,
+                        //brick_pool_values,
+                        //*direction,
+                    //);
                     // self.builder.border_transfer_pass.run(
                     //     &self.textures,
                     //     &self.geometry_data.node_data,
@@ -148,6 +148,7 @@ impl Octree {
         allocated_nodes_counter: u32,
     ) {
         log::trace!("Voxels to nodes called for: {:?}", octree_data_type);
+        let octree_data_type = OctreeDataType::Geometry;
 
         let mut octree_level_start_indices = Vec::with_capacity(CONFIG.octree_levels as usize);
         let mut first_node_in_level = 0; // Index of first node in a given octree level
