@@ -3,11 +3,8 @@ use std::{ffi::c_void, mem::size_of};
 use gl::types::GLuint;
 use log;
 use serde::{Serialize, Deserialize};
+use engine::prelude::*;
 
-use engine::{
-    types::{BufferTexture, Texture2D, Texture3D},
-    shader::{Shader, compile_compute, compile_shaders}
-};
 use crate::{
     config::Config,
     constants,
