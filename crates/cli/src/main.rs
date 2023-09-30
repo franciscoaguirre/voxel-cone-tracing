@@ -17,9 +17,9 @@ use core::{
     },
     octree::{OctreeDataType, BricksToShow, BrickAttribute, Octree},
 };
-use renderer::prelude::*;
-use renderer::ui::glfw::{self, Context};
-use renderer::ui::Ui;
+use engine::prelude::*;
+use engine::ui::glfw::{self, Context};
+use engine::ui::Ui;
 use cgmath::{point3, vec3, Deg, Matrix4};
 use log::info;
 use structopt::StructOpt;

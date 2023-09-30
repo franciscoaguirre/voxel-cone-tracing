@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 use std::fmt;
-use renderer::prelude::*;
+use engine::prelude::*;
 
 use c_str_macro::c_str;
 use cgmath::{point3, vec3, Matrix4, Vector3};

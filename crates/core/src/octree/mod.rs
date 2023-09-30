@@ -4,7 +4,7 @@ use gl::types::GLuint;
 use log;
 use serde::{Serialize, Deserialize};
 
-use renderer::{
+use engine::{
     types::{BufferTexture, Texture2D, Texture3D},
     shader::{Shader, compile_compute, compile_shaders}
 };
@@ -149,7 +149,7 @@ impl Octree {
         let geometry_data = OctreeData {
             node_data: NodeData {
                 nodes_per_level: Vec::new(),
-                level_start_indices: renderer::helpers::generate_texture_buffer(
+                level_start_indices: helpers::generate_texture_buffer(
                     (config.octree_levels() + 1) as usize,
                     gl::R32UI,
                     0u32,
@@ -165,14 +165,14 @@ impl Octree {
         let border_data = OctreeData {
             node_data: NodeData {
                 nodes_per_level: Vec::new(),
-                level_start_indices: renderer::helpers::generate_texture_buffer(
+                level_start_indices: helpers::generate_texture_buffer(
                     (config.octree_levels() + 1) as usize,
                     gl::R32UI,
                     0u32,
                 ),
             },
             voxel_data: VoxelData {
-                voxel_positions: renderer::helpers::generate_texture_buffer(
+                voxel_positions: helpers::generate_texture_buffer(
                     size_of::<GLuint>() * number_of_voxel_fragments as usize, // TODO: Should be smaller
                     gl::R32UI,
                     64u32,
@@ -291,39 +291,39 @@ impl Octree {
     unsafe fn initialize_textures(max_node_pool_size: usize) -> OctreeTextures {
         let config = Config::instance();
         OctreeTextures {
-            node_pool: renderer::helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32),
-            brick_pointers: renderer::helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32),
-            node_positions: renderer::helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32),
+            node_pool: helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32),
+            brick_pointers: helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32),
+            node_positions: helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32),
             neighbors: [
-                renderer::helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // X
-                renderer::helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // -X
-                renderer::helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // Y
-                renderer::helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // -Y
-                renderer::helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // Z
-                renderer::helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // -Z
+                helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // X
+                helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // -X
+                helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // Y
+                helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // -Y
+                helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // Z
+                helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // -Z
             ],
-            brick_pool_colors_raw: renderer::helpers::generate_3d_r32ui_texture(config.brick_pool_resolution),
+            brick_pool_colors_raw: helpers::generate_3d_r32ui_texture(config.brick_pool_resolution),
             brick_pool_colors: [
-                renderer::helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (X, +), also used for lower level
-                renderer::helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (X, -)
-                renderer::helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (Y, +)
-                renderer::helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (Y, -)
-                renderer::helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (Z, +)
-                renderer::helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (Z, -)
+                helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (X, +), also used for lower level
+                helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (X, -)
+                helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (Y, +)
+                helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (Y, -)
+                helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (Z, +)
+                helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (Z, -)
             ],
-            brick_pool_alpha: renderer::helpers::generate_3d_rgba_texture(config.brick_pool_resolution),
+            brick_pool_alpha: helpers::generate_3d_rgba_texture(config.brick_pool_resolution),
             brick_pool_irradiance: [
-                renderer::helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (X, +), also used for lower level
-                renderer::helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (X, -)
-                renderer::helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (Y, +)
-                renderer::helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (Y, -)
-                renderer::helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (Z, +)
-                renderer::helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (Z, -)
+                helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (X, +), also used for lower level
+                helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (X, -)
+                helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (Y, +)
+                helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (Y, -)
+                helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (Z, +)
+                helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (Z, -)
             ],
-            brick_pool_normals: renderer::helpers::generate_3d_rgba32f_texture(config.brick_pool_resolution),
-            brick_pool_photons: renderer::helpers::generate_3d_r32ui_texture(config.brick_pool_resolution),
-            photons_buffer: renderer::helpers::generate_texture_buffer(27, gl::R32UI, 0u32), // 27 voxels in a brick
-            children_buffer: renderer::helpers::generate_texture_buffer(8, gl::R32UI, 0_u32), // 8 children in a node
+            brick_pool_normals: helpers::generate_3d_rgba32f_texture(config.brick_pool_resolution),
+            brick_pool_photons: helpers::generate_3d_r32ui_texture(config.brick_pool_resolution),
+            photons_buffer: helpers::generate_texture_buffer(27, gl::R32UI, 0u32), // 27 voxels in a brick
+            children_buffer: helpers::generate_texture_buffer(8, gl::R32UI, 0_u32), // 8 children in a node
             color_quad_textures: {
                 let mut textures = [0; 2];
 

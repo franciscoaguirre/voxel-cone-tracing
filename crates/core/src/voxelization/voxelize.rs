@@ -3,13 +3,7 @@ use std::mem::size_of;
 use c_str_macro::c_str;
 use cgmath::point3;
 use gl::types::*;
-use renderer::{
-    shader::{Shader, compile_shaders},
-    model::Model,
-    transform::Transform,
-    types::BufferTexture,
-    helpers,
-};
+use engine::prelude::*;
 
 use crate::config::Config;
 

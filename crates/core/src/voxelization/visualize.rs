@@ -1,7 +1,7 @@
 use c_str_macro::c_str;
 use cgmath::Matrix4;
 use gl::types::*;
-use renderer::shader::{Shader, compile_shaders};
+use engine::prelude::*;
 
 use crate::config::Config;
 

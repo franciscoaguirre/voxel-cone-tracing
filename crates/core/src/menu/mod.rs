@@ -1,7 +1,7 @@
 use std::fmt;
 use std::fs::File;
 
-use renderer::ui::prelude::*;
+use engine::ui::prelude::*;
 use serde::{Serialize, Deserialize};
 
 pub mod submenus;
@@ -244,7 +244,7 @@ pub fn get_button_text(text: &str, clicked: bool) -> egui::RichText {
 #[serde(default)]
 pub struct Preset {
     pub submenus: SubMenus,
-    pub camera: renderer::camera::Camera,
+    pub camera: engine::camera::Camera,
 }
 
 pub fn save_preset(name: &str, preset: Preset) {

@@ -1,5 +1,5 @@
 use c_str_macro::c_str;
-use renderer::prelude::*;
+use engine::prelude::*;
 
 use crate::{
     config::Config,

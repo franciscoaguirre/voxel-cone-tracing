@@ -5,6 +5,7 @@ use crate::{
     config::Config,
     constants::{Direction, Sign, Axis},
 };
+use engine::prelude::*;
 
 mod stages;
 
@@ -19,7 +20,7 @@ pub enum BrickPoolValues {
 
 impl Octree {
     pub unsafe fn build(&mut self) {
-        let allocated_nodes_counter = renderer::helpers::generate_atomic_counter_buffer();
+        let allocated_nodes_counter = helpers::generate_atomic_counter_buffer();
 
         // Root node is in the geometry pool, not the border one.
         self.geometry_data.node_data.nodes_per_level.push(1);
@@ -167,7 +168,7 @@ impl Octree {
                 *first_free_node,
             );
             if let OctreeDataType::Border = octree_data_type {
-                let geometry_level_start_indices = renderer::helpers::get_values_from_texture_buffer(
+                let geometry_level_start_indices = helpers::get_values_from_texture_buffer(
                     self.geometry_data.node_data.level_start_indices.1,
                     (config.octree_levels() + 1) as usize,
                     0u32,
@@ -184,7 +185,7 @@ impl Octree {
                 );
             }
 
-            let nodes_allocated = renderer::helpers::get_value_from_atomic_counter(allocated_nodes_counter);
+            let nodes_allocated = helpers::get_value_from_atomic_counter(allocated_nodes_counter);
             log::debug!(
                 "{octree_data_type:?} nodes allocated for {}: {}",
                 octree_level + 1,
@@ -259,7 +260,7 @@ impl Octree {
             OctreeDataType::Border => &self.border_data,
         };
 
-        renderer::helpers::fill_texture_buffer_with_data(
+        helpers::fill_texture_buffer_with_data(
             octree_data.node_data.level_start_indices.1,
             &octree_level_start_indices,
         );

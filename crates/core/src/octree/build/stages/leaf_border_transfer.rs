@@ -1,8 +1,5 @@
 use c_str_macro::c_str;
-use renderer::{
-    helpers,
-    shader::{Shader, compile_compute}
-};
+use engine::prelude::*;
 
 use crate::{
     config::Config,

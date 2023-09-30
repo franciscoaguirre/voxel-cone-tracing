@@ -1,6 +1,6 @@
 use c_str_macro::c_str;
 use gl::types::GLuint;
-use renderer::prelude::*;
+use engine::prelude::*;
 
 use crate::{
     config::Config,

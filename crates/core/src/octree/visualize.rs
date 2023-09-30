@@ -4,7 +4,7 @@ use c_str_macro::c_str;
 use cgmath::{vec3, Matrix4, Vector3};
 use gl::types::GLuint;
 use serde::{Serialize, Deserialize};
-use renderer::prelude::*;
+use engine::prelude::*;
 
 use crate::config::Config;
 use super::{NodeData, Octree};

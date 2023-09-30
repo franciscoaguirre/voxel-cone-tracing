@@ -18,4 +18,4 @@ log = { version = "0.4", features = ["max_level_trace", "release_max_level_info"
 
 # Local
 core = { path = "../core" }
-renderer = { path = "../renderer", features = ["ui"] }
+engine = { path = "../engine", features = ["ui"] }
