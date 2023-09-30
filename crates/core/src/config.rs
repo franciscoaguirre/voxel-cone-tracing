@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct Config {
     pub brick_pool_resolution: u32,
     // TODO: This could be different than the one in the shaders right now
