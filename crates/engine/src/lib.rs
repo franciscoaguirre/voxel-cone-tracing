@@ -39,4 +39,7 @@ pub mod prelude {
         gizmo::RenderGizmo,
         common,
     };
+
+    #[cfg(test)]
+    pub use super::test_utils;
 }
