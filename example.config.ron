@@ -1,14 +1,13 @@
 (
     // Viewport settings
-    viewport_width: 1024,
-    viewport_height: 1024,
+    viewport_dimensions: (1024, 1024),
 
     // Voxel dimension
     // This value is the exponent, the real dimension is 2 to the power of this exponent.
     // `octree_levels` is calculated based on this, given by: log2(`voxel_dimension`^3) / log2(8).
     // We use one octree level less than expected so leaves only have bricks (not nodes).
     // This allows for interpolation inside the bricks.
-    voxel_dimension: 8,
+    voxel_dimension: 9,
 
     // This is the value domme uses, I don't know if it is okay.
     // It could be that we just need voxel_dimension * 3.
