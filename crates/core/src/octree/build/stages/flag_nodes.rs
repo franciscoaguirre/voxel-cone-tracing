@@ -61,5 +61,7 @@ mod tests {
         env::set_current_dir(path).unwrap();
 
         let shader = compile_compute!(SHADER_PATH);
+
+        // TODO: Test stuff
     }
 }
