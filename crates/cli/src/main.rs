@@ -37,16 +37,15 @@ use preset::PRESET;
 fn main() {
     simple_logger::init().unwrap();
 
+    // Load configuration file and set it up in core
     use std::fs::File;
     use ron;
     let file = File::open("config.ron").expect("Missing config file!");
     let raw_config: CoreConfig = ron::de::from_reader(file).expect("Config file malformed!");
     log::info!("Configuration used: {:#?}", raw_config);
-
     unsafe {
         CoreConfig::initialize(raw_config);
     }
-
     let config = CoreConfig::instance();
 
     // NOTE: This is true if the binary was compiled in debug mode

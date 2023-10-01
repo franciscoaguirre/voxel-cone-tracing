@@ -56,7 +56,7 @@ impl<'a> SubMenu for BricksMenu {
             return;
         }
 
-        egui::Window::new("Bricks").show(&context, |ui| {
+        egui::Window::new("Bricks").show(context, |ui| {
             ui.horizontal(|ui| {
                 ui.label("Bricks: ");
                 if ui
