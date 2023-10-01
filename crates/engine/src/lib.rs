@@ -17,6 +17,9 @@ pub mod aabb;
 pub mod helpers;
 pub mod types;
 
+#[cfg(test)]
+pub mod test_utils;
+
 #[cfg(feature = "ui")]
 pub mod ui;
 

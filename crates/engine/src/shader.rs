@@ -73,6 +73,21 @@ impl Shader {
         shader
     }
 
+    #[cfg(test)]
+    pub fn new_compute_from_string(source_code: &str) -> Self {
+        let mut shader = Shader {
+            id: 0,
+            is_compute: true,
+        };
+        let c_source_code = CString::new(source_code.as_bytes()).unwrap();
+
+        unsafe {
+            shader.id = Self::compile_compute(&c_source_code);
+        }
+
+        shader
+    }
+
     pub fn new_single(shader_path: &str, is_debug: bool) -> Self {
         let mut shader = Self::default();
 
