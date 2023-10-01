@@ -1,0 +1,21 @@
+[package]
+name = "cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Third-party
+simple_logger = "4.0"
+serde = { version = "1", features = ["derive"] }
+ron = "0.8.0"
+once_cell = "1.16.0"
+structopt = "0.3"
+# TODO: Should only be in core
+c_str_macro = "1.0.3"
+gl = "0.14.0"
+cgmath = { version = "0.18.0", features = ["serde"] }
+log = { version = "0.4", features = ["max_level_trace", "release_max_level_info"] }
+
+# Local
+core = { path = "../core" }
+engine = { path = "../engine", features = ["ui"] }
