@@ -17,6 +17,9 @@ pub mod aabb;
 pub mod helpers;
 pub mod types;
 
+#[cfg(feature = "testing")]
+pub mod test_utils;
+
 #[cfg(feature = "ui")]
 pub mod ui;
 
@@ -36,4 +39,7 @@ pub mod prelude {
         gizmo::RenderGizmo,
         common,
     };
+
+    #[cfg(feature = "testing")]
+    pub use super::test_utils;
 }

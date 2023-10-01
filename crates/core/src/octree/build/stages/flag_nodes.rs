@@ -10,10 +10,12 @@ pub struct FlagNodesPass {
     shader: Shader,
 }
 
+const SHADER_PATH: &'static str = "assets/shaders/octree/flagNodes.comp.glsl";
+
 impl FlagNodesPass {
     pub fn init() -> Self {
         Self {
-            shader: compile_compute!("assets/shaders/octree/flagNodes.comp.glsl"),
+            shader: compile_compute!(SHADER_PATH),
         }
     }
 
@@ -39,5 +41,27 @@ impl FlagNodesPass {
 
         self.shader.dispatch(groups_count);
         self.shader.wait();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+    use std::env;
+
+    #[test]
+    fn flag_nodes_works() {
+        let (_glfw, _window) = test_utils::init_opengl_context();
+
+        // To go from the crate root to the workspace root
+        let mut path = PathBuf::from(env::current_dir().unwrap());
+        path.pop();
+        path.pop();
+        env::set_current_dir(path).unwrap();
+
+        let shader = compile_compute!(SHADER_PATH);
+
+        // TODO: Test stuff
     }
 }
