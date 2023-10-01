@@ -15,4 +15,4 @@ ron = "0.8.0"
 once_cell = "1.16.0"
 
 # Local
-engine = { path = "../engine", features = ["ui"] }
+engine = { path = "../engine", features = ["ui", "testing"] }

@@ -17,7 +17,7 @@ pub mod aabb;
 pub mod helpers;
 pub mod types;
 
-#[cfg(test)]
+#[cfg(feature = "testing")]
 pub mod test_utils;
 
 #[cfg(feature = "ui")]
@@ -40,6 +40,6 @@ pub mod prelude {
         common,
     };
 
-    #[cfg(test)]
+    #[cfg(feature = "testing")]
     pub use super::test_utils;
 }

@@ -433,7 +433,7 @@ macro_rules! compile_shaders {
 
 #[macro_export]
 macro_rules! compile_compute {
-    ($compute_path:literal$(,)?) => {
+    ($compute_path:expr$(,)?) => {
         Shader::new_compute($compute_path, false)
     };
 }
