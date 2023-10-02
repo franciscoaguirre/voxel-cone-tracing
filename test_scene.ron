@@ -1,0 +1,57 @@
+(
+    objects: [
+        (
+            model: "cube",
+            material: "red",
+            transform: (
+                position: (
+                    x: 0.0,
+                    y: 0.0,
+                    z: 0.0,
+                ),
+            ),        
+        ),
+    ],
+    models: [
+        (
+            name: "cube",
+            path: "assets/models/cube.obj",
+        ),
+    ],
+    materials: [
+        (
+            name: "red",
+            properties: (
+                color: (
+                    x: 1.0,
+                    y: 0.0,
+                    z: 0.0,
+                ),
+                diffuse: 1.0,
+                specular: 0.0,
+            ),
+        ),
+    ],
+    light: (
+        transform: (
+            position: (
+                x: 0.0,
+                y: 1.0,
+                z: 0.0,
+            ),
+            rotation: (
+                x: -90.0,
+                y: 0.0,
+                z: 0.0,
+            ),
+            intensity: 1000000.0,
+            width: 1.0,
+            height: 1.0,
+            color: (
+                x: 1.0,
+                y: 1.0,
+                z: 1.0,
+            ),
+        ),
+    ),
+)

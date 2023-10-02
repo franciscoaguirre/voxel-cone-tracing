@@ -1,34 +1,9 @@
 use std::fs::File;
 
 use once_cell::sync::Lazy;
-use serde::Deserialize;
 use structopt::StructOpt;
-use engine::prelude::*;
 
 use crate::cli_arguments::Options;
-
-#[derive(Debug, Deserialize)]
-#[serde(default)]
-pub struct Scene {
-    /// Model for the scene
-    #[serde(default = "default_model")]
-    pub model: String,
-    /// Light of the scene for both direct and indirect illumination
-    pub light: SpotLight,
-}
-
-fn default_model() -> String {
-    "triangle".to_string()
-}
-
-impl Default for Scene {
-    fn default() -> Self {
-        Self {
-            model: "triangle".to_string(),
-            light: SpotLight::default(),
-        }
-    }
-}
 
 pub static SCENE: Lazy<Scene> = Lazy::new(load_scene);
 

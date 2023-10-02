@@ -16,8 +16,10 @@ pub mod transform;
 pub mod aabb;
 pub mod helpers;
 pub mod types;
-
-#[cfg(feature = "testing")]
+pub mod scene;
+pub mod material;
+pub mod object;
+pub mod asset_registry;
 pub mod test_utils;
 
 #[cfg(feature = "ui")]
@@ -34,12 +36,13 @@ pub mod prelude {
         geometry_buffers::GeometryBuffers,
         light::SpotLight,
         model::Model,
+        material::Material,
+        object::Object,
+        asset_registry::{AssetRegistry, AssetHandle},
         quad::Quad,
         aabb::Aabb,
         gizmo::RenderGizmo,
         common,
+        test_utils,
     };
-
-    #[cfg(feature = "testing")]
-    pub use super::test_utils;
 }
