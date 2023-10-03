@@ -92,6 +92,7 @@ fn main() {
     );
     let mut cone_tracer = ConeTracer::init();
     let mut debug_cone = unsafe { DebugCone::new() };
+    let objects = scene::process_scene(SCENE);
     let our_model = unsafe { helpers::load_model(&SCENE.model) };
 
     let scene_aabb = &our_model.aabb;

@@ -37,6 +37,7 @@ pub mod prelude {
         light::SpotLight,
         model::Model,
         material::{Material, MaterialProperties},
+        scene,
         object::Object,
         asset_registry::{AssetRegistry, AssetHandle},
         quad::Quad,

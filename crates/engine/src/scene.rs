@@ -22,7 +22,7 @@ pub struct ModelInfo {
     pub path: String,
 }
 
-pub fn process_scene(scene: Scene) {
+pub fn process_scene(scene: Scene) -> Vec<Object> {
     let mut assets = AssetRegistry::instance().lock().unwrap();
     for model in scene.models {
         let model_content = Model::new(&model.path);
@@ -31,6 +31,7 @@ pub fn process_scene(scene: Scene) {
     for material in scene.materials {
         assets.register_material(material.name.clone(), material);
     }
+    scene.objects
 }
 
 #[cfg(test)]
@@ -101,22 +102,24 @@ mod tests {
         let scene = get_test_scene();
 
         {
-            let assets = AssetRegistry::instance().lock().unwrap();
-
             // Models and materials are not loaded
+            let assets = AssetRegistry::instance().lock().unwrap();
             assert!(&assets.get_model("cube").is_none());
             assert!(&assets.get_material("red").is_none());
         }
 
         // Process the scene
-        process_scene(scene);
+        let objects = process_scene(scene);
 
         {
-            let assets = AssetRegistry::instance().lock().unwrap();
-
             // Models and materials are now loaded
+            let assets = AssetRegistry::instance().lock().unwrap();
             assert!(&assets.get_model("cube").is_some());
             assert!(&assets.get_material("red").is_some());
         }
+
+        assert_eq!(objects.len(), 1);
+        assert_eq!(&objects[0].model, "cube");
+        assert_eq!(&objects[0].material, "red");
     }
 }
