@@ -38,8 +38,6 @@ impl AssetRegistry {
     pub fn get_material(&self, id: &str) -> Option<&Material> {
         self.materials.get(id)
     }
-
-    // Other methods...
 }
 
 impl AssetRegistry {

@@ -36,7 +36,7 @@ pub mod prelude {
         geometry_buffers::GeometryBuffers,
         light::SpotLight,
         model::Model,
-        material::Material,
+        material::{Material, MaterialProperties},
         object::Object,
         asset_registry::{AssetRegistry, AssetHandle},
         quad::Quad,

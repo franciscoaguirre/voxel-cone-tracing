@@ -3,13 +3,13 @@ use cgmath::{Vector3};
 
 #[derive(Debug, Deserialize)]
 pub struct Material {
-    name: String,
-    properties: MaterialProperties,
+    pub name: String,
+    pub properties: MaterialProperties,
 }
 
 #[derive(Debug, Deserialize)]
-struct MaterialProperties {
-    color: Vector3<f32>,
-    diffuse: f32,
-    specular: f32,
+pub struct MaterialProperties {
+    pub color: Vector3<f32>,
+    pub diffuse: f32,
+    pub specular: f32,
 }
