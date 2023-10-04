@@ -72,3 +72,15 @@ fn compute_shader_works() {
         assert_eq!(values[0], 2);
     }
 }
+
+fn initialize_test_config() {
+    use core::config::Config as CoreConfig;
+    use std::fs::File;
+    use ron;
+    let file = File::open("config.ron").expect("Missing config file!");
+    let raw_config: CoreConfig = ron::de::from_reader(file).expect("Config file malformed!");
+    log::info!("Configuration used: {:#?}", raw_config);
+    unsafe {
+        CoreConfig::initialize(raw_config);
+    }
+}

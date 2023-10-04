@@ -60,7 +60,6 @@ mod tests {
 
     #[test]
     fn flag_nodes_works() {
-
         let (_glfw, _window) = test_utils::init_opengl_context();
 
         // To go from the crate root to the workspace root
