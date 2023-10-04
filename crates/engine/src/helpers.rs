@@ -364,16 +364,3 @@ pub unsafe fn load_model(name: &str) -> Model {
     env::set_current_dir(previous_current_dir).unwrap();
     model
 }
-
-pub fn get_scene_normalization_matrix(aabb: &Aabb) -> Matrix4<f32> {
-    let aabb_middle_point = aabb.middle_point();
-    let aabb_longer_side = aabb.longer_axis_length();
-
-    let center_scene_matrix = cgmath::Matrix4::from_translation(-aabb_middle_point);
-    // aabb_longer_side is divided by two and we then use the inverse because
-    // normal device coordinates go from -1 to 1
-    let normalize_size_matrix = cgmath::Matrix4::from_scale(2f32 / aabb_longer_side);
-
-    let model_normalization_matrix = normalize_size_matrix * center_scene_matrix;
-    model_normalization_matrix
-}

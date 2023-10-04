@@ -60,13 +60,13 @@ impl Octree {
 
     pub unsafe fn inject_light(
         &self,
-        models: &[&Model],
+        objects: &[Object],
         light: &SpotLight,
-        model: &Matrix4<f32>,
+        scene_aabb: &Aabb,
         framebuffer: &Framebuffer,
     ) -> (GLuint, GLuint, GLuint) {
         let (light_view_map, light_view_map_view, shadow_map) =
-            self.create_light_view_map(models, light, model, framebuffer);
+            self.create_light_view_map(objects, light, scene_aabb, framebuffer);
         self.store_photons(light_view_map, light_view_map_view);
         self.border_transfer(light_view_map);
 
@@ -178,18 +178,18 @@ impl Octree {
 
     unsafe fn create_light_view_map(
         &self,
-        models: &[&Model],
+        objects: &[Object],
         light: &SpotLight,
-        model: &Matrix4<f32>,
+        scene_aabb: &Aabb,
         framebuffer: &Framebuffer,
     ) -> (GLuint, GLuint, GLuint) {
         let projection = light.get_projection_matrix();
 
         gl::CullFace(gl::FRONT);
         let geometry_buffers = light.transform.take_photo(
-            models,
+            objects,
             &projection,
-            model,
+            scene_aabb,
             framebuffer,
             Some(self.renderer.light_view_map_shader),
         );

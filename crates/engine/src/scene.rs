@@ -22,16 +22,9 @@ pub struct ModelInfo {
     pub path: String,
 }
 
-pub fn process_scene(scene: Scene) -> Vec<Object> {
-    let mut assets = AssetRegistry::instance().lock().unwrap();
-    for model in scene.models {
-        let model_content = Model::new(&model.path);
-        assets.register_model(model.name, model_content);
-    }
-    for material in scene.materials {
-        assets.register_material(material.name.clone(), material);
-    }
-    scene.objects
+pub fn process_scene(scene: Scene) -> (Vec<Object>, SpotLight) {
+    let mut assets = unsafe { AssetRegistry::initialize(&scene) };
+    (scene.objects, scene.light)
 }
 
 #[cfg(test)]
@@ -103,17 +96,17 @@ mod tests {
 
         {
             // Models and materials are not loaded
-            let assets = AssetRegistry::instance().lock().unwrap();
+            let assets = AssetRegistry::instance();
             assert!(&assets.get_model("cube").is_none());
             assert!(&assets.get_material("red").is_none());
         }
 
         // Process the scene
-        let objects = process_scene(scene);
+        let (objects, _light) = process_scene(scene);
 
         {
             // Models and materials are now loaded
-            let assets = AssetRegistry::instance().lock().unwrap();
+            let assets = AssetRegistry::instance();
             assert!(&assets.get_model("cube").is_some());
             assert!(&assets.get_material("red").is_some());
         }

@@ -1,0 +1,207 @@
+(
+    objects: [
+        (
+            model: "cube",
+            material: "red",
+            transform: (
+                position: (
+                    x: 0.5,
+                    y: -0.75,
+                    z: -0.5,
+                ),
+            ),
+        ),
+        (
+            model: "bunny",
+            material: "green",
+            transform: (
+                position: (
+                    x: -0.5,
+                    y: -0.85,
+                    z: -0.5,
+                ),
+            ),
+        ),
+        (
+            model: "cylinder",
+            material: "blue",
+            transform: (
+                position: (
+                    x: 0.0,
+                    y: -0.5,
+                    z: 0.5,
+                ),
+            ),
+        ),
+        (
+            // Floor
+            model: "plane",
+            material: "white",
+            transform: (
+                position: (
+                    x: 0.0,
+                    y: -1.0,
+                    z: 0.0,
+                ),
+            ),
+        ),
+        (
+            // Left wall
+            model: "plane",
+            material: "red",
+            transform: (
+                position: (
+                    x: 1.0,
+                    y: 0.0,
+                    z: 0.0,
+                ),
+                rotation: (
+                    x: 0.0,
+                    y: 0.0,
+                    z: 90.0,
+                ),
+            ),
+        ),
+        (
+            // Right wall
+            model: "plane",
+            material: "blue",
+            transform: (
+                position: (
+                    x: -1.0,
+                    y: 0.0,
+                    z: 0.0,
+                ),
+                rotation: (
+                    x: 0.0,
+                    y: 0.0,
+                    z: -90.0,
+                ),
+            ),
+        ),
+        (
+            // Back wall
+            model: "plane",
+            material: "white",
+            transform: (
+                position: (
+                    x: 0.0,
+                    y: 0.0,
+                    z: 1.0,
+                ),
+                rotation: (
+                    x: 90.0,
+                    y: 90.0,
+                    z: 0.0,
+                ),
+            ),
+        ),
+        (
+            // Roof
+            model: "plane",
+            material: "white",
+            transform: (
+                position: (
+                    x: 0.0,
+                    y: 1.0,
+                    z: 0.0,
+                ),
+                rotation: (
+                    x: 0.0,
+                    y: 0.0,
+                    z: 0.0,
+                ),
+            ),
+        ),
+    ],
+    models: [
+        (
+            name: "cube",
+            path: "assets/models/cube.obj",
+        ),
+        (
+            name: "bunny",
+            path: "assets/models/bunny.obj",
+        ),
+        (
+            name: "cylinder",
+            path: "assets/models/cylinder.obj",
+        ),
+        (
+            name: "plane",
+            path: "assets/models/plane.obj",
+        ),
+    ],
+    materials: [
+        (
+            name: "red",
+            properties: (
+                color: (
+                    x: 1.0,
+                    y: 0.0,
+                    z: 0.0,
+                ),
+                diffuse: 1.0,
+                specular: 0.0,
+            ),
+        ),
+        (
+            name: "green",
+            properties: (
+                color: (
+                    x: 0.0,
+                    y: 1.0,
+                    z: 0.0,
+                ),
+                diffuse: 1.0,
+                specular: 0.0,
+            ),
+        ),
+        (
+            name: "blue",
+            properties: (
+                color: (
+                    x: 0.0,
+                    y: 0.0,
+                    z: 1.0,
+                ),
+                diffuse: 1.0,
+                specular: 0.0,
+            ),
+        ),
+        (
+            name: "white",
+            properties: (
+                color: (
+                    x: 1.0,
+                    y: 1.0,
+                    z: 1.0,
+                ),
+                diffuse: 1.0,
+                specular: 0.0,
+            ),
+        ),
+    ],
+    light: (
+        transform: (
+            position: (
+                x: 0.0,
+                y: 1.0,
+                z: 0.0,
+            ),
+            rotation: (
+                x: -90.0,
+                y: 0.0,
+                z: 0.0,
+            ),
+            intensity: 1000000.0,
+            width: 1.0,
+            height: 1.0,
+            color: (
+                x: 1.0,
+                y: 1.0,
+                z: 1.0,
+            ),
+        ),
+    ),
+)

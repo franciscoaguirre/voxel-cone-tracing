@@ -10,11 +10,14 @@ out VertexData {
     vec2 textureCoordinates;
 } Out;
 
+// This is the individual model matrix
+uniform mat4 model;
+// This is the scene aabb normalization matrix to fit in our voxelization box
 uniform mat4 modelNormalizationMatrix;
 
 void main()
 {
-    Out.position = (modelNormalizationMatrix * vec4(position, 1.0)).xyz;
+    Out.position = (modelNormalizationMatrix * model * vec4(position, 1.0)).xyz;
     Out.textureCoordinates = textureCoordinates;
     Out.normal = normal;
 }
