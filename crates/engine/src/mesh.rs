@@ -82,7 +82,9 @@ impl Mesh {
         let mut num_specular = 0;
         let mut num_normal = 0;
         let mut num_height = 0;
-        if !self.textures.is_empty() {
+        if self.textures.is_empty() {
+            shader.set_bool(c_str!("hasTexture"), false);
+        } else {
             shader.set_bool(c_str!("hasTexture"), true);
         }
         if let Some(diffuse) = self.diffuse {

@@ -206,7 +206,7 @@ impl Transform {
     /// Creates geometry buffers from its POV of `objects`.
     pub unsafe fn take_photo(
         &self,
-        objects: &[Object],
+        objects: &mut [Object],
         projection: &Matrix4<f32>,
         scene_aabb: &Aabb,
         framebuffer: &Framebuffer,
@@ -229,7 +229,7 @@ impl Transform {
         gl::ClearColor(0.0, 0.0, 0.0, 0.0);
         gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
         gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-        for object in objects.iter() {
+        for object in objects.iter_mut() {
             object.draw(&shader);
         }
         gl::BindFramebuffer(gl::FRAMEBUFFER, 0);

@@ -94,18 +94,16 @@ fn main() {
 
     let options = Options::from_args();
     let scene = scene::load_scene(&options.scene);
-    let (objects, mut light) = process_scene(scene);
-    let assets = AssetRegistry::instance();
+    let (mut objects, mut light) = process_scene(scene);
 
     let mut scene_aabb = Aabb::default();
-    for object in objects.iter() {
-        let model = assets.get_model(&object.model).unwrap();
-        scene_aabb.join(&model.aabb);
+    for object in objects.iter_mut() {
+        scene_aabb.join(&object.model().aabb);
     }
     let model_normalization_matrix = scene_aabb.normalization_matrix();
 
     let (voxel_positions, number_of_voxel_fragments, voxel_colors, voxel_normals) =
-        unsafe { voxelization::build_voxel_fragment_list(&objects[..], &scene_aabb) };
+        unsafe { voxelization::build_voxel_fragment_list(&mut objects[..], &scene_aabb) };
     info!("Number of voxel fragments: {}", number_of_voxel_fragments);
 
     let mut octree = unsafe {
@@ -147,7 +145,7 @@ fn main() {
     let light_framebuffer = unsafe { Framebuffer::new_light() };
     let mut light_maps = unsafe {
         octree.inject_light(
-            &objects[..],
+            &mut objects[..],
             &light,
             &scene_aabb,
             &light_framebuffer,
@@ -208,7 +206,7 @@ fn main() {
 
         let geometry_buffers = unsafe {
             camera.transform.take_photo(
-                &objects[..],
+                &mut objects[..],
                 &camera.get_projection_matrix(),
                 &scene_aabb,
                 &camera_framebuffer,
@@ -414,7 +412,7 @@ fn main() {
                 render_model_shader.set_mat4(c_str!("projection"), &projection);
                 render_model_shader.set_mat4(c_str!("view"), &view);
                 // Model gets set in the draw call
-                for object in objects.iter() {
+                for object in objects.iter_mut() {
                     object.draw(&render_model_shader);
                 }
             }

@@ -10,6 +10,5 @@ pub fn load_scene(file_name: &str) -> Scene {
     unsafe {
         scene.light.transform.update_vectors();
     }
-    log::info!("Scene used: {:#?}", scene);
     scene
 }

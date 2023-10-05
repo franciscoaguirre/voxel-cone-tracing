@@ -4,7 +4,7 @@ use crate::prelude::{
     Object, SpotLight, Material, MaterialProperties, Model, AssetRegistry,
 };
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 pub struct Scene {
     /// Objects in the scene
     pub objects: Vec<Object>,
@@ -41,11 +41,11 @@ mod tests {
     fn get_test_scene() -> Scene {
         Scene {
             objects: vec![
-                Object {
-                    model: "cube".to_string(),
-                    material: "red".to_string(),
-                    transform: Transform::default(),
-                },
+                Object::new(
+                    "cube".to_string(),
+                    "red".to_string(),
+                    Transform::default(),
+                ),
             ],
             models: vec![
                 ModelInfo {
@@ -71,8 +71,9 @@ mod tests {
     fn scene_deserialization_works() {
         let (_glfw, _window) = test_utils::init_opengl_context();
 
+        let previous_path = env::current_dir().unwrap();
         // To go from the crate root to the workspace root
-        let mut path = PathBuf::from(env::current_dir().unwrap());
+        let mut path = previous_path.clone();
         path.pop();
         path.pop();
         env::set_current_dir(path).unwrap();
@@ -80,26 +81,23 @@ mod tests {
         let scene_file = File::open("test_scene.ron").unwrap();
         let scene: Result<Scene, _> = ron::de::from_reader(scene_file);
         assert!(scene.is_ok());
+
+        // Reset dir in the end
+        env::set_current_dir(previous_path).unwrap();
     }
 
     #[test]
     fn process_scene_works() {
         let (_glfw, _window) = test_utils::init_opengl_context();
 
+        let previous_path = env::current_dir().unwrap();
         // To go from the crate root to the workspace root
-        let mut path = PathBuf::from(env::current_dir().unwrap());
+        let mut path = previous_path.clone();
         path.pop();
         path.pop();
         env::set_current_dir(path).unwrap();
 
         let scene = get_test_scene();
-
-        {
-            // Models and materials are not loaded
-            let assets = AssetRegistry::instance();
-            assert!(&assets.get_model("cube").is_none());
-            assert!(&assets.get_material("red").is_none());
-        }
 
         // Process the scene
         let (objects, _light) = process_scene(scene);
@@ -112,7 +110,10 @@ mod tests {
         }
 
         assert_eq!(objects.len(), 1);
-        assert_eq!(&objects[0].model, "cube");
-        assert_eq!(&objects[0].material, "red");
+        assert_eq!(objects[0].model_handle(), "cube");
+        assert_eq!(objects[0].material_handle(), "red");
+
+        // Reset dir in the end
+        env::set_current_dir(previous_path).unwrap();
     }
 }

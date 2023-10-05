@@ -38,8 +38,16 @@ in VertexData {
     vec2 textureCoordinates;
 } In;
 
+struct Material {
+    vec3 color;
+    float diffuse;
+    float specular;
+};
+uniform Material material;
+
 // TODO: Bring back?
 // uniform uint voxelDimension;
+uniform bool hasTexture;
 uniform sampler2D texture_diffuse1;
 
 void main() {
@@ -51,7 +59,12 @@ void main() {
     
     viewMapPositions = vec4(In.position.xyz / In.position.w, 1);
     viewMapNormals = vec4(In.normal, 1);
-    viewMapColors = texture(texture_diffuse1, In.textureCoordinates);
+    // TODO: Handle simple materials
+    // if (hasTexture) {
+        viewMapColors = texture(texture_diffuse1, In.textureCoordinates);
+    // } else {
+        // viewMapColors = vec4(material.color, 1);
+    // }
 
     viewMapViewOutput = normalizedGlobalPosition;
 }

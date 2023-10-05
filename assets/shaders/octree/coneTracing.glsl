@@ -113,10 +113,12 @@ void main() {
 
     vec3 indirectLight = vec3(0);
     if (shouldShowIndirect) {
-      // We should pre-multiply by alpha probably? Instead of just ignoring it
+        // We should pre-multiply by alpha probably? Instead of just ignoring it
         indirectLight = gatherIndirectLight(position, normal, tangent, useLighting).rgb;
     }
 
+    // TODO: Should actually get `specular` from the material.
+    // That should be in the gbuffer.
     vec3 specularIndirectLight = vec3(0);
     if (shouldShowIndirectSpecular) {
       // We should pre-multiply by alpha probably? Instead of just ignoring it

@@ -60,7 +60,7 @@ impl Octree {
 
     pub unsafe fn inject_light(
         &self,
-        objects: &[Object],
+        objects: &mut [Object],
         light: &SpotLight,
         scene_aabb: &Aabb,
         framebuffer: &Framebuffer,
@@ -178,7 +178,7 @@ impl Octree {
 
     unsafe fn create_light_view_map(
         &self,
-        objects: &[Object],
+        objects: &mut [Object],
         light: &SpotLight,
         scene_aabb: &Aabb,
         framebuffer: &Framebuffer,

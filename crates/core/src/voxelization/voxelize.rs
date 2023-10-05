@@ -9,7 +9,7 @@ use crate::config::Config;
 
 unsafe fn calculate_voxel_fragment_list_length(
     voxelization_shader: &Shader,
-    objects: &[Object],
+    objects: &mut [Object],
     scene_aabb: &Aabb,
     atomic_counter: &mut u32,
 ) {
@@ -21,7 +21,7 @@ unsafe fn calculate_voxel_fragment_list_length(
 
 unsafe fn populate_voxel_fragment_list(
     voxelization_shader: &Shader,
-    objects: &[Object],
+    objects: &mut [Object],
     scene_aabb: &Aabb,
     atomic_counter: &mut u32,
     voxel_positions: BufferTexture,
@@ -41,7 +41,7 @@ unsafe fn populate_voxel_fragment_list(
 
 unsafe fn voxelize_scene(
     voxelization_shader: &Shader,
-    objects: &[Object],
+    objects: &mut [Object],
     scene_aabb: &Aabb,
     atomic_counter: &mut u32,
 ) {
@@ -94,7 +94,7 @@ unsafe fn voxelize_scene(
     gl::Disable(gl::CULL_FACE);
     gl::Disable(gl::DEPTH_TEST);
     // TODO: We should apparently disable depth test and colormask false flase flase
-    for object in objects.iter() {
+    for object in objects.iter_mut() {
         object.draw(voxelization_shader);
     }
 
@@ -110,7 +110,7 @@ unsafe fn voxelize_scene(
 }
 
 pub unsafe fn build_voxel_fragment_list(
-    objects: &[Object],
+    objects: &mut [Object],
     scene_aabb: &Aabb,
 ) -> (BufferTexture, u32, BufferTexture, BufferTexture) {
     let mut atomic_counter: u32 = helpers::generate_atomic_counter_buffer();
