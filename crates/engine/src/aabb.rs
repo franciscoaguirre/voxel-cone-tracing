@@ -1,7 +1,7 @@
 use cgmath::{vec3, Vector3, Matrix4};
 
 // Axis Aligned Bounding Box
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Aabb {
     pub min_vertex: Vector3<f32>,
     pub max_vertex: Vector3<f32>,
@@ -73,6 +73,18 @@ impl Aabb {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn join_with_default_gives_same() {
+        let mut aabb = Aabb {
+            min_vertex: vec3(0.0, -1.0, -1.0),
+            max_vertex: vec3(1.0, 1.0, 1.0),
+        };
+        let aabb_before = aabb.clone();
+        let default_aabb = Aabb::default();
+        aabb.join(&default_aabb);
+        assert_eq!(aabb, aabb_before);
+    }
 
     #[test]
     fn join_works() {
