@@ -142,7 +142,7 @@ fn main() {
     let mut photons: Vec<u32> = Vec::new();
     let mut children: Vec<u32> = Vec::new();
 
-    let light_framebuffer = unsafe { Framebuffer::new_light() };
+    let light_framebuffer = unsafe { LightFramebuffer::new() };
     let mut light_maps = unsafe {
         octree.inject_light(
             &mut objects[..],
@@ -152,7 +152,7 @@ fn main() {
         )
     };
     let quad = unsafe { Quad::new() };
-    let camera_framebuffer = unsafe { Framebuffer::new() };
+    let camera_framebuffer = unsafe { GeometryFramebuffer::new() };
 
     let mut current_voxel_fragment_count: u32 = 0;
     let mut current_octree_level: u32 = 0;

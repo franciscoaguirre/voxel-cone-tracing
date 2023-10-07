@@ -63,7 +63,7 @@ impl Octree {
         objects: &mut [Object],
         light: &SpotLight,
         scene_aabb: &Aabb,
-        framebuffer: &Framebuffer,
+        framebuffer: &LightFramebuffer,
     ) -> (GLuint, GLuint, GLuint) {
         let (light_view_map, light_view_map_view, shadow_map) =
             self.create_light_view_map(objects, light, scene_aabb, framebuffer);
@@ -181,12 +181,12 @@ impl Octree {
         objects: &mut [Object],
         light: &SpotLight,
         scene_aabb: &Aabb,
-        framebuffer: &Framebuffer,
+        framebuffer: &LightFramebuffer,
     ) -> (GLuint, GLuint, GLuint) {
         let projection = light.get_projection_matrix();
 
         gl::CullFace(gl::FRONT);
-        let geometry_buffers = light.transform.take_photo(
+        let light_map_buffers = light.transform.take_photo(
             objects,
             &projection,
             scene_aabb,
@@ -196,9 +196,9 @@ impl Octree {
         gl::CullFace(gl::BACK);
 
         (
-            geometry_buffers.raw_positions(),
-            geometry_buffers.positions(),
-            geometry_buffers.normals(), // We use the normals texture for the shadow map
+            light_map_buffers[0],
+            light_map_buffers[1],
+            light_map_buffers[2],
         )
     }
 }

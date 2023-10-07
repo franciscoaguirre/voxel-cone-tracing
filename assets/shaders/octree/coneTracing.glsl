@@ -71,6 +71,7 @@ uniform sampler2D gBufferColors;
 uniform sampler2D gBufferPositions;
 uniform sampler2D gBufferNormals;
 uniform sampler2D shadowMap;
+uniform sampler2D gBufferSpeculars;
 
 #include "./_constants.glsl"
 #include "./_helpers.glsl"
@@ -117,12 +118,11 @@ void main() {
         indirectLight = gatherIndirectLight(position, normal, tangent, useLighting).rgb;
     }
 
-    // TODO: Should actually get `specular` from the material.
-    // That should be in the gbuffer.
+    float specularFactor = texture(gBufferSpeculars, In.textureCoordinates).r;
     vec3 specularIndirectLight = vec3(0);
-    if (shouldShowIndirectSpecular) {
+    if (shouldShowIndirectSpecular && specularFactor > 0.0) {
       // We should pre-multiply by alpha probably? Instead of just ignoring it
-        specularIndirectLight = gatherSpecularIndirectLight(position, eyeDirection, normal).rgb;
+        specularIndirectLight = specularFactor * gatherSpecularIndirectLight(position, eyeDirection, normal).rgb;
     }
 
     vec4 positionInLightSpace = lightProjectionMatrix * lightViewMatrix * vec4(positionRaw, 1.0);
@@ -135,6 +135,17 @@ void main() {
 
     vec4 finalImage = vec4(0);
 
+    bool shouldShowOnlyColor = (
+        !shouldShowDirect &&
+            !shouldShowIndirect &&
+            !shouldShowAmbientOcclusion &&
+            !shouldShowIndirectSpecular
+    );
+
+    if (shouldShowOnlyColor) {
+        finalImage = color;
+    }
+
     if (shouldShowDirect) {
         finalImage += vec4(visibility * directLight, 1.0);
     }
@@ -144,7 +155,7 @@ void main() {
     if (shouldShowAmbientOcclusion) {
         finalImage += vec4(vec3(1.0 - ambientOcclusion), 1.0);
     }
-    if (shouldShowColor) {
+    if (!shouldShowOnlyColor && shouldShowColor) {
         finalImage *= color;
     }
     if (shouldShowIndirectSpecular) {

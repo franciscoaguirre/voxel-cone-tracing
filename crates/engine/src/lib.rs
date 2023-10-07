@@ -4,7 +4,6 @@
 pub mod camera;
 pub mod common;
 pub mod framebuffer;
-pub mod geometry_buffers;
 pub mod gizmo;
 pub mod light;
 pub mod macros;
@@ -32,8 +31,13 @@ pub mod prelude {
         helpers,
         types::*,
         camera::Camera,
-        framebuffer::Framebuffer,
-        geometry_buffers::GeometryBuffers,
+        framebuffer::{
+            Framebuffer,
+            GeometryFramebuffer,
+            GEOMETRY_BUFFERS,
+            LightFramebuffer,
+            LIGHT_MAP_BUFFERS,
+        },
         light::SpotLight,
         model::Model,
         material::{Material, MaterialProperties},

@@ -1,17 +1,6 @@
 (
     objects: [
         (
-            model: "triangle",
-            material: "red",
-            transform: (
-                position: (
-                    x: 0.0,
-                    y: 0.0,
-                    z: 0.0,
-                ),
-            ),
-        ),
-        (
             model: "cube",
             material: "red",
             transform: (
@@ -125,10 +114,6 @@
             name: "plane",
             path: "assets/models/plane.obj",
         ),
-        (
-            name: "triangle",
-            path: "assets/models/triangle.obj",
-        ),
     ],
     materials: [
         (
@@ -151,8 +136,8 @@
                     y: 1.0,
                     z: 0.0,
                 ),
-                diffuse: 1.0,
-                specular: 0.0,
+                diffuse: 0.0,
+                specular: 1.0,
             ),
         ),
         (

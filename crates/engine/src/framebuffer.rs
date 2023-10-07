@@ -1,22 +1,34 @@
 use gl::types::GLuint;
 
-use super::{
-    geometry_buffers::GeometryBuffers, common,
-};
+use super::{common, types::*};
 
-pub struct Framebuffer {
+pub struct Framebuffer<const N: usize> {
     fbo: GLuint,
-    textures: [GLuint; 4], // TODO: Make generic?
+    textures: Textures<N>,
 }
 
-impl Framebuffer {
+pub const GEOMETRY_BUFFERS: usize = 5;
+pub const LIGHT_MAP_BUFFERS: usize = 3;
+
+pub type GeometryFramebuffer = Framebuffer<GEOMETRY_BUFFERS>;
+pub type LightFramebuffer = Framebuffer<LIGHT_MAP_BUFFERS>;
+
+/// Implementation of framebuffer with 4 output buffers.
+/// Used for geometry buffers.
+/// The buffers hold the following:
+/// - Positions: rgb10_a2ui
+/// - Viewing positions: rgba8
+/// - Normals: rgb32f
+/// - Colors: rgba8
+/// - Specular: rgba8
+impl Framebuffer<GEOMETRY_BUFFERS> {
     pub unsafe fn new() -> Self {
         let mut fbo = 0;
         gl::GenFramebuffers(1, &mut fbo);
         gl::BindFramebuffer(gl::FRAMEBUFFER, fbo);
 
-        let mut textures = [0; 4]; // First one is rgb10_a2ui, second rgba8 for viewing, third is normals, fourth for colors
-        gl::GenTextures(4, textures.as_mut_ptr());
+        let mut textures = [0; 5];
+        gl::GenTextures(5, textures.as_mut_ptr());
 
         let (width, height) = common::get_framebuffer_size();
 
@@ -84,6 +96,22 @@ impl Framebuffer {
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
         gl::BindTexture(gl::TEXTURE_2D, 0);
 
+        gl::BindTexture(gl::TEXTURE_2D, textures[4]);
+        gl::TexImage2D(
+            gl::TEXTURE_2D,
+            0,
+            gl::RGBA8 as i32,
+            width as i32,
+            height as i32,
+            0,
+            gl::RGBA,
+            gl::UNSIGNED_BYTE,
+            std::ptr::null(),
+        );
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+        gl::BindTexture(gl::TEXTURE_2D, 0);
+
         let mut rbo = 0;
         gl::GenRenderbuffers(1, &mut rbo);
         gl::BindRenderbuffer(gl::RENDERBUFFER, rbo);
@@ -129,14 +157,22 @@ impl Framebuffer {
             textures[3],
             0,
         );
+        gl::FramebufferTexture2D(
+            gl::FRAMEBUFFER,
+            gl::COLOR_ATTACHMENT4,
+            gl::TEXTURE_2D,
+            textures[4],
+            0,
+        );
 
         gl::DrawBuffers(
-            4,
+            5,
             [
                 gl::COLOR_ATTACHMENT0,
                 gl::COLOR_ATTACHMENT1,
                 gl::COLOR_ATTACHMENT2,
                 gl::COLOR_ATTACHMENT3,
+                gl::COLOR_ATTACHMENT4,
             ]
             .as_ptr(),
         );
@@ -149,8 +185,12 @@ impl Framebuffer {
 
         Self { fbo, textures }
     }
+}
 
-    pub unsafe fn new_light() -> Self {
+/// Implementation of framebuffer with three output buffers.
+/// Used for light maps.
+impl Framebuffer<LIGHT_MAP_BUFFERS> {
+    pub unsafe fn new() -> Self {
         let mut fbo = 0;
         gl::GenFramebuffers(1, &mut fbo);
         gl::BindFramebuffer(gl::FRAMEBUFFER, fbo);
@@ -275,20 +315,17 @@ impl Framebuffer {
 
         Self {
             fbo,
-            textures: [textures[0], textures[1], textures[2], 0],
+            textures,
         }
     }
+}
 
+impl<const N: usize> Framebuffer<N> {
     pub fn fbo(&self) -> GLuint {
         self.fbo
     }
 
-    pub fn textures(&self) -> GeometryBuffers {
-        GeometryBuffers::new(
-            self.textures[0],
-            self.textures[1],
-            self.textures[2],
-            self.textures[3],
-        )
+    pub fn textures(&self) -> [GLuint; N] {
+        self.textures
     }
 }

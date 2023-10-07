@@ -6,9 +6,10 @@ use gl::types::GLuint;
 use serde::{Serialize, Deserialize};
 
 use super::prelude::{
-    Framebuffer, GeometryBuffers, RenderGizmo, Model, Shader, compile_shaders, Object,
+    Framebuffer, RenderGizmo, Model, Shader, compile_shaders, Object,
     Aabb,
 };
+use super::types::*;
 
 /// Struct that handles `position`, `rotation` and `scale` for an entity
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -204,14 +205,14 @@ impl Transform {
     }
 
     /// Creates geometry buffers from its POV of `objects`.
-    pub unsafe fn take_photo(
+    pub unsafe fn take_photo<const N: usize>(
         &self,
         objects: &mut [Object],
         projection: &Matrix4<f32>,
         scene_aabb: &Aabb,
-        framebuffer: &Framebuffer,
+        framebuffer: &Framebuffer<N>,
         shader: Option<Shader>,
-    ) -> GeometryBuffers {
+    ) -> Textures<N> {
         let shader = if let Some(shader) = shader {
             shader
         } else {

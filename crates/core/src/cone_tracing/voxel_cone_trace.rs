@@ -26,7 +26,7 @@ impl ConeTracer {
         light: &SpotLight,
         cone_angle: f32,
         textures: &OctreeTextures,
-        geometry_buffers: &GeometryBuffers,
+        geometry_buffers: &Textures<GEOMETRY_BUFFERS>,
         light_maps: (u32, u32, u32),
         quad: &Quad,
         camera: &Camera,
@@ -171,9 +171,10 @@ impl ConeTracer {
         }
 
         let g_buffer_textures = vec![
-            (c_str!("gBufferColors"), geometry_buffers.colors()),
-            (c_str!("gBufferPositions"), geometry_buffers.raw_positions()),
-            (c_str!("gBufferNormals"), geometry_buffers.normals()),
+            (c_str!("gBufferColors"), geometry_buffers[3]),
+            (c_str!("gBufferPositions"), geometry_buffers[0]),
+            (c_str!("gBufferNormals"), geometry_buffers[2]),
+            (c_str!("gBufferSpeculars"), geometry_buffers[4]),
         ];
 
         for &(texture_name, texture) in g_buffer_textures.iter() {
