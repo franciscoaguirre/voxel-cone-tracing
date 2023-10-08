@@ -4,7 +4,6 @@
 pub mod camera;
 pub mod common;
 pub mod framebuffer;
-pub mod geometry_buffers;
 pub mod gizmo;
 pub mod light;
 pub mod macros;
@@ -16,8 +15,10 @@ pub mod transform;
 pub mod aabb;
 pub mod helpers;
 pub mod types;
-
-#[cfg(feature = "testing")]
+pub mod scene;
+pub mod material;
+pub mod object;
+pub mod asset_registry;
 pub mod test_utils;
 
 #[cfg(feature = "ui")]
@@ -30,16 +31,23 @@ pub mod prelude {
         helpers,
         types::*,
         camera::Camera,
-        framebuffer::Framebuffer,
-        geometry_buffers::GeometryBuffers,
+        framebuffer::{
+            Framebuffer,
+            GeometryFramebuffer,
+            GEOMETRY_BUFFERS,
+            LightFramebuffer,
+            LIGHT_MAP_BUFFERS,
+        },
         light::SpotLight,
         model::Model,
+        material::{Material, MaterialProperties},
+        scene::{Scene, process_scene},
+        object::Object,
+        asset_registry::{AssetRegistry, AssetHandle},
         quad::Quad,
         aabb::Aabb,
         gizmo::RenderGizmo,
         common,
+        test_utils,
     };
-
-    #[cfg(feature = "testing")]
-    pub use super::test_utils;
 }

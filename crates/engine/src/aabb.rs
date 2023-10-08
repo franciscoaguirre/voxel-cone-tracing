@@ -1,7 +1,12 @@
-use cgmath::{vec3, Vector3};
+use std::mem::size_of;
+use std::ffi::c_void;
+
+use cgmath::{vec3, Vector3, Matrix4};
+
+use crate::prelude::{Shader, compile_shaders};
 
 // Axis Aligned Bounding Box
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Aabb {
     pub min_vertex: Vector3<f32>,
     pub max_vertex: Vector3<f32>,
@@ -21,6 +26,14 @@ impl Default for Aabb {
 }
 
 impl Aabb {
+    /// Offset the entire Aabb by a given vector
+    pub fn offsetted(self, offset: Vector3<f32>) -> Self {
+        Self {
+            min_vertex: self.min_vertex + offset,
+            max_vertex: self.max_vertex + offset,
+        }
+    }
+    
     /// Refreshes Aabb whenever a vertex is added to the structure
     pub fn refresh_aabb(&mut self, pos_x: f32, pos_y: f32, pos_z: f32) {
         self.max_vertex.x = pos_x.max(self.max_vertex.x);
@@ -32,11 +45,27 @@ impl Aabb {
         self.min_vertex.z = pos_z.min(self.min_vertex.z);
     }
 
-    pub fn middle_point(&self) -> Vector3<f32> {
+    pub fn join(&mut self, other: &Aabb) {
+        self.max_vertex.x = self.max_vertex.x.max(other.max_vertex.x);
+        self.max_vertex.y = self.max_vertex.y.max(other.max_vertex.y);
+        self.max_vertex.z = self.max_vertex.z.max(other.max_vertex.z);
+
+        self.min_vertex.x = self.min_vertex.x.min(other.min_vertex.x);
+        self.min_vertex.y = self.min_vertex.y.min(other.min_vertex.y);
+        self.min_vertex.z = self.min_vertex.z.min(other.min_vertex.z);
+    }
+
+    pub fn normalization_matrix(&self) -> Matrix4<f32> {
+        let center_matrix = Matrix4::from_translation(-self.middle_point());
+        let normalize_size_matrix = Matrix4::from_scale(2_f32 / self.longer_axis_length());
+        normalize_size_matrix * center_matrix
+    }
+
+    fn middle_point(&self) -> Vector3<f32> {
         (self.min_vertex + self.max_vertex) / 2_f32
     }
 
-    pub fn longer_axis_length(&self) -> f32 {
+    fn longer_axis_length(&self) -> f32 {
         let diff_vector = self.max_vertex - self.min_vertex;
         let x_axis_length = diff_vector.x;
         let y_axis_length = diff_vector.y;
@@ -51,5 +80,40 @@ impl Aabb {
         }
 
         z_axis_length
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn join_with_default_gives_same() {
+        let mut aabb = Aabb {
+            min_vertex: vec3(0.0, -1.0, -1.0),
+            max_vertex: vec3(1.0, 1.0, 1.0),
+        };
+        let aabb_before = aabb.clone();
+        let default_aabb = Aabb::default();
+        aabb.join(&default_aabb);
+        assert_eq!(aabb, aabb_before);
+    }
+
+    #[test]
+    fn join_works() {
+        let mut aabb_1 = Aabb {
+            min_vertex: vec3(0.0, -1.0, -1.0),
+            max_vertex: vec3(1.0, 1.0, 1.0),
+        };
+        let aabb_2 = Aabb {
+            min_vertex: vec3(-1.0, -1.0, -1.0),
+            max_vertex: vec3(0.0, 1.0, 1.0),
+        };
+        let expected = Aabb {
+            min_vertex: vec3(-1.0, -1.0, -1.0),
+            max_vertex: vec3(1.0, 1.0, 1.0),
+        };
+        aabb_1.join(&aabb_2);
+        assert_eq!(aabb_1, expected);
     }
 }

@@ -22,7 +22,7 @@ use core::{
 use engine::prelude::*;
 use engine::ui::glfw::{self, Context};
 use engine::ui::Ui;
-use cgmath::{point3, vec3, Deg, Matrix4};
+use cgmath::{point3, vec3, Deg, Matrix4, SquareMatrix};
 use log::info;
 use structopt::StructOpt;
 
@@ -31,7 +31,6 @@ use cli_arguments::Options;
 mod preset;
 mod scene;
 
-use scene::SCENE;
 use preset::PRESET;
 
 fn main() {
@@ -92,21 +91,24 @@ fn main() {
     );
     let mut cone_tracer = ConeTracer::init();
     let mut debug_cone = unsafe { DebugCone::new() };
-    let our_model = unsafe { helpers::load_model(&SCENE.model) };
 
-    let scene_aabb = &our_model.aabb;
-    let aabb_middle_point = scene_aabb.middle_point();
-    let aabb_longer_side = scene_aabb.longer_axis_length();
+    let options = Options::from_args();
+    let scene = scene::load_scene(&options.scene);
+    let (mut objects, mut light) = process_scene(scene);
 
-    let center_scene_matrix = cgmath::Matrix4::from_translation(-aabb_middle_point);
-    // aabb_longer_side is divided by two and we then use the inverse because
-    // NDC coordinates goes from -1 to 1
-    let normalize_size_matrix = cgmath::Matrix4::from_scale(2f32 / aabb_longer_side);
-
-    let model_normalization_matrix = normalize_size_matrix * center_scene_matrix;
+    let mut scene_aabb = Aabb::default();
+    for object in objects.iter_mut() {
+        let offset = vec3(
+            object.transform.position.x,
+            object.transform.position.y,
+            object.transform.position.z,
+        );
+        scene_aabb.join(&object.model().aabb.offsetted(offset));
+    }
+    let model_normalization_matrix = scene_aabb.normalization_matrix();
 
     let (voxel_positions, number_of_voxel_fragments, voxel_colors, voxel_normals) =
-        unsafe { voxelization::build_voxel_fragment_list(&our_model) };
+        unsafe { voxelization::build_voxel_fragment_list(&mut objects[..], &scene_aabb) };
     info!("Number of voxel fragments: {}", number_of_voxel_fragments);
 
     let mut octree = unsafe {
@@ -145,19 +147,17 @@ fn main() {
     let mut photons: Vec<u32> = Vec::new();
     let mut children: Vec<u32> = Vec::new();
 
-    let mut light = SCENE.light.clone();
-
-    let light_framebuffer = unsafe { Framebuffer::new_light() };
+    let light_framebuffer = unsafe { LightFramebuffer::new() };
     let mut light_maps = unsafe {
         octree.inject_light(
-            &[&our_model],
+            &mut objects[..],
             &light,
-            &model_normalization_matrix,
+            &scene_aabb,
             &light_framebuffer,
         )
     };
     let quad = unsafe { Quad::new() };
-    let camera_framebuffer = unsafe { Framebuffer::new() };
+    let camera_framebuffer = unsafe { GeometryFramebuffer::new() };
 
     let mut current_voxel_fragment_count: u32 = 0;
     let mut current_octree_level: u32 = 0;
@@ -211,9 +211,9 @@ fn main() {
 
         let geometry_buffers = unsafe {
             camera.transform.take_photo(
-                &[&our_model],
+                &mut objects[..],
                 &camera.get_projection_matrix(),
-                &model_normalization_matrix,
+                &scene_aabb,
                 &camera_framebuffer,
                 None,
             )
@@ -416,8 +416,10 @@ fn main() {
                 render_model_shader.use_program();
                 render_model_shader.set_mat4(c_str!("projection"), &projection);
                 render_model_shader.set_mat4(c_str!("view"), &view);
-                render_model_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
-                our_model.draw(&render_model_shader);
+                // Model gets set in the draw call
+                for object in objects.iter_mut() {
+                    object.draw(&render_model_shader, &model_normalization_matrix);
+                }
             }
 
             cone_tracer.run(

@@ -143,6 +143,10 @@ unsafe fn texture_from_file(filename: &str) -> u32 {
     let mut texture_id = 0;
     gl::GenTextures(1, &mut texture_id);
 
+    use std::env;
+    dbg!(&env::current_dir().unwrap());
+    dbg!(&filename);
+
     let img = image::open(&Path::new(&filename)).expect("Texture failed to load");
     let img = img.flipv();
     let format = match img {

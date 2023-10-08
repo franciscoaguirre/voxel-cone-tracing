@@ -5,10 +5,11 @@ use cgmath::{point3, vec3, Deg, Euler, InnerSpace, Matrix4, Point3, Vector3, Zer
 use gl::types::GLuint;
 use serde::{Serialize, Deserialize};
 
-use super::{
-    framebuffer::Framebuffer, geometry_buffers::GeometryBuffers, gizmo::RenderGizmo, model::Model,
-    shader::{Shader, compile_shaders},
+use super::prelude::{
+    Framebuffer, RenderGizmo, Model, Shader, compile_shaders, Object,
+    Aabb,
 };
+use super::types::*;
 
 /// Struct that handles `position`, `rotation` and `scale` for an entity
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -203,15 +204,15 @@ impl Transform {
         // Not that relevant since it's debugging code.
     }
 
-    /// Creates geometry buffers from its POV of `models`.
-    pub unsafe fn take_photo(
+    /// Creates geometry buffers from its POV of `objects`.
+    pub unsafe fn take_photo<const N: usize>(
         &self,
-        models: &[&Model],
+        objects: &mut [Object],
         projection: &Matrix4<f32>,
-        model: &Matrix4<f32>,
-        framebuffer: &Framebuffer,
+        scene_aabb: &Aabb,
+        framebuffer: &Framebuffer<N>,
         shader: Option<Shader>,
-    ) -> GeometryBuffers {
+    ) -> Textures<N> {
         let shader = if let Some(shader) = shader {
             shader
         } else {
@@ -221,7 +222,7 @@ impl Transform {
         shader.use_program();
         shader.set_mat4(c_str!("projection"), &projection);
         shader.set_mat4(c_str!("view"), &self.get_view_matrix());
-        shader.set_mat4(c_str!("model"), &model);
+        shader.set_mat4(c_str!("modelNormalizationMatrix"), &scene_aabb.normalization_matrix());
         // shader.set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
 
         gl::BindFramebuffer(gl::FRAMEBUFFER, framebuffer.fbo());
@@ -229,8 +230,8 @@ impl Transform {
         gl::ClearColor(0.0, 0.0, 0.0, 0.0);
         gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
         gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-        for model in models {
-            model.draw(&shader);
+        for object in objects.iter_mut() {
+            object.draw(&shader, &scene_aabb.normalization_matrix());
         }
         gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
 

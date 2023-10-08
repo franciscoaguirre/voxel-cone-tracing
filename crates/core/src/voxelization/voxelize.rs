@@ -1,7 +1,7 @@
 use std::mem::size_of;
 
 use c_str_macro::c_str;
-use cgmath::point3;
+use cgmath::{point3, Matrix4, SquareMatrix};
 use gl::types::*;
 use engine::prelude::*;
 
@@ -9,18 +9,20 @@ use crate::config::Config;
 
 unsafe fn calculate_voxel_fragment_list_length(
     voxelization_shader: &Shader,
-    models: &[&Model; 1],
+    objects: &mut [Object],
+    scene_aabb: &Aabb,
     atomic_counter: &mut u32,
 ) {
     voxelization_shader.use_program();
     voxelization_shader.set_bool(c_str!("shouldStore"), false);
     voxelization_shader.set_bool(c_str!("hasBump"), false);
-    voxelize_scene(voxelization_shader, models, atomic_counter);
+    voxelize_scene(voxelization_shader, objects, scene_aabb, atomic_counter);
 }
 
 unsafe fn populate_voxel_fragment_list(
     voxelization_shader: &Shader,
-    models: &[&Model; 1],
+    objects: &mut [Object],
+    scene_aabb: &Aabb,
     atomic_counter: &mut u32,
     voxel_positions: BufferTexture,
     voxel_colors: BufferTexture,
@@ -34,12 +36,13 @@ unsafe fn populate_voxel_fragment_list(
     helpers::bind_image_texture(1, voxel_colors.0, gl::WRITE_ONLY, gl::RGBA8);
     helpers::bind_image_texture(2, voxel_normals.0, gl::WRITE_ONLY, gl::RGBA32F);
 
-    voxelize_scene(voxelization_shader, models, atomic_counter);
+    voxelize_scene(voxelization_shader, objects, scene_aabb, atomic_counter);
 }
 
 unsafe fn voxelize_scene(
     voxelization_shader: &Shader,
-    models: &[&Model; 1], // TODO: More than one?
+    objects: &mut [Object],
+    scene_aabb: &Aabb,
     atomic_counter: &mut u32,
 ) {
     gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
@@ -53,12 +56,9 @@ unsafe fn voxelize_scene(
         config.voxel_dimension() as i32,
     );
 
-    // TODO: This should be the aabb of the entire scene
-    // We could fix this by preprocessing the `models` array before this function to get
-    // one big aabb that spans the whole scene.
-    let scene_aabb = &models[0].aabb;
-    let model_normalization_matrix = helpers::get_scene_normalization_matrix(scene_aabb);
+    let model_normalization_matrix = scene_aabb.normalization_matrix();
 
+    // Same for every object
     voxelization_shader.set_mat4(
         c_str!("modelNormalizationMatrix"),
         &model_normalization_matrix,
@@ -94,9 +94,8 @@ unsafe fn voxelize_scene(
     gl::Disable(gl::CULL_FACE);
     gl::Disable(gl::DEPTH_TEST);
     // TODO: We should apparently disable depth test and colormask false flase flase
-    for model in models {
-        // TODO: Do we need to set more things in the shader?
-        model.draw(voxelization_shader);
+    for object in objects.iter_mut() {
+        object.draw(voxelization_shader, &model_normalization_matrix);
     }
 
     let (viewport_width, viewport_height) = config.viewport_dimensions();
@@ -111,7 +110,8 @@ unsafe fn voxelize_scene(
 }
 
 pub unsafe fn build_voxel_fragment_list(
-    model: &Model,
+    objects: &mut [Object],
+    scene_aabb: &Aabb,
 ) -> (BufferTexture, u32, BufferTexture, BufferTexture) {
     let mut atomic_counter: u32 = helpers::generate_atomic_counter_buffer();
 
@@ -120,9 +120,8 @@ pub unsafe fn build_voxel_fragment_list(
         "assets/shaders/voxel_fragment/voxelize.frag.glsl",
         "assets/shaders/voxel_fragment/voxelize.geom.glsl",
     );
-    let models = [model];
 
-    calculate_voxel_fragment_list_length(&voxelization_shader, &models, &mut atomic_counter);
+    calculate_voxel_fragment_list_length(&voxelization_shader, objects, scene_aabb, &mut atomic_counter);
     gl::MemoryBarrier(gl::ATOMIC_COUNTER_BUFFER);
 
     gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, atomic_counter);
@@ -158,7 +157,8 @@ pub unsafe fn build_voxel_fragment_list(
 
     populate_voxel_fragment_list(
         &voxelization_shader,
-        &models,
+        objects,
+        scene_aabb,
         &mut atomic_counter,
         voxel_positions,
         voxel_colors,

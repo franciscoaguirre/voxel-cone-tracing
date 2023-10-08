@@ -2,6 +2,12 @@
 
 Voxel Cone Tracing implementation
 
+## Tests
+
+To run the tests, do `cargo test -- --test-threads 1`.
+Because all tests initialize an OpenGL context, that gets cleaned up at the end of the test,
+they can't run concurrently.
+
 ## Process
 
 We voxelize the entire scene. This generates a voxel fragment list.
