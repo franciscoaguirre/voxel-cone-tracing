@@ -57,7 +57,6 @@ unsafe fn voxelize_scene(
     );
 
     let model_normalization_matrix = scene_aabb.normalization_matrix();
-    // let model_normalization_matrix = Matrix4::identity();
 
     // Same for every object
     voxelization_shader.set_mat4(

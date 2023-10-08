@@ -105,9 +105,7 @@ fn main() {
         );
         scene_aabb.join(&object.model().aabb.offsetted(offset));
     }
-    dbg!(&scene_aabb);
     let model_normalization_matrix = scene_aabb.normalization_matrix();
-    // let model_normalization_matrix = Matrix4::identity();
 
     let (voxel_positions, number_of_voxel_fragments, voxel_colors, voxel_normals) =
         unsafe { voxelization::build_voxel_fragment_list(&mut objects[..], &scene_aabb) };
