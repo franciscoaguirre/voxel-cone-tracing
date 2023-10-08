@@ -1,7 +1,12 @@
+use std::mem::size_of;
+use std::ffi::c_void;
+
 use cgmath::{vec3, Vector3, Matrix4};
 
+use crate::prelude::{Shader, compile_shaders};
+
 // Axis Aligned Bounding Box
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Aabb {
     pub min_vertex: Vector3<f32>,
     pub max_vertex: Vector3<f32>,
@@ -21,6 +26,14 @@ impl Default for Aabb {
 }
 
 impl Aabb {
+    /// Offset the entire Aabb by a given vector
+    pub fn offsetted(self, offset: Vector3<f32>) -> Self {
+        Self {
+            min_vertex: self.min_vertex + offset,
+            max_vertex: self.max_vertex + offset,
+        }
+    }
+    
     /// Refreshes Aabb whenever a vertex is added to the structure
     pub fn refresh_aabb(&mut self, pos_x: f32, pos_y: f32, pos_z: f32) {
         self.max_vertex.x = pos_x.max(self.max_vertex.x);

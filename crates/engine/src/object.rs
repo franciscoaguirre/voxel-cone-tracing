@@ -1,5 +1,6 @@
 use serde::Deserialize;
 use c_str_macro::c_str;
+use cgmath::{vec3, Matrix4};
 
 use crate::prelude::{Transform, AssetHandle, Shader, AssetRegistry, Material, Model};
 
@@ -28,10 +29,11 @@ impl Object {
     }
 
     // TODO: Shouldn't need mut, but does for optimization purposes
-    pub fn draw(&mut self, shader: &Shader) {
+    pub fn draw(&mut self, shader: &Shader, model_normalization_matrix: &Matrix4<f32>) {
         unsafe {
             // Transform's model matrix
             shader.set_mat4(c_str!("model"), &self.transform.get_model_matrix());
+            shader.set_mat4(c_str!("modelNormalizationMatrix"), model_normalization_matrix);
             // Material properties
             self.material().set_uniforms(shader);
         };

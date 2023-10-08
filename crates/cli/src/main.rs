@@ -98,9 +98,16 @@ fn main() {
 
     let mut scene_aabb = Aabb::default();
     for object in objects.iter_mut() {
-        scene_aabb.join(&object.model().aabb);
+        let offset = vec3(
+            object.transform.position.x,
+            object.transform.position.y,
+            object.transform.position.z,
+        );
+        scene_aabb.join(&object.model().aabb.offsetted(offset));
     }
+    dbg!(&scene_aabb);
     let model_normalization_matrix = scene_aabb.normalization_matrix();
+    // let model_normalization_matrix = Matrix4::identity();
 
     let (voxel_positions, number_of_voxel_fragments, voxel_colors, voxel_normals) =
         unsafe { voxelization::build_voxel_fragment_list(&mut objects[..], &scene_aabb) };
@@ -413,7 +420,7 @@ fn main() {
                 render_model_shader.set_mat4(c_str!("view"), &view);
                 // Model gets set in the draw call
                 for object in objects.iter_mut() {
-                    object.draw(&render_model_shader);
+                    object.draw(&render_model_shader, &model_normalization_matrix);
                 }
             }
 

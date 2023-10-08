@@ -231,7 +231,7 @@ impl Transform {
         gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
         gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         for object in objects.iter_mut() {
-            object.draw(&shader);
+            object.draw(&shader, &scene_aabb.normalization_matrix());
         }
         gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
 

@@ -1,7 +1,7 @@
 use std::mem::size_of;
 
 use c_str_macro::c_str;
-use cgmath::point3;
+use cgmath::{point3, Matrix4, SquareMatrix};
 use gl::types::*;
 use engine::prelude::*;
 
@@ -57,6 +57,7 @@ unsafe fn voxelize_scene(
     );
 
     let model_normalization_matrix = scene_aabb.normalization_matrix();
+    // let model_normalization_matrix = Matrix4::identity();
 
     // Same for every object
     voxelization_shader.set_mat4(
@@ -95,7 +96,7 @@ unsafe fn voxelize_scene(
     gl::Disable(gl::DEPTH_TEST);
     // TODO: We should apparently disable depth test and colormask false flase flase
     for object in objects.iter_mut() {
-        object.draw(voxelization_shader);
+        object.draw(voxelization_shader, &model_normalization_matrix);
     }
 
     let (viewport_width, viewport_height) = config.viewport_dimensions();
