@@ -156,6 +156,7 @@ fn main() {
             &light_framebuffer,
         )
     };
+    dbg!(&light_maps);
     let quad = unsafe { Quad::new() };
     let camera_framebuffer = unsafe { GeometryFramebuffer::new() };
 
