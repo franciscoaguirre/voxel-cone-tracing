@@ -42,7 +42,7 @@ impl ShaderPass for FlagNodesPass {
         self.shader
             .set_uint(c_str!("voxelDimension"), config.voxel_dimension());
 
-        helpers::bind_image_texture(0, input.voxel_data.voxel_positions.0, gl::READ_ONLY, gl::RGB10_A2);
+        helpers::bind_image_texture(0, input.voxel_data.voxel_positions.0, gl::READ_WRITE, gl::RGB10_A2);
         helpers::bind_image_texture(1, input.node_pool.0, gl::READ_WRITE, gl::R32UI);
 
         let groups_count = (input.voxel_data.number_of_voxel_fragments as f32
@@ -79,6 +79,18 @@ mod tests {
         helpers::generate_texture_buffer_with_initial_data(8, gl::R32UI, data)
     }
 
+    /// The idea is to generate a single u32 representing a RGB10_A2UI given three coordinates
+    fn combine_bits(first: u32, second: u32, third: u32) -> u32 {
+        // Mask to extract the first 10 bits of an integer
+        let mask = 0x3FF;
+        let offset = 10;
+
+        // Combine the bits of the three integers
+        let result = (first & mask) << 2 * offset | (second & mask) << offset | (third & mask);
+
+        result
+    }
+
     /// The idea is to generate a testing voxel fragment list we can use to feed the SVO construction
     unsafe fn get_voxel_data() -> VoxelData {
         VoxelData {
@@ -87,7 +99,7 @@ mod tests {
                 gl::RGB10_A2UI,
                 vec![
                     // TODO: Add useful testing voxels, probably very simple coordinates
-                    134461564_u32, // (124, 238, 128)
+                    combine_bits(124, 238, 128), // (124, 238, 128)
                 ],
             ),
             number_of_voxel_fragments: 1,
@@ -136,6 +148,9 @@ mod tests {
             // We should verify more once we have a reasonable voxel fragment list to test with.
             let output = helpers::get_values_from_texture_buffer(node_pool.1, 8, 42_u32);
             assert_eq!(output[0], flag_value);
+            /// Why is this returning a bunch of 42 (default) when we initialize it with generate_texture_buffer_with_initial_data and write on it on flagNodes (with my breaking change on flagNodes.comp.glsl). One of the two should write on it
+            let output = helpers::get_values_from_texture_buffer(voxel_data.voxel_positions.1, 10, 42_u32);
+            assert_eq!(output[0..10], [0_u32; 10]);
         }
     }
 }

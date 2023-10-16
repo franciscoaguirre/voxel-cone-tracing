@@ -40,7 +40,6 @@ void main()
 
     uint nodePoolValue = imageLoad(nodePool, int(childGlobalID)).r;
 
-    if (nodePoolValue == 0) {
-        imageStore(nodePool, int(childGlobalID), uvec4(NODE_FLAG_VALUE, 0, 0, 0));
-    }
+    imageStore(nodePool, int(childGlobalID), uvec4(NODE_FLAG_VALUE, 0, 0, 0));
+    imageStore(voxelPositions, int(childGlobalID), uvec4(1, 2, 3, 4));
 }
