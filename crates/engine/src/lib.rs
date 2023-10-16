@@ -27,7 +27,7 @@ pub mod ui;
 pub mod prelude {
     pub use super::{
         transform::Transform,
-        shader::{Shader, compile_shaders, compile_compute},
+        shader::{Shader, ShaderPass, compile_shaders, compile_compute},
         helpers,
         types::*,
         camera::Camera,

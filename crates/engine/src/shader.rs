@@ -440,3 +440,12 @@ macro_rules! compile_compute {
 
 pub use compile_compute;
 pub use compile_shaders;
+
+pub trait ShaderPass {
+    type Input;
+
+    /// Run the shader pass.
+    /// Usually involves setting a lot of uniforms and either
+    /// dispatching compute threads or making draw calls.
+    unsafe fn run(&self, input: Self::Input);
+}

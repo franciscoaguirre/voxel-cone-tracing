@@ -67,7 +67,16 @@ impl Octree {
     ) -> (GLuint, GLuint, GLuint) {
         let (light_view_map, light_view_map_view, shadow_map) =
             self.create_light_view_map(objects, light, scene_aabb, framebuffer);
-        self.store_photons(light_view_map, light_view_map_view);
+
+        let store_photons_input = StorePhotonsInput {
+            light_view_map,
+            node_pool: self.textures.node_pool,
+            brick_pool_photons: self.textures.brick_pool_photons,
+        };
+        self.builder
+            .store_photons
+            .run(store_photons_input);
+
         self.border_transfer(light_view_map);
 
         // TODO: Refactorear todos estos métodos a su propia stage.
@@ -92,9 +101,16 @@ impl Octree {
             config.brick_pool_resolution as i32,
         );
 
+        let photons_to_irradiance_input = PhotonsToIrradianceInput {
+            node_pool: self.textures.node_pool,
+            brick_pool_colors_last_level: self.textures.brick_pool_colors[0],
+            brick_pool_photons: self.textures.brick_pool_photons,
+            brick_pool_irradiance_last_level: self.textures.brick_pool_irradiance[0],
+            light_view_map,
+        };
         self.builder
             .photons_to_irradiance_pass
-            .run(&self.textures, light_view_map);
+            .run(photons_to_irradiance_input);
 
         self.builder.spread_leaf_bricks_pass.run(
             &self.textures,
@@ -134,48 +150,6 @@ impl Octree {
         self.run_mipmap(BrickPoolValues::Irradiance);
     }
 
-    unsafe fn store_photons(&self, light_view_map: GLuint, light_view_map_view: GLuint) {
-        self.renderer.store_photons_shader.use_program();
-
-        let config = Config::instance();
-
-        self.renderer
-            .store_photons_shader
-            .set_uint(c_str!("octreeLevel"), config.last_octree_level());
-        self.renderer
-            .store_photons_shader
-            .set_uint(c_str!("voxelDimension"), config.voxel_dimension());
-
-        gl::ActiveTexture(gl::TEXTURE0);
-        gl::BindTexture(gl::TEXTURE_2D, light_view_map);
-        self.renderer
-            .store_photons_shader
-            .set_int(c_str!("lightViewMap"), 0);
-
-        helpers::bind_image_texture(0, self.textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
-        helpers::bind_3d_image_texture(
-            1,
-            self.textures.brick_pool_photons,
-            gl::READ_WRITE,
-            gl::R32UI,
-        );
-        let total_photons = helpers::generate_texture_buffer(1, gl::R32UI, 0u32);
-        helpers::bind_image_texture(2, total_photons.0, gl::READ_WRITE, gl::R32UI);
-
-        let (viewport_width, viewport_height) = config.viewport_dimensions();
-
-        self.renderer.store_photons_shader.dispatch_xyz(vec3(
-            (viewport_width as f32 / 32 as f32).ceil() as u32,
-            (viewport_height as f32 / 32 as f32).ceil() as u32,
-            1,
-        ));
-        self.renderer.store_photons_shader.wait();
-
-        let total_photons_values =
-            helpers::get_values_from_texture_buffer(total_photons.1, 1, 69u32);
-        // dbg!(&total_photons_values[0]);
-    }
-
     unsafe fn create_light_view_map(
         &self,
         objects: &mut [Object],
@@ -185,6 +159,8 @@ impl Octree {
     ) -> (GLuint, GLuint, GLuint) {
         let projection = light.get_projection_matrix();
 
+        let config = Config::instance();
+
         gl::CullFace(gl::FRONT);
         let light_map_buffers = light.transform.take_photo(
             objects,
@@ -192,6 +168,7 @@ impl Octree {
             scene_aabb,
             framebuffer,
             Some(self.renderer.light_view_map_shader),
+            config.voxel_dimension(),
         );
         gl::CullFace(gl::BACK);
 
