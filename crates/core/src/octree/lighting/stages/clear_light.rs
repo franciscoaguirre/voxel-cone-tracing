@@ -34,9 +34,9 @@ pub struct ClearLightInput {
 }
 
 impl ShaderPass for ClearLight {
-    type Input = ClearLightInput;
+    type Input<'a> = ClearLightInput;
 
-    unsafe fn run(&self, input: Self::Input) {
+    unsafe fn run(&self, input: Self::Input<'_>) {
         let config = Config::instance();
 
         self.uint_shader.use_program();

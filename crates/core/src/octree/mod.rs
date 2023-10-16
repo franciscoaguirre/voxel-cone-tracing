@@ -91,7 +91,7 @@ pub struct VoxelData {
     pub voxel_positions: BufferTexture,
     pub number_of_voxel_fragments: u32,
     pub voxel_colors: BufferTexture,
-    voxel_normals: BufferTexture,
+    pub voxel_normals: BufferTexture,
 }
 
 struct Renderer {

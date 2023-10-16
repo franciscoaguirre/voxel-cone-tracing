@@ -35,6 +35,19 @@ impl Config {
         let _ = INSTANCE.set(config);
     }
 
+    pub fn new(voxel_dimension: u32) -> Self {
+        let mut this = Self {
+            brick_pool_resolution: 384,
+            working_group_size: 64,
+            viewport_dimensions: (840, 840),
+            voxel_dimension: 0, // Will be set later
+            octree_levels: 0, // Will be set later
+            last_octree_level: 0, // Will be set later
+        };
+        this.set_voxel_dimension(voxel_dimension);
+        this
+    }
+
     pub fn voxel_dimension(&self) -> u32 {
         self.voxel_dimension
     }

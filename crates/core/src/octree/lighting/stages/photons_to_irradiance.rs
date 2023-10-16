@@ -29,9 +29,9 @@ pub struct PhotonsToIrradianceInput {
 }
 
 impl ShaderPass for PhotonsToIrradiance {
-    type Input = PhotonsToIrradianceInput;
+    type Input<'a> = PhotonsToIrradianceInput;
 
-    unsafe fn run(&self, input: Self::Input) {
+    unsafe fn run(&self, input: Self::Input<'_>) {
         self.shader.use_program();
 
         let config = Config::instance();
@@ -75,6 +75,8 @@ impl ShaderPass for PhotonsToIrradiance {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
+    use std::env;
 
     #[test]
     fn it_works() {
