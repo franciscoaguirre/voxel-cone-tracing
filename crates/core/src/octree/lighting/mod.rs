@@ -18,44 +18,14 @@ pub use stages::*;
 
 impl Octree {
     pub unsafe fn clear_light(&self) {
-        let config = Config::instance();
-
-        self.renderer.clear_bricks_shader.use_program();
-        self.renderer
-            .clear_bricks_shader
-            .set_uint(c_str!("voxelDimension"), config.voxel_dimension());
-
-        helpers::bind_3d_image_texture(
-            0,
-            self.textures.brick_pool_photons,
-            gl::WRITE_ONLY,
-            gl::R32UI,
-        );
-
-        let number_of_groups =
-            (self.number_of_nodes() as f64 / config.working_group_size as f64).ceil() as u32;
-
-        self.renderer.clear_bricks_shader.dispatch(number_of_groups);
-        self.renderer.clear_bricks_shader.wait();
-
-        self.renderer.clear_bricks_float_shader.use_program();
-        self.renderer
-            .clear_bricks_float_shader
-            .set_uint(c_str!("voxelDimension"), config.voxel_dimension());
-
-        for texture_number in 0..6 {
-            helpers::bind_3d_image_texture(
-                1,
-                self.textures.brick_pool_irradiance[texture_number as usize],
-                gl::WRITE_ONLY,
-                gl::RGBA8,
-            );
-
-            self.renderer
-                .clear_bricks_float_shader
-                .dispatch(number_of_groups);
-            self.renderer.clear_bricks_float_shader.wait();
-        }
+        let input = ClearLightInput {
+            brick_pool_photons: self.textures.brick_pool_photons,
+            brick_pool_irradiance: self.textures.brick_pool_irradiance,
+            number_of_nodes: self.number_of_nodes(),
+        };
+        self.builder
+            .clear_light
+            .run(input);
     }
 
     pub unsafe fn inject_light(
@@ -79,27 +49,9 @@ impl Octree {
 
         self.border_transfer(light_view_map);
 
-        // TODO: Refactorear todos estos métodos a su propia stage.
-
         let config = Config::instance();
 
-        gl::CopyImageSubData(
-            self.textures.brick_pool_alpha,
-            gl::TEXTURE_3D,
-            0,
-            0,
-            0,
-            0,
-            self.textures.brick_pool_irradiance[0],
-            gl::TEXTURE_3D,
-            0,
-            0,
-            0,
-            0,
-            config.brick_pool_resolution as i32,
-            config.brick_pool_resolution as i32,
-            config.brick_pool_resolution as i32,
-        );
+        self.copy_alpha_to_irradiance();
 
         let photons_to_irradiance_input = PhotonsToIrradianceInput {
             node_pool: self.textures.node_pool,
@@ -125,9 +77,32 @@ impl Octree {
             BrickPoolValues::Irradiance,
         );
 
-        self.mipmap_photons(light_view_map);
+        self.run_mipmap(BrickPoolValues::Irradiance);
 
         (light_view_map, light_view_map_view, shadow_map)
+    }
+
+    #[inline]
+    unsafe fn copy_alpha_to_irradiance(&self) {
+        let config = Config::instance();
+
+        gl::CopyImageSubData(
+            self.textures.brick_pool_alpha,
+            gl::TEXTURE_3D,
+            0,
+            0,
+            0,
+            0,
+            self.textures.brick_pool_irradiance[0],
+            gl::TEXTURE_3D,
+            0,
+            0,
+            0,
+            0,
+            config.brick_pool_resolution as i32,
+            config.brick_pool_resolution as i32,
+            config.brick_pool_resolution as i32,
+        );
     }
 
     unsafe fn border_transfer(&self, light_view_map: GLuint) {
@@ -145,11 +120,6 @@ impl Octree {
         }
     }
 
-    unsafe fn mipmap_photons(&self, light_view_map: GLuint) {
-        let mipmap = MipmapAnisotropicPass::init();
-        self.run_mipmap(BrickPoolValues::Irradiance);
-    }
-
     unsafe fn create_light_view_map(
         &self,
         objects: &mut [Object],
@@ -159,8 +129,6 @@ impl Octree {
     ) -> (GLuint, GLuint, GLuint) {
         let projection = light.get_projection_matrix();
 
-        let config = Config::instance();
-
         gl::CullFace(gl::FRONT);
         let light_map_buffers = light.transform.take_photo(
             objects,
@@ -168,7 +136,6 @@ impl Octree {
             scene_aabb,
             framebuffer,
             Some(self.renderer.light_view_map_shader),
-            config.voxel_dimension(),
         );
         gl::CullFace(gl::BACK);
 

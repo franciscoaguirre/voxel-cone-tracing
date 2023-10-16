@@ -18,3 +18,6 @@ pub use photons_to_irradiance::{PhotonsToIrradiance, PhotonsToIrradianceInput};
 
 mod store_photons;
 pub use store_photons::{StorePhotons, StorePhotonsInput};
+
+mod clear_light;
+pub use clear_light::{ClearLight, ClearLightInput};
