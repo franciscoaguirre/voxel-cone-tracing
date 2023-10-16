@@ -17,7 +17,7 @@ mod visualize;
 use build::*;
 pub use visualize::{BrickAttribute, BricksToShow};
 
-use self::lighting::PhotonsToIrradiance;
+use self::lighting::{PhotonsToIrradiance, StorePhotons, ClearLight};
 
 pub struct Octree {
     pub geometry_data: OctreeData,
@@ -109,9 +109,6 @@ struct Renderer {
     eye_ray_shader: Shader,
     get_colors_quad_shader: Shader,
     light_view_map_shader: Shader,
-    store_photons_shader: Shader,
-    clear_bricks_shader: Shader,
-    clear_bricks_float_shader: Shader,
 }
 
 struct Builder {
@@ -129,6 +126,8 @@ struct Builder {
     photons_to_irradiance_pass: PhotonsToIrradiance,
     process_raw_brick_pool_colors: ProcessRawBrickPoolColors,
     create_alpha_map: CreateAlphaMap,
+    store_photons: StorePhotons,
+    clear_light: ClearLight,
 }
 
 impl Octree {
@@ -220,11 +219,6 @@ impl Octree {
                 "assets/shaders/debug/debugInterpolation.glsl",
             ),
             light_view_map_shader: compile_shaders!("assets/shaders/octree/lightViewMap.glsl"),
-            store_photons_shader: compile_compute!("assets/shaders/octree/storePhotons.comp.glsl",),
-            clear_bricks_shader: compile_compute!("assets/shaders/octree/clearBricks.comp.glsl"),
-            clear_bricks_float_shader: compile_compute!(
-                "assets/shaders/octree/clearBricksFloat.comp.glsl",
-            ),
         };
         let builder = Builder {
             neighbor_pointers_pass: NeighborPointersPass::init(),
@@ -241,6 +235,8 @@ impl Octree {
             photons_to_irradiance_pass: PhotonsToIrradiance::init(),
             process_raw_brick_pool_colors: ProcessRawBrickPoolColors::init(),
             create_alpha_map: CreateAlphaMap::init(),
+            store_photons: StorePhotons::init(),
+            clear_light: ClearLight::init(),
         };
 
         let mut octree = Self {

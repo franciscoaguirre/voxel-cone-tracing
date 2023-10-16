@@ -14,4 +14,10 @@ mod light_transfer;
 pub use light_transfer::BorderTransferPass;
 
 mod photons_to_irradiance;
-pub use photons_to_irradiance::PhotonsToIrradiance;
+pub use photons_to_irradiance::{PhotonsToIrradiance, PhotonsToIrradianceInput};
+
+mod store_photons;
+pub use store_photons::{StorePhotons, StorePhotonsInput};
+
+mod clear_light;
+pub use clear_light::{ClearLight, ClearLightInput};

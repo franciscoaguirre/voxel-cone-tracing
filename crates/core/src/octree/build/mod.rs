@@ -59,11 +59,11 @@ impl Octree {
             .create_alpha_map
             .run(&self.textures, &self.geometry_data.node_data);
 
-        // self.builder.spread_leaf_bricks_pass.run(
-        //     &self.textures,
-        //     &self.geometry_data.node_data,
-        //     BrickPoolValues::Colors,
-        // );
+        self.builder.spread_leaf_bricks_pass.run(
+            &self.textures,
+            &self.geometry_data.node_data,
+            BrickPoolValues::Colors,
+        );
 
         // self.builder.spread_leaf_bricks_pass.run(
         //     &self.textures,
@@ -71,15 +71,15 @@ impl Octree {
         //     BrickPoolValues::Normals,
         // );
 
-        // self.builder.leaf_border_transfer_pass.run(
-        //     &self.textures,
-        //     &self.geometry_data.node_data,
-        //     &self.border_data.node_data,
-        //     BrickPoolValues::Colors,
-        // );
+        self.builder.leaf_border_transfer_pass.run(
+            &self.textures,
+            &self.geometry_data.node_data,
+            &self.border_data.node_data,
+            BrickPoolValues::Colors,
+        );
 
-        //#[cfg(debug_assertions)]
-        //self.run_mipmap(BrickPoolValues::Colors);
+        #[cfg(debug_assertions)]
+        self.run_mipmap(BrickPoolValues::Colors);
     }
 
     pub unsafe fn run_mipmap(&self, brick_pool_values: BrickPoolValues) {
@@ -104,21 +104,21 @@ impl Octree {
                     brick_pool_values,
                 );
 
-                // self.builder.mipmap_isotropic_pass.run(
-                //     &self.textures,
-                //     &self.geometry_data.node_data,
-                //     level,
-                // );
+                self.builder.mipmap_isotropic_pass.run(
+                    &self.textures,
+                    &self.geometry_data.node_data,
+                    level,
+                );
 
                 if level > 0 {
-                    // self.builder.anisotropic_border_transfer_pass.run(
-                    //     &self.textures,
-                    //     &self.geometry_data.node_data,
-                    //     &self.border_data.node_data,
-                    //     level,
-                    //     brick_pool_values,
-                    //     *direction,
-                    // );
+                    self.builder.anisotropic_border_transfer_pass.run(
+                        &self.textures,
+                        &self.geometry_data.node_data,
+                        &self.border_data.node_data,
+                        level,
+                        brick_pool_values,
+                        *direction,
+                    );
                     // self.builder.border_transfer_pass.run(
                     //     &self.textures,
                     //     &self.geometry_data.node_data,
