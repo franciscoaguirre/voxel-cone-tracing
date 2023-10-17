@@ -357,13 +357,13 @@ pub fn load_texture(image_path: &str) -> GLuint {
 }
 
 pub fn r32ui_to_rgb10_a2ui(from: u32) -> (u32, u32, u32) {
-    let mask = 0b00000000000000000000001111111111;
+    let mask = 0x3FF;
 
     (from & mask, (from >> 10) & mask, (from >> 20) & mask)
 }
 
 pub fn rgb10_a2ui_to_r32ui(x: u32, y: u32, z: u32) -> u32 {
-    let mask = 0b00000000000000000000001111111111;
+    let mask = 0x3FF;
 
     (x & mask) | ((y & mask) << 10) | ((z & mask) << 20)
 }
@@ -413,7 +413,7 @@ mod tests {
     fn rgb10_a2ui_to_r32ui_works() {
         let test_data = vec![
             ((124, 238, 128), 134461564_u32),
-            ((227, 40, 128), 3355484387_u32),
+            ((227, 40, 128), 134258915_u32),
         ];
 
         for &(input, expected_result) in test_data.iter() {
@@ -421,4 +421,14 @@ mod tests {
             assert_eq!(result, expected_result);
         }
     }
+
+    #[test]
+    fn r32ui_to_rgb10_a2ui_and_back_works() {
+        // Should move both functions and the test to util file
+        assert_eq!(r32ui_to_rgb10_a2ui(rgb10_a2ui_to_r32ui(3, 4, 5)), (3, 4, 5));
+        assert_eq!(r32ui_to_rgb10_a2ui(rgb10_a2ui_to_r32ui(1023, 512, 128)), (1023, 512, 128));
+        // Should consider just 10 bits, so 1025 == 1
+        assert_eq!(r32ui_to_rgb10_a2ui(rgb10_a2ui_to_r32ui(1025, 512, 128)), (1, 512, 128));
+    }
+
 }
