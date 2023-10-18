@@ -1,5 +1,6 @@
 [package]
 name = "cli"
+description = "Entrypoint for the application"
 version = "0.1.0"
 edition = "2021"
 
