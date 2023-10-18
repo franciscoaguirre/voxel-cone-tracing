@@ -159,7 +159,7 @@ impl Octree {
         for octree_level in 0..config.octree_levels() - 1 {
             let flag_nodes_input = FlagNodesInput {
                 octree_level,
-                voxel_data: &voxel_data,
+                voxel_data: voxel_data.clone(),
                 node_pool: BufferTextureV2::from_texture_and_buffer(self.textures.node_pool),
             };
             self.builder

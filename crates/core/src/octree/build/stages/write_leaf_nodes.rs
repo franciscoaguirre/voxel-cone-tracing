@@ -32,7 +32,7 @@ impl WriteLeafNodesPass {
 
         helpers::bind_image_texture(
             0,
-            voxel_data.voxel_positions.0,
+            voxel_data.voxel_positions.texture(),
             gl::READ_WRITE,
             gl::RGB10_A2UI,
         );

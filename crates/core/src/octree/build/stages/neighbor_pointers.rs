@@ -37,7 +37,7 @@ impl NeighborPointersPass {
 
         // Bind images
         helpers::bind_image_texture(0, textures.node_pool.0, gl::WRITE_ONLY, gl::R32UI);
-        helpers::bind_image_texture(1, voxel_data.voxel_positions.0, gl::WRITE_ONLY, gl::R32UI);
+        helpers::bind_image_texture(1, voxel_data.voxel_positions.texture(), gl::WRITE_ONLY, gl::R32UI);
 
         helpers::bind_image_texture(2, textures.neighbors[0].0, gl::WRITE_ONLY, gl::R32UI);
         helpers::bind_image_texture(3, textures.neighbors[1].0, gl::WRITE_ONLY, gl::R32UI);
