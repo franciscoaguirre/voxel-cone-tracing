@@ -118,11 +118,16 @@ mod tests {
         let flag_value = 1 << 31;
 
         let test_data: Vec<u32> = vec![
-            // TestCase {
-            //     octree_level: 0,
-            //     voxel_dimension: 0,
-            //     node_pool: 0,
-            // },
+            TestCase {
+                input: FlagNodesInput {
+                    octree_level: 0,
+                    voxel_dimension: 0,
+                    node_pool: BufferTextureV2::from_data(vec![
+                        0, 0, 0, 0, 0, 0, 0, 0,
+                    ]),
+                },
+                expected_output: vec![],
+            },
         ];
 
         unsafe {

@@ -249,10 +249,6 @@ impl Octree {
             }
         }
 
-        //let output = helpers::get_values_from_texture_buffer(self.geometry_data.voxel_data.voxel_positions.1, 10, 42_u32);
-        //let lol: Vec<[u32; 3]> = output[0..10].into_iter().map(|m| unscramble_position_from_int(m)).collect();
-        //dbg!(lol);
-
         self.builder.store_node_positions_pass.run(
             &self.textures,
             config.octree_levels() - 1, // Last level
