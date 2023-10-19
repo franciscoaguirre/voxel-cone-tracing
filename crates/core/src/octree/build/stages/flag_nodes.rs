@@ -1,5 +1,6 @@
 use c_str_macro::c_str;
 use engine::prelude::*;
+use log;
 
 use crate::{
     config::Config,
@@ -77,13 +78,7 @@ mod tests {
         path.pop();
         env::set_current_dir(path).unwrap();
 
-        // TODO: Make this small enough to understand,
-        // but good enough to test what we want.
         let voxel_dimension_exponent = 4;
-
-        // Flag left in node's child pointers to notify the child they point to
-        // should be allocated, in `allocate_nodes`
-        #[allow(non_snake_case)]
 
         unsafe {
             let test_data = test_cases();
@@ -98,14 +93,17 @@ mod tests {
 
                 // Verify output
                 let output = input.node_pool.data();
-                dbg!(description);
+                println!("Running test: {description}");
                 assert_eq!(output, *expected_output);
-                dbg!("Passed");
+                println!("Passed");
             }
         }
     }
 
     unsafe fn test_cases() -> std::vec::Vec<TestCase> {
+        // Flag left in node's child pointers to notify the child they point to
+        // should be allocated, in `allocate_nodes`
+        #[allow(non_snake_case)]
         let F = 1 << 31;
         vec![
             TestCase {
@@ -180,7 +178,7 @@ mod tests {
             TestCase {
                 description: String::from("First two levels already complete, flag subnode for x = 0, z = y = 1"),
                 input: FlagNodesInput {
-                    octree_level: 1,
+                    octree_level: 2,
                     voxel_data: BufferTextureV2::from_data(vec![
                        helpers::rgb10_a2ui_to_r32ui(4, 6, 6),
                     ]).into(),
@@ -188,7 +186,8 @@ mod tests {
                       // Level 0
                       1, 0, 0, 0, 0, 0, 0, 0,
                       // Level 1
-                      0, 0, 0, 0, 0, 0, 0, 0,
+                      0, 0, 0, 0, 0, 0, 0, 2,
+                      // Level 2
                       0, 0, 0, 0, 0, 0, 0, 0,
                     ]),
                 },
@@ -244,7 +243,6 @@ mod tests {
                       0, 0, 0, 0, 0, 0, 0, 0,
                       0, 0, 0, 0, 0, 0, 0, 0,
                       0, 0, 0, 0, 0, 0, 0, 0,
-                      // Level 2
                     ]),
                 },
                 expected_output: vec![
@@ -254,8 +252,6 @@ mod tests {
                     F, 0, 0, 0, 0, 0, 0, 0,
                     0, 0, 0, 0, F, 0, 0, 0,
                     0, 0, F, 0, 0, 0, 0, 0,
-                    // Level 2
-                    0, 0, 0, 0, 0, 0, 0, 0,
                 ],
             },
             TestCase {
@@ -286,11 +282,11 @@ mod tests {
                     1, 0, 0, 2, 0, 3, 0, 0,
                     // Level 1
                     4, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0, 5, 0, 0,
+                    0, 0, 0, 0, 5, 0, 0, 0,
                     0, 0, 6, 0, 0, 0, 0, 0,
                     // Level 2
                     F, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, F, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, F, 0,
                     0, 0, F, 0, 0, 0, F, 0,
                 ],
             },
