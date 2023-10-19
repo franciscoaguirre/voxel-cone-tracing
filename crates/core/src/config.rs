@@ -35,17 +35,16 @@ impl Config {
         let _ = INSTANCE.set(config);
     }
 
-    pub fn new(voxel_dimension: u32) -> Self {
-        let mut this = Self {
+    pub fn new(voxel_dimension_exponent: u32) -> Self {
+        Self {
             brick_pool_resolution: 384,
             working_group_size: 64,
             viewport_dimensions: (840, 840),
-            voxel_dimension: 0, // Will be set later
-            octree_levels: 0, // Will be set later
-            last_octree_level: 0, // Will be set later
-        };
-        this.set_voxel_dimension(voxel_dimension);
-        this
+            // Will be set correctly in `initialize` later
+            voxel_dimension: voxel_dimension_exponent,
+            octree_levels: 0,
+            last_octree_level: 0,
+        }
     }
 
     pub fn voxel_dimension(&self) -> u32 {
@@ -80,5 +79,17 @@ mod tests {
     #[should_panic]
     fn uninitialized_config_should_panic() {
         let _ = Config::instance();
+    }
+
+    #[test]
+    fn config_initialization_works() {
+        let voxel_dimension_exponent = 4;
+        unsafe {
+            Config::initialize(Config::new(voxel_dimension_exponent));
+        };
+        let config = Config::instance();
+        assert_eq!(config.voxel_dimension(), 16);
+        assert_eq!(config.octree_levels(), 4);
+        assert_eq!(config.last_octree_level(), 3);
     }
 }
