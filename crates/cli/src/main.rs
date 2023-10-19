@@ -38,7 +38,6 @@ fn main() {
 
     // Load configuration file and set it up in core
     use std::fs::File;
-    use ron;
     let file = File::open("config.ron").expect("Missing config file!");
     let raw_config: CoreConfig = ron::de::from_reader(file).expect("Config file malformed!");
     log::info!("Configuration used: {:#?}", raw_config);
@@ -113,7 +112,7 @@ fn main() {
 
     let mut octree = unsafe {
         Octree::new(
-            voxel_positions,
+            voxel_positions.clone(),
             number_of_voxel_fragments,
             voxel_colors,
             voxel_normals,
@@ -178,12 +177,12 @@ fn main() {
     let mut should_move_debug_cone = false;
 
     let render_voxel_fragments_shader = RenderVoxelFragmentsShader::init(
-        voxel_positions.0,
+        voxel_positions.texture(),
         voxel_colors.0,
         number_of_voxel_fragments,
     );
     let render_border_voxel_fragments_shader = RenderVoxelFragmentsShader::init(
-        octree.border_data.voxel_data.voxel_positions.0,
+        octree.border_data.voxel_data.voxel_positions.texture(),
         octree.border_data.voxel_data.voxel_colors.0,
         octree.border_data.voxel_data.number_of_voxel_fragments,
     );

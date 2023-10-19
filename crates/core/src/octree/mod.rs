@@ -128,7 +128,7 @@ struct Builder {
 impl Octree {
     /// Creates a Sparse Voxel Octree (SVO)
     pub unsafe fn new(
-        voxel_positions: BufferTexture,
+        voxel_positions: BufferTextureV2<u32>,
         number_of_voxel_fragments: u32,
         voxel_colors: BufferTexture,
         voxel_normals: BufferTexture,
@@ -147,7 +147,7 @@ impl Octree {
                 ),
             },
             voxel_data: VoxelData {
-                voxel_positions: BufferTextureV2::from_texture_and_buffer(voxel_positions),
+                voxel_positions,
                 number_of_voxel_fragments,
                 voxel_colors,
                 voxel_normals,
