@@ -27,9 +27,9 @@ pub struct StorePhotonsInput {
 }
 
 impl ShaderPass for StorePhotons {
-    type Input = StorePhotonsInput;
+    type Input<'a> = StorePhotonsInput;
 
-    unsafe fn run(&self, input: Self::Input) {
+    unsafe fn run(&self, input: Self::Input<'_>) {
         self.shader.use_program();
 
         let config = Config::instance();

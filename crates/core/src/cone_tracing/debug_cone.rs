@@ -68,13 +68,13 @@ impl DebugCone {
             max_distance: 1.0,
             direction: vec3(0.0, 1.0, 0.0),
             previous_values: HashSet::new(),
-            nodes_queried: helpers::generate_texture_buffer4(
+            nodes_queried: helpers::generate_texture_buffer_with_hint(
                 1000,
                 gl::R32UI,
                 69u32,
                 gl::DYNAMIC_READ,
             ),
-            sampled_colors_texture: helpers::generate_texture_buffer4(
+            sampled_colors_texture: helpers::generate_texture_buffer_with_hint(
                 100,
                 gl::R32F,
                 69f32,

@@ -442,10 +442,10 @@ pub use compile_compute;
 pub use compile_shaders;
 
 pub trait ShaderPass {
-    type Input;
+    type Input<'a>;
 
     /// Run the shader pass.
     /// Usually involves setting a lot of uniforms and either
     /// dispatching compute threads or making draw calls.
-    unsafe fn run(&self, input: Self::Input);
+    unsafe fn run<'a>(&self, input: Self::Input<'a>);
 }

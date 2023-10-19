@@ -157,9 +157,14 @@ impl Octree {
         };
 
         for octree_level in 0..config.octree_levels() - 1 {
+            let flag_nodes_input = FlagNodesInput {
+                octree_level,
+                voxel_data: voxel_data.clone(),
+                node_pool: BufferTextureV2::from_texture_and_buffer(self.textures.node_pool),
+            };
             self.builder
                 .flag_nodes_pass
-                .run(&voxel_data, &self.textures, octree_level);
+                .run(flag_nodes_input);
             self.builder.allocate_nodes_pass.run(
                 &self.geometry_data.voxel_data, // TODO: Pass in the actual number of nodes
                 &self.textures,
@@ -263,6 +268,7 @@ impl Octree {
         helpers::fill_texture_buffer_with_data(
             octree_data.node_data.level_start_indices.1,
             &octree_level_start_indices,
+            gl::STATIC_DRAW,
         );
 
         log::debug!(

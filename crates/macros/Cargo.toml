@@ -1,0 +1,14 @@
+[package]
+name = "macros"
+description = "Procedural macros for the core of the project"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { version = "2", features = ["full"] }
+proc-macro2 = "1"
+quote = "1"
+derive-syn-parse = "0.1.5"

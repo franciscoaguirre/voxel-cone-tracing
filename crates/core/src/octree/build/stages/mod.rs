@@ -8,7 +8,7 @@ mod anisotropic_border_transfer;
 pub use anisotropic_border_transfer::AnisotropicBorderTransferPass;
 
 mod flag_nodes;
-pub use flag_nodes::FlagNodesPass;
+pub use flag_nodes::{FlagNodesPass, FlagNodesInput};
 
 mod mipmap_anisotropic;
 pub use mipmap_anisotropic::MipmapAnisotropicPass;

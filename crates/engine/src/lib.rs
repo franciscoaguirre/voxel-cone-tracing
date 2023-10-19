@@ -20,6 +20,8 @@ pub mod material;
 pub mod object;
 pub mod asset_registry;
 pub mod test_utils;
+pub mod texture_buffer;
+mod traits;
 
 #[cfg(feature = "ui")]
 pub mod ui;
@@ -49,5 +51,6 @@ pub mod prelude {
         gizmo::RenderGizmo,
         common,
         test_utils,
+        texture_buffer::BufferTextureV2,
     };
 }

@@ -8,7 +8,7 @@ use std::{
     path::Path,
 };
 
-use crate::{model::Model, aabb::Aabb};
+use crate::{model::Model, aabb::Aabb, types::*};
 
 pub unsafe fn generate_atomic_counter_buffer() -> GLuint {
     generate_atomic_counter_buffer1()
@@ -35,23 +35,40 @@ pub unsafe fn generate_texture_buffer<T>(
     size: usize,
     format: GLenum,
     default_value: T,
-) -> (GLuint, GLuint)
+) -> BufferTexture
 where
     T: Clone,
 {
-    generate_texture_buffer4(size, format, default_value, gl::STATIC_DRAW)
+    generate_texture_buffer_with_hint(size, format, default_value, gl::STATIC_DRAW)
 }
 
 /// Generates a buffer texture initialized with a default value
-pub unsafe fn generate_texture_buffer4<T>(
+pub unsafe fn generate_texture_buffer_with_hint<T>(
     size: usize,
     format: GLenum,
     default_value: T,
     usage_hint: GLuint,
-) -> (GLuint, GLuint)
+) -> BufferTexture
 where
     T: Clone,
 {
+    generate_texture_buffer_full(size, format, vec![default_value; size], usage_hint)
+}
+
+pub unsafe fn generate_texture_buffer_with_initial_data<T>(
+    size: usize,
+    format: GLenum,
+    initial_data: Vec<T>,
+) -> BufferTexture {
+    generate_texture_buffer_full(size, format, initial_data, gl::STATIC_DRAW)
+}
+
+pub unsafe fn generate_texture_buffer_full<T>(
+    size: usize,
+    format: GLenum,
+    initial_data: Vec<T>,
+    usage_hint: GLuint,
+) -> BufferTexture {
     let mut texture_buffer: GLuint = 0;
     gl::GenBuffers(1, &mut texture_buffer);
 
@@ -64,18 +81,22 @@ where
     gl::TexBuffer(gl::TEXTURE_BUFFER, format, texture_buffer);
     gl::BindBuffer(gl::TEXTURE_BUFFER, 0);
 
-    clear_texture_buffer(texture_buffer, size, default_value, usage_hint);
+    fill_texture_buffer_with_data(texture_buffer, &initial_data, usage_hint);
 
     (texture, texture_buffer)
 }
 
-pub unsafe fn fill_texture_buffer_with_data<T>(texture_buffer: GLuint, data: &Vec<T>) {
+pub unsafe fn fill_texture_buffer_with_data<T>(
+    texture_buffer: GLuint,
+    data: &Vec<T>,
+    usage_hint: GLenum,
+) {
     gl::BindBuffer(gl::TEXTURE_BUFFER, texture_buffer);
     gl::BufferData(
         gl::TEXTURE_BUFFER,
         (size_of::<T>() * data.len()) as isize,
         data.as_ptr() as *const c_void,
-        gl::STATIC_DRAW,
+        usage_hint,
     );
     gl::BindBuffer(gl::TEXTURE_BUFFER, 0);
 }
@@ -336,9 +357,15 @@ pub fn load_texture(image_path: &str) -> GLuint {
 }
 
 pub fn r32ui_to_rgb10_a2ui(from: u32) -> (u32, u32, u32) {
-    let mask = 0b00000000000000000000001111111111;
+    let mask = 0x3FF;
 
     (from & mask, (from >> 10) & mask, (from >> 20) & mask)
+}
+
+pub fn rgb10_a2ui_to_r32ui(x: u32, y: u32, z: u32) -> u32 {
+    let mask = 0x3FF;
+
+    (x & mask) | ((y & mask) << 10) | ((z & mask) << 20)
 }
 
 // TODO: Bring back, elsewhere
@@ -363,4 +390,45 @@ pub unsafe fn load_model(name: &str) -> Model {
     let model = Model::new(&model_file);
     env::set_current_dir(previous_current_dir).unwrap();
     model
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn r32ui_to_rgb10_a2ui_works() {
+        let test_data = vec![
+            (134461564_u32, (124, 238, 128)),
+            (3355484387_u32, (227, 40, 128)),
+        ];
+
+        for &(input, expected_result) in test_data.iter() {
+            let result = r32ui_to_rgb10_a2ui(input);
+            assert_eq!(result, expected_result);
+        }
+    }
+
+    #[test]
+    fn rgb10_a2ui_to_r32ui_works() {
+        let test_data = vec![
+            ((124, 238, 128), 134461564_u32),
+            ((227, 40, 128), 134258915_u32),
+        ];
+
+        for &(input, expected_result) in test_data.iter() {
+            let result = rgb10_a2ui_to_r32ui(input.0, input.1, input.2);
+            assert_eq!(result, expected_result);
+        }
+    }
+
+    #[test]
+    fn r32ui_to_rgb10_a2ui_and_back_works() {
+        // Should move both functions and the test to util file
+        assert_eq!(r32ui_to_rgb10_a2ui(rgb10_a2ui_to_r32ui(3, 4, 5)), (3, 4, 5));
+        assert_eq!(r32ui_to_rgb10_a2ui(rgb10_a2ui_to_r32ui(1023, 512, 128)), (1023, 512, 128));
+        // Should consider just 10 bits, so 1025 == 1
+        assert_eq!(r32ui_to_rgb10_a2ui(rgb10_a2ui_to_r32ui(1025, 512, 128)), (1, 512, 128));
+    }
+
 }

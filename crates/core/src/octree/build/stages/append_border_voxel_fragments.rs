@@ -37,7 +37,7 @@ impl AppendBorderVoxelFragmentsPass {
         );
         helpers::bind_image_texture(
             1,
-            border_data.voxel_data.voxel_positions.0,
+            border_data.voxel_data.voxel_positions.texture(),
             gl::WRITE_ONLY,
             gl::RGB10_A2UI,
         );

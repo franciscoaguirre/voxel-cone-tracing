@@ -112,7 +112,7 @@ unsafe fn voxelize_scene(
 pub unsafe fn build_voxel_fragment_list(
     objects: &mut [Object],
     scene_aabb: &Aabb,
-) -> (BufferTexture, u32, BufferTexture, BufferTexture) {
+) -> (BufferTextureV2<u32>, u32, BufferTexture, BufferTexture) {
     let mut atomic_counter: u32 = helpers::generate_atomic_counter_buffer();
 
     let voxelization_shader = compile_shaders!(
@@ -168,7 +168,7 @@ pub unsafe fn build_voxel_fragment_list(
     gl::MemoryBarrier(gl::SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
     (
-        voxel_positions,
+        BufferTextureV2::from_texture_and_buffer(voxel_positions),
         number_of_voxel_fragments,
         voxel_colors,
         voxel_normals,

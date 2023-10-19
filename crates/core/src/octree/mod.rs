@@ -13,11 +13,13 @@ use crate::{
 mod build;
 mod lighting;
 mod visualize;
+mod voxel_data;
 
 use build::*;
 pub use visualize::{BrickAttribute, BricksToShow};
 
-use self::lighting::{PhotonsToIrradiance, StorePhotons, ClearLight};
+use lighting::{PhotonsToIrradiance, StorePhotons, ClearLight};
+pub use voxel_data::VoxelData;
 
 pub struct Octree {
     pub geometry_data: OctreeData,
@@ -87,13 +89,6 @@ impl NodeData {
     }
 }
 
-pub struct VoxelData {
-    pub voxel_positions: BufferTexture,
-    pub number_of_voxel_fragments: u32,
-    pub voxel_colors: BufferTexture,
-    voxel_normals: BufferTexture,
-}
-
 struct Renderer {
     vao: GLuint,
     node_count: u32,
@@ -133,7 +128,7 @@ struct Builder {
 impl Octree {
     /// Creates a Sparse Voxel Octree (SVO)
     pub unsafe fn new(
-        voxel_positions: BufferTexture,
+        voxel_positions: BufferTextureV2<u32>,
         number_of_voxel_fragments: u32,
         voxel_colors: BufferTexture,
         voxel_normals: BufferTexture,
@@ -168,10 +163,8 @@ impl Octree {
                 ),
             },
             voxel_data: VoxelData {
-                voxel_positions: helpers::generate_texture_buffer(
-                    size_of::<GLuint>() * number_of_voxel_fragments as usize, // TODO: Should be smaller
-                    gl::R32UI,
-                    64u32,
+                voxel_positions: BufferTextureV2::from_data(
+                    vec![0u32; number_of_voxel_fragments as usize], // TODO: Should be smaller
                 ),
                 number_of_voxel_fragments: 0, // Will be initialized empty later
                 voxel_colors: (0, 0),         // Will be initialized empty later
