@@ -212,6 +212,7 @@ impl Transform {
         scene_aabb: &Aabb,
         framebuffer: &Framebuffer<N>,
         shader: Option<Shader>,
+        voxel_dimension: u32, // TODO: Find another way. This breaks separation of concerns
     ) -> Textures<N> {
         let shader = if let Some(shader) = shader {
             shader
@@ -223,7 +224,7 @@ impl Transform {
         shader.set_mat4(c_str!("projection"), &projection);
         shader.set_mat4(c_str!("view"), &self.get_view_matrix());
         shader.set_mat4(c_str!("modelNormalizationMatrix"), &scene_aabb.normalization_matrix());
-        // shader.set_uint(c_str!("voxelDimension"), CONFIG.voxel_dimension);
+        shader.set_uint(c_str!("voxelDimension"), voxel_dimension);
 
         gl::BindFramebuffer(gl::FRAMEBUFFER, framebuffer.fbo());
         gl::Enable(gl::DEPTH_TEST);

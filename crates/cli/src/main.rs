@@ -215,6 +215,7 @@ fn main() {
                 &scene_aabb,
                 &camera_framebuffer,
                 None,
+                0,
             )
         };
 

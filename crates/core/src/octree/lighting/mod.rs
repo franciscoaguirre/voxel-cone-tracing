@@ -129,6 +129,8 @@ impl Octree {
     ) -> (GLuint, GLuint, GLuint) {
         let projection = light.get_projection_matrix();
 
+        let config = Config::instance();
+
         gl::CullFace(gl::FRONT);
         let light_map_buffers = light.transform.take_photo(
             objects,
@@ -136,6 +138,7 @@ impl Octree {
             scene_aabb,
             framebuffer,
             Some(self.renderer.light_view_map_shader),
+            config.voxel_dimension(),
         );
         gl::CullFace(gl::BACK);
 
