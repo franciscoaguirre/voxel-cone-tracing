@@ -223,7 +223,6 @@ impl Transform {
         shader.use_program();
         shader.set_mat4(c_str!("projection"), &projection);
         shader.set_mat4(c_str!("view"), &self.get_view_matrix());
-        shader.set_mat4(c_str!("modelNormalizationMatrix"), &scene_aabb.normalization_matrix());
         shader.set_uint(c_str!("voxelDimension"), voxel_dimension);
 
         gl::BindFramebuffer(gl::FRAMEBUFFER, framebuffer.fbo());

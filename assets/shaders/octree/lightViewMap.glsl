@@ -15,7 +15,7 @@ uniform mat4 projection;
 
 void main() {
     gl_Position = projection * view * modelNormalizationMatrix * model * vec4(position, 1.0);
-    Out.position = model * vec4(position, 1.0);
+    Out.position = modelNormalizationMatrix * model * vec4(position, 1.0);
 }
 
 #shader fragment
