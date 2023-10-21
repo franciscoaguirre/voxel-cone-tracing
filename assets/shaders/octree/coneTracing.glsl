@@ -111,7 +111,6 @@ void main() {
     }
 
     useLighting = true;
-
     vec3 indirectLight = vec3(0);
     if (shouldShowIndirect) {
         // We should pre-multiply by alpha probably? Instead of just ignoring it
@@ -233,8 +232,6 @@ vec4 gatherSpecularIndirectLight(vec3 position, vec3 eyeDirection, vec3 normal) 
 
 vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, bool useLighting) {
     float maxDistance = useLighting ? 1.0 : 0.01;
-    // float halfConeAngle = 0.261799;
-    //float halfConeAngle = 0.0001;
     vec3 bitangent = cross(normal, tangent);
     vec3 direction;
     vec4 indirectLight = vec4(0);
