@@ -24,7 +24,7 @@ impl ConeTracer {
     pub unsafe fn run(
         &self,
         light: &SpotLight,
-        cone_angle: f32,
+        half_cone_angle: f32,
         textures: &OctreeTextures,
         geometry_buffers: &Textures<GEOMETRY_BUFFERS>,
         light_maps: (u32, u32, u32),
@@ -84,7 +84,7 @@ impl ConeTracer {
             &light.get_projection_matrix(),
         );
         self.shader
-            .set_float(c_str!("coneAngle"), cone_angle as f32);
+            .set_float(c_str!("halfConeAngle"), half_cone_angle as f32);
         helpers::bind_image_texture(0, textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
 
         let brick_pool_textures = vec![

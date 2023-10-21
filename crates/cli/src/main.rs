@@ -296,7 +296,7 @@ fn main() {
             // Cone tracing
             should_show_debug_cone = outputs.9.show_debug_cone;
             should_move_debug_cone = outputs.9.move_debug_cone;
-            debug_cone.half_cone_angle = outputs.9.cone_angle_in_degrees.to_radians() / 2.0;
+            debug_cone.half_cone_angle = if outputs.9.cone_angle_in_degrees <= 1.0 { 30f32.to_radians() / 2.0 } else { outputs.9.cone_angle_in_degrees.to_radians() / 2.0 };
             debug_cone.number_of_cones = if outputs.9.number_of_cones == 0 { 1 } else { outputs.9.number_of_cones };
             debug_cone.max_distance = if outputs.9.max_distance == 0.0 { 0.1 } else { outputs.9.max_distance };
         }
@@ -417,7 +417,7 @@ fn main() {
                 render_model_shader.use_program();
                 render_model_shader.set_mat4(c_str!("projection"), &projection);
                 render_model_shader.set_mat4(c_str!("view"), &view);
-                // Model gets set in the draw call
+                // Model and model normalization matrix get set in the draw call
                 for object in objects.iter_mut() {
                     object.draw(&render_model_shader, &model_normalization_matrix);
                 }
