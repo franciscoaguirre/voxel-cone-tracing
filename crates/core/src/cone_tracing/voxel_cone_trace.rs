@@ -230,7 +230,7 @@ impl ConeTracer {
                 assert!(
                     result,
                     "Generated image is not the same as the one in `screenshots`.
-                    Make sure to update the screenshot with `--update-screenshot` if this was intended.
+                    Make sure to update the screenshot with `--update-screenshots` if this was intended.
                     If not, make sure to fix what you broke :)",
                 );
             }
