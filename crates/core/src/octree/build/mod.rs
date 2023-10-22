@@ -162,16 +162,18 @@ impl Octree {
                 voxel_data: voxel_data.clone(),
                 node_pool: BufferTextureV2::from_texture_and_buffer(self.textures.node_pool),
             };
+            let allocate_nodes_input = AllocateNodesInput {
+                voxel_data: voxel_data.clone(),
+                allocated_nodes_counter,
+                first_node_in_level,
+                first_free_node: *first_free_node,
+                node_pool: BufferTextureV2::from_texture_and_buffer(self.textures.node_pool),
+            };
             self.builder
                 .flag_nodes_pass
                 .run(flag_nodes_input);
-            self.builder.allocate_nodes_pass.run(
-                &self.geometry_data.voxel_data, // TODO: Pass in the actual number of nodes
-                &self.textures,
-                allocated_nodes_counter,
-                first_node_in_level,
-                *first_free_node,
-            );
+            self.builder.allocate_nodes_pass.run(allocate_nodes_input);
+
             if let OctreeDataType::Border = octree_data_type {
                 let geometry_level_start_indices = helpers::get_values_from_texture_buffer(
                     self.geometry_data.node_data.level_start_indices.1,
@@ -181,13 +183,15 @@ impl Octree {
                 let geometry_first_node_in_level =
                     geometry_level_start_indices[octree_level as usize];
 
-                self.builder.allocate_nodes_pass.run(
-                    &self.geometry_data.voxel_data, // TODO: Pass in the actual number of nodes
-                    &self.textures,
+                let allocate_nodes_input = AllocateNodesInput {
+                    voxel_data: self.border_data.voxel_data.clone(),
                     allocated_nodes_counter,
-                    geometry_first_node_in_level as i32,
-                    *first_free_node,
-                );
+                    first_node_in_level: geometry_first_node_in_level as i32,
+                    first_free_node: *first_free_node,
+                    node_pool: BufferTextureV2::from_texture_and_buffer(self.textures.node_pool),
+                };
+
+                self.builder.allocate_nodes_pass.run(allocate_nodes_input);
             }
 
             let nodes_allocated = helpers::get_value_from_atomic_counter(allocated_nodes_counter);
