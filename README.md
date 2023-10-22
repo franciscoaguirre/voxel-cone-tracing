@@ -2,11 +2,32 @@
 
 Voxel Cone Tracing implementation
 
-## Tests
+## Testing
+
+### Unit tests
 
 To run the tests, do `cargo test -- --test-threads 1`.
 Because all tests initialize an OpenGL context, that gets cleaned up at the end of the test,
 they can't run concurrently.
+
+### Visual tests
+
+Screenshots are stored in the root `screenshots` directory.
+The `--visual-tests` flag runs the program headless and draws the output to a framebuffer.
+This framebuffer is then compared to the stored screenshot with the name of the preset that was used.
+This means the following command will compare the output to the file `screenshots/cornell-box-diffuse.png`:
+
+```bash
+cargo run -- --scene cornell-box --preset cornell-box-diffuse --visual-tests
+```
+
+In the case you actually want to override the screenshot, you should also add the `--update-screenshots` flag:
+
+```bash
+cargo run -- --scene cornell-box --preset cornell-box-diffuse --visual-tests --update-screenshots
+```
+
+This flag also works when you want to create a screenshot of a new preset that doesn't have one yet.
 
 ## Process
 
