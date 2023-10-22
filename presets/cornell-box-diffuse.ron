@@ -45,7 +45,7 @@
                 toggles: (
                     should_show_color: true,
                     should_show_direct: true,
-                    should_show_indirect: false,
+                    should_show_indirect: true,
                     should_show_indirect_specular: false,
                     should_show_ambient_occlusion: false,
                 ),
@@ -55,15 +55,32 @@
             is_showing: false,
         ),
         save_preset: (
-            name: "windows-direct",
+            name: "cornell-box-diffuse",
+            is_showing: true,
+        ),
+        camera: (
+            is_showing: false,
+            output: (
+                orthographic: false,
+            ),
+        ),
+        cone_tracing: (
+            is_showing: false,
+            output: (
+                show_debug_cone: false,
+                move_debug_cone: false,
+                cone_angle_in_degrees: 0.0,
+                number_of_cones: 0,
+                max_distance: 0.0,
+            ),
         ),
     ),
     camera: (
         transform: (
             position: (
-                x: -0.7188971,
-                y: -0.008542735,
-                z: 0.24826172,
+                x: -0.011399127,
+                y: 0.24242206,
+                z: -2.195616,
             ),
             scale: (
                 x: 1.0,
@@ -71,12 +88,13 @@
                 z: 1.0,
             ),
             rotation: (
-                x: -8.9,
-                y: -9.0999565,
+                x: -0.29999962,
+                y: 89.10003,
                 z: 0.0,
             ),
             movement_speed: 1.0,
         ),
+        orthographic: false,
         movement_speed: 1.0,
         mouse_sensitivity: 0.1,
         zoom: 45.0,

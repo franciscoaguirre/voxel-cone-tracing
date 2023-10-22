@@ -23,7 +23,7 @@ unsafe fn set_window(window: Window) {
     *WINDOW.borrow_mut() = Some(window);
 }
 
-pub unsafe fn setup_glfw(viewport_width: i32, viewport_height: i32, debug: bool) -> (Glfw, Receiver<(f64, WindowEvent)>) {
+pub unsafe fn setup_glfw(viewport_width: i32, viewport_height: i32, debug: bool, headless: bool) -> (Glfw, Receiver<(f64, WindowEvent)>) {
     // GLFW: Setup
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
     glfw.window_hint(glfw::WindowHint::ContextVersion(4, 6));
@@ -31,6 +31,7 @@ pub unsafe fn setup_glfw(viewport_width: i32, viewport_height: i32, debug: bool)
         glfw::OpenGlProfileHint::Core,
     ));
     glfw.window_hint(glfw::WindowHint::OpenGlDebugContext(debug));
+    glfw.window_hint(glfw::WindowHint::Visible(!headless));
 
     // GLFW: Window creation
     let (mut window, events) = glfw

@@ -26,6 +26,24 @@ pub struct SubMenus {
     cone_tracing: ConeTracingMenu,
 }
 
+impl SubMenus {
+    /// Returns whether any submenu is showing right now.
+    /// Used to determine whether or not the menu itself should be visible
+    /// after loading a preset.
+    /// We're purposely leaving out `diagnostics` since it's always open and
+    /// `save_preset` since it'll always be open on a preset, unless manually edited.
+    pub fn any_showing(&self) -> bool {
+        self.all_nodes.is_showing()
+            || self.node_search.is_showing()
+            || self.bricks.is_showing()
+            || self.children.is_showing()
+            || self.images.is_showing()
+            || self.photons.is_showing()
+            || self.camera.is_showing()
+            || self.cone_tracing.is_showing()
+    }
+}
+
 type SubMenuInputs<'a> = (
     <AllNodesMenu as SubMenu>::InputData<'a>,
     <NodeSearchMenu as SubMenu>::InputData<'a>,
@@ -64,6 +82,9 @@ impl Menu {
 
     fn process_preset(&mut self, preset: Preset) {
         self.sub_menus = preset.submenus.clone();
+        if self.sub_menus.any_showing() {
+            self.toggle_showing(&mut 0.0, &mut 0.0);
+        }
     }
 
     pub fn toggle_showing(&mut self, last_x: &mut f32, last_y: &mut f32) {
@@ -187,6 +208,15 @@ impl Menu {
                 .clicked()
             {
                 self.sub_menus.images.toggle_showing();
+            }
+            if ui
+                .button(get_button_text(
+                    "Save Preset",
+                    self.sub_menus.save_preset.is_showing(),
+                ))
+                .clicked()
+            {
+                self.sub_menus.save_preset.toggle_showing();
             }
             if ui
                 .button(get_button_text(

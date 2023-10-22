@@ -75,6 +75,7 @@ impl Config {
 mod tests {
     use super::*;
 
+    // TODO: Fix, the `should_panic` is not working
     #[test]
     #[should_panic]
     fn uninitialized_config_should_panic() {

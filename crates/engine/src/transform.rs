@@ -204,7 +204,7 @@ impl Transform {
         // Not that relevant since it's debugging code.
     }
 
-    /// Creates geometry buffers from its POV of `objects`.
+    /// Writes to a framebuffer from the transform's POV of `objects`.
     pub unsafe fn take_photo<const N: usize>(
         &self,
         objects: &mut [Object],

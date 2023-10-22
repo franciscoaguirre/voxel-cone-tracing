@@ -36,6 +36,8 @@ use preset::PRESET;
 fn main() {
     simple_logger::init().unwrap();
 
+    let options = Options::from_args();
+
     // Load configuration file and set it up in core
     use std::fs::File;
     let file = File::open("config.ron").expect("Missing config file!");
@@ -54,7 +56,7 @@ fn main() {
     let mut last_frame: f64 = 0.0;
 
     let (viewport_width, viewport_height) = config.viewport_dimensions();
-    let (mut glfw, events) = unsafe { common::setup_glfw(viewport_width, viewport_height, debug) };
+    let (mut glfw, events) = unsafe { common::setup_glfw(viewport_width, viewport_height, debug, options.visual_tests) };
 
     // Camera setup
     let mut camera = PRESET.camera.clone();
@@ -91,7 +93,6 @@ fn main() {
     let mut cone_tracer = ConeTracer::init();
     let mut debug_cone = unsafe { DebugCone::new() };
 
-    let options = Options::from_args();
     let scene = scene::load_scene(&options.scene);
     let (mut objects, mut light) = process_scene(scene);
 
@@ -157,6 +158,9 @@ fn main() {
     };
     let quad = unsafe { Quad::new() };
     let camera_framebuffer = unsafe { GeometryFramebuffer::new() };
+
+    // Only used when taking a screenshot to compare
+    let final_image_framebuffer = unsafe { Framebuffer::<1>::new() };
 
     let mut current_voxel_fragment_count: u32 = 0;
     let mut current_octree_level: u32 = 0;
@@ -430,6 +434,11 @@ fn main() {
                 light_maps,
                 &quad,
                 &camera,
+                if options.visual_tests { Some((
+                    &options.preset,
+                    &final_image_framebuffer,
+                    options.update_screenshots,
+                )) } else { None },
             );
 
             if should_show_debug_cone {
@@ -472,5 +481,10 @@ fn main() {
         // Swap buffers and poll I/O events
         common::swap_buffers();
         glfw.poll_events();
+
+        // We only run once for visual tests
+        if options.visual_tests {
+            break;
+        }
     }
 }

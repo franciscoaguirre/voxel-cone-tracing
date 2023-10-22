@@ -9,6 +9,7 @@ use crate::menu::{SubMenus, Preset, save_preset};
 #[serde(default)]
 pub struct SavePresetMenu {
     name: String,
+    is_showing: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -28,16 +29,22 @@ impl<'a> SubMenu for SavePresetMenu {
     type OutputData = ();
 
     fn is_showing(&self) -> bool {
-        true
+        self.is_showing
     }
 
-    fn toggle_showing(&mut self) {}
+    fn toggle_showing(&mut self) {
+        self.is_showing = !self.is_showing;
+    }
 
     fn get_data(&self) -> &Self::OutputData {
         &()
     }
 
     fn render<'b>(&mut self, context: &egui::Context, input: &Self::InputData<'b>) {
+        if !self.is_showing() {
+            return;
+        }
+
         egui::Window::new("Save Preset").show(context, |ui| {
             ui.text_edit_singleline(&mut self.name);
             if ui.button("Save").clicked() {

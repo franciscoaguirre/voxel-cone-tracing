@@ -30,6 +30,7 @@ impl ConeTracer {
         light_maps: (u32, u32, u32),
         quad: &Quad,
         camera: &Camera,
+        visual_tests_data: Option<(&str, &Framebuffer<1>, bool)>, // When specified, will write to a framebuffer instead of to screen, and save the image to disk
     ) {
         self.shader.use_program();
 
@@ -199,6 +200,13 @@ impl ConeTracer {
 
         let quad_vao = quad.get_vao();
         if self.toggles.should_show_final_image_quad() {
+            if let Some((_, framebuffer, _)) = visual_tests_data {
+                gl::BindFramebuffer(gl::FRAMEBUFFER, framebuffer.fbo());
+                gl::Enable(gl::DEPTH_TEST);
+                gl::ClearColor(0.0, 0.0, 0.0, 0.0);
+                gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
+                gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+            }
             gl::BindVertexArray(quad_vao);
             gl::DrawElements(
                 gl::TRIANGLES,
@@ -207,20 +215,26 @@ impl ConeTracer {
                 std::ptr::null(),
             );
             gl::BindVertexArray(0);
+            if let Some((_, framebuffer, _)) = visual_tests_data {
+                gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
+            }
         }
 
-        // let (debug, buffer) = helpers::generate_texture_buffer(100, gl::R32F, 69f32);
-        // helpers::bind_image_texture(4, debug, gl::WRITE_ONLY, gl::R32F);
-        // our_model.draw(&self.shader);
-        // let debug_values = helpers::get_values_from_texture_buffer(buffer, 100, 420f32);
-        // dbg!(&debug_values[..20]);
-
-        // Show normals
-        // render_normals_shader.use_program();
-        // render_normals_shader.set_mat4(c_str!("projection"), &projection);
-        // render_normals_shader.set_mat4(c_str!("view"), &view);
-        // render_normals_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
-        // our_model.draw(&render_normals_shader);
+        if let Some((filename, framebuffer, should_update)) = visual_tests_data {
+            let filepath = format!("screenshots/{filename}.png");
+            if should_update {
+                framebuffer.save_color_attachment_to_file(0, &filepath);
+            } else {
+                let result = framebuffer.compare_attachment_to_file(0, &filepath)
+                    .expect("Image not found for comparing. Generate it with `--update-sceenshots` first.");
+                assert!(
+                    result,
+                    "Generated image is not the same as the one in `screenshots`.
+                    Make sure to update the screenshot with `--update-screenshots` if this was intended.
+                    If not, make sure to fix what you broke :)",
+                );
+            }
+        }
     }
 }
 

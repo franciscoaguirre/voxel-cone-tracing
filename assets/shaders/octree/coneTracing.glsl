@@ -162,16 +162,6 @@ void main() {
     }
     
     outColor = vec4(finalImage.xyz, 1.0);
-    // FragColor = vec4(texture(texture_diffuse1, frag_textureCoordinates).xyz - vec3(AO), 1);
-    // outColor = vec4(vec3(ambientOcclusion), 1.0);
-    //outColor = vec4(1.0 - vec3(ambientOcclusion), 1.0);
-    // outColor = color * vec4(lightIntensity, 1.0);
-    // outColor = texture(gBufferColors, In.textureCoordinates);
-    // outColor = vec4(position, 1.0);
-    // outColor = vec4(normal, 1.0);
-    //outColor = vec4(indirectLight, 1.0);
-    //vec4 color = texture(texture_diffuse1, frag_textureCoordinates);
-    //FragColor = vec4(color.rgb * AO, color.a);
 }
 
 float SampleShadowMap(sampler2D shadowMap, vec2 coords, float currentDepth, float bias)
