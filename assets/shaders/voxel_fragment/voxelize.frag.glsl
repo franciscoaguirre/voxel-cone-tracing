@@ -20,6 +20,14 @@ layout(binding = 0, rgb10_a2ui) coherent uniform uimageBuffer voxelPositions;
 uniform layout(binding = 1, rgba8) imageBuffer voxelColors;
 uniform layout(binding = 2, rgba32f) imageBuffer voxelNormals;
 
+struct Material {
+    vec3 color;
+    float diffuse;
+    float specular;
+};
+uniform Material material;
+uniform bool hasMaterial;
+
 uniform vec3 fallbackColor;
 uniform vec3 materialDiffuse;
 uniform float shininess;
@@ -79,6 +87,8 @@ void storeVoxelFragment(uvec4 voxelCoordinates, uint fragmentListIndex) {
 
     if (hasTexture) {
       voxelColor = texture(textureDiffuse1, In.textureCoordinates);
+    } else if (hasMaterial) {
+      voxelColor = vec4(material.color, 1);
     } else if (hasDiffuse) {
       voxelColor = vec4(materialDiffuse, 1);
     } else {
