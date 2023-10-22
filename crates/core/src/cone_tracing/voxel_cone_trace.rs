@@ -30,6 +30,7 @@ impl ConeTracer {
         light_maps: (u32, u32, u32),
         quad: &Quad,
         camera: &Camera,
+        visual_tests_data: Option<(&str, &Framebuffer<1>, bool)>, // When specified, will write to a framebuffer instead of to screen, and save the image to disk
     ) {
         self.shader.use_program();
 
@@ -199,6 +200,13 @@ impl ConeTracer {
 
         let quad_vao = quad.get_vao();
         if self.toggles.should_show_final_image_quad() {
+            if let Some((_, framebuffer, _)) = visual_tests_data {
+                gl::BindFramebuffer(gl::FRAMEBUFFER, framebuffer.fbo());
+                gl::Enable(gl::DEPTH_TEST);
+                gl::ClearColor(0.0, 0.0, 0.0, 0.0);
+                gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
+                gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+            }
             gl::BindVertexArray(quad_vao);
             gl::DrawElements(
                 gl::TRIANGLES,
@@ -207,6 +215,20 @@ impl ConeTracer {
                 std::ptr::null(),
             );
             gl::BindVertexArray(0);
+            if let Some((_, framebuffer, _)) = visual_tests_data {
+                gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
+            }
+        }
+
+        if let Some((filename, framebuffer, should_update)) = visual_tests_data {
+            let filepath = format!("screenshots/{filename}.png");
+            if should_update {
+                framebuffer.save_color_attachment_to_file(&filepath, 0);
+            } else {
+                let result = framebuffer.compare_attachment_to_file(0, &filepath)
+                    .expect("Image not found for comparing. Generate it with `--update-sceenshots` first.");
+                assert!(result);
+            }
         }
 
         // let (debug, buffer) = helpers::generate_texture_buffer(100, gl::R32F, 69f32);
