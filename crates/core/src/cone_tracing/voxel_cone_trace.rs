@@ -223,26 +223,18 @@ impl ConeTracer {
         if let Some((filename, framebuffer, should_update)) = visual_tests_data {
             let filepath = format!("screenshots/{filename}.png");
             if should_update {
-                framebuffer.save_color_attachment_to_file(&filepath, 0);
+                framebuffer.save_color_attachment_to_file(0, &filepath);
             } else {
                 let result = framebuffer.compare_attachment_to_file(0, &filepath)
                     .expect("Image not found for comparing. Generate it with `--update-sceenshots` first.");
-                assert!(result);
+                assert!(
+                    result,
+                    "Generated image is not the same as the one in `screenshots`.
+                    Make sure to update the screenshot with `--update-screenshot` if this was intended.
+                    If not, make sure to fix what you broke :)",
+                );
             }
         }
-
-        // let (debug, buffer) = helpers::generate_texture_buffer(100, gl::R32F, 69f32);
-        // helpers::bind_image_texture(4, debug, gl::WRITE_ONLY, gl::R32F);
-        // our_model.draw(&self.shader);
-        // let debug_values = helpers::get_values_from_texture_buffer(buffer, 100, 420f32);
-        // dbg!(&debug_values[..20]);
-
-        // Show normals
-        // render_normals_shader.use_program();
-        // render_normals_shader.set_mat4(c_str!("projection"), &projection);
-        // render_normals_shader.set_mat4(c_str!("view"), &view);
-        // render_normals_shader.set_mat4(c_str!("model"), &model_normalization_matrix);
-        // our_model.draw(&render_normals_shader);
     }
 }
 

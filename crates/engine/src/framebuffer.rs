@@ -527,7 +527,7 @@ impl<const N: usize> Framebuffer<N> {
 
     /// Saves the color attachment with index `attachment_index` of the current framebuffer
     /// to an image with the name `filename`
-    pub fn save_color_attachment_to_file(&self, filepath: &str, attachment_index: usize) {
+    pub fn save_color_attachment_to_file(&self, attachment_index: usize, filepath: &str) {
         let image = self.get_image_from_attachment(attachment_index);
         image.save(filepath).expect("Failed to save the image");
     }
@@ -538,7 +538,7 @@ impl<const N: usize> Framebuffer<N> {
     pub fn compare_attachment_to_file(&self, attachment_index: usize, file_to_compare: &str) -> Result<bool, ()> {
         let image = self.get_image_from_attachment(attachment_index);
         let image_to_compare = image::open(file_to_compare)
-            .map_err(|_| ())?; // We know what this error means
+            .map_err(|_| ())?; // We know this error has something to do with creating the file. We'll handle it outside.
 
         // Ensure the two images have the same dimensions
         let (width_1, height_1) = image.dimensions();
