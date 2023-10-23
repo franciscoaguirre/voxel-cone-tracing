@@ -95,7 +95,7 @@ mod tests {
             // Initialize everything
             Config::initialize_test_sensitive(Config::new(voxel_dimension_exponent), true);
             let allocate_nodes_pass = AllocateNodesPass::init();
-            let mut allocations: Vec<u32> = vec!();
+            let mut allocations: Vec<u32> = vec![];
 
             for TestCase { input, expected_output, description } in test_data.iter() {
                 // Run the shader
