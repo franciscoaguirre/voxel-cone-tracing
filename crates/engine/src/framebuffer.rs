@@ -336,21 +336,22 @@ impl Framebuffer<LIGHT_MAP_BUFFERS> {
 
         let (width, height) = common::get_framebuffer_size();
 
-        gl::BindTexture(gl::TEXTURE_2D, textures[0]);
-        gl::TexImage2D(
-            gl::TEXTURE_2D,
+        gl::BindTexture(gl::TEXTURE_2D_ARRAY, textures[0]);
+        gl::TexImage3D(
+            gl::TEXTURE_2D_ARRAY,
             0,
             gl::RGB10_A2UI as i32,
             width as i32,
             height as i32,
+            6, // Number of faces
             0,
             gl::RGBA_INTEGER,
             gl::UNSIGNED_INT_2_10_10_10_REV,
             std::ptr::null(),
         );
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
-        gl::BindTexture(gl::TEXTURE_2D, 0);
+        gl::TexParameteri(gl::TEXTURE_2D_ARRAY, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(gl::TEXTURE_2D_ARRAY, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+        gl::BindTexture(gl::TEXTURE_2D_ARRAY, 0);
         attachments.push(ColorAttachment {
             name: "positions".to_string(),
             texture_id: textures[0],
@@ -359,21 +360,22 @@ impl Framebuffer<LIGHT_MAP_BUFFERS> {
             format: gl::RGBA_INTEGER,
         });
 
-        gl::BindTexture(gl::TEXTURE_2D, textures[1]);
-        gl::TexImage2D(
-            gl::TEXTURE_2D,
+        gl::BindTexture(gl::TEXTURE_2D_ARRAY, textures[1]);
+        gl::TexImage3D(
+            gl::TEXTURE_2D_ARRAY,
             0,
             gl::RGBA8 as i32,
             width as i32,
             height as i32,
+            6, // Number of faces
             0,
             gl::RGBA,
             gl::UNSIGNED_BYTE,
             std::ptr::null(),
         );
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
-        gl::BindTexture(gl::TEXTURE_2D, 0);
+        gl::TexParameteri(gl::TEXTURE_2D_ARRAY, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(gl::TEXTURE_2D_ARRAY, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+        gl::BindTexture(gl::TEXTURE_2D_ARRAY, 0);
         attachments.push(ColorAttachment {
             name: "normalized_positions".to_string(),
             texture_id: textures[1],
@@ -382,37 +384,38 @@ impl Framebuffer<LIGHT_MAP_BUFFERS> {
             format: gl::RGBA,
         });
 
-        gl::BindTexture(gl::TEXTURE_2D, textures[2]);
-        gl::TexImage2D(
-            gl::TEXTURE_2D,
+        gl::BindTexture(gl::TEXTURE_2D_ARRAY, textures[2]);
+        gl::TexImage3D(
+            gl::TEXTURE_2D_ARRAY,
             0,
             gl::DEPTH_COMPONENT as i32,
             width as i32,
             height as i32,
+            6, // Number of faces
             0,
             gl::DEPTH_COMPONENT,
             gl::FLOAT,
             std::ptr::null(),
         );
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(gl::TEXTURE_2D_ARRAY, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(gl::TEXTURE_2D_ARRAY, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
         gl::TexParameteri(
-            gl::TEXTURE_2D,
+            gl::TEXTURE_2D_ARRAY,
             gl::TEXTURE_WRAP_S,
             gl::CLAMP_TO_BORDER as i32,
         );
         gl::TexParameteri(
-            gl::TEXTURE_2D,
+            gl::TEXTURE_2D_ARRAY,
             gl::TEXTURE_WRAP_T,
             gl::CLAMP_TO_BORDER as i32,
         );
         let border_color = [1.0f32; 4];
         gl::TexParameterfv(
-            gl::TEXTURE_2D,
+            gl::TEXTURE_2D_ARRAY,
             gl::TEXTURE_BORDER_COLOR,
             border_color.as_ptr(),
         );
-        gl::BindTexture(gl::TEXTURE_2D, 0);
+        gl::BindTexture(gl::TEXTURE_2D_ARRAY, 0);
         // TODO: Deal with this better
         attachments.push(ColorAttachment {
             name: "depth".to_string(),
@@ -422,44 +425,22 @@ impl Framebuffer<LIGHT_MAP_BUFFERS> {
             format: gl::DEPTH_COMPONENT,
         });
 
-        gl::FramebufferTexture2D(
-            gl::FRAMEBUFFER,
-            gl::DEPTH_ATTACHMENT,
-            gl::TEXTURE_2D,
-            textures[2],
-            0,
-        );
-
-        // let (width, height) = common::get_framebuffer_size();
-        // let mut rbo = 0;
-        // gl::GenRenderbuffers(1, &mut rbo);
-        // gl::BindRenderbuffer(gl::RENDERBUFFER, rbo);
-        // gl::RenderbufferStorage(
-        //     gl::RENDERBUFFER,
-        //     gl::DEPTH24_STENCIL8,
-        //     width as i32,
-        //     height as i32,
-        // );
-        // gl::FramebufferRenderbuffer(
-        //     gl::FRAMEBUFFER,
-        //     gl::DEPTH_STENCIL_ATTACHMENT,
-        //     gl::RENDERBUFFER,
-        //     rbo,
-        // );
-        // gl::BindRenderbuffer(gl::RENDERBUFFER, 0);
-
-        gl::FramebufferTexture2D(
+        gl::FramebufferTexture(
             gl::FRAMEBUFFER,
             gl::COLOR_ATTACHMENT0,
-            gl::TEXTURE_2D,
             textures[0],
             0,
         );
-        gl::FramebufferTexture2D(
+        gl::FramebufferTexture(
             gl::FRAMEBUFFER,
             gl::COLOR_ATTACHMENT1,
-            gl::TEXTURE_2D,
             textures[1],
+            0,
+        );
+        gl::FramebufferTexture(
+            gl::FRAMEBUFFER,
+            gl::DEPTH_ATTACHMENT,
+            textures[2],
             0,
         );
 

@@ -40,7 +40,7 @@ impl ShaderPass for StorePhotons {
             .set_uint(c_str!("voxelDimension"), config.voxel_dimension());
 
         gl::ActiveTexture(gl::TEXTURE0);
-        gl::BindTexture(gl::TEXTURE_2D, input.light_view_map);
+        gl::BindTexture(gl::TEXTURE_2D_ARRAY, input.light_view_map);
         self.shader
             .set_int(c_str!("lightViewMap"), 0);
 
@@ -57,8 +57,8 @@ impl ShaderPass for StorePhotons {
         let (viewport_width, viewport_height) = config.viewport_dimensions();
 
         self.shader.dispatch_xyz(vec3(
-            (viewport_width as f32 / 32 as f32).ceil() as u32,
-            (viewport_height as f32 / 32 as f32).ceil() as u32,
+            (viewport_width as f32 / 12 as f32).ceil() as u32,
+            (viewport_height as f32 / 12 as f32).ceil() as u32,
             1,
         ));
         self.shader.wait();

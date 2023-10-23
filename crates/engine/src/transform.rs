@@ -220,10 +220,31 @@ impl Transform {
             self.view_map_shader
         };
 
+        // TODO: Same thing with separation of concerns, this should be in the
+        // light, given that shadow mapping is such a common thing.
+        // Although in our case it's a light view map with positions.
+        // So probably shadow map but with configurable parameters.
+        let shadow_matrices = vec![
+            projection * Matrix4::look_at_rh(self.position, self.position + vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0)),
+            projection * Matrix4::look_at_rh(self.position, self.position + vec3(-1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0)),
+            projection * Matrix4::look_at_rh(self.position, self.position + vec3(0.0, 1.0, 0.0), vec3(0.0, 0.0, 1.0)),
+            projection * Matrix4::look_at_rh(self.position, self.position + vec3(0.0, -1.0, 0.0), vec3(0.0, 0.0, 1.0)),
+            projection * Matrix4::look_at_rh(self.position, self.position + vec3(0.0, 0.0, 1.0), vec3(0.0, 1.0, 0.0)),
+            projection * Matrix4::look_at_rh(self.position, self.position + vec3(0.0, 0.0, -1.0), vec3(0.0, 1.0, 0.0)),
+        ];
+
         shader.use_program();
         shader.set_mat4(c_str!("projection"), &projection);
         shader.set_mat4(c_str!("view"), &self.get_view_matrix());
+        shader.set_mat4_array(c_str!("shadowMatrices"), shadow_matrices.iter().collect::<Vec<&Matrix4<f32>>>().as_slice());
         shader.set_uint(c_str!("voxelDimension"), voxel_dimension);
+        shader.set_vec3(
+            c_str!("lightPosition"),
+            self.position.x,
+            self.position.y,
+            self.position.z,
+        );
+        shader.set_float(c_str!("farPlane"), 3.0);
 
         gl::BindFramebuffer(gl::FRAMEBUFFER, framebuffer.fbo());
         gl::Enable(gl::DEPTH_TEST);

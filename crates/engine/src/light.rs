@@ -1,14 +1,15 @@
 use std::{ffi::c_void, mem::size_of};
 
 use c_str_macro::c_str;
-use cgmath::{point3, Matrix4, Point3};
+use cgmath::{point3, Matrix4, Point3, Deg};
 use gl::types::GLuint;
 use serde::Deserialize;
 
 use super::{
     gizmo::RenderGizmo,
     shader::{Shader, compile_shaders},
-    transform::Transform
+    transform::Transform,
+    common,
 };
 
 #[derive(Debug, Deserialize, Clone)]
@@ -56,13 +57,21 @@ impl SpotLight {
     }
 
     pub fn get_projection_matrix(&self) -> Matrix4<f32> {
-        cgmath::ortho(
-            -self.width / 2.0,
-            self.width / 2.0,
-            -self.height / 2.0,
-            self.height / 2.0,
+        // cgmath::ortho(
+        //     -self.width / 2.0,
+        //     self.width / 2.0,
+        //     -self.height / 2.0,
+        //     self.height / 2.0,
+        //     0.0,
+        //     2.0,
+        // )
+
+        let (width, height) = unsafe { common::get_framebuffer_size() };
+        cgmath::perspective(
+            Deg(90.0),
+            width as f32 / height as f32,
             0.0001,
-            3.0,
+            1000000.0,
         )
     }
 

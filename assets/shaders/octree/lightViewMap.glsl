@@ -4,18 +4,36 @@
 
 layout (location = 0) in vec3 position;
 
-out VertexData {
+uniform mat4 model;
+uniform mat4 modelNormalizationMatrix;
+
+void main() {
+    gl_Position = modelNormalizationMatrix * model * vec4(position, 1.0);
+}
+
+#shader geometry
+
+#version 460 core
+
+layout (triangles) in;
+layout (triangle_strip, max_vertices=18) out;
+
+uniform mat4 shadowMatrices[6];
+
+out GeometryData {
     vec4 position;
 } Out;
 
-uniform mat4 model;
-uniform mat4 modelNormalizationMatrix;
-uniform mat4 view;
-uniform mat4 projection;
-
 void main() {
-    gl_Position = projection * view * modelNormalizationMatrix * model * vec4(position, 1.0);
-    Out.position = modelNormalizationMatrix * model * vec4(position, 1.0);
+    for (int face = 0; face < 6; face++) {
+        gl_Layer = face;
+        for (int i = 0; i < 3; i++) {
+            Out.position = gl_in[i].gl_Position;
+            gl_Position = shadowMatrices[face] * Out.position;
+            EmitVertex();
+        }
+        EndPrimitive();
+    }
 }
 
 #shader fragment
@@ -25,11 +43,13 @@ void main() {
 layout (location = 0) out uvec4 viewMapPositions;
 layout (location = 1) out vec4 viewMapViewOutput;
 
-in VertexData {
+in GeometryData {
     vec4 position;
 } In;
 
 uniform uint voxelDimension;
+uniform vec3 lightPosition;
+uniform float farPlane;
 
 void main() {
     vec4 normalizedGlobalPosition = vec4(
@@ -42,4 +62,8 @@ void main() {
     
     viewMapPositions = uvec4(unnormalizedGlobalPosition, 1.0);
     viewMapViewOutput = normalizedGlobalPosition;
+
+    float lightDistance = length(In.position.xyz - lightPosition);
+    lightDistance = lightDistance / farPlane;
+    gl_FragDepth = lightDistance;
 }

@@ -10,7 +10,10 @@ uniform layout(binding = 1, r32ui) uimage3D photonValues;
 uniform layout(binding = 2, r32ui) uimageBuffer nodePool;
 uniform layout(binding = 3, r32ui) uimageBuffer levelStartIndices;
 
-uniform usampler2D lightViewMap;
+// TODO: Not being used right now.
+// When we do use it, we need to probably add 6 z threads to each working group
+// to handle all the faces in the texture array.
+uniform usampler2DArray lightViewMap;
 
 uniform uint axis;
 uniform uint octreeLevel;
