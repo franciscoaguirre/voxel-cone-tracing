@@ -70,7 +70,6 @@ uniform sampler3D brickPoolIrradianceZNeg;
 uniform sampler2D gBufferColors;
 uniform sampler2D gBufferPositions;
 uniform sampler2D gBufferNormals;
-uniform sampler2D shadowMap;
 uniform sampler2D gBufferSpeculars;
 
 #include "./_constants.glsl"
@@ -86,7 +85,6 @@ const float PI = 3.14159;
 
 vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, bool useLighting);
 vec4 gatherSpecularIndirectLight(vec3 position, vec3 eyeDirection, vec3 normal);
-float visibilityCalculation(vec4 positionInLightSpace, vec3 normal);
 
 void main() {
     vec3 positionRaw = texture(gBufferPositions, In.textureCoordinates).xyz;
@@ -125,7 +123,6 @@ void main() {
     }
 
     vec4 positionInLightSpace = lightProjectionMatrix * lightViewMatrix * vec4(positionRaw, 1.0);
-    float visibility = visibilityCalculation(positionInLightSpace, normal);
 
     float diffuse = max(0.0, dot(lightDirection, normal));
     // float h = normalize((lightDirection - view);
@@ -146,7 +143,7 @@ void main() {
     }
 
     if (shouldShowDirect) {
-        finalImage += vec4(visibility * directLight, 1.0);
+        finalImage += vec4(directLight, 1.0);
     }
     if (shouldShowIndirect) {
         finalImage += vec4(indirectLight, 1.0);
@@ -162,52 +159,6 @@ void main() {
     }
     
     outColor = vec4(finalImage.xyz, 1.0);
-}
-
-float SampleShadowMap(sampler2D shadowMap, vec2 coords, float currentDepth, float bias)
-{
-    float pcfDepth = texture(shadowMap, coords).r;
-    float shadow = (currentDepth - bias) > pcfDepth ? 1.0 : 0.0;
-    return shadow;
-}
-
-float SampleShadowMapLinear(sampler2D shadowMap, vec2 coords, float currentDepth, vec2 texelSize, float bias)
-{
-	vec2 pixelPos = coords/texelSize + vec2(0.5);
-	vec2 fracPart = fract(pixelPos);
-	vec2 startTexel = (pixelPos - fracPart) * texelSize;
-
-	float blTexel = SampleShadowMap(shadowMap, startTexel, currentDepth, bias);
-	float brTexel = SampleShadowMap(shadowMap, startTexel + vec2(texelSize.x, 0.0), currentDepth, bias);
-	float tlTexel = SampleShadowMap(shadowMap, startTexel + vec2(0.0, texelSize.y), currentDepth, bias);
-	float trTexel = SampleShadowMap(shadowMap, startTexel + texelSize, currentDepth, bias);
-
-	float mixA = mix(blTexel, tlTexel, fracPart.y);
-	float mixB = mix(brTexel, trTexel, fracPart.y);
-
-	return mix(mixA, mixB, fracPart.x);
-}
-
-float visibilityCalculation(vec4 positionInLightSpace, vec3 normal) {
-    vec3 projectedPosition = positionInLightSpace.xyz / positionInLightSpace.w;
-
-    projectedPosition = projectedPosition * 0.5 + 0.5;
-    float closestDepth = texture(shadowMap, projectedPosition.xy).r;
-    float currentDepth = projectedPosition.z;
-    float bias = max(0.01 * (1.0 - dot(normal, lightDirection)), 0.003);
-    float shadow = 0.0;
-    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
-    for (int x = -2; x <= 2; x++) {
-        for (int y = -2; y <= 2; y++) {
-            float partialShadow = SampleShadowMapLinear(shadowMap, projectedPosition.xy + vec2(x, y) * texelSize, currentDepth, texelSize, bias);
-            shadow += partialShadow;
-        }
-    }
-    shadow /= 25.0;
-    if (projectedPosition.z > 1.0) {
-        shadow = 0.0;
-    }
-    return 1.0 - shadow;
 }
 
 vec4 gatherSpecularIndirectLight(vec3 position, vec3 eyeDirection, vec3 normal) {

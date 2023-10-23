@@ -2,14 +2,14 @@
 
 #include "./_constants.glsl"
 
-layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+layout (local_size_x = 12, local_size_y = 12, local_size_z = 6) in;
 
 uniform layout(binding = 0, rgba8) writeonly image3D brickPoolIrradiance;
 uniform layout(binding = 1, r32ui) readonly uimageBuffer nodePool;
 
 uniform sampler3D brickPoolColors;
 uniform usampler3D brickPoolPhotons;
-uniform usampler2D lightViewMap;
+uniform usampler2DArray lightViewMap;
 
 uniform uint voxelDimension;
 uniform uint octreeLevel;
@@ -22,7 +22,7 @@ uniform uint octreeLevel;
 void main() {
     uvec3 queryCoordinates = texelFetch(
         lightViewMap,
-        ivec2(gl_GlobalInvocationID.xy),
+        ivec3(gl_GlobalInvocationID.xy, gl_LocalInvocationID.z),
         0
     ).xyz;
     if (queryCoordinates == uvec3(0)) {
