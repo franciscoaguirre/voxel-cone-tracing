@@ -2,6 +2,20 @@
 
 Voxel Cone Tracing implementation
 
+## Latest screenshots
+
+### Indirect light
+
+![Indirect light in cornell box](./screenshots/cornell-box-diffuse.png)
+
+![Indirect light in sponza](./screenshots/sponza-windows-diffuse.png)
+
+### Ambient occlusion
+
+![Ambient occlusion in cornell box](./screenshots/cornell-box-ao.png)
+
+![Ambient occlusion in sponza](./screenshots/sponza-ao.png)
+
 ## Testing
 
 ### Unit tests
