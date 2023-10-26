@@ -37,7 +37,7 @@ impl BorderTransferPass {
             .set_uint(c_str!("voxelDimension"), config.voxel_dimension());
 
         gl::ActiveTexture(gl::TEXTURE0);
-        gl::BindTexture(gl::TEXTURE_2D, self.light_view_map);
+        gl::BindTexture(gl::TEXTURE_2D_ARRAY, self.light_view_map);
         self.shader.set_int(c_str!("lightViewMap"), 0);
 
         helpers::bind_3d_image_texture(1, textures.brick_pool_photons, gl::READ_WRITE, gl::R32UI);

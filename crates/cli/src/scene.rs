@@ -8,7 +8,7 @@ pub fn load_scene(file_name: &str) -> Scene {
     let file = File::open(&input_path).expect("Missing scene file!");
     let mut scene: Scene = ron::de::from_reader(file).expect("Scene file malformed!");
     unsafe {
-        scene.light.transform.update_vectors();
+        scene.light.transform_mut().update_vectors();
     }
     scene
 }

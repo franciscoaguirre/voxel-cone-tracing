@@ -23,7 +23,7 @@ impl ConeTracer {
 
     pub unsafe fn run(
         &self,
-        light: &SpotLight,
+        light: &Light,
         half_cone_angle: f32,
         textures: &OctreeTextures,
         geometry_buffers: &Textures<GEOMETRY_BUFFERS>,
@@ -64,10 +64,11 @@ impl ConeTracer {
             camera.transform.position.y,
             camera.transform.position.z,
         );
+        // TODO: This is the direction of the light??
         let light_direction = vec3(
-            light.transform.position.x,
-            light.transform.position.y,
-            light.transform.position.z,
+            light.transform().position.x,
+            light.transform().position.y,
+            light.transform().position.z,
         );
         self.shader.set_vec3(
             c_str!("lightDirection"),
@@ -78,7 +79,7 @@ impl ConeTracer {
         self.shader.set_float(c_str!("shininess"), 30.0);
         self.shader.set_mat4(
             c_str!("lightViewMatrix"),
-            &light.transform.get_view_matrix(),
+            &light.transform().get_view_matrix(),
         );
         self.shader.set_mat4(
             c_str!("lightProjectionMatrix"),
@@ -189,7 +190,11 @@ impl ConeTracer {
             texture_counter += 1;
         }
 
+        self.shader.set_bool(c_str!("isDirectional"), light.is_directional());
         gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
+        // TODO: This is causing an `INVALID_OPERATION` error when using point lights
+        // since in that case it's not a `TEXTURE_2D`.
+        // We should remove this anyway once we have shadow cones, solving the error.
         gl::BindTexture(gl::TEXTURE_2D, light_maps.2);
         self.shader
             .set_int(c_str!("shadowMap"), texture_counter as i32);

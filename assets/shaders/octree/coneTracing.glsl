@@ -33,6 +33,7 @@ uniform layout(binding = 0, r32ui) readonly uimageBuffer nodePool;
 uniform uint voxelDimension;
 uniform uint maxOctreeLevel;
 uniform vec3 lightDirection;
+uniform bool isDirectional;
 uniform float shininess;
 uniform mat4 lightViewMatrix;
 uniform mat4 lightProjectionMatrix;
@@ -125,7 +126,10 @@ void main() {
     }
 
     vec4 positionInLightSpace = lightProjectionMatrix * lightViewMatrix * vec4(positionRaw, 1.0);
-    float visibility = visibilityCalculation(positionInLightSpace, normal);
+    float visibility = 1.0;
+    if (isDirectional) {
+        visibility = visibilityCalculation(positionInLightSpace, normal);
+    }
 
     float diffuse = max(0.0, dot(lightDirection, normal));
     // float h = normalize((lightDirection - view);

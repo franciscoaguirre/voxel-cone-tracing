@@ -9,13 +9,15 @@ use crate::{
 };
 
 pub struct PhotonsToIrradiance {
-    shader: Shader,
+    directional_shader: Shader,
+    point_shader: Shader,
 }
 
 impl PhotonsToIrradiance {
     pub fn init() -> Self {
         Self {
-            shader: compile_compute!("assets/shaders/octree/photonsToIrradiance.comp.glsl"),
+            directional_shader: compile_compute!("assets/shaders/octree/photonsToIrradianceDirectional.comp.glsl"),
+            point_shader: compile_compute!("assets/shaders/octree/photonsToIrradiancePoint.comp.glsl"),
         }
     }
 }
@@ -26,33 +28,34 @@ pub struct PhotonsToIrradianceInput {
     pub brick_pool_photons: Texture3D,
     pub brick_pool_irradiance_last_level: Texture3D,
     pub light_view_map: Texture2D,
+    pub is_directional: bool,
 }
 
 impl ShaderPass for PhotonsToIrradiance {
     type Input<'a> = PhotonsToIrradianceInput;
 
     unsafe fn run(&self, input: Self::Input<'_>) {
-        self.shader.use_program();
-
+        let shader = if input.is_directional { self.directional_shader } else { self.point_shader };
         let config = Config::instance();
 
-        self.shader
+        shader.use_program();
+        shader
             .set_uint(c_str!("voxelDimension"), config.voxel_dimension());
-        self.shader
+        shader
             .set_uint(c_str!("octreeLevel"), config.last_octree_level());
-
         gl::ActiveTexture(gl::TEXTURE0);
         gl::BindTexture(gl::TEXTURE_3D, input.brick_pool_colors_last_level);
-        self.shader.set_int(c_str!("brickPoolColors"), 0);
-
+        shader.set_int(c_str!("brickPoolColors"), 0);
         gl::ActiveTexture(gl::TEXTURE1);
         gl::BindTexture(gl::TEXTURE_3D, input.brick_pool_photons);
-        self.shader.set_int(c_str!("brickPoolPhotons"), 1);
-
+        shader.set_int(c_str!("brickPoolPhotons"), 1);
         gl::ActiveTexture(gl::TEXTURE2);
-        gl::BindTexture(gl::TEXTURE_2D, input.light_view_map);
-        self.shader.set_int(c_str!("lightViewMap"), 2);
-
+        if input.is_directional {
+            gl::BindTexture(gl::TEXTURE_2D, input.light_view_map);
+        } else {
+            gl::BindTexture(gl::TEXTURE_2D_ARRAY, input.light_view_map);
+        }
+        shader.set_int(c_str!("lightViewMap"), 2);
         helpers::bind_3d_image_texture(
             0,
             input.brick_pool_irradiance_last_level,
@@ -62,13 +65,13 @@ impl ShaderPass for PhotonsToIrradiance {
         helpers::bind_image_texture(1, input.node_pool.0, gl::READ_ONLY, gl::R32UI);
 
         let (viewport_width, viewport_height) = config.viewport_dimensions();
-
-        self.shader.dispatch_xyz(vec3(
-            (viewport_width as f32 / 32 as f32).ceil() as u32,
-            (viewport_height as f32 / 32 as f32).ceil() as u32,
+        let local_group_size = if input.is_directional { 32 } else { 12 };
+        shader.dispatch_xyz(vec3(
+            (viewport_width as f32 / local_group_size as f32).ceil() as u32,
+            (viewport_height as f32 / local_group_size as f32).ceil() as u32,
             1,
         ));
-        self.shader.wait();
+        shader.wait();
     }
 }
 

@@ -9,6 +9,7 @@ uniform layout(binding = 1, r32ui) uimage3D brickPoolPhotons;
 uniform layout(binding = 2, r32ui) uimageBuffer totalPhotonHits;
 
 uniform usampler2D lightViewMap;
+
 uniform uint octreeLevel;
 uniform uint voxelDimension;
 
@@ -21,7 +22,7 @@ void main() {
     uvec3 queryCoordinates = texelFetch(
         lightViewMap,
         ivec2(gl_GlobalInvocationID.xy),
-        0
+        0 // Mipmap level is always 0
     ).xyz;
 
     if (queryCoordinates == uvec3(0)) {

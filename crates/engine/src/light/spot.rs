@@ -1,14 +1,19 @@
 use std::{ffi::c_void, mem::size_of};
 
 use c_str_macro::c_str;
-use cgmath::{point3, Matrix4, Point3};
+use cgmath::{point3, Matrix4, Point3, Deg};
 use gl::types::GLuint;
 use serde::Deserialize;
 
-use super::{
+use crate::{
     gizmo::RenderGizmo,
     shader::{Shader, compile_shaders},
-    transform::Transform
+    transform::Transform,
+    common,
+    framebuffer::{LIGHT_MAP_BUFFERS, LightFramebuffer},
+    types::Textures,
+    aabb::Aabb,
+    object::Object,
 };
 
 #[derive(Debug, Deserialize, Clone)]
@@ -19,22 +24,30 @@ pub struct SpotLight {
     width: f32,
     height: f32,
     color: Point3<f32>,
-    #[serde(skip_deserializing, default = "default_gizmo_shader")]
+    #[serde(skip_deserializing, default = "gizmo_shader")]
     shader: Shader,
     #[serde(skip_deserializing)]
     vao: GLuint,
+    #[serde(skip_deserializing)]
+    light_map_shader: Shader,
+    #[serde(skip_deserializing)]
+    framebuffer: LightFramebuffer,
 }
 
 impl Default for SpotLight {
     fn default() -> Self {
-        let mut light = Self {
-            width: 2.0,
-            height: 2.0,
-            transform: Transform::default(),
-            intensity: 1_000_000.0,
-            color: point3(1.0, 1.0, 1.0),
-            vao: 0,
-            shader: default_gizmo_shader(),
+        let mut light = unsafe {
+            Self {
+                width: 2.0,
+                height: 2.0,
+                transform: Transform::default(),
+                intensity: 1_000_000.0,
+                color: point3(1.0, 1.0, 1.0),
+                vao: 0,
+                shader: gizmo_shader(),
+                light_map_shader: light_map_shader(),
+                framebuffer: LightFramebuffer::new_directional(),
+            }
         };
         unsafe {
             light.setup_vao();
@@ -61,8 +74,8 @@ impl SpotLight {
             self.width / 2.0,
             -self.height / 2.0,
             self.height / 2.0,
-            0.0001,
-            3.0,
+            0.0,
+            2.0,
         )
     }
 
@@ -91,13 +104,50 @@ impl SpotLight {
         // in the geometry shader. Will speed things up a lot.
         // Not that relevant since it's debugging code.
     }
+
+    pub unsafe fn take_photo(
+        &self,
+        objects: &mut [Object],
+        scene_aabb: &Aabb,
+        voxel_dimension: u32, // TODO: Find another way. This breaks separation of concerns
+    ) -> Textures<LIGHT_MAP_BUFFERS> {
+        let projection = self.get_projection_matrix();
+        self.light_map_shader.use_program();
+        self.light_map_shader.set_mat4(c_str!("projection"), &projection);
+        self.light_map_shader.set_mat4(c_str!("view"), &self.transform.get_view_matrix());
+        self.light_map_shader.set_uint(c_str!("voxelDimension"), voxel_dimension);
+        self.light_map_shader.set_vec3(
+            c_str!("lightPosition"),
+            self.transform.position.x,
+            self.transform.position.y,
+            self.transform.position.z,
+        );
+
+        gl::BindFramebuffer(gl::FRAMEBUFFER, self.framebuffer.fbo());
+        gl::Enable(gl::DEPTH_TEST);
+        gl::ClearColor(0.0, 0.0, 0.0, 0.0);
+        gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
+        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+        for object in objects.iter_mut() {
+            object.draw(&self.light_map_shader, &scene_aabb.normalization_matrix());
+        }
+        gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
+
+        self.framebuffer.textures()
+    }
 }
 
-fn default_gizmo_shader() -> Shader {
+fn gizmo_shader() -> Shader {
     compile_shaders!(
         "assets/shaders/debug/gizmo.vert.glsl",
         "assets/shaders/debug/gizmo.frag.glsl",
         "assets/shaders/debug/gizmo.geom.glsl",
+    )
+}
+
+fn light_map_shader() -> Shader {
+    compile_shaders!(
+        "assets/shaders/octree/lightViewMapDirectional.glsl",
     )
 }
 

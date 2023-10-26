@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
 use crate::prelude::{
-    Object, SpotLight, Material, MaterialProperties, Model, AssetRegistry,
+    Object, Light, Material, MaterialProperties, Model, AssetRegistry,
 };
 
 #[derive(Deserialize)]
@@ -13,7 +13,7 @@ pub struct Scene {
     /// Materials to load in the `AssetsRegistry`
     pub materials: Vec<Material>,
     /// Light of the scene for both direct and indirect illumination
-    pub light: SpotLight,
+    pub light: Light,
 }
 
 #[derive(Debug, Deserialize)]
@@ -22,7 +22,7 @@ pub struct ModelInfo {
     pub path: String,
 }
 
-pub fn process_scene(scene: Scene) -> (Vec<Object>, SpotLight) {
+pub fn process_scene(scene: Scene) -> (Vec<Object>, Light) {
     let mut assets = unsafe { AssetRegistry::initialize(&scene) };
     (scene.objects, scene.light)
 }
@@ -63,7 +63,7 @@ mod tests {
                     },
                 },
             ],
-            light: SpotLight::default(),
+            light: Light::default(),
         }
     }
 

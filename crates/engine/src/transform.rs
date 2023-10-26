@@ -29,7 +29,7 @@ pub struct Transform {
     pub movement_speed: f32,
     #[serde(skip)]
     pub vao: GLuint,
-    #[serde(skip, default = "default_gizmo_shader")]
+    #[serde(skip, default = "gizmo_shader")]
     shader: Shader,
     #[serde(skip, default = "default_view_map_shader")]
     view_map_shader: Shader, // TODO: It's kind of ugly to store this here
@@ -70,7 +70,7 @@ impl Default for Transform {
             right: Vector3::zero(), // Initialized later
             vao: 0,                 // Initialized later
             movement_speed: 1.0,
-            shader: default_gizmo_shader(),
+            shader: gizmo_shader(),
             view_map_shader: default_view_map_shader(),
         };
         unsafe {
@@ -81,7 +81,7 @@ impl Default for Transform {
     }
 }
 
-fn default_gizmo_shader() -> Shader {
+fn gizmo_shader() -> Shader {
     compile_shaders!(
         "assets/shaders/debug/cubicGizmo.vert.glsl",
         "assets/shaders/debug/cubicGizmo.frag.glsl",
@@ -205,25 +205,19 @@ impl Transform {
     }
 
     /// Writes to a framebuffer from the transform's POV of `objects`.
+    /// Used to get geometry buffers
     pub unsafe fn take_photo<const N: usize>(
         &self,
         objects: &mut [Object],
         projection: &Matrix4<f32>,
         scene_aabb: &Aabb,
         framebuffer: &Framebuffer<N>,
-        shader: Option<Shader>,
         voxel_dimension: u32, // TODO: Find another way. This breaks separation of concerns
     ) -> Textures<N> {
-        let shader = if let Some(shader) = shader {
-            shader
-        } else {
-            self.view_map_shader
-        };
-
-        shader.use_program();
-        shader.set_mat4(c_str!("projection"), &projection);
-        shader.set_mat4(c_str!("view"), &self.get_view_matrix());
-        shader.set_uint(c_str!("voxelDimension"), voxel_dimension);
+        self.view_map_shader.use_program();
+        self.view_map_shader.set_mat4(c_str!("projection"), &projection);
+        self.view_map_shader.set_mat4(c_str!("view"), &self.get_view_matrix());
+        self.view_map_shader.set_uint(c_str!("voxelDimension"), voxel_dimension);
 
         gl::BindFramebuffer(gl::FRAMEBUFFER, framebuffer.fbo());
         gl::Enable(gl::DEPTH_TEST);
@@ -231,7 +225,7 @@ impl Transform {
         gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
         gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         for object in objects.iter_mut() {
-            object.draw(&shader, &scene_aabb.normalization_matrix());
+            object.draw(&self.view_map_shader, &scene_aabb.normalization_matrix());
         }
         gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
 
