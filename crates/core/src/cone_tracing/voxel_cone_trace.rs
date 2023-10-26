@@ -190,6 +190,19 @@ impl ConeTracer {
             texture_counter += 1;
         }
 
+        self.shader.set_bool(c_str!("isDirectional"), light.is_directional());
+        gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
+        // TODO: This is causing an `INVALID_OPERATION` error when using point lights
+        // since in that case it's not a `TEXTURE_2D`.
+        // We should remove this anyway once we have shadow cones, solving the error.
+        gl::BindTexture(gl::TEXTURE_2D, light_maps.2);
+        self.shader
+            .set_int(c_str!("shadowMap"), texture_counter as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+
         let quad_vao = quad.get_vao();
         if self.toggles.should_show_final_image_quad() {
             if let Some((_, framebuffer, _)) = visual_tests_data {
