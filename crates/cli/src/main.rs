@@ -147,13 +147,11 @@ fn main() {
     let mut photons: Vec<u32> = Vec::new();
     let mut children: Vec<u32> = Vec::new();
 
-    let light_framebuffer = unsafe { LightFramebuffer::new() };
     let mut light_maps = unsafe {
         octree.inject_light(
             &mut objects[..],
             &light,
             &scene_aabb,
-            &light_framebuffer,
         )
     };
     let quad = unsafe { Quad::new() };
@@ -192,7 +190,7 @@ fn main() {
     );
     let render_depth_buffer_shader = compile_shaders!("assets/shaders/renderDepthQuad.glsl");
 
-    let photon_power = light.intensity / (viewport_width * viewport_height) as f32;
+    let photon_power = light.intensity() / (viewport_width * viewport_height) as f32;
 
     let ui = Ui::instance();
 
@@ -218,7 +216,6 @@ fn main() {
                 &camera.get_projection_matrix(),
                 &scene_aabb,
                 &camera_framebuffer,
-                None,
                 0,
             )
         };
@@ -339,10 +336,9 @@ fn main() {
                         &mut objects[..],
                         &light,
                         &scene_aabb,
-                        &light_framebuffer,
                     )
                 };
-                &mut light.transform
+                light.transform_mut()
             } else if should_move_debug_cone {
                 &mut debug_cone.transform
             } else {

@@ -31,17 +31,17 @@ impl Octree {
     pub unsafe fn inject_light(
         &self,
         objects: &mut [Object],
-        light: &SpotLight,
+        light: &Light,
         scene_aabb: &Aabb,
-        framebuffer: &LightFramebuffer,
     ) -> (GLuint, GLuint, GLuint) {
         let (light_view_map, light_view_map_view, shadow_map) =
-            self.create_light_view_map(objects, light, scene_aabb, framebuffer);
+            self.create_light_view_map(objects, light, scene_aabb);
 
         let store_photons_input = StorePhotonsInput {
             light_view_map,
             node_pool: self.textures.node_pool,
             brick_pool_photons: self.textures.brick_pool_photons,
+            is_directional: light.is_directional(),
         };
         self.builder
             .store_photons
@@ -59,6 +59,7 @@ impl Octree {
             brick_pool_photons: self.textures.brick_pool_photons,
             brick_pool_irradiance_last_level: self.textures.brick_pool_irradiance[0],
             light_view_map,
+            is_directional: light.is_directional(),
         };
         self.builder
             .photons_to_irradiance_pass
@@ -123,21 +124,15 @@ impl Octree {
     unsafe fn create_light_view_map(
         &self,
         objects: &mut [Object],
-        light: &SpotLight,
+        light: &Light,
         scene_aabb: &Aabb,
-        framebuffer: &LightFramebuffer,
     ) -> (GLuint, GLuint, GLuint) {
-        let projection = light.get_projection_matrix();
-
         let config = Config::instance();
 
         gl::CullFace(gl::FRONT);
-        let light_map_buffers = light.transform.take_photo(
+        let light_map_buffers = light.take_photo(
             objects,
-            &projection,
             scene_aabb,
-            framebuffer,
-            Some(self.renderer.light_view_map_shader),
             config.voxel_dimension(),
         );
         gl::CullFace(gl::BACK);

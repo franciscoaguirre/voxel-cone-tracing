@@ -9,6 +9,8 @@ uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 model;
 
+uniform vec3 color = vec3(1);
+
 mat4 canonizationMatrix = projection * view * model;
 
 #include "assets/shaders/octree/_drawCube.glsl"
@@ -16,6 +18,5 @@ mat4 canonizationMatrix = projection * view * model;
 void main() {
     vec4 center = gl_in[0].gl_Position;
     float halfNodeSize = 0.01;
-    vec4 color = vec4(1);
-    drawCube(center, halfNodeSize, canonizationMatrix, color);
+    drawCube(center, halfNodeSize, canonizationMatrix, vec4(color, 1));
 }

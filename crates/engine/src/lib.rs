@@ -40,7 +40,7 @@ pub mod prelude {
             LightFramebuffer,
             LIGHT_MAP_BUFFERS,
         },
-        light::SpotLight,
+        light::Light,
         model::Model,
         material::{Material, MaterialProperties},
         scene::{Scene, process_scene},

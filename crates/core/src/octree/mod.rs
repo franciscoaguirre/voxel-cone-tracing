@@ -103,7 +103,6 @@ struct Renderer {
     get_children_shader: Shader,
     eye_ray_shader: Shader,
     get_colors_quad_shader: Shader,
-    light_view_map_shader: Shader,
 }
 
 struct Builder {
@@ -211,7 +210,6 @@ impl Octree {
             get_colors_quad_shader: compile_shaders!(
                 "assets/shaders/debug/debugInterpolation.glsl",
             ),
-            light_view_map_shader: compile_shaders!("assets/shaders/octree/lightViewMap.glsl"),
         };
         let builder = Builder {
             neighbor_pointers_pass: NeighborPointersPass::init(),
