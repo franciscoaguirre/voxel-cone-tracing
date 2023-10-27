@@ -15,6 +15,10 @@ uniform uint octreeLevel;
 #include "./_brickCoordinates.glsl"
 #include "./_threadNodeUtil.glsl"
 
+vec4 getFinalValue(vec4 value, vec4 neighborValue) {
+    return 0.5 * (value + neighborValue);
+}
+
 void main() {
     int nodeAddress = getThreadNode();
 
@@ -41,15 +45,7 @@ void main() {
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
                 memoryBarrier();
 
-                vec4 finalValue;
-                // We don't want border nodes to affect the geometry nodes' color
-                if (borderValue == vec4(0)) {
-                    finalValue = neighborBorderValue;
-                } else if (neighborBorderValue == vec4(0)) {
-                    finalValue = borderValue;
-                } else {
-                    finalValue = 0.5 * (borderValue + neighborBorderValue);
-                }
+                vec4 finalValue = getFinalValue(borderValue, neighborBorderValue);
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
             }
@@ -66,15 +62,7 @@ void main() {
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
                 memoryBarrier();
 
-                vec4 finalValue;
-                // We don't want border nodes to affect the geometry nodes' color
-                if (borderValue == vec4(0)) {
-                    finalValue = neighborBorderValue;
-                } else if (neighborBorderValue == vec4(0)) {
-                    finalValue = borderValue;
-                } else {
-                    finalValue = 0.5 * (borderValue + neighborBorderValue);
-                }
+                vec4 finalValue = getFinalValue(borderValue, neighborBorderValue);
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
             }
@@ -91,15 +79,7 @@ void main() {
                 vec4 neighborBorderValue = imageLoad(brickPoolValues, neighborBrickAddress + neighborOffset);
                 memoryBarrier();
 
-                vec4 finalValue;
-                // We don't want border nodes to affect the geometry nodes' color
-                if (borderValue == vec4(0)) {
-                    finalValue = neighborBorderValue;
-                } else if (neighborBorderValue == vec4(0)) {
-                    finalValue = borderValue;
-                } else {
-                    finalValue = 0.5 * (borderValue + neighborBorderValue);
-                }
+                vec4 finalValue = getFinalValue(borderValue, neighborBorderValue);
                 imageStore(brickPoolValues, brickAddress + offset, finalValue);
                 imageStore(brickPoolValues, neighborBrickAddress + neighborOffset, finalValue);
             }
