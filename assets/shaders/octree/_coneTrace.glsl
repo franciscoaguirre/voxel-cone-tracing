@@ -126,11 +126,7 @@ vec4 coneTrace(
         vec3 parentVoxelCoordinates = findVoxel(queryCoordinates, parentNode);
         vec4 childColor;
         vec4 parentColor;
-        if (octreeLevel == maxOctreeLevel) {
-            childColor = getLeafIrradiance(childVoxelCoordinates);
-        } else {
-            childColor = getAnisotropicIrradiance(childVoxelCoordinates, coneDirection);
-        }
+        childColor = getLeafColor(childVoxelCoordinates);
         #if debug
             int aux = 5;
             imageStore(sampledColor, steps * aux + 0 + 5, vec4(childColor.r, 0, 0, 0));
@@ -139,8 +135,7 @@ vec4 coneTrace(
             imageStore(sampledColor, steps * aux + 3 + 5, vec4(childColor.a, 0, 0, 0));
             imageStore(sampledColor, steps * aux + 4 + 5, vec4(octreeLevel, 0, 0, 0));
         #endif
-        parentColor = getAnisotropicIrradiance(parentVoxelCoordinates, coneDirection);
-        // parentColor = getLeafIrradiance(parentVoxelCoordinates);
+        parentColor = getLeafColor(parentVoxelCoordinates);
         vec4 newColor = mix(childColor, parentColor, parentWeight); // Quadrilinear interpolation
         newColor.rgb /= distanceFactor;
 
