@@ -55,10 +55,6 @@ impl Octree {
             .process_raw_brick_pool_colors
             .run(&self.geometry_data.node_data, &self.textures);
 
-        self.builder
-            .create_alpha_map
-            .run(&self.textures, &self.geometry_data.node_data);
-
         self.builder.spread_leaf_bricks_pass.run(
             &self.textures,
             &self.geometry_data.node_data,
