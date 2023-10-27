@@ -160,15 +160,15 @@ impl ConeTracer {
 
         let mut texture_counter = 0;
 
-        for &(texture_name, texture, sample_interpolation) in brick_pool_textures.iter() {
+        for &(texture_name, texture, _sample_interpolation) in brick_pool_textures.iter() {
             gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
             gl::BindTexture(gl::TEXTURE_3D, texture);
             self.shader.set_int(texture_name, texture_counter as i32);
             gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
             gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
             gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
-            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, sample_interpolation);
-            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, sample_interpolation);
+            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
             texture_counter += 1;
         }
 
