@@ -37,42 +37,6 @@ impl Octree {
         let (light_view_map, light_view_map_view, shadow_map) =
             self.create_light_view_map(objects, light, scene_aabb);
 
-        let store_photons_input = StorePhotonsInput {
-            light_view_map,
-            node_pool: self.textures.node_pool,
-            brick_pool_photons: self.textures.brick_pool_photons,
-            is_directional: light.is_directional(),
-        };
-        self.builder
-            .store_photons
-            .run(store_photons_input);
-
-        self.border_transfer(light_view_map);
-
-        let config = Config::instance();
-
-        self.copy_alpha_to_irradiance();
-
-        let photons_to_irradiance_input = PhotonsToIrradianceInput {
-            node_pool: self.textures.node_pool,
-            brick_pool_colors_last_level: self.textures.brick_pool_colors[0],
-            brick_pool_photons: self.textures.brick_pool_photons,
-            brick_pool_irradiance_last_level: self.textures.brick_pool_irradiance[0],
-            light_view_map,
-            is_directional: light.is_directional(),
-        };
-        self.builder
-            .photons_to_irradiance_pass
-            .run(photons_to_irradiance_input);
-
-        self.builder.spread_leaf_bricks_pass.run(
-            &self.textures,
-            &self.geometry_data.node_data,
-            BrickPoolValues::Irradiance,
-        );
-
-        self.run_mipmap(BrickPoolValues::Irradiance);
-
         (light_view_map, light_view_map_view, shadow_map)
     }
 
