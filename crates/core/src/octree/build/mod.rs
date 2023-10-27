@@ -65,12 +65,6 @@ impl Octree {
             BrickPoolValues::Colors,
         );
 
-        // self.builder.spread_leaf_bricks_pass.run(
-        //     &self.textures,
-        //     &self.geometry_data.node_data,
-        //     BrickPoolValues::Normals,
-        // );
-
         self.builder.leaf_border_transfer_pass.run(
             &self.textures,
             &self.geometry_data.node_data,
@@ -104,12 +98,6 @@ impl Octree {
                     brick_pool_values,
                 );
 
-                self.builder.mipmap_isotropic_pass.run(
-                    &self.textures,
-                    &self.geometry_data.node_data,
-                    level,
-                );
-
                 if level > 0 {
                     self.builder.anisotropic_border_transfer_pass.run(
                         &self.textures,
@@ -119,12 +107,6 @@ impl Octree {
                         brick_pool_values,
                         *direction,
                     );
-                    // self.builder.border_transfer_pass.run(
-                    //     &self.textures,
-                    //     &self.geometry_data.node_data,
-                    //     level,
-                    //     BrickPoolValues::Normals,
-                    // );
                 }
             }
         }
