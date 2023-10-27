@@ -24,6 +24,7 @@ impl LeafBorderTransferPass {
         geometry_node_data: &NodeData,
         border_node_data: &NodeData,
         brick_pool_values: BrickPoolValues,
+        octree_level: u32, // Not leaf anymore
     ) {
         self.shader.use_program();
 
@@ -39,18 +40,7 @@ impl LeafBorderTransferPass {
                 gl::READ_WRITE,
                 gl::RGBA8,
             ),
-            BrickPoolValues::Normals => helpers::bind_3d_image_texture(
-                1,
-                textures.brick_pool_normals,
-                gl::READ_WRITE,
-                gl::RGBA8,
-            ),
-            BrickPoolValues::Irradiance => helpers::bind_3d_image_texture(
-                1,
-                textures.brick_pool_irradiance[0], // We use +X texture for lower level
-                gl::READ_WRITE,
-                gl::RGBA8,
-            ),
+            _ => panic!("Not now"),
         }
 
         let geometry_nodes_in_level =

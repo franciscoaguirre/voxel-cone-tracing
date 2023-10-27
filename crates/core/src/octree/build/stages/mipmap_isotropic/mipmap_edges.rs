@@ -3,7 +3,7 @@ use engine::prelude::*;
 
 use crate::{
     config::Config,
-    octree::{NodeData, OctreeTextures},
+    octree::{NodeData, OctreeTextures, build::BrickPoolValues},
 };
 
 pub struct MipmapEdgesPass {
@@ -19,7 +19,13 @@ impl MipmapEdgesPass {
         }
     }
 
-    pub unsafe fn run(&self, textures: &OctreeTextures, node_data: &NodeData, level: u32) {
+    pub unsafe fn run(
+        &self,
+        textures: &OctreeTextures,
+        node_data: &NodeData,
+        level: u32,
+        brick_pool_values: BrickPoolValues,
+    ) {
         self.shader.use_program();
 
         let config = Config::instance();
@@ -28,8 +34,13 @@ impl MipmapEdgesPass {
         self.shader
             .set_uint(c_str!("voxelDimension"), config.voxel_dimension());
 
+        let mipmap_texture = match brick_pool_values {
+            BrickPoolValues::Colors => textures.brick_pool_colors[0],
+            _ => panic!("Not supported for now"),
+        };
+
         helpers::bind_image_texture(0, textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
-        helpers::bind_3d_image_texture(1, textures.brick_pool_normals, gl::READ_WRITE, gl::RGBA32F);
+        helpers::bind_3d_image_texture(1, mipmap_texture, gl::READ_WRITE, gl::RGBA8);
         helpers::bind_image_texture(2, node_data.level_start_indices.0, gl::READ_ONLY, gl::R32UI);
 
         let nodes_in_level = node_data.nodes_per_level[level as usize];

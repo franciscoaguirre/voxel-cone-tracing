@@ -65,49 +65,29 @@ impl Octree {
             BrickPoolValues::Colors,
         );
 
-        self.builder.leaf_border_transfer_pass.run(
-            &self.textures,
-            &self.geometry_data.node_data,
-            &self.border_data.node_data,
-            BrickPoolValues::Colors,
-        );
-
         #[cfg(debug_assertions)]
         self.run_mipmap(BrickPoolValues::Colors);
     }
 
     pub unsafe fn run_mipmap(&self, brick_pool_values: BrickPoolValues) {
-        let all_directions = vec![
-            Direction::new(Axis::X, Sign::Pos),
-            Direction::new(Axis::X, Sign::Neg),
-            Direction::new(Axis::Y, Sign::Pos),
-            Direction::new(Axis::Y, Sign::Neg),
-            Direction::new(Axis::Z, Sign::Pos),
-            Direction::new(Axis::Z, Sign::Neg),
-        ];
-
         let config = Config::instance();
 
         for level in (0..config.octree_levels() - 1).rev() {
-            for direction in all_directions.iter() {
-                self.builder.mipmap_anisotropic_pass.run(
+            self.builder.mipmap_isotropic_pass.run(
+                &self.textures,
+                &self.geometry_data.node_data,
+                level,
+                brick_pool_values,
+            );
+
+            if level > 0 {
+                self.builder.leaf_border_transfer_pass.run(
                     &self.textures,
                     &self.geometry_data.node_data,
+                    &self.border_data.node_data,
+                    BrickPoolValues::Colors,
                     level,
-                    *direction,
-                    brick_pool_values,
                 );
-
-                if level > 0 {
-                    self.builder.anisotropic_border_transfer_pass.run(
-                        &self.textures,
-                        &self.geometry_data.node_data,
-                        &self.border_data.node_data,
-                        level,
-                        brick_pool_values,
-                        *direction,
-                    );
-                }
             }
         }
     }

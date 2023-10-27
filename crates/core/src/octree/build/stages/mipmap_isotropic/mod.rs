@@ -8,7 +8,7 @@ use mipmap_corners::MipmapCornersPass;
 use mipmap_edges::MipmapEdgesPass;
 use mipmap_faces::MipmapFacesPass;
 
-use crate::octree::{NodeData, OctreeTextures};
+use crate::octree::{NodeData, OctreeTextures, build::BrickPoolValues};
 
 pub struct MipmapIsotropicPass {
     center: MipmapCenterPass,
@@ -27,10 +27,16 @@ impl MipmapIsotropicPass {
         }
     }
 
-    pub unsafe fn run(&self, textures: &OctreeTextures, node_data: &NodeData, level: u32) {
-        self.center.run(textures, node_data, level);
-        self.corners.run(textures, node_data, level);
-        self.edges.run(textures, node_data, level);
-        self.faces.run(textures, node_data, level);
+    pub unsafe fn run(
+        &self,
+        textures: &OctreeTextures,
+        node_data: &NodeData,
+        level: u32,
+        brick_pool_values: BrickPoolValues,
+    ) {
+        self.center.run(textures, node_data, level, brick_pool_values);
+        self.corners.run(textures, node_data, level, brick_pool_values);
+        self.edges.run(textures, node_data, level, brick_pool_values);
+        self.faces.run(textures, node_data, level, brick_pool_values);
     }
 }
