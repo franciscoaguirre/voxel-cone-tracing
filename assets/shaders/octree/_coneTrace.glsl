@@ -1,7 +1,6 @@
 // Requires:
 // - uniform uint voxelDimension
 // - uniform uint maxOctreeLevel
-// - uniform sampler3D brickPoolNormals
 // - _anisotropicColor
 // - _anisotropicIrradiance
 // - _traversalHelpers
@@ -11,6 +10,7 @@
 // - uniform (r32ui) nodesQueried
 // - uniform atomic_uint queriedNodesCounter
 // - uniform (r32f) sampledColor
+// - uniform (rgb10_a2ui) queriedCoordinates
 
 float brickPoolResolutionf = float(textureSize(brickPoolColorsX, 0).x);
 float brickPoolBrickSize = 3.0 / brickPoolResolutionf;
@@ -53,9 +53,9 @@ vec4 getLeafColor(vec3 voxelCoordinates) {
     return texture(brickPoolColorsX, voxelCoordinates);
 }
 
-vec4 getLeafIrradiance(vec3 voxelCoordinates) {
-    return texture(brickPoolIrradianceX, voxelCoordinates);
-}
+// vec4 getLeafIrradiance(vec3 voxelCoordinates) {
+//     return texture(brickPoolIrradianceX, voxelCoordinates);
+// }
 
 // rayOrigin should be between 0 and 1
 // maxDistance should be max 1
@@ -63,7 +63,7 @@ vec4 coneTrace(
     vec3 coneOrigin,
     vec3 coneDirection, // Normalized
     float coneHalfAngle,
-    float maxDistance,
+    float maxDistance
 ) {
     vec4 returnColor = vec4(0);
     uint previousOctreeLevel = maxOctreeLevel;
@@ -90,6 +90,10 @@ vec4 coneTrace(
         }
 
         vec3 queryCoordinates = offsetedConeOrigin + distanceAlongCone * coneDirection;
+        #if debug
+            // Only works well in a single thread
+            imageStore(queriedCoordinates, steps, vec4(queryCoordinates, 1));
+        #endif
         bool changedNode = steps == 0 || fallsOutsideNode(queryCoordinates, previousNode); // Should be true on first iteration
 
         Node node, parentNode;

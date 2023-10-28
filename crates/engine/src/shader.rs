@@ -378,13 +378,13 @@ impl Shader {
     /// ------------------------------------------------------------------------
     unsafe fn check_compile_errors(shader: u32, type_: &str) {
         let mut success = gl::FALSE as GLint;
-        let mut info_log = vec![0u8; 1024];
+        let mut info_log = vec![0u8; 4096];
         if type_ != "PROGRAM" {
             gl::GetShaderiv(shader, gl::COMPILE_STATUS, &mut success);
             if success != gl::TRUE as GLint {
                 gl::GetShaderInfoLog(
                     shader,
-                    1024,
+                    4096,
                     ptr::null_mut(),
                     info_log.as_mut_ptr() as *mut GLchar,
                 );
@@ -400,7 +400,7 @@ impl Shader {
             if success != gl::TRUE as GLint {
                 gl::GetProgramInfoLog(
                     shader,
-                    1024,
+                    4096,
                     ptr::null_mut(),
                     info_log.as_mut_ptr() as *mut GLchar,
                 );
@@ -433,6 +433,9 @@ macro_rules! compile_shaders {
 
 #[macro_export]
 macro_rules! compile_compute {
+    ($compute_path:literal, debug = $value:expr$(,)?) => {
+        Shader::new_compute($compute_path, $value)
+    };
     ($compute_path:expr$(,)?) => {
         Shader::new_compute($compute_path, false)
     };
