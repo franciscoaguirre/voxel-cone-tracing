@@ -63,22 +63,22 @@ void main() {
 
     if (threadIndex == 0) {
         Out.direction = axis;
-        coneTrace(position, Out.direction, halfConeAngle, maxDistance, false);
+        coneTrace(position, Out.direction, halfConeAngle, maxDistance);
     }
 
     if (threadIndex == 1) {
         Out.direction = sinAngle * axis - cosAngle * tangent;
-        coneTrace(position, Out.direction, halfConeAngle, maxDistance, false);
+        coneTrace(position, Out.direction, halfConeAngle, maxDistance);
     }
 
     if (threadIndex == 2) {
         Out.direction = sinAngle * axis + cosAngle * bitangent;
-        coneTrace(position, Out.direction, halfConeAngle, maxDistance, false);
+        coneTrace(position, Out.direction, halfConeAngle, maxDistance);
     }
 
     if (threadIndex == 3) {
         Out.direction = sinAngle * axis - cosAngle * bitangent;
-        coneTrace(position, Out.direction, halfConeAngle, maxDistance, false);
+        coneTrace(position, Out.direction, halfConeAngle, maxDistance);
     }
 }
 
