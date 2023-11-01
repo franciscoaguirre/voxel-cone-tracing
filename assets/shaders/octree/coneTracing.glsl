@@ -221,7 +221,7 @@ vec4 gatherSpecularIndirectLight(vec3 position, vec3 eyeDirection, vec3 normal) 
     float maxDistance = 5;
     bool useLighting = true;
 
-    return coneTrace(position, reflectDirection, halfConeAngle, maxDistance, useLighting);
+    return coneTrace(position, reflectDirection, halfConeAngle, maxDistance);
 }
 
 vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, bool useLighting) {
@@ -238,16 +238,16 @@ vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, bool useLight
 
     direction = sinAngle * normal + cosAngle * tangent;
     
-    indirectLight += coneWeight * coneTrace(position, direction, halfConeAngle, maxDistance, useLighting);
+    indirectLight += coneWeight * coneTrace(position, direction, halfConeAngle, maxDistance);
 
     direction = sinAngle * normal - cosAngle * tangent;
-    indirectLight += coneWeight * coneTrace(position, direction, halfConeAngle, maxDistance, useLighting);
+    indirectLight += coneWeight * coneTrace(position, direction, halfConeAngle, maxDistance);
 
     direction = sinAngle * normal + cosAngle * bitangent;
-    indirectLight += coneWeight * coneTrace(position, direction, halfConeAngle, maxDistance, useLighting);
+    indirectLight += coneWeight * coneTrace(position, direction, halfConeAngle, maxDistance);
 
     direction = sinAngle * normal - cosAngle * bitangent;
-    indirectLight += coneWeight * coneTrace(position, direction, halfConeAngle, maxDistance, useLighting);
+    indirectLight += coneWeight * coneTrace(position, direction, halfConeAngle, maxDistance);
 
     indirectLight /= coneWeight * 4;
 

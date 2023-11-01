@@ -63,8 +63,7 @@ vec4 coneTrace(
     vec3 coneOrigin,
     vec3 coneDirection, // Normalized
     float coneHalfAngle,
-    float maxDistance,
-    bool useLighting
+    float maxDistance
 ) {
     vec4 returnColor = vec4(0);
     uint previousOctreeLevel = maxOctreeLevel;
