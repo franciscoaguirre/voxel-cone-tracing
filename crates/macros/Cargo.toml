@@ -8,7 +8,9 @@ edition = "2021"
 proc-macro = true
 
 [dependencies]
-syn = { version = "2", features = ["full"] }
+syn = "2"
 proc-macro2 = "1"
 quote = "1"
-derive-syn-parse = "0.1.5"
+
+[dev-dependencies]
+trybuild = { version = "1.0.74", features = ["diff"] }
