@@ -19,6 +19,7 @@ uniform mat4 projection;
 
 void main() {
     gl_Position = projection * view * modelNormalizationMatrix * model * vec4(position, 1.0);
+    // Position in world space
     Out.position = modelNormalizationMatrix * model * vec4(position, 1.0);
     Out.normal = normal;
     Out.textureCoordinates = textureCoordinates;
@@ -53,6 +54,7 @@ uniform bool hasTexture;
 uniform sampler2D texture_diffuse1;
 
 void main() {
+    // We take world space position (-1, 1) and move it to voxel space (0, 1)
     vec4 normalizedGlobalPosition = vec4(
         ((In.position.xyz / In.position.w) + vec3(1.0)) / 2.0,
         1.0

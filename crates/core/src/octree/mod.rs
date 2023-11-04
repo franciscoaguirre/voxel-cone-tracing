@@ -18,7 +18,7 @@ mod voxel_data;
 use build::*;
 pub use visualize::{BrickAttribute, BricksToShow};
 
-use lighting::{PhotonsToIrradiance, StorePhotons, ClearLight};
+use lighting::{PhotonsToIrradiance, StorePhotons, ClearLight, LightTransfer};
 pub use voxel_data::VoxelData;
 
 pub struct Octree {
@@ -122,6 +122,7 @@ struct Builder {
     create_alpha_map: CreateAlphaMap,
     store_photons: StorePhotons,
     clear_light: ClearLight,
+    light_transfer: LightTransfer,
 }
 
 impl Octree {
@@ -228,6 +229,7 @@ impl Octree {
             create_alpha_map: CreateAlphaMap::init(),
             store_photons: StorePhotons::init(),
             clear_light: ClearLight::init(),
+            light_transfer: LightTransfer::init(),
         };
 
         let mut octree = Self {

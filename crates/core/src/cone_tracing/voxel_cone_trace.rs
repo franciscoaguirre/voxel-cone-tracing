@@ -64,17 +64,26 @@ impl ConeTracer {
             camera.transform.position.y,
             camera.transform.position.z,
         );
-        // TODO: This is the direction of the light??
-        let light_direction = vec3(
-            light.transform().position.x,
-            light.transform().position.y,
-            light.transform().position.z,
-        );
+        if light.is_directional() {
+            self.shader.set_vec3(
+                c_str!("directionalLight.direction"),
+                light.transform().position.x,
+                light.transform().position.y,
+                light.transform().position.z,
+            );
+        } else {
+            self.shader.set_vec3(
+                c_str!("pointLight.position"),
+                light.transform().position.x,
+                light.transform().position.y,
+                light.transform().position.z,
+            );
+        }
         self.shader.set_vec3(
-            c_str!("lightDirection"),
-            light_direction.x,
-            light_direction.y,
-            light_direction.z,
+            c_str!("pointLight.color"),
+            1.0, // White
+            1.0,
+            1.0,
         );
         self.shader.set_float(c_str!("shininess"), 30.0);
         self.shader.set_mat4(
@@ -191,17 +200,8 @@ impl ConeTracer {
         }
 
         self.shader.set_bool(c_str!("isDirectional"), light.is_directional());
-        gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
-        // TODO: This is causing an `INVALID_OPERATION` error when using point lights
-        // since in that case it's not a `TEXTURE_2D`.
-        // We should remove this anyway once we have shadow cones, solving the error.
-        gl::BindTexture(gl::TEXTURE_2D, light_maps.2);
-        self.shader
-            .set_int(c_str!("shadowMap"), texture_counter as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+        // Unbind textures
+        gl::BindTexture(gl::TEXTURE_2D, 0);
 
         let quad_vao = quad.get_vao();
         if self.toggles.should_show_final_image_quad() {

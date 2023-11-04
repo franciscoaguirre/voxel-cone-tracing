@@ -29,10 +29,21 @@ in VertexData {
 
 uniform layout(binding = 0, r32ui) readonly uimageBuffer nodePool;
 
+struct PointLight {
+    vec3 position;
+    vec3 color;
+};
+
+struct DirectionalLight {
+    vec3 direction;
+    vec3 color;
+};
+
 // Scalar attributes
 uniform uint voxelDimension;
 uniform uint maxOctreeLevel;
-uniform vec3 lightDirection;
+uniform DirectionalLight directionalLight;
+uniform PointLight pointLight;
 uniform bool isDirectional;
 uniform float shininess;
 uniform mat4 lightViewMatrix;
@@ -87,14 +98,17 @@ const float PI = 3.14159;
 
 vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, bool useLighting);
 vec4 gatherSpecularIndirectLight(vec3 position, vec3 eyeDirection, vec3 normal);
-float visibilityCalculation(vec4 positionInLightSpace, vec3 normal);
+float traceShadowCone(vec3 origin, vec3 direction, float targetDistance);
 
 void main() {
-    vec3 positionRaw = texture(gBufferPositions, In.textureCoordinates).xyz;
-    vec3 position = positionRaw * 0.5 + 0.5;
+    // We should use `positionWorldSpace` when relating to other objects in the scene
+    vec3 positionWorldSpace = texture(gBufferPositions, In.textureCoordinates).xyz;
+    // We should use `positionVoxelSpace` when cone tracing
+    vec3 positionVoxelSpace = positionWorldSpace * 0.5 + 0.5;
 
-    vec3 eyeDirection = normalize(positionRaw - eyePosition);
+    vec3 eyeDirection = normalize(positionWorldSpace - eyePosition);
 
+    // TODO: Pretty sure this can't be negative right now
     vec3 normal = texture(gBufferNormals, In.textureCoordinates).xyz;
     vec3 helper = normal - vec3(0.1, 0, 0); // Random vector
     vec3 tangent = normalize(helper - dot(normal, helper) * normal);
@@ -108,32 +122,39 @@ void main() {
     bool useLighting = false;
     float ambientOcclusion;
     if (shouldShowAmbientOcclusion) {
-        ambientOcclusion = gatherIndirectLight(position, normal, tangent, useLighting).a;
+        ambientOcclusion = gatherIndirectLight(positionVoxelSpace, normal, tangent, useLighting).a;
     }
 
     useLighting = true;
     vec3 indirectLight = vec3(0);
     if (shouldShowIndirect) {
         // We should pre-multiply by alpha probably? Instead of just ignoring it
-        indirectLight = gatherIndirectLight(position, normal, tangent, useLighting).rgb;
+        indirectLight = gatherIndirectLight(positionVoxelSpace, normal, tangent, useLighting).rgb;
     }
 
     float specularFactor = texture(gBufferSpeculars, In.textureCoordinates).r;
     vec3 specularIndirectLight = vec3(0);
     if (shouldShowIndirectSpecular && specularFactor > 0.0) {
       // We should pre-multiply by alpha probably? Instead of just ignoring it
-        specularIndirectLight = specularFactor * gatherSpecularIndirectLight(position, eyeDirection, normal).rgb;
+        specularIndirectLight = specularFactor * gatherSpecularIndirectLight(positionVoxelSpace, eyeDirection, normal).rgb;
     }
 
-    vec4 positionInLightSpace = lightProjectionMatrix * lightViewMatrix * vec4(positionRaw, 1.0);
-    float visibility = 1.0;
-    if (isDirectional) {
-        visibility = visibilityCalculation(positionInLightSpace, normal);
-    }
-
-    float diffuse = max(0.0, dot(lightDirection, normal));
     // float h = normalize((lightDirection - view);
     // float specular = pow(max(0.0, dot(normal, h)), shininess);
+    float visibility = 1.0;
+    vec3 lightDirection;
+    float distanceToLight;
+    if (isDirectional) {
+        lightDirection = directionalLight.direction;
+        distanceToLight = 1.0;
+    } else {
+        lightDirection = pointLight.position - positionWorldSpace;
+    }
+    distanceToLight = length(lightDirection);
+    lightDirection = lightDirection / distanceToLight;
+    visibility = traceShadowCone(positionVoxelSpace, lightDirection, 1.0);
+    float lightAngle = dot(normal, lightDirection);
+    float diffuse = max(0.0, lightAngle);
     vec3 directLight = vec3(diffuse);
 
     vec4 finalImage = vec4(0);
@@ -150,7 +171,7 @@ void main() {
     }
 
     if (shouldShowDirect) {
-        finalImage += vec4(visibility * directLight, 1.0);
+        finalImage += visibility * vec4(directLight, 1.0);
     }
     if (shouldShowIndirect) {
         finalImage += vec4(indirectLight, 1.0);
@@ -168,50 +189,10 @@ void main() {
     outColor = vec4(finalImage.xyz, 1.0);
 }
 
-float SampleShadowMap(sampler2D shadowMap, vec2 coords, float currentDepth, float bias)
-{
-    float pcfDepth = texture(shadowMap, coords).r;
-    float shadow = (currentDepth - bias) > pcfDepth ? 1.0 : 0.0;
-    return shadow;
-}
-
-float SampleShadowMapLinear(sampler2D shadowMap, vec2 coords, float currentDepth, vec2 texelSize, float bias)
-{
-	vec2 pixelPos = coords/texelSize + vec2(0.5);
-	vec2 fracPart = fract(pixelPos);
-	vec2 startTexel = (pixelPos - fracPart) * texelSize;
-
-	float blTexel = SampleShadowMap(shadowMap, startTexel, currentDepth, bias);
-	float brTexel = SampleShadowMap(shadowMap, startTexel + vec2(texelSize.x, 0.0), currentDepth, bias);
-	float tlTexel = SampleShadowMap(shadowMap, startTexel + vec2(0.0, texelSize.y), currentDepth, bias);
-	float trTexel = SampleShadowMap(shadowMap, startTexel + texelSize, currentDepth, bias);
-
-	float mixA = mix(blTexel, tlTexel, fracPart.y);
-	float mixB = mix(brTexel, trTexel, fracPart.y);
-
-	return mix(mixA, mixB, fracPart.x);
-}
-
-float visibilityCalculation(vec4 positionInLightSpace, vec3 normal) {
-    vec3 projectedPosition = positionInLightSpace.xyz / positionInLightSpace.w;
-
-    projectedPosition = projectedPosition * 0.5 + 0.5;
-    float closestDepth = texture(shadowMap, projectedPosition.xy).r;
-    float currentDepth = projectedPosition.z;
-    float bias = max(0.01 * (1.0 - dot(normal, lightDirection)), 0.003);
-    float shadow = 0.0;
-    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
-    for (int x = -2; x <= 2; x++) {
-        for (int y = -2; y <= 2; y++) {
-            float partialShadow = SampleShadowMapLinear(shadowMap, projectedPosition.xy + vec2(x, y) * texelSize, currentDepth, texelSize, bias);
-            shadow += partialShadow;
-        }
-    }
-    shadow /= 25.0;
-    if (projectedPosition.z > 1.0) {
-        shadow = 0.0;
-    }
-    return 1.0 - shadow;
+float traceShadowCone(vec3 origin, vec3 direction, float targetDistance) {
+    // TODO: Possibly add a little bit in the direction of the normal
+    float occlusion = coneTrace(origin, direction, halfConeAngle, targetDistance).a;
+    return 1 - occlusion;
 }
 
 vec4 gatherSpecularIndirectLight(vec3 position, vec3 eyeDirection, vec3 normal) {
