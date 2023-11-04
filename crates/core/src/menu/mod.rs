@@ -3,12 +3,15 @@ use std::fs::File;
 
 use engine::ui::prelude::*;
 use serde::{Serialize, Deserialize};
+use cgmath::{vec2, Vector2};
 
 pub mod submenus;
 use submenus::*;
 
 pub struct Menu {
     pub sub_menus: SubMenus,
+    quad_coordinates: Vector2<f32>, // These are just to return for debugging
+    pub is_picking: bool,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
@@ -24,6 +27,7 @@ pub struct SubMenus {
     save_preset: SavePresetMenu,
     camera: CameraMenu,
     cone_tracing: ConeTracingMenu,
+    picker: PickerMenu,
 }
 
 impl SubMenus {
@@ -41,6 +45,7 @@ impl SubMenus {
             || self.photons.is_showing()
             || self.camera.is_showing()
             || self.cone_tracing.is_showing()
+            || self.picker.is_showing()
     }
 }
 
@@ -55,6 +60,7 @@ type SubMenuInputs<'a> = (
     <SavePresetMenu as SubMenu>::InputData<'a>,
     <CameraMenu as SubMenu>::InputData<'a>,
     <ConeTracingMenu as SubMenu>::InputData<'a>,
+    <PickerMenu as SubMenu>::InputData<'a>,
 );
 
 type SubMenuOutputs<'a> = (
@@ -68,6 +74,7 @@ type SubMenuOutputs<'a> = (
     &'a <SavePresetMenu as SubMenu>::OutputData,
     &'a <CameraMenu as SubMenu>::OutputData,
     &'a <ConeTracingMenu as SubMenu>::OutputData,
+    &'a <PickerMenu as SubMenu>::OutputData,
 );
 
 impl Menu {
@@ -75,6 +82,8 @@ impl Menu {
         let sub_menus = SubMenus::default();
         let mut menu = Menu {
             sub_menus,
+            quad_coordinates: vec2(0.0, 0.0),
+            is_picking: false,
         };
         menu.process_preset(preset);
         menu
@@ -106,17 +115,29 @@ impl Menu {
     pub fn handle_event(&mut self, event: glfw::WindowEvent) {
         let mut ui = Ui::instance();
 
-        if !ui.is_showing() {
-            return;
-        }
-
         if let glfw::WindowEvent::Key(glfw::Key::LeftShift, _, glfw::Action::Press, _) = event {
             ui.toggle_shift();
         } else if let glfw::WindowEvent::Key(glfw::Key::LeftShift, _, glfw::Action::Release, _) = event {
             ui.toggle_shift();
         }
 
+        if self.is_picking {
+            if let glfw::WindowEvent::MouseButton(_, glfw::Action::Press, _) = event {
+                let cursor_position = Ui::get_cursor_pos();
+                let viewport_dimensions = Ui::get_window_size();
+                let quad_coordinates = (
+                    cursor_position.0 / viewport_dimensions.0 as f64,
+                    1.0 - (cursor_position.1 / viewport_dimensions.1 as f64)
+                );
+                self.quad_coordinates = vec2(quad_coordinates.0 as f32, quad_coordinates.1 as f32);
+            }
+        }
+
         egui_backend::handle_event(event, ui.input_state_mut());
+    }
+
+    pub fn get_quad_coordinates(&self) -> Vector2<f32> {
+        self.quad_coordinates
     }
 
     pub fn render(&mut self, inputs: SubMenuInputs) {
@@ -135,6 +156,7 @@ impl Menu {
         self.sub_menus.save_preset.render(ui.context(), &inputs.7);
         self.sub_menus.camera.render(ui.context(), &inputs.8);
         self.sub_menus.cone_tracing.render(ui.context(), &inputs.9);
+        self.sub_menus.picker.render(ui.context(), &inputs.10);
     }
 
     pub fn get_data(&self) -> SubMenuOutputs {
@@ -149,6 +171,7 @@ impl Menu {
             self.sub_menus.save_preset.get_data(),
             self.sub_menus.camera.get_data(),
             self.sub_menus.cone_tracing.get_data(),
+            self.sub_menus.picker.get_data(),
         )
     }
 
@@ -235,6 +258,15 @@ impl Menu {
                 .clicked()
             {
                 self.sub_menus.cone_tracing.toggle_showing();
+            }
+            if ui
+                .button(get_button_text(
+                    "Picker",
+                    self.sub_menus.picker.is_showing(),
+                ))
+                .clicked()
+            {
+                self.sub_menus.picker.toggle_showing();
             }
         });
     }

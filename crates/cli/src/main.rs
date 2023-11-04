@@ -22,7 +22,7 @@ use core::{
 use engine::prelude::*;
 use engine::ui::glfw::{self, Context};
 use engine::ui::Ui;
-use cgmath::{point3, vec3, Deg, Matrix4, SquareMatrix};
+use cgmath::{point3, vec3, vec2, Deg, Matrix4, SquareMatrix};
 use log::info;
 use structopt::StructOpt;
 
@@ -166,6 +166,7 @@ fn main() {
     let mut show_voxel_fragment_list = false;
     let mut show_octree = false;
     let mut octree_nodes_to_visualize = OctreeDataType::Geometry;
+    let mut geometry_buffer_coordinates = vec2(0.0, 0.0);
 
     let mut node_filter_text = String::new();
     let mut should_show_final_image_quad = false;
@@ -192,6 +193,9 @@ fn main() {
 
     let photon_power = light.intensity() / (viewport_width * viewport_height) as f32;
 
+    // TODO: Theory. See if EGUI breaks the rendering in some way.
+    // I remember it did some weird things with opacity, but maybe that was
+    // just how we rendered the UI.
     let ui = Ui::instance();
 
     // Render loop
@@ -246,8 +250,9 @@ fn main() {
                 common::handle_show_model(&event, &mut show_model);
                 common::handle_show_voxel_fragment_list(&event, &mut show_voxel_fragment_list);
                 common::handle_light_movement(&event, &mut should_move_light);
+            } else {
+                menu.handle_event(event);
             }
-            menu.handle_event(event);
         }
 
         ui.begin_frame(current_frame);
@@ -264,6 +269,7 @@ fn main() {
                 (),
                 PhotonsMenuInput::new(&photons),
                 SavePresetMenuInput::new(&camera, menu.sub_menus.clone()), // TODO: Remove clone
+                (),
                 (),
                 (),
             ));
@@ -299,6 +305,11 @@ fn main() {
             debug_cone.half_cone_angle = if outputs.9.cone_angle_in_degrees <= 1.0 { 30f32.to_radians() / 2.0 } else { outputs.9.cone_angle_in_degrees.to_radians() / 2.0 };
             debug_cone.number_of_cones = if outputs.9.number_of_cones == 0 { 1 } else { outputs.9.number_of_cones };
             debug_cone.max_distance = if outputs.9.max_distance == 0.0 { 0.1 } else { outputs.9.max_distance };
+            debug_cone.point_to_light = outputs.9.point_to_light;
+            // This one doesn't come from `get_data()` but is still relevant to `debug_cone`
+            geometry_buffer_coordinates = menu.get_quad_coordinates();
+
+            menu.is_picking = outputs.10.is_picking;
         }
 
         // This is for debugging
@@ -441,6 +452,9 @@ fn main() {
                     &projection,
                     &view,
                     &mut selected_debug_nodes,
+                    &geometry_buffers,
+                    &geometry_buffer_coordinates,
+                    &light,
                 );
             }
             static_eye.draw_gizmo(&projection, &view);

@@ -19,6 +19,7 @@ pub struct ConeTracingMenuOutput {
     pub cone_angle_in_degrees: f32,
     pub number_of_cones: u32,
     pub max_distance: f32,
+    pub point_to_light: bool,
 }
 
 impl<'a> SubMenu for ConeTracingMenu {
@@ -64,6 +65,9 @@ impl<'a> SubMenu for ConeTracingMenu {
             ui.add(
                 egui::Slider::new(&mut self.output.max_distance, 0.1..=1.0),
             );
+            if ui.button(get_button_text("Point towards light", self.output.point_to_light)).clicked() {
+                self.output.point_to_light = !self.output.point_to_light;
+            };
         });
     }
 }

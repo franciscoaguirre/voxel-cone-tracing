@@ -82,7 +82,6 @@ uniform sampler3D brickPoolIrradianceZNeg;
 uniform sampler2D gBufferColors;
 uniform sampler2D gBufferPositions;
 uniform sampler2D gBufferNormals;
-uniform sampler2D shadowMap;
 uniform sampler2D gBufferSpeculars;
 
 #include "./_constants.glsl"
@@ -104,7 +103,7 @@ void main() {
     // We should use `positionWorldSpace` when relating to other objects in the scene
     vec3 positionWorldSpace = texture(gBufferPositions, In.textureCoordinates).xyz;
     // We should use `positionVoxelSpace` when cone tracing
-    vec3 positionVoxelSpace = (positionWorldSpace + 1.0) / 2.0;
+    vec3 positionVoxelSpace = (positionWorldSpace + vec3(1)) / 2.0;
 
     vec3 eyeDirection = normalize(positionWorldSpace - eyePosition);
 

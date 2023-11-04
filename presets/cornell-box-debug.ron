@@ -1,0 +1,109 @@
+(
+    submenus: (
+        all_nodes: (
+            is_showing: false,
+            output: (
+                should_render_octree: false,
+                current_octree_level: 0,
+                octree_nodes_to_visualize: Geometry,
+            ),
+        ),
+        node_search: (
+            is_showing: false,
+            output: (
+                selected_items: [],
+                filter_text: "",
+                should_show_neighbors: false,
+                selected_items_updated: false,
+            ),
+        ),
+        bricks: (
+            is_showing: false,
+            output: (
+                brick_attribute: None,
+                brick_padding: 0.0,
+                bricks_to_show: (
+                    show_z0: false,
+                    show_z1: false,
+                    show_z2: false,
+                ),
+                color_direction: (
+                    x: 1.0,
+                    y: 0.0,
+                    z: 0.0,
+                ),
+                should_show_brick_normals: false,
+            ),
+        ),
+        children: (
+            is_showing: false,
+        ),
+        diagnostics: (),
+        images: (
+            is_showing: false,
+            output: (
+                toggles: (
+                    should_show_color: false,
+                    should_show_direct: false,
+                    should_show_indirect: false,
+                    should_show_indirect_specular: false,
+                    should_show_ambient_occlusion: false,
+                ),
+            ),
+        ),
+        photons: (
+            is_showing: false,
+        ),
+        save_preset: (
+            name: "cornell-box-debug",
+            is_showing: true,
+        ),
+        camera: (
+            is_showing: false,
+            output: (
+                orthographic: false,
+            ),
+        ),
+        cone_tracing: (
+            is_showing: true,
+            output: (
+                show_debug_cone: true,
+                move_debug_cone: false,
+                cone_angle_in_degrees: 0.0,
+                number_of_cones: 0,
+                max_distance: 0.0,
+                point_to_light: false,
+            ),
+        ),
+        picker: (
+            is_showing: true,
+            output: (
+                is_picking: true,
+            ),
+        ),
+    ),
+    camera: (
+        transform: (
+            position: (
+                x: -0.011399127,
+                y: 0.24242206,
+                z: -2.195616,
+            ),
+            scale: (
+                x: 1.0,
+                y: 1.0,
+                z: 1.0,
+            ),
+            rotation: (
+                x: 0.0,
+                y: 90.0,
+                z: 0.0,
+            ),
+            movement_speed: 1.0,
+        ),
+        orthographic: false,
+        movement_speed: 1.0,
+        mouse_sensitivity: 0.1,
+        zoom: 45.0,
+    ),
+)
