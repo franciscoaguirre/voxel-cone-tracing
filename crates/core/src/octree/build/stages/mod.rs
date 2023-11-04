@@ -1,5 +1,5 @@
 mod allocate_nodes;
-pub use allocate_nodes::AllocateNodesPass;
+pub use allocate_nodes::{AllocateNodesPass, AllocateNodesInput};
 
 mod leaf_border_transfer;
 pub use leaf_border_transfer::LeafBorderTransferPass;

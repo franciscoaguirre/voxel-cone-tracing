@@ -72,19 +72,13 @@ mod tests {
     fn flag_nodes_works() {
         let (_glfw, _window) = test_utils::init_opengl_context();
 
-        // To go from the crate root to the workspace root
-        let mut path = PathBuf::from(env::current_dir().unwrap());
-        path.pop();
-        path.pop();
-        env::set_current_dir(path).unwrap();
-
         let voxel_dimension_exponent = 4;
 
         unsafe {
             let test_data = test_cases();
 
             // Initialize everything
-            Config::initialize(Config::new(voxel_dimension_exponent));
+            Config::initialize_test_sensitive(Config::new(voxel_dimension_exponent), true);
             let flag_nodes_pass = FlagNodesPass::init();
 
             for TestCase { input, expected_output, description } in test_data.iter() {

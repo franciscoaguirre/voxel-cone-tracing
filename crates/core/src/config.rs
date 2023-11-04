@@ -30,7 +30,12 @@ impl Config {
     /// Initializes the config
     /// Must be called before any call to `instance`
     pub unsafe fn initialize(mut config: Self) {
-        if INSTANCE.get().is_some() { panic!("Can only initialize core config once"); }
+        Self::initialize_test_sensitive(config, false);
+    }
+
+    pub unsafe fn initialize_test_sensitive(mut config: Self, is_test: bool) {
+        // We may initialize many times in test mode
+        if INSTANCE.get().is_some() && !is_test { panic!("Can only initialize core config once"); }
         config.set_voxel_dimension(config.voxel_dimension);
         let _ = INSTANCE.set(config);
     }
@@ -78,7 +83,8 @@ mod tests {
     // TODO: Fix, the `should_panic` is not working
     #[test]
     #[should_panic]
-    fn uninitialized_config_should_panic() {
+    // Given this is stateful code, this test should run first (they are ran alfabetically)
+    fn aauninitialized_config_should_panic() {
         let _ = Config::instance();
     }
 
@@ -92,5 +98,14 @@ mod tests {
         assert_eq!(config.voxel_dimension(), 16);
         assert_eq!(config.octree_levels(), 4);
         assert_eq!(config.last_octree_level(), 3);
+    }
+
+    #[test]
+    #[should_panic]
+    fn initializing_twice_should_panic() {
+        let voxel_dimension_exponent = 4;
+        unsafe {
+            Config::initialize(Config::new(voxel_dimension_exponent));
+        };
     }
 }
