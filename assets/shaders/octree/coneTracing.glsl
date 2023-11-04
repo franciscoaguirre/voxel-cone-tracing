@@ -104,7 +104,7 @@ void main() {
     // We should use `positionWorldSpace` when relating to other objects in the scene
     vec3 positionWorldSpace = texture(gBufferPositions, In.textureCoordinates).xyz;
     // We should use `positionVoxelSpace` when cone tracing
-    vec3 positionVoxelSpace = positionWorldSpace * 0.5 + 0.5;
+    vec3 positionVoxelSpace = (positionWorldSpace + 1.0) / 2.0;
 
     vec3 eyeDirection = normalize(positionWorldSpace - eyePosition);
 
@@ -142,19 +142,10 @@ void main() {
     // float h = normalize((lightDirection - view);
     // float specular = pow(max(0.0, dot(normal, h)), shininess);
     float visibility = 1.0;
-    vec3 lightDirection;
-    float distanceToLight;
-    if (isDirectional) {
-        lightDirection = directionalLight.direction;
-        distanceToLight = 1.0;
-    } else {
-        lightDirection = pointLight.position - positionWorldSpace;
-    }
-    distanceToLight = length(lightDirection);
-    lightDirection = lightDirection / distanceToLight;
+    vec3 lightDirection = normalize(pointLight.position - positionWorldSpace);
     visibility = traceShadowCone(positionVoxelSpace, lightDirection, 1.0);
     float lightAngle = dot(normal, lightDirection);
-    float diffuse = max(0.0, lightAngle);
+    float diffuse = max(lightAngle, 0.0);
     vec3 directLight = vec3(diffuse);
 
     vec4 finalImage = vec4(0);

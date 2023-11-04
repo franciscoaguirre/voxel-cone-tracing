@@ -1,7 +1,10 @@
 use std::{ffi::c_void, mem::size_of};
 
 use c_str_macro::c_str;
-use cgmath::{point3, vec3, Deg, Euler, InnerSpace, Matrix4, Point3, Vector3, Zero};
+use cgmath::{
+    point3, vec3, Deg, Euler, InnerSpace, Matrix4, Point3, Vector3,
+    Zero, Matrix3, SquareMatrix, Matrix,
+};
 use gl::types::GLuint;
 use serde::{Serialize, Deserialize};
 
@@ -122,6 +125,26 @@ impl Transform {
             self.position.z,
         )) * model;
         model
+    }
+
+    pub fn get_normal_matrix(&self) -> Matrix3<f32> {
+        // Only rotation and scale
+        let mut model = Matrix4::<f32>::from_angle_z(Deg(self.rotation.z))
+            * Matrix4::<f32>::from_angle_y(Deg(90.0 - self.rotation.y))
+            * Matrix4::<f32>::from_angle_x(Deg(-self.rotation.x));
+        model = Matrix4::<f32>::from_nonuniform_scale(self.scale.x, self.scale.y, self.scale.z) * model;
+
+        // We extract the upper-left 3x3 part of the model matrix
+        let mat3 = Matrix3::from_cols(
+            model.x.truncate(), // Take the first column and discard the 4th component
+            model.y.truncate(),
+            model.z.truncate(),
+        );
+
+        // Compute the inverse transpose
+        let normal_matrix = mat3.invert().unwrap().transpose();
+
+        normal_matrix
     }
 
     pub fn get_view_matrix(&self) -> Matrix4<f32> {

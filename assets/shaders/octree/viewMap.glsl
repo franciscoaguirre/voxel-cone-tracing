@@ -12,6 +12,7 @@ out VertexData {
     vec2 textureCoordinates;
 } Out;
 
+uniform mat3 normalMatrix;
 uniform mat4 modelNormalizationMatrix;
 uniform mat4 model;
 uniform mat4 view;
@@ -21,7 +22,7 @@ void main() {
     gl_Position = projection * view * modelNormalizationMatrix * model * vec4(position, 1.0);
     // Position in world space
     Out.position = modelNormalizationMatrix * model * vec4(position, 1.0);
-    Out.normal = normal;
+    Out.normal = normalize(normalMatrix * normal);
     Out.textureCoordinates = textureCoordinates;
 }
 

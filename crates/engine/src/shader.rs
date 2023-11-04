@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::Read;
 use std::{env, ptr, str};
 
-use cgmath::{vec3, Matrix, Matrix4, Vector3};
+use cgmath::{vec3, Matrix, Matrix4, Vector3, Matrix3};
 use gl::types::*;
 use log::trace;
 
@@ -146,6 +146,14 @@ impl Shader {
         gl::Uniform3f(gl::GetUniformLocation(self.id, name.as_ptr()), x, y, z);
     }
     /// ------------------------------------------------------------------------
+    pub unsafe fn set_mat3(&self, name: &CStr, mat: &Matrix3<f32>) {
+        gl::UniformMatrix3fv(
+            gl::GetUniformLocation(self.id, name.as_ptr()),
+            1,
+            gl::FALSE,
+            mat.as_ptr(),
+        );
+    }
     pub unsafe fn set_mat4(&self, name: &CStr, mat: &Matrix4<f32>) {
         gl::UniformMatrix4fv(
             gl::GetUniformLocation(self.id, name.as_ptr()),
