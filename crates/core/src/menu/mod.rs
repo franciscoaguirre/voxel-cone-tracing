@@ -75,7 +75,7 @@ impl Menu {
             ui.toggle_shift();
         }
 
-        if self.is_picking {
+        if self.is_picking && !ui.context().wants_pointer_input() {
             if let glfw::WindowEvent::MouseButton(_, glfw::Action::Press, _) = event {
                 let cursor_position = Ui::get_cursor_pos();
                 let viewport_dimensions = Ui::get_window_size();
