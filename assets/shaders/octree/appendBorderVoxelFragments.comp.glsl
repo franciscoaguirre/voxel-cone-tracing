@@ -12,6 +12,7 @@ uniform layout(binding = 3, r32ui) readonly uimageBuffer nodePoolNeighbors[3];
 uniform layout(binding = 0, offset = 0) atomic_uint nextVoxelFragmentCounter;
 
 uniform uint octreeLevel;
+uniform uint maxOctreeLevel;
 uniform uint callOffset;
 uniform uint voxelDimension;
 
@@ -24,8 +25,36 @@ const ivec4 NEIGHBOR_OFFSETS[6] = {
     ivec4(0, 0, -2, 0)
 };
 
+// Maps to positions in NEIGHBOR_OFFSETS
+// 0 maps to X+ in NEIGHBOR_OFFSETS, 
+// Here 0 maps to 2, that represents the start of the Y directions (Y+ and Y-)
+// So X+ is responsible to add the voxel fragments for X+Y+, X+Y-
+const uint DIAGONAL_DIRECTION_MAPPING[6] = {
+    2,
+    2,
+    3,
+    3,
+    0,
+    0
+};
+
 #include "./_helpers.glsl"
 #include "./_threadNodeUtil.glsl"
+
+void save(uvec4 borderVoxelFragmentPosition) {
+    if (
+        !isOutsideRange(borderVoxelFragmentPosition.xyz, ivec3(0), ivec3(voxelDimension - 1))
+    ) {
+      uint nextVoxelFragment = atomicCounterIncrement(nextVoxelFragmentCounter);
+      imageStore(borderVoxelFragments, int(nextVoxelFragment), borderVoxelFragmentPosition);
+    }
+}
+
+ivec4 getNeighborOffset(uint neighbor) {
+  // Should probably be this to do it for all levels
+  //return NEIGHBOR_OFFSETS[neighbor] * pow(2, maxOctreeLevel - octreeLevel);
+  return NEIGHBOR_OFFSETS[neighbor];
+}
 
 void main() {
     int nodeID = getThreadNode();
@@ -40,16 +69,28 @@ void main() {
         uint neighborID = imageLoad(nodePoolNeighbors[i], nodeID).r;
 
         if (neighborID == 0) {
-            ivec4 borderVoxelFragmentPosition = ivec4(nodePosition) + NEIGHBOR_OFFSETS[i + callOffset];
+            uint offest = i + callOffset;
+            uvec4 borderVoxelBaseFragmentPosition = ivec4(nodePosition) + getNeighborOffset(offest);
+            save(borderVoxelBaseFragmentPosition);
+            memoryBarrier();
 
-            if (
-                isOutsideRange(borderVoxelFragmentPosition.xyz, ivec3(0), ivec3(voxelDimension - 1))
-            ) {
-                continue;
+            for (uint directionSign = 0; directionSign <= 1; directionSign++) {
+              ivec4 diagonalCoordinates = getNeighborOffset(DIAGONAL_DIRECTION_MAPPING[offest] + directionSign); 
+              save(borderVoxelBaseFragmentPosition + diagonalCoordinates);
+              memoryBarrier();
             }
 
-            uint nextVoxelFragment = atomicCounterIncrement(nextVoxelFragmentCounter);
-            imageStore(borderVoxelFragments, int(nextVoxelFragment), borderVoxelFragmentPosition);
+            //for (uint directionSignX = 0; directionSignX <= 1; directionSignX++) {
+              //ivec4 diagonalCoordinatesX = NEIGHBOR_OFFSETS[directionSignX];
+              //for (uint directionSignY = 0; directionSignY <= 1; directionSignY++) {
+                //ivec4 diagonalCoordinatesY = NEIGHBOR_OFFSETS[directionSignY + 2]; 
+
+                //if (offest >= 4) {
+                  //save(borderVoxelBaseFragmentPosition + diagonalCoordinatesX + diagonalCoordinatesY);
+                //}
+                //memoryBarrier();
+              //}
+            //}
         }
     }
 }

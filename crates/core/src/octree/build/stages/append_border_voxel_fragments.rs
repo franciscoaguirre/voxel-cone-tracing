@@ -26,7 +26,7 @@ impl AppendBorderVoxelFragmentsPass {
         let config = Config::instance();
         self.shader.use_program();
         self.shader
-            .set_uint(c_str!("octreeLevel"), config.last_octree_level());
+            .set_uint(c_str!("maxOctreeLevel"), config.last_octree_level());
         self.shader
             .set_uint(c_str!("voxelDimension"), config.voxel_dimension());
         helpers::bind_image_texture(
@@ -46,6 +46,16 @@ impl AppendBorderVoxelFragmentsPass {
         let next_voxel_fragment_counter = helpers::generate_atomic_counter_buffer();
         gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, next_voxel_fragment_counter);
 
+        //for i in 0..config.last_octree_level() {
+            //self.shader
+                //.set_uint(c_str!("octreeLevel"), i + 1); // If octree has 7 levels (0 to 6), it goes from 1
+                                                         //// to 6
+            //self.run_pass(geometry_data.voxel_data.number_of_voxel_fragments, textures);
+        //}
+
+        self.shader
+            .set_uint(c_str!("octreeLevel"), config.last_octree_level()); // If octree has 7 levels (0 to 6), it goes from 1
+                                                     // to 6
         self.run_pass(geometry_data.voxel_data.number_of_voxel_fragments, textures);
 
         // Get the number of voxel fragments

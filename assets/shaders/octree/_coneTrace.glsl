@@ -21,7 +21,7 @@ float calculateLod(float coneDiameter) {
     // Shouldn't this be log2(1 / coneDiameter) + 1 or something similar?
     //return max(maxOctreeLevel - log2(1 + coneDiameter * voxelDimension), 0);
     //return clamp(log2(1 / coneDiameter) - 1, 0, maxOctreeLevel);
-    return 5.0;
+    return maxOctreeLevel;
 }
 
 // Brick marching
