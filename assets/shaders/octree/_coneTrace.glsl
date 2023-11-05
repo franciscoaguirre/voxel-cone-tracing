@@ -76,8 +76,8 @@ vec4 coneTrace(
     int steps = 0;
     
     // Move the cone origin so it doesn't intersect with own voxels
-    vec3 offsetedConeOrigin = coneOrigin + coneDirection * voxelSize * 0.5;
-    while (distanceAlongCone < maxDistance && returnColor.a < 0.97) {
+    vec3 offsetedConeOrigin = coneOrigin + coneDirection * voxelSize * 2;
+    while (distanceAlongCone < maxDistance && returnColor.a < 1.0) {
         float coneDiameter = clamp(coneDiameterCoefficient * distanceAlongCone, 0.0009765625, 100.0);
         float lod = calculateLod(coneDiameter);
         uint octreeLevel = uint(ceil(lod));
@@ -90,10 +90,6 @@ vec4 coneTrace(
         }
 
         vec3 queryCoordinates = offsetedConeOrigin + distanceAlongCone * coneDirection;
-        #if debug
-            // Only works well in a single thread
-            imageStore(queriedCoordinates, steps, vec4(queryCoordinates, 1));
-        #endif
         bool changedNode = steps == 0 || fallsOutsideNode(queryCoordinates, previousNode); // Should be true on first iteration
 
         Node node, parentNode;
@@ -109,38 +105,18 @@ vec4 coneTrace(
                 //break;
                 continue;
             }
-            #if debug
-                int nodesCount = int(atomicCounterIncrement(queriedNodesCounter));
-                imageStore(nodesQueried, nodesCount, uvec4(uint(node.id), 0, 0, 0));
-            #endif
         } else {
             node = previousNode;
             parentNode = previousParentNode;
         }
-
-        float c1 = 1.0;
-        float c2 = 0.09;
-        float c3 = 0.032;
-        float magicNumber = 60; // TODO: Find out what value to use
-        float distance = distanceAlongCone * magicNumber;
-        float distanceFactor = c1 + c2 * distance + c3 * distance * distance;
 
         vec3 childVoxelCoordinates = findVoxel(queryCoordinates, node);
         vec3 parentVoxelCoordinates = findVoxel(queryCoordinates, parentNode);
         vec4 childColor;
         vec4 parentColor;
         childColor = getLeafColor(childVoxelCoordinates);
-        #if debug
-            int aux = 5;
-            imageStore(sampledColor, steps * aux + 0 + 5, vec4(childColor.r, 0, 0, 0));
-            imageStore(sampledColor, steps * aux + 1 + 5, vec4(childColor.g, 0, 0, 0));
-            imageStore(sampledColor, steps * aux + 2 + 5, vec4(childColor.b, 0, 0, 0));
-            imageStore(sampledColor, steps * aux + 3 + 5, vec4(childColor.a, 0, 0, 0));
-            imageStore(sampledColor, steps * aux + 4 + 5, vec4(octreeLevel, 0, 0, 0));
-        #endif
         parentColor = getLeafColor(parentVoxelCoordinates);
         vec4 newColor = mix(childColor, parentColor, parentWeight); // Quadrilinear interpolation
-        newColor.rgb /= distanceFactor;
 
         returnColor += (1 - returnColor.a) * newColor;
 
@@ -152,19 +128,7 @@ vec4 coneTrace(
         previousParentNode = parentNode;
     }
 
-    #if debug
-        imageStore(sampledColor, 0, vec4(returnColor.r, 0, 0, 0));
-        imageStore(sampledColor, 1, vec4(returnColor.g, 0, 0, 0));
-        imageStore(sampledColor, 2, vec4(returnColor.b, 0, 0, 0));
-        imageStore(sampledColor, 3, vec4(returnColor.a, 0, 0, 0));
-        // imageStore(sampledColor, 4, vec4(float(octreeLevel), 0, 0, 0));
-    #endif
-
     // returnColor.a = min(returnColor.a, 1.0);
-
-    #if debug
-        imageStore(sampledColor, 4, vec4(returnColor.a, 0, 0, 0));
-    #endif
 
     return returnColor;
 }
