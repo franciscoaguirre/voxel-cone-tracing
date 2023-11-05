@@ -96,7 +96,7 @@ void main() {
     vec3 eyeDirection = normalize(positionRaw - eyePosition);
 
     vec3 normal = texture(gBufferNormals, In.textureCoordinates).xyz;
-    vec3 helper = normal - vec3(0.1, 0, 0); // Random vector
+    vec3 helper = normal - vec3(0.1, 0.1, 0); // Random vector
     vec3 tangent = normalize(helper - dot(normal, helper) * normal);
 
     vec4 color = texture(gBufferColors, In.textureCoordinates);

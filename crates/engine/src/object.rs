@@ -34,6 +34,7 @@ impl Object {
             // Transform's model matrix
             shader.set_mat4(c_str!("model"), &self.transform.get_model_matrix());
             shader.set_mat4(c_str!("modelNormalizationMatrix"), model_normalization_matrix);
+            shader.set_mat3(c_str!("normalMatrix"), &self.transform.get_normal_matrix());
             // Material properties
             self.material().set_uniforms(shader);
         };

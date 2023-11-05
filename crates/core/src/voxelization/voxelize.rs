@@ -59,38 +59,12 @@ unsafe fn voxelize_scene(
     let model_normalization_matrix = scene_aabb.normalization_matrix();
 
     // Same for every object
-    voxelization_shader.set_mat4(
-        c_str!("modelNormalizationMatrix"),
-        &model_normalization_matrix,
-    );
     voxelization_shader.set_int(c_str!("voxelDimension"), config.voxel_dimension() as i32);
 
     gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, *atomic_counter);
 
     voxelization_shader.set_vec3(c_str!("fallbackColor"), 1.0, 1.0, 1.0);
 
-    let ortho = cgmath::ortho(-1.0, 1.0, -1.0, 1.0, 0.0001, 10_000.0);
-
-    let mut right_camera = Transform::default();
-    right_camera.position = point3(-2.0, 0.0, 0.0);
-    right_camera.set_rotation_y(0.0);
-    let right_view_matrix = ortho * right_camera.get_view_matrix();
-
-    let mut top_camera = Transform::default();
-    top_camera.position = point3(0.0, 2.0, 0.0);
-    top_camera.set_rotation_x(-90.0);
-    top_camera.set_rotation_y(90.0);
-    let top_view_matrix = ortho * top_camera.get_view_matrix();
-
-    let mut far_camera = Transform::default();
-    far_camera.position = point3(0.0, 0.0, 2.0);
-    far_camera.set_rotation_y(-90.0);
-    let far_view_matrix = ortho * far_camera.get_view_matrix();
-
-    voxelization_shader.set_mat4_array(
-        c_str!("axisProjections"),
-        &[&right_view_matrix, &top_view_matrix, &far_view_matrix],
-    );
     gl::Disable(gl::CULL_FACE);
     gl::Disable(gl::DEPTH_TEST);
     // TODO: We should apparently disable depth test and colormask false flase flase

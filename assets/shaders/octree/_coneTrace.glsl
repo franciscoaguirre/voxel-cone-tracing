@@ -76,7 +76,7 @@ vec4 coneTrace(
     int steps = 0;
     
     // Move the cone origin so it doesn't intersect with own voxels
-    vec3 offsetedConeOrigin = coneOrigin + coneDirection * voxelSize * 2;
+    vec3 offsetedConeOrigin = coneOrigin + coneDirection * voxelSize * 0.5;
     while (distanceAlongCone < maxDistance && returnColor.a < 0.97) {
         float coneDiameter = clamp(coneDiameterCoefficient * distanceAlongCone, 0.0009765625, 100.0);
         float lod = calculateLod(coneDiameter);
@@ -160,7 +160,7 @@ vec4 coneTrace(
         // imageStore(sampledColor, 4, vec4(float(octreeLevel), 0, 0, 0));
     #endif
 
-    returnColor.a = min(returnColor.a, 1.0);
+    // returnColor.a = min(returnColor.a, 1.0);
 
     #if debug
         imageStore(sampledColor, 4, vec4(returnColor.a, 0, 0, 0));

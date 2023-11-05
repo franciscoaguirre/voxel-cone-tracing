@@ -129,32 +129,32 @@ void main() {
 
     vec3 expandedVertex[3];
     for (int i = 0; i < 3; i++) {
-        vec2 currentEdge = vertex[(i + 1) % 3].xy - vertex[i].xy;
-        vec2 previousEdge = vertex[i].xy - vertex[(i + 2) % 3].xy;
+        // vec2 currentEdge = vertex[(i + 1) % 3].xy - vertex[i].xy;
+        // vec2 previousEdge = vertex[i].xy - vertex[(i + 2) % 3].xy;
 
-        vec2 currentNormal = normalize(vec2(-currentEdge.y, currentEdge.x)) * normalMultiplier;
-        vec2 currentSemiDiagonal = normalToSemiDiagonal(currentNormal);
-        vec2 previousNormal = normalize(vec2(-previousEdge.y, previousEdge.x)) * normalMultiplier;
-        vec2 previousSemiDiagonal = normalToSemiDiagonal(previousNormal);
+        // vec2 currentNormal = normalize(vec2(-currentEdge.y, currentEdge.x)) * normalMultiplier;
+        // vec2 currentSemiDiagonal = normalToSemiDiagonal(currentNormal);
+        // vec2 previousNormal = normalize(vec2(-previousEdge.y, previousEdge.x)) * normalMultiplier;
+        // vec2 previousSemiDiagonal = normalToSemiDiagonal(previousNormal);
 
-        vec2 currentExpanded1 = vertex[i].xy + currentSemiDiagonal * halfPixel;
-        vec2 currentExpanded2 = vertex[(i + 1) % 3].xy + currentSemiDiagonal * halfPixel;
-        vec2 previousExpanded1 = vertex[(i + 2) % 3].xy + previousSemiDiagonal * halfPixel;
-        vec2 previousExpanded2 = vertex[i].xy + previousSemiDiagonal * halfPixel;
+        // vec2 currentExpanded1 = vertex[i].xy + currentSemiDiagonal * halfPixel;
+        // vec2 currentExpanded2 = vertex[(i + 1) % 3].xy + currentSemiDiagonal * halfPixel;
+        // vec2 previousExpanded1 = vertex[(i + 2) % 3].xy + previousSemiDiagonal * halfPixel;
+        // vec2 previousExpanded2 = vertex[i].xy + previousSemiDiagonal * halfPixel;
 
-        vec2 intersection;
-        if (lineIntersection(currentExpanded1, currentExpanded2, previousExpanded1, previousExpanded2, intersection)) {
-            expandedVertex[i].xy = intersection;
-            // Irrelevant which value it is, except for the fact it should be inside clip space (so vertex doesn't get frustumed out)
-            expandedVertex[i].z = 0;
-        } else {
-            // We f***** up
+        // vec2 intersection;
+        // if (lineIntersection(currentExpanded1, currentExpanded2, previousExpanded1, previousExpanded2, intersection)) {
+        //     expandedVertex[i].xy = intersection;
+        //     // Irrelevant which value it is, except for the fact it should be inside clip space (so vertex doesn't get frustumed out)
+        //     expandedVertex[i].z = 0;
+        // } else {
+        //     // We f***** up
             expandedVertex[i] = vertex[i].xyz;
-        }
+        // }
         
-        // Debug values
-        edgeNormal = currentNormal;
-        semiDiagonal = currentSemiDiagonal;
+        // // Debug values
+        // edgeNormal = currentNormal;
+        // semiDiagonal = currentSemiDiagonal;
 
         //gl_Position = vertex[i];
         //Out.position = vec3(vertex[i]);
