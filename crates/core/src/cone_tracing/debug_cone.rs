@@ -82,7 +82,7 @@ impl DebugCone {
                 gl::DYNAMIC_READ,
             ),
             nodes_queried_counter: helpers::generate_atomic_counter_buffer1(),
-            half_cone_angle: 30f32.to_radians(),
+            half_cone_angle: 20f32.to_radians(),
             point_to_light: false,
             vao,
         }
