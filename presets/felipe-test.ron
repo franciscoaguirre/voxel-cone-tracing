@@ -1,10 +1,10 @@
 (
     submenus: (
         all_nodes: (
-            is_showing: false,
+            is_showing: true,
             output: (
-                should_render_octree: false,
-                current_octree_level: 0,
+                should_render_octree: true,
+                current_octree_level: 1,
                 octree_nodes_to_visualize: Geometry,
             ),
         ),
@@ -40,11 +40,11 @@
         ),
         diagnostics: (),
         images: (
-            is_showing: true,
+            is_showing: false,
             output: (
                 toggles: (
                     should_show_color: false,
-                    should_show_direct: true,
+                    should_show_direct: false,
                     should_show_indirect: false,
                     should_show_indirect_specular: false,
                     should_show_ambient_occlusion: false,
@@ -85,9 +85,9 @@
     camera: (
         transform: (
             position: (
-                x: -0.029725472,
-                y: 0.43094873,
-                z: -0.8981142,
+                x: 2.6892686,
+                y: 1.3785485,
+                z: -0.9511302,
             ),
             scale: (
                 x: 1.0,
@@ -95,8 +95,8 @@
                 z: 1.0,
             ),
             rotation: (
-                x: -56.800125,
-                y: 93.80016,
+                x: -29.300144,
+                y: 156.39963,
                 z: 0.0,
             ),
             movement_speed: 1.0,
