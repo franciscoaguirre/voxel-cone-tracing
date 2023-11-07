@@ -7,13 +7,14 @@ layout (local_size_x = WORKING_GROUP_SIZE, local_size_y = 1, local_size_z = 1) i
 uniform layout(binding = 0, rgb10_a2ui) writeonly uimageBuffer borderVoxelFragments;
 uniform layout(binding = 1, rgb10_a2ui) readonly uimageBuffer nodePositions;
 uniform layout(binding = 2, r32ui) readonly uimageBuffer nodePoolNeighbors[HALF_NEIGHBORS];
-uniform layout(binding = 7, r32f) imageBuffer debug;
+uniform layout(binding = 5, r32f) imageBuffer debug;
 
 uniform layout(binding = 0, offset = 0) atomic_uint nextVoxelFragmentCounter;
 
+uniform uint offsetTexture;
+uniform uint sideOffsetTexture;
 uniform uint octreeLevel;
 uniform uint maxOctreeLevel;
-uniform uint callOffset;
 uniform uint voxelDimension;
 uniform uint levelStart;
 uniform uint nextLevelStart;
@@ -58,8 +59,8 @@ void save(uvec4 borderVoxelFragmentPosition) {
 
 ivec4 getNeighborOffset(uint neighbor) {
   // Should probably be this to do it for all levels
-  //return NEIGHBOR_OFFSETS[neighbor] * pow(2, maxOctreeLevel - octreeLevel);
-  return NEIGHBOR_OFFSETS[neighbor];
+  int curretOctreeLevelMultiplier = int(round(pow(2, maxOctreeLevel - octreeLevel)));
+  return NEIGHBOR_OFFSETS[neighbor] * curretOctreeLevelMultiplier;
 }
 
 void main() {
@@ -70,37 +71,43 @@ void main() {
     }
 
     ivec4 nodePosition = ivec4(imageLoad(nodePositions, nodeID));
-    imageStore(debug, int(0), vec4(float(nodePosition.x), 0, 0, 0));
-    imageStore(debug, int(1), vec4(float(nodePosition.y), 0, 0, 0));
-    imageStore(debug, int(2), vec4(float(nodePosition.z), 0, 0, 0));
+    //imageStore(debug, int(0), vec4(float(nodePosition.x), 0, 0, 0));
+    //imageStore(debug, int(1), vec4(float(nodePosition.y), 0, 0, 0));
+    //imageStore(debug, int(2), vec4(float(nodePosition.z), 0, 0, 0));
 
-    for (uint i = 0; i < 3; i++) {
-        uint neighborID = imageLoad(nodePoolNeighbors[i], nodeID).r;
-        imageStore(debug, int(callOffset + i + 4), vec4(float(neighborID), 0, 0, 0));
+    uint baseNeighborID = imageLoad(nodePoolNeighbors[0], nodeID).r;
+    //imageStore(debug, int(0), vec4(float(baseNeighborID), 0, 0, 0));
 
-        if (neighborID == 0) {
-            uint offest = i + callOffset;
-            uvec4 borderVoxelBaseFragmentPosition = ivec4(nodePosition) + getNeighborOffset(offest);
-            save(borderVoxelBaseFragmentPosition);
-            memoryBarrier();
+    if (baseNeighborID == 0) {
+        uvec4 borderVoxelBaseFragmentPosition = ivec4(nodePosition) + getNeighborOffset(offsetTexture);
+        save(borderVoxelBaseFragmentPosition);
+        memoryBarrier();
 
-            for (uint directionSign = 0; directionSign <= 1; directionSign++) {
-              ivec4 diagonalCoordinates = getNeighborOffset(DIAGONAL_DIRECTION_MAPPING[offest] + directionSign); 
-              save(borderVoxelBaseFragmentPosition + diagonalCoordinates);
-              memoryBarrier();
-            }
+        for (uint directionSign = 0; directionSign <= 1; directionSign++) {
+          uint sideNeighborID = imageLoad(nodePoolNeighbors[1 + directionSign], nodeID).r;
 
-            for (uint directionSignX = 0; directionSignX <= 1; directionSignX++) {
-              ivec4 diagonalCoordinatesX = NEIGHBOR_OFFSETS[directionSignX];
-              for (uint directionSignY = 0; directionSignY <= 1; directionSignY++) {
-                ivec4 diagonalCoordinatesY = NEIGHBOR_OFFSETS[directionSignY + 2]; 
-
-                if (offest >= 4) {
-                  save(borderVoxelBaseFragmentPosition + diagonalCoordinatesX + diagonalCoordinatesY);
-                }
-                memoryBarrier();
-              }
-            }
+          // If offsetTexture is 0 it means we are running X+ case. Then we want to posibly get the diagonals for X+Y+ and X+Y-
+          // So on directionSign 0 with sideNeighborID we check if Y+ exists as sideOffsetTexture should be 2, if it exists 
+          // that node at Y+ will take care of adding the neighbor X+Y+ when the appendBorderVoxel call runs for it
+          // if it doesn't exist then this node is responsible of adding that diagonal
+          if (sideNeighborID == 0) {
+            ivec4 diagonalCoordinates = getNeighborOffset(sideOffsetTexture + directionSign); 
+            save(borderVoxelBaseFragmentPosition + diagonalCoordinates);
+          }
+          memoryBarrier();
         }
+
     }
 }
+//
+            //for (uint directionSignX = 0; directionSignX <= 1; directionSignX++) {
+              //ivec4 diagonalCoordinatesX = NEIGHBOR_OFFSETS[directionSignX];
+              //for (uint directionSignY = 0; directionSignY <= 1; directionSignY++) {
+                //ivec4 diagonalCoordinatesY = NEIGHBOR_OFFSETS[directionSignY + 2]; 
+
+                //if (offsetTexture >= 4) {
+                  //save(borderVoxelBaseFragmentPosition + diagonalCoordinatesX + diagonalCoordinatesY);
+                //}
+                //memoryBarrier();
+              //}
+            //}

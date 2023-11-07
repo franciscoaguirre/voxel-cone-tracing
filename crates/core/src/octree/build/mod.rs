@@ -40,23 +40,23 @@ impl Octree {
             //allocated_nodes_counter,
         //);
 
-        self.builder
-            .write_leaf_nodes_pass
-            .run(&self.geometry_data.voxel_data, &self.textures);
+        //self.builder
+            //.write_leaf_nodes_pass
+            //.run(&self.geometry_data.voxel_data, &self.textures);
 
-        self.builder
-            .process_raw_brick_pool_colors
-            .run(&self.geometry_data.node_data, &self.textures);
+        //self.builder
+            //.process_raw_brick_pool_colors
+            //.run(&self.geometry_data.node_data, &self.textures);
 
-        self.builder
-            .create_alpha_map
-            .run(&self.textures, &self.geometry_data.node_data);
+        //self.builder
+            //.create_alpha_map
+            //.run(&self.textures, &self.geometry_data.node_data);
 
-        self.builder.spread_leaf_bricks_pass.run(
-            &self.textures,
-            &self.geometry_data.node_data,
-            BrickPoolValues::Colors,
-        );
+        //self.builder.spread_leaf_bricks_pass.run(
+            //&self.textures,
+            //&self.geometry_data.node_data,
+            //BrickPoolValues::Colors,
+        //);
 
         // self.builder.spread_leaf_bricks_pass.run(
         //     &self.textures,
@@ -64,14 +64,14 @@ impl Octree {
         //     BrickPoolValues::Normals,
         // );
 
-        self.builder.leaf_border_transfer_pass.run(
-            &self.textures,
-            &self.geometry_data.node_data,
-            BrickPoolValues::Colors,
-        );
+        //self.builder.leaf_border_transfer_pass.run(
+            //&self.textures,
+            //&self.geometry_data.node_data,
+            //BrickPoolValues::Colors,
+        //);
 
-        #[cfg(debug_assertions)]
-        self.run_mipmap(BrickPoolValues::Colors);
+        //#[cfg(debug_assertions)]
+        //self.run_mipmap(BrickPoolValues::Colors);
     }
 
     pub unsafe fn run_mipmap(&self, brick_pool_values: BrickPoolValues) {
@@ -147,7 +147,7 @@ impl Octree {
             .store_node_positions_pass
             .run(&self.textures, 0, &voxel_data);
 
-        for octree_level in 1..=config.last_octree_level() {
+        for octree_level in 1..=1 {
             // Flag and allocate previous level of octree with nodes for current level
             // of octree
             let flag_nodes_input = FlagNodesInput {

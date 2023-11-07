@@ -45,19 +45,13 @@ impl AppendBorderVoxelFragmentsPass {
         self.shader
             .set_uint(c_str!("octreeLevel"), octree_level);
 
-        helpers::bind_image_texture(
-            0,
-            border_data.voxel_data.voxel_positions.texture(),
-            gl::WRITE_ONLY,
-            gl::RGB10_A2UI,
-        );
         helpers::bind_image_texture(1, textures.node_positions.0, gl::READ_ONLY, gl::RGB10_A2UI);
 
         let next_voxel_fragment_counter = helpers::generate_atomic_counter_buffer();
         gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, next_voxel_fragment_counter);
 
         let (debug_texture, debug_texture_buffer) = helpers::generate_texture_buffer(20, gl::R32F, 42f32);
-        helpers::bind_image_texture(7, debug_texture, gl::WRITE_ONLY, gl::R32F);
+        helpers::bind_image_texture(5, debug_texture, gl::WRITE_ONLY, gl::R32F);
 
         self.run_pass(nodes_in_current_level, textures);
 
@@ -73,33 +67,46 @@ impl AppendBorderVoxelFragmentsPass {
             octree_level,
             number_of_voxel_fragments
         );
-        panic!();
     }
 
     unsafe fn run_pass(&self, nodes_in_current_level: u32, textures: &OctreeTextures) {
-        let call_offset = 0;
-        self.run_half(call_offset, nodes_in_current_level, textures);
-
-        let call_offset = 3;
-        self.run_half(call_offset, nodes_in_current_level, textures);
+        self.run_one(0, 2, nodes_in_current_level, textures);
+        self.run_one(1, 2, nodes_in_current_level, textures);
+        self.run_one(2, 4, nodes_in_current_level, textures);
+        self.run_one(3, 4, nodes_in_current_level, textures);
+        self.run_one(4, 0, nodes_in_current_level, textures);
+        self.run_one(5, 0, nodes_in_current_level, textures);
     }
 
-    unsafe fn run_half(
+    unsafe fn run_one(
         &self,
-        call_offset: usize,
+        base_texture: usize,
+        side_texture: usize,
         nodes_in_current_level: u32,
         textures: &OctreeTextures,
     ) {
         self.shader
-            .set_uint(c_str!("callOffset"), call_offset as u32);
-        for texture_offset in 0..(textures.neighbors.len() / 2) {
-            helpers::bind_image_texture(
-                2 + texture_offset as u32,
-                textures.neighbors[texture_offset + call_offset].0,
-                gl::READ_ONLY,
-                gl::R32UI,
-            );
-        }
+            .set_uint(c_str!("offsetTexture"), base_texture as u32);
+        self.shader
+            .set_uint(c_str!("sideOffsetTexture"), side_texture as u32);
+        helpers::bind_image_texture(
+            2 as u32,
+            textures.neighbors[base_texture].0,
+            gl::READ_ONLY,
+            gl::R32UI,
+        );
+        helpers::bind_image_texture(
+            3 as u32,
+            textures.neighbors[side_texture].0,
+            gl::READ_ONLY,
+            gl::R32UI,
+        );
+        helpers::bind_image_texture(
+            4 as u32,
+            textures.neighbors[side_texture + 1].0,
+            gl::READ_ONLY,
+            gl::R32UI,
+        );
 
         let config = Config::instance();
 
