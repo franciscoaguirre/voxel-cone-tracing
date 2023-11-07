@@ -73,7 +73,7 @@ impl AppendBorderVoxelFragmentsPass {
             octree_level,
             number_of_voxel_fragments
         );
-        //panic!();
+        panic!();
     }
 
     unsafe fn run_pass(&self, nodes_in_current_level: u32, textures: &OctreeTextures) {
@@ -94,7 +94,7 @@ impl AppendBorderVoxelFragmentsPass {
             .set_uint(c_str!("callOffset"), call_offset as u32);
         for texture_offset in 0..(textures.neighbors.len() / 2) {
             helpers::bind_image_texture(
-                3 + texture_offset as u32,
+                2 + texture_offset as u32,
                 textures.neighbors[texture_offset + call_offset].0,
                 gl::READ_ONLY,
                 gl::R32UI,

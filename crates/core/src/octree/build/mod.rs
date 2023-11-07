@@ -178,10 +178,12 @@ impl Octree {
                 .run(&self.textures, octree_level, &voxel_data);
 
             self.builder.neighbor_pointers_pass.run(
-                    &self.geometry_data.voxel_data,
-                    &self.geometry_data.node_data,
-                    &self.textures,
-                    octree_level,
+                &self.geometry_data.voxel_data,
+                &self.geometry_data.node_data,
+                &self.textures,
+                octree_level,
+                *first_free_node as u32,
+                non_border_nodes_allocated,
             );
 
             self.builder.append_border_voxel_fragments_pass.run(

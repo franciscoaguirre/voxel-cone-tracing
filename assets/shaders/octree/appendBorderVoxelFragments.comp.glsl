@@ -6,7 +6,7 @@ layout (local_size_x = WORKING_GROUP_SIZE, local_size_y = 1, local_size_z = 1) i
 
 uniform layout(binding = 0, rgb10_a2ui) writeonly uimageBuffer borderVoxelFragments;
 uniform layout(binding = 1, rgb10_a2ui) readonly uimageBuffer nodePositions;
-uniform layout(binding = 2, r32ui) readonly uimageBuffer nodePoolNeighbors[3];
+uniform layout(binding = 2, r32ui) readonly uimageBuffer nodePoolNeighbors[HALF_NEIGHBORS];
 uniform layout(binding = 7, r32f) imageBuffer debug;
 
 uniform layout(binding = 0, offset = 0) atomic_uint nextVoxelFragmentCounter;
@@ -65,15 +65,18 @@ ivec4 getNeighborOffset(uint neighbor) {
 void main() {
     int nodeID = getThreadNode();
 
-    if (nodeID != 1) {
+    if (nodeID == NODE_NOT_FOUND) {
         return;
     }
 
     ivec4 nodePosition = ivec4(imageLoad(nodePositions, nodeID));
+    imageStore(debug, int(0), vec4(float(nodePosition.x), 0, 0, 0));
+    imageStore(debug, int(1), vec4(float(nodePosition.y), 0, 0, 0));
+    imageStore(debug, int(2), vec4(float(nodePosition.z), 0, 0, 0));
 
     for (uint i = 0; i < 3; i++) {
         uint neighborID = imageLoad(nodePoolNeighbors[i], nodeID).r;
-        imageStore(debug, int(callOffset + i), vec4(float(neighborID), 0, 0, 0));
+        imageStore(debug, int(callOffset + i + 4), vec4(float(neighborID), 0, 0, 0));
 
         if (neighborID == 0) {
             uint offest = i + callOffset;
@@ -81,23 +84,23 @@ void main() {
             save(borderVoxelBaseFragmentPosition);
             memoryBarrier();
 
-            //for (uint directionSign = 0; directionSign <= 1; directionSign++) {
-              //ivec4 diagonalCoordinates = getNeighborOffset(DIAGONAL_DIRECTION_MAPPING[offest] + directionSign); 
-              //save(borderVoxelBaseFragmentPosition + diagonalCoordinates);
-              //memoryBarrier();
-            //}
+            for (uint directionSign = 0; directionSign <= 1; directionSign++) {
+              ivec4 diagonalCoordinates = getNeighborOffset(DIAGONAL_DIRECTION_MAPPING[offest] + directionSign); 
+              save(borderVoxelBaseFragmentPosition + diagonalCoordinates);
+              memoryBarrier();
+            }
 
-            //for (uint directionSignX = 0; directionSignX <= 1; directionSignX++) {
-              //ivec4 diagonalCoordinatesX = NEIGHBOR_OFFSETS[directionSignX];
-              //for (uint directionSignY = 0; directionSignY <= 1; directionSignY++) {
-                //ivec4 diagonalCoordinatesY = NEIGHBOR_OFFSETS[directionSignY + 2]; 
+            for (uint directionSignX = 0; directionSignX <= 1; directionSignX++) {
+              ivec4 diagonalCoordinatesX = NEIGHBOR_OFFSETS[directionSignX];
+              for (uint directionSignY = 0; directionSignY <= 1; directionSignY++) {
+                ivec4 diagonalCoordinatesY = NEIGHBOR_OFFSETS[directionSignY + 2]; 
 
-                //if (offest >= 4) {
-                  //save(borderVoxelBaseFragmentPosition + diagonalCoordinatesX + diagonalCoordinatesY);
-                //}
-                //memoryBarrier();
-              //}
-            //}
+                if (offest >= 4) {
+                  save(borderVoxelBaseFragmentPosition + diagonalCoordinatesX + diagonalCoordinatesY);
+                }
+                memoryBarrier();
+              }
+            }
         }
     }
 }
