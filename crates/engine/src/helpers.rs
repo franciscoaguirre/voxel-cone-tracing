@@ -199,6 +199,20 @@ pub unsafe fn get_value_from_atomic_counter(counter: u32) -> GLuint {
     value
 }
 
+pub unsafe fn get_value_from_atomic_counter_without_reset(counter: u32) -> GLuint {
+    let mut value: GLuint = 0;
+    gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, counter);
+    gl::GetBufferSubData(
+        gl::ATOMIC_COUNTER_BUFFER,
+        0,
+        size_of::<GLuint>() as isize,
+        get_mutable_pointer(&mut value),
+    );
+    gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, 0);
+
+    value
+}
+
 pub unsafe fn reset_atomic_counter(counter: u32) {
     let reset: GLuint = 0;
     gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, counter);

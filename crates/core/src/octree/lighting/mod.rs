@@ -84,7 +84,6 @@ impl Octree {
         self.builder.leaf_border_transfer_pass.run(
             &self.textures,
             &self.geometry_data.node_data,
-            &self.border_data.node_data,
             BrickPoolValues::Irradiance,
         );
 
