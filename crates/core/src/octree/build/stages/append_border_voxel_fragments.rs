@@ -45,6 +45,13 @@ impl AppendBorderVoxelFragmentsPass {
         self.shader
             .set_uint(c_str!("octreeLevel"), octree_level);
 
+
+        helpers::bind_image_texture(
+            0,
+            border_data.voxel_data.voxel_positions.texture(),
+            gl::WRITE_ONLY,
+            gl::RGB10_A2UI,
+        );
         helpers::bind_image_texture(1, textures.node_positions.0, gl::READ_ONLY, gl::RGB10_A2UI);
 
         let next_voxel_fragment_counter = helpers::generate_atomic_counter_buffer();

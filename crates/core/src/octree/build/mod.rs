@@ -24,6 +24,7 @@ impl Octree {
 
         // Root node is in the geometry pool
         self.geometry_data.node_data.nodes_per_level.push(1);
+        self.border_data.node_data.nodes_per_level.push(0);
 
         let mut first_free_node = 1; // Index of first free node (unallocated) in the octree
 
@@ -147,7 +148,8 @@ impl Octree {
             .store_node_positions_pass
             .run(&self.textures, 0, &voxel_data);
 
-        for octree_level in 1..=1 {
+        for octree_level in 1..=config.last_octree_level() {
+            let previous_level_node_amount = self.geometry_data.node_data.nodes_per_level[octree_level as usize - 1];
             // Flag and allocate previous level of octree with nodes for current level
             // of octree
             let flag_nodes_input = FlagNodesInput {
@@ -164,6 +166,7 @@ impl Octree {
                 allocated_nodes_counter,
                 first_node_in_level,
                 *first_free_node,
+                previous_level_node_amount
             );
 
             let non_border_nodes_allocated = helpers::get_value_from_atomic_counter_without_reset(allocated_nodes_counter);
@@ -193,6 +196,35 @@ impl Octree {
                 *first_free_node as u32,
                 non_border_nodes_allocated,
                 &self.textures,
+            );
+
+            let flag_nodes_input = FlagNodesInput {
+                octree_level: octree_level - 1,
+                voxel_data: self.border_data.voxel_data.clone(),
+                node_pool: BufferTextureV2::from_texture_and_buffer(self.textures.node_pool),
+            };
+            self.builder
+                .flag_nodes_pass
+                .run(flag_nodes_input);
+            self.builder.allocate_nodes_pass.run(
+                &self.border_data.voxel_data, // TODO: Pass in the actual number of nodes
+                &self.textures,
+                allocated_nodes_counter,
+                first_node_in_level,
+                *first_free_node,
+                previous_level_node_amount
+            );
+            self.builder
+                .store_node_positions_pass
+                .run(&self.textures, octree_level, &self.border_data.voxel_data);
+
+            self.builder.neighbor_pointers_pass.run(
+                &self.geometry_data.voxel_data,
+                &self.geometry_data.node_data,
+                &self.textures,
+                octree_level,
+                *first_free_node as u32,
+                non_border_nodes_allocated,
             );
 
             let nodes_allocated = helpers::get_value_from_atomic_counter(allocated_nodes_counter);

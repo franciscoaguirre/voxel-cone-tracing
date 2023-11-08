@@ -371,9 +371,9 @@ fn main() {
 
             if show_voxel_fragment_list {
                 if should_move_light {
-                    render_voxel_fragments_shader.run(&projection, &view, &model);
-                } else {
                     render_border_voxel_fragments_shader.run(&projection, &view, &model);
+                } else {
+                    render_voxel_fragments_shader.run(&projection, &view, &model);
                 }
             }
 
