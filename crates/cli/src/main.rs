@@ -147,13 +147,13 @@ fn main() {
     let mut photons: Vec<u32> = Vec::new();
     let mut children: Vec<u32> = Vec::new();
 
-    //let mut light_maps = unsafe {
-        //octree.inject_light(
-            //&mut objects[..],
-            //&light,
-            //&scene_aabb,
-        //)
-    //};
+    let mut light_maps = unsafe {
+        octree.inject_light(
+            &mut objects[..],
+            &light,
+            &scene_aabb,
+        )
+    };
     let quad = unsafe { Quad::new() };
     let camera_framebuffer = unsafe { GeometryFramebuffer::new() };
 
@@ -431,20 +431,20 @@ fn main() {
                 }
             }
 
-            //cone_tracer.run(
-                //&light,
-                //debug_cone.half_cone_angle,
-                //&octree.textures,
-                //&geometry_buffers,
-                //light_maps,
-                //&quad,
-                //&camera,
-                //if options.visual_tests { Some((
-                    //&options.preset,
-                    //&final_image_framebuffer,
-                    //options.update_screenshots,
-                //)) } else { None },
-            //);
+            cone_tracer.run(
+                &light,
+                debug_cone.half_cone_angle,
+                &octree.textures,
+                &geometry_buffers,
+                light_maps,
+                &quad,
+                &camera,
+                if options.visual_tests { Some((
+                    &options.preset,
+                    &final_image_framebuffer,
+                    options.update_screenshots,
+                )) } else { None },
+            );
 
             if should_show_debug_cone {
                 debug_cone.run(

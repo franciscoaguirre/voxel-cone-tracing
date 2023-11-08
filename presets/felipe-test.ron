@@ -40,11 +40,11 @@
         ),
         diagnostics: (),
         images: (
-            is_showing: false,
+            is_showing: true,
             output: (
                 toggles: (
                     should_show_color: false,
-                    should_show_direct: false,
+                    should_show_direct: true,
                     should_show_indirect: false,
                     should_show_indirect_specular: false,
                     should_show_ambient_occlusion: false,
@@ -85,9 +85,9 @@
     camera: (
         transform: (
             position: (
-                x: 2.6892686,
-                y: 1.3785485,
-                z: -0.9511302,
+                x: 0.27183864,
+                y: 1.00415,
+                z: -2.0918067,
             ),
             scale: (
                 x: 1.0,
@@ -95,8 +95,8 @@
                 z: 1.0,
             ),
             rotation: (
-                x: -29.300144,
-                y: 156.39963,
+                x: -25.20002,
+                y: -260.4003,
                 z: 0.0,
             ),
             movement_speed: 1.0,

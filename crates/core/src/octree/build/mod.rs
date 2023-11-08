@@ -24,7 +24,6 @@ impl Octree {
 
         // Root node is in the geometry pool
         self.geometry_data.node_data.nodes_per_level.push(1);
-        self.border_data.node_data.nodes_per_level.push(0);
 
         let mut first_free_node = 1; // Index of first free node (unallocated) in the octree
 
@@ -41,38 +40,38 @@ impl Octree {
             //allocated_nodes_counter,
         //);
 
-        //self.builder
-            //.write_leaf_nodes_pass
-            //.run(&self.geometry_data.voxel_data, &self.textures);
+        self.builder
+            .write_leaf_nodes_pass
+            .run(&self.geometry_data.voxel_data, &self.textures);
 
-        //self.builder
-            //.process_raw_brick_pool_colors
-            //.run(&self.geometry_data.node_data, &self.textures);
+        self.builder
+            .process_raw_brick_pool_colors
+            .run(&self.geometry_data.node_data, &self.textures);
 
-        //self.builder
-            //.create_alpha_map
-            //.run(&self.textures, &self.geometry_data.node_data);
+        self.builder
+            .create_alpha_map
+            .run(&self.textures, &self.geometry_data.node_data);
 
-        //self.builder.spread_leaf_bricks_pass.run(
-            //&self.textures,
-            //&self.geometry_data.node_data,
-            //BrickPoolValues::Colors,
-        //);
+        self.builder.spread_leaf_bricks_pass.run(
+            &self.textures,
+            &self.geometry_data.node_data,
+            BrickPoolValues::Colors,
+        );
 
-        // self.builder.spread_leaf_bricks_pass.run(
-        //     &self.textures,
-        //     &self.geometry_data.node_data,
-        //     BrickPoolValues::Normals,
-        // );
+         //self.builder.spread_leaf_bricks_pass.run(
+             //&self.textures,
+             //&self.geometry_data.node_data,
+             //BrickPoolValues::Normals,
+         //);
 
-        //self.builder.leaf_border_transfer_pass.run(
-            //&self.textures,
-            //&self.geometry_data.node_data,
-            //BrickPoolValues::Colors,
-        //);
+        self.builder.leaf_border_transfer_pass.run(
+            &self.textures,
+            &self.geometry_data.node_data,
+            BrickPoolValues::Colors,
+        );
 
-        //#[cfg(debug_assertions)]
-        //self.run_mipmap(BrickPoolValues::Colors);
+        #[cfg(debug_assertions)]
+        self.run_mipmap(BrickPoolValues::Colors);
     }
 
     pub unsafe fn run_mipmap(&self, brick_pool_values: BrickPoolValues) {
@@ -107,7 +106,6 @@ impl Octree {
                     self.builder.anisotropic_border_transfer_pass.run(
                         &self.textures,
                         &self.geometry_data.node_data,
-                        &self.border_data.node_data,
                         level,
                         brick_pool_values,
                         *direction,
@@ -218,16 +216,16 @@ impl Octree {
                 .store_node_positions_pass
                 .run(&self.textures, octree_level, &self.border_data.voxel_data);
 
+            let nodes_allocated = helpers::get_value_from_atomic_counter(allocated_nodes_counter);
             self.builder.neighbor_pointers_pass.run(
                 &self.geometry_data.voxel_data,
                 &self.geometry_data.node_data,
                 &self.textures,
                 octree_level,
                 *first_free_node as u32,
-                non_border_nodes_allocated,
+                nodes_allocated,
             );
 
-            let nodes_allocated = helpers::get_value_from_atomic_counter(allocated_nodes_counter);
             // TODO: Separate node_data and voxel_data top-level.
             // The only mutable thing we need is node_data.
             // If we had node_data separate from voxel_data we could mutably borrow it and
