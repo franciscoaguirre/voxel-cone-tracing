@@ -59,7 +59,7 @@ impl AllocateNodesPass {
         self.shader.dispatch(groups_count);
         self.shader.wait();
 
-        let values = helpers::get_values_from_texture_buffer(debug_texture_buffer, 20, 0f32);
-        dbg!(&values);
+        // let values = helpers::get_values_from_texture_buffer(debug_texture_buffer, 20, 0f32);
+        // dbg!(&values);
     }
 }

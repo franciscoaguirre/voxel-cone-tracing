@@ -34,12 +34,6 @@ impl Octree {
         );
         let number_of_nodes = self.number_of_nodes() as u32;
 
-        //self.voxels_to_nodes(
-            //OctreeDataType::Border,
-            //&mut first_free_node,
-            //allocated_nodes_counter,
-        //);
-
         self.builder
             .write_leaf_nodes_pass
             .run(&self.geometry_data.voxel_data, &self.textures);
@@ -57,12 +51,6 @@ impl Octree {
             &self.geometry_data.node_data,
             BrickPoolValues::Colors,
         );
-
-         //self.builder.spread_leaf_bricks_pass.run(
-             //&self.textures,
-             //&self.geometry_data.node_data,
-             //BrickPoolValues::Normals,
-         //);
 
         self.builder.leaf_border_transfer_pass.run(
             &self.textures,
@@ -110,12 +98,6 @@ impl Octree {
                         brick_pool_values,
                         *direction,
                     );
-                    // self.builder.border_transfer_pass.run(
-                    //     &self.textures,
-                    //     &self.geometry_data.node_data,
-                    //     level,
-                    //     BrickPoolValues::Normals,
-                    // );
                 }
             }
         }

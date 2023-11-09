@@ -63,7 +63,7 @@ impl AppendBorderVoxelFragmentsPass {
         self.run_pass(nodes_in_current_level, textures);
 
         let values = helpers::get_values_from_texture_buffer(debug_texture_buffer, 20, 0f32);
-        dbg!(&values);
+        // dbg!(&values);
 
         // Get the number of voxel fragments
         let number_of_voxel_fragments =

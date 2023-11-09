@@ -144,7 +144,12 @@ void main() {
     // float h = normalize((lightDirection - view);
     // float specular = pow(max(0.0, dot(normal, h)), shininess);
     float visibility = 1.0;
-    vec3 lightVector = toVoxelSpace(pointLight.position) - positionVoxelSpace;
+    vec3 lightVector;
+    if (isDirectional) {
+        lightVector = toVoxelSpace(directionalLight.direction);
+    } else {
+        lightVector = toVoxelSpace(pointLight.position) - positionVoxelSpace;
+    }
     vec3 lightDirection = normalize(lightVector);
     visibility = traceShadowCone(positionVoxelSpace, lightDirection, length(lightVector));
     float lightAngle = dot(normal, lightDirection);
@@ -165,7 +170,7 @@ void main() {
     }
 
     if (shouldShowDirect) {
-        finalImage += visibility * vec4(directLight, 1.0);
+        finalImage += vec4(visibility * directLight, 1.0);
     }
     if (shouldShowIndirect) {
         finalImage += vec4(indirectLight, 1.0);
