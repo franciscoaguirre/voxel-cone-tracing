@@ -8,6 +8,7 @@ uniform int firstNodeInLevel;
 uniform int firstFreeNode;
 
 uniform layout(binding = 0, r32ui) uimageBuffer nodePool;
+uniform layout(binding = 1, r32f) imageBuffer debug;
 
 uniform layout(binding = 0, offset = 0) atomic_uint allocatedNodesCounter;
 
@@ -21,6 +22,7 @@ void main()
     uint threadIndex = gl_GlobalInvocationID.x;
     int parentNodeIndex = firstNodeInLevel * CHILDREN_PER_NODE + int(threadIndex);
     uint parentNode = imageLoad(nodePool, parentNodeIndex).r;
+    imageStore(debug, int(parentNodeIndex), vec4(float(parentNode), 0, 0, 0));
 
     if (isNodeFlagged(parentNode)) {
         allocatedNodeIndex = atomicCounterIncrement(allocatedNodesCounter);

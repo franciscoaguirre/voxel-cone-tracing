@@ -23,6 +23,8 @@ impl NeighborPointersPass {
         node_data: &NodeData,
         textures: &OctreeTextures,
         current_octree_level: u32,
+        level_start: u32,
+        nodes_in_current_level: u32
     ) {
         self.shader.use_program();
 
@@ -33,6 +35,10 @@ impl NeighborPointersPass {
             .set_uint(c_str!("voxelDimension"), config.voxel_dimension() as u32);
         self.shader
             .set_uint(c_str!("octreeLevel"), current_octree_level);
+        self.shader
+            .set_uint(c_str!("levelStart"), level_start);
+        self.shader
+            .set_uint(c_str!("nextLevelStart"), level_start + nodes_in_current_level);
         self.shader.set_int(c_str!("axis"), 0);
 
         // Bind images
@@ -41,10 +47,9 @@ impl NeighborPointersPass {
 
         helpers::bind_image_texture(2, textures.neighbors[0].0, gl::WRITE_ONLY, gl::R32UI);
         helpers::bind_image_texture(3, textures.neighbors[1].0, gl::WRITE_ONLY, gl::R32UI);
+        helpers::bind_image_texture(4, textures.node_positions.0, gl::READ_ONLY, gl::RGB10_A2UI);
 
-        helpers::bind_image_texture(4, node_data.level_start_indices.0, gl::READ_ONLY, gl::R32UI);
-
-        let groups_count = (voxel_data.number_of_voxel_fragments as f32
+        let groups_count = (nodes_in_current_level as f32
             / config.working_group_size as f32)
             .ceil() as u32;
 

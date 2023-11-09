@@ -125,7 +125,8 @@ void main() {
 
     // Because we have a square that is half the pixel, but we want to expand on the diagonal of that square, so halfPixel*sqrt(2) 
     // Not sure of it so left as a comment
-    halfPixel *= 1.41421356237;
+    halfPixel *= 1.21421356237;
+    //halfPixel *= 1.41421356237;
 
     vec3 expandedVertex[3];
     for (int i = 0; i < 3; i++) {
