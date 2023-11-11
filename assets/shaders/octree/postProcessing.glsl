@@ -40,8 +40,9 @@ void main() {
         color.rgb /= maxNorm;
     }
 
-    float gamma = 2.2;
-    color.rgb = pow(color.rgb, vec3(1.0 / gamma));
+    // TODO: Makes it look worse for some reason
+    // float gamma = 2.2;
+    // color.rgb = pow(color.rgb, vec3(1.0 / gamma));
 
     outColor = color;
 }
