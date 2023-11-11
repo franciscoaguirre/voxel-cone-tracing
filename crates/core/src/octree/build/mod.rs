@@ -137,6 +137,13 @@ impl Octree {
                 voxel_data: voxel_data.clone(),
                 node_pool: BufferTextureV2::from_texture_and_buffer(self.textures.node_pool),
             };
+            let allocate_nodes_input = AllocateNodesInput {
+                voxel_data: voxel_data.clone(),
+                allocated_nodes_counter,
+                first_node_in_level,
+                first_free_node: *first_free_node,
+                node_pool: BufferTextureV2::from_texture_and_buffer(self.textures.node_pool),
+            };
             self.builder
                 .flag_nodes_pass
                 .run(flag_nodes_input);
