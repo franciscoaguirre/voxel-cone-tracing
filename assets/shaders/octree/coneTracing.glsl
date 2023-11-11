@@ -8,10 +8,6 @@ out VertexData {
     vec2 textureCoordinates;
 } Out;
 
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
-
 void main() {
     gl_Position = vec4(position, 1.0);
     Out.textureCoordinates = position.xy * 0.5 + 0.5;
@@ -46,12 +42,19 @@ uniform DirectionalLight directionalLight;
 uniform PointLight pointLight;
 uniform bool isDirectional;
 uniform float shininess;
-uniform mat4 lightViewMatrix;
-uniform mat4 lightProjectionMatrix;
-uniform float halfConeAngle;
 uniform float photonPower;
 uniform bool showIndirectLight;
 uniform vec3 eyePosition;
+
+// Cone parameters
+struct ConeParameters {
+    float halfConeAngle;
+    float maxDistance;
+};
+uniform ConeParameters shadowConeParameters;
+uniform ConeParameters ambientOcclusionConeParameters;
+uniform ConeParameters diffuseConeParameters;
+uniform ConeParameters specularConeParameters;
 
 // Boolean toggles
 uniform bool shouldShowColor;
@@ -59,14 +62,6 @@ uniform bool shouldShowDirect;
 uniform bool shouldShowIndirect;
 uniform bool shouldShowIndirectSpecular;
 uniform bool shouldShowAmbientOcclusion;
-
-// Brick attributes
-uniform sampler3D brickPoolColorsX;
-uniform sampler3D brickPoolColorsXNeg;
-uniform sampler3D brickPoolColorsY;
-uniform sampler3D brickPoolColorsYNeg;
-uniform sampler3D brickPoolColorsZ;
-uniform sampler3D brickPoolColorsZNeg;
 
 uniform sampler3D brickPoolNormals;
 
@@ -89,15 +84,14 @@ uniform sampler2D gBufferSpeculars;
 #include "./_traversalHelpers.glsl"
 #include "./_octreeTraversal.glsl"
 #include "./_brickCoordinates.glsl"
-#include "./_anisotropicColor.glsl"
 #include "./_anisotropicIrradiance.glsl"
 #include "./_coneTrace.glsl"
 
 const float PI = 3.14159;
 
-vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, bool useLighting);
-vec4 gatherSpecularIndirectLight(vec3 position, vec3 eyeDirection, vec3 normal);
-float traceShadowCone(vec3 origin, vec3 direction, float targetDistance);
+vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, ConeParameters parameters);
+vec4 gatherSpecularIndirectLight(vec3 position, vec3 eyeDirection, vec3 normal, ConeParameters parameters);
+float traceShadowCone(vec3 origin, vec3 direction, float targetDistance, ConeParameters parameters);
 
 vec3 toVoxelSpace(vec3 positionWorldSpace) {
   return (positionWorldSpace + vec3(1)) / 2.0;
@@ -109,7 +103,8 @@ void main() {
     // We should use `positionVoxelSpace` when cone tracing
     vec3 positionVoxelSpace = toVoxelSpace(positionWorldSpace);
 
-    vec3 eyeDirection = normalize(positionWorldSpace - eyePosition);
+    // Using world positions is fine as well since we are subtracting
+    vec3 eyeDirection = normalize(positionVoxelSpace - toVoxelSpace(eyePosition));
 
     vec3 normal = texture(gBufferNormals, In.textureCoordinates).xyz;
     vec3 helper = normal - vec3(0.1, 0.1, 0); // Random vector
@@ -121,24 +116,22 @@ void main() {
         discard;
     }
 
-    bool useLighting = false;
     float ambientOcclusion;
     if (shouldShowAmbientOcclusion) {
-        ambientOcclusion = gatherIndirectLight(positionVoxelSpace, normal, tangent, useLighting).a;
+        ambientOcclusion = gatherIndirectLight(positionVoxelSpace, normal, tangent, ambientOcclusionConeParameters).a;
     }
 
-    useLighting = true;
     vec3 indirectLight = vec3(0);
     if (shouldShowIndirect) {
         // We should pre-multiply by alpha probably? Instead of just ignoring it
-        indirectLight = gatherIndirectLight(positionVoxelSpace, normal, tangent, useLighting).rgb;
+        indirectLight = gatherIndirectLight(positionVoxelSpace, normal, tangent, diffuseConeParameters).rgb;
     }
 
     float specularFactor = texture(gBufferSpeculars, In.textureCoordinates).r;
     vec3 specularIndirectLight = vec3(0);
     if (shouldShowIndirectSpecular && specularFactor > 0.0) {
       // We should pre-multiply by alpha probably? Instead of just ignoring it
-        specularIndirectLight = specularFactor * gatherSpecularIndirectLight(positionVoxelSpace, eyeDirection, normal).rgb;
+        specularIndirectLight = specularFactor * gatherSpecularIndirectLight(positionVoxelSpace, eyeDirection, normal, specularConeParameters).rgb;
     }
 
     // float h = normalize((lightDirection - view);
@@ -151,12 +144,11 @@ void main() {
         lightVector = toVoxelSpace(pointLight.position) - positionVoxelSpace;
     }
     vec3 lightDirection = normalize(lightVector);
-    visibility = traceShadowCone(positionVoxelSpace, lightDirection, length(lightVector));
+    visibility = traceShadowCone(positionVoxelSpace, lightDirection, length(lightVector), shadowConeParameters);
     float lightAngle = dot(normal, lightDirection);
     float diffuse = max(lightAngle, 0.0);
-    vec3 directLight = vec3(diffuse);
-
-    vec4 finalImage = vec4(0);
+    // TODO: This should be the diffuse factor, not the specular
+    vec3 directLight = (1 - specularFactor) * vec3(diffuse);
 
     bool shouldShowOnlyColor = (
         !shouldShowDirect &&
@@ -165,47 +157,44 @@ void main() {
             !shouldShowIndirectSpecular
     );
 
-    if (shouldShowOnlyColor) {
-        finalImage = color;
-    }
+    vec4 finalImage = vec4(0);
 
     if (shouldShowDirect) {
-        finalImage += vec4(visibility * directLight, 1.0);
+        finalImage += vec4(visibility * directLight * color.rgb, 1.0);
     }
     if (shouldShowIndirect) {
-        finalImage += vec4(indirectLight, 1.0);
-    }
-    if (shouldShowAmbientOcclusion) {
-        finalImage += vec4(vec3(1.0 - ambientOcclusion), 1.0);
-    }
-    if (!shouldShowOnlyColor && shouldShowColor) {
-        finalImage *= color;
+        finalImage += vec4(indirectLight * color.rgb, 1.0);
     }
     if (shouldShowIndirectSpecular) {
         finalImage += vec4(specularIndirectLight, 1.0);
+    }
+
+    if (shouldShowAmbientOcclusion) {
+        finalImage = vec4(vec3(1.0 - ambientOcclusion), 1);
+    }
+
+    if (shouldShowOnlyColor) {
+        finalImage = color;
     }
     
     outColor = vec4(finalImage.xyz, 1.0);
 }
 
-float traceShadowCone(vec3 origin, vec3 direction, float targetDistance) {
+float traceShadowCone(vec3 origin, vec3 direction, float targetDistance, ConeParameters parameters) {
     // TODO: Possibly add a little bit in the direction of the normal
-    float occlusion = coneTrace(origin, direction, halfConeAngle, targetDistance).a;
+    float occlusion = coneTrace(origin, direction, parameters.halfConeAngle, targetDistance).a;
     return 1 - occlusion;
 }
 
-vec4 gatherSpecularIndirectLight(vec3 position, vec3 eyeDirection, vec3 normal) {
+vec4 gatherSpecularIndirectLight(vec3 position, vec3 eyeDirection, vec3 normal, ConeParameters parameters) {
     vec3 reflectDirection = normalize(reflect(eyeDirection, normalize(normal)));
-    //vec3 reflectDirection = normalize(reflect(eyeDirection, vec3(0, 0, -1)));
-    float halfConeAngle = 0.005;
-    float maxDistance = 5;
-    bool useLighting = true;
-
-    return coneTrace(position, reflectDirection, halfConeAngle, maxDistance);
+    return coneTrace(position, reflectDirection, parameters.halfConeAngle, parameters.maxDistance);
 }
 
-vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, bool useLighting) {
-    float maxDistance = useLighting ? 1.0 : 0.01;
+vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, ConeParameters parameters) {
+    float maxDistance = parameters.maxDistance;
+    float halfConeAngle = parameters.halfConeAngle;
+
     vec3 bitangent = cross(normal, tangent);
     vec3 direction;
     vec4 indirectLight = vec4(0);

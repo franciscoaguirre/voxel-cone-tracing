@@ -1,5 +1,7 @@
 //! The entrypoint to the VCT application
 
+use std::collections::HashMap;
+
 extern crate c_str_macro;
 
 use c_str_macro::c_str;
@@ -91,6 +93,7 @@ fn main() {
         "assets/shaders/model/renderNormals.geom.glsl",
     );
     let mut cone_tracer = ConeTracer::init();
+    let mut cone_parameters = HashMap::new();
     let mut debug_cone = unsafe { DebugCone::new() };
 
     let scene = scene::load_scene(&options.scene);
@@ -302,10 +305,13 @@ fn main() {
             // Cone tracing
             should_show_debug_cone = outputs.9.show_debug_cone;
             should_move_debug_cone = outputs.9.move_debug_cone;
-            debug_cone.half_cone_angle = if outputs.9.cone_angle_in_degrees <= 1.0 { 30f32.to_radians() / 2.0 } else { outputs.9.cone_angle_in_degrees.to_radians() / 2.0 };
-            debug_cone.number_of_cones = if outputs.9.number_of_cones == 0 { 1 } else { outputs.9.number_of_cones };
-            debug_cone.max_distance = if outputs.9.max_distance == 0.0 { 0.1 } else { outputs.9.max_distance };
+            // TODO: there is quite a bit of cloning here
+            debug_cone.parameters = outputs.9.debug_cone_parameters.clone();
             debug_cone.point_to_light = outputs.9.point_to_light;
+            cone_parameters.insert("shadowConeParameters", outputs.9.shadow_cone_parameters.clone());
+            cone_parameters.insert("ambientOcclusionConeParameters", outputs.9.ambient_occlusion_cone_parameters.clone());
+            cone_parameters.insert("diffuseConeParameters", outputs.9.diffuse_cone_parameters.clone());
+            cone_parameters.insert("specularConeParameters", outputs.9.specular_cone_parameters.clone());
             // This one doesn't come from `get_data()` but is still relevant to `debug_cone`
             geometry_buffer_coordinates = menu.get_quad_coordinates();
 
@@ -433,12 +439,12 @@ fn main() {
 
             cone_tracer.run(
                 &light,
-                debug_cone.half_cone_angle,
                 &octree.textures,
                 &geometry_buffers,
                 light_maps,
                 &quad,
                 &camera,
+                &cone_parameters,
                 if options.visual_tests { Some((
                     &options.preset,
                     &final_image_framebuffer,

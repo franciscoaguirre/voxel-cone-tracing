@@ -14,11 +14,11 @@ use crate::{
     octree::OctreeTextures,
 };
 
+use super::ConeParameters;
+
 pub struct DebugCone {
     pub transform: Transform,
-    pub half_cone_angle: f32,
-    pub number_of_cones: u32,
-    pub max_distance: f32,
+    pub parameters: ConeParameters,
     pub point_to_light: bool,
     shader: Shader,
     direction: Vector3<f32>,
@@ -65,8 +65,10 @@ impl DebugCone {
         Self {
             shader: compile_shaders!("assets/shaders/debug/debugConeTracing.glsl", debug = true),
             transform,
-            number_of_cones: 1,
-            max_distance: 1.0,
+            parameters: ConeParameters {
+                max_distance: 1.0,
+                cone_angle_in_degrees: 30f32.to_radians(),
+            },
             direction: vec3(0.0, 1.0, 0.0),
             previous_values: HashSet::new(),
             nodes_queried: helpers::generate_texture_buffer_with_hint(
@@ -82,7 +84,6 @@ impl DebugCone {
                 gl::DYNAMIC_READ,
             ),
             nodes_queried_counter: helpers::generate_atomic_counter_buffer1(),
-            half_cone_angle: 20f32.to_radians(),
             point_to_light: false,
             vao,
         }
@@ -110,36 +111,6 @@ impl DebugCone {
         gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, self.nodes_queried_counter);
 
         let brick_pool_textures = vec![
-            (
-                c_str!("brickPoolColorsX"),
-                textures.brick_pool_colors[0],
-                gl::LINEAR as i32,
-            ),
-            (
-                c_str!("brickPoolColorsXNeg"),
-                textures.brick_pool_colors[1],
-                gl::LINEAR as i32,
-            ),
-            (
-                c_str!("brickPoolColorsY"),
-                textures.brick_pool_colors[2],
-                gl::LINEAR as i32,
-            ),
-            (
-                c_str!("brickPoolColorsYNeg"),
-                textures.brick_pool_colors[3],
-                gl::LINEAR as i32,
-            ),
-            (
-                c_str!("brickPoolColorsZ"),
-                textures.brick_pool_colors[4],
-                gl::LINEAR as i32,
-            ),
-            (
-                c_str!("brickPoolColorsZNeg"),
-                textures.brick_pool_colors[5],
-                gl::LINEAR as i32,
-            ),
             (
                 c_str!("brickPoolNormals"),
                 textures.brick_pool_normals,
@@ -250,12 +221,10 @@ impl DebugCone {
             self.direction.y,
             self.direction.z,
         );
-        self.shader
-            .set_float(c_str!("halfConeAngle"), self.half_cone_angle);
-        self.shader
-            .set_float(c_str!("maxDistance"), self.max_distance);
+        self.parameters.set_uniforms("parameters", &self.shader);
 
-        gl::DrawArrays(gl::POINTS, 0, self.number_of_cones as i32);
+        let number_of_cones = 1; // For now
+        gl::DrawArrays(gl::POINTS, 0, number_of_cones);
 
         let values = helpers::get_values_from_texture_buffer(self.nodes_queried.1, 1000, 42u32);
         let sampled_colors =

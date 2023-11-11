@@ -1,7 +1,11 @@
+use std::collections::HashMap;
+
 use c_str_macro::c_str;
 use cgmath::vec3;
 use serde::{Serialize, Deserialize};
 use engine::prelude::*;
+
+use super::ConeParameters;
 
 use crate::{
     config::Config,
@@ -24,12 +28,12 @@ impl ConeTracer {
     pub unsafe fn run(
         &self,
         light: &Light,
-        half_cone_angle: f32,
         textures: &OctreeTextures,
         geometry_buffers: &Textures<GEOMETRY_BUFFERS>,
         light_maps: (u32, u32, u32),
         quad: &Quad,
         camera: &Camera,
+        parameters: &HashMap<&str, ConeParameters>,
         visual_tests_data: Option<(&str, &Framebuffer<1>, bool)>, // When specified, will write to a framebuffer instead of to screen, and save the image to disk
     ) {
         self.shader.use_program();
@@ -85,50 +89,13 @@ impl ConeTracer {
             1.0,
             1.0,
         );
-        self.shader.set_float(c_str!("shininess"), 30.0);
-        self.shader.set_mat4(
-            c_str!("lightViewMatrix"),
-            &light.transform().get_view_matrix(),
-        );
-        self.shader.set_mat4(
-            c_str!("lightProjectionMatrix"),
-            &light.get_projection_matrix(),
-        );
-        self.shader
-            .set_float(c_str!("halfConeAngle"), half_cone_angle as f32);
+        self.shader.set_float(c_str!("shininess"), 30.0); // TODO: This should be decided per material
+        for (key, value) in parameters.iter() {
+            value.set_uniforms(&key, &self.shader);
+        }
         helpers::bind_image_texture(0, textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
 
         let brick_pool_textures = vec![
-            (
-                c_str!("brickPoolColorsX"),
-                textures.brick_pool_colors[0],
-                gl::LINEAR as i32,
-            ),
-            (
-                c_str!("brickPoolColorsXNeg"),
-                textures.brick_pool_colors[1],
-                gl::LINEAR as i32,
-            ),
-            (
-                c_str!("brickPoolColorsY"),
-                textures.brick_pool_colors[2],
-                gl::LINEAR as i32,
-            ),
-            (
-                c_str!("brickPoolColorsYNeg"),
-                textures.brick_pool_colors[3],
-                gl::LINEAR as i32,
-            ),
-            (
-                c_str!("brickPoolColorsZ"),
-                textures.brick_pool_colors[4],
-                gl::LINEAR as i32,
-            ),
-            (
-                c_str!("brickPoolColorsZNeg"),
-                textures.brick_pool_colors[5],
-                gl::LINEAR as i32,
-            ),
             (
                 c_str!("brickPoolNormals"),
                 textures.brick_pool_normals,
@@ -200,8 +167,6 @@ impl ConeTracer {
         }
 
         self.shader.set_bool(c_str!("isDirectional"), light.is_directional());
-        // Unbind textures
-        gl::BindTexture(gl::TEXTURE_2D, 0);
 
         let quad_vao = quad.get_vao();
         if self.toggles.should_show_final_image_quad() {

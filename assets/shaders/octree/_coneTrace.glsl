@@ -2,7 +2,6 @@
 // - uniform uint voxelDimension
 // - uniform uint maxOctreeLevel
 // - uniform sampler3D brickPoolNormals
-// - _anisotropicColor
 // - _anisotropicIrradiance
 // - _traversalHelpers
 // - _octreeTraversal
@@ -12,7 +11,7 @@
 // - uniform atomic_uint queriedNodesCounter
 // - uniform (r32f) sampledColor
 
-float brickPoolResolutionf = float(textureSize(brickPoolColorsX, 0).x);
+float brickPoolResolutionf = float(textureSize(brickPoolIrradianceX, 0).x);
 float brickPoolBrickSize = 3.0 / brickPoolResolutionf;
 
 // Returns values in [0, maxOctreeLevel]
@@ -21,15 +20,6 @@ float calculateLod(float coneDiameter) {
     // Shouldn't this be log2(1 / coneDiameter) + 1 or something similar?
     return clamp(log2(1 / coneDiameter) - 1, 0, maxOctreeLevel);
 }
-
-// Brick marching
-//float findVoxelOcclusion(vec3 queryCoordinates, Node node) {
-   //ivec3 brickCoordinates = calculateBrickCoordinates(node.id);
-   ////ivec3 brickOffset = ivec3(calculateBrickVoxel(node.coordinates, node.halfNodeSize, queryCoordinates));
-   //vec3 brickOffset = (queryCoordinates - node.coordinates) / (2.0 * node.halfNodeSize);
-   //vec4 color = texture(brickPoolColors, (brickCoordinates / brickPoolResolutionf + brickOffset * brickPoolBrickSize));
-   //return color.a;
-//}
 
 vec3 findVoxel(vec3 queryCoordinates, Node node) {
     // offset between 0 and 1
@@ -46,10 +36,6 @@ bool fallsOutsideNode(vec3 queryCoordinates, Node node) {
     vec3 range_start = node.coordinates; 
     vec3 range_end = node.coordinates + vec3(node.halfNodeSize * 2);
     return isOutsideRange(queryCoordinates, range_start, range_end);
-}
-
-vec4 getLeafColor(vec3 voxelCoordinates) {
-    return texture(brickPoolColorsX, voxelCoordinates);
 }
 
 vec4 getLeafIrradiance(vec3 voxelCoordinates) {
@@ -75,7 +61,7 @@ vec4 coneTrace(
     int steps = 0;
     
     // Move the cone origin so it doesn't intersect with own voxels
-    vec3 offsetedConeOrigin = coneOrigin + coneDirection * voxelSize * 2.0;
+    vec3 offsetedConeOrigin = coneOrigin + coneDirection * voxelSize * 5.0;
     while (distanceAlongCone < maxDistance && returnColor.a < 0.97) {
         float coneDiameter = clamp(coneDiameterCoefficient * distanceAlongCone, 0.0009765625, 100.0);
         float lod = calculateLod(coneDiameter);

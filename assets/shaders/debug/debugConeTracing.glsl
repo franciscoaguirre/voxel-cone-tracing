@@ -16,14 +16,6 @@ uniform uint voxelDimension;
 uniform uint maxOctreeLevel;
 uniform bool pointToLight;
 
-// Color
-uniform sampler3D brickPoolColorsX;
-uniform sampler3D brickPoolColorsXNeg;
-uniform sampler3D brickPoolColorsY;
-uniform sampler3D brickPoolColorsYNeg;
-uniform sampler3D brickPoolColorsZ;
-uniform sampler3D brickPoolColorsZNeg;
-
 // Irradiance
 uniform sampler3D brickPoolIrradianceX;
 uniform sampler3D brickPoolIrradianceXNeg;
@@ -45,7 +37,6 @@ uniform vec3 lightPosition;
 #include "assets/shaders/octree/_traversalHelpers.glsl"
 #include "assets/shaders/octree/_octreeTraversal.glsl"
 #include "assets/shaders/octree/_brickCoordinates.glsl"
-#include "assets/shaders/octree/_anisotropicColor.glsl"
 #include "assets/shaders/octree/_anisotropicIrradiance.glsl"
 #include "assets/shaders/octree/_coneTrace.glsl"
 
