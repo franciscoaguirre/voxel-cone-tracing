@@ -17,6 +17,7 @@ pub struct AllocateNodesInput {
     pub first_node_in_level: i32,
     pub first_free_node: i32,
     pub node_pool: BufferTextureV2<u32>,
+    pub previous_level_node_amount: u32,
 }
 
 impl AllocateNodesPass {
@@ -54,7 +55,7 @@ impl ShaderPass for AllocateNodesPass {
         // `voxel_data` and `node_data` need to be the top level split instead of
         // `geometry_data` and `border_data`
         // TODO: Should move to its own function since we use it all over the place
-        let groups_count = ((amount_of_previous_level_nodes * 8) as f32
+        let groups_count = ((input.previous_level_node_amount * 8) as f32
             / config.working_group_size as f32)
             .ceil() as u32;
 
