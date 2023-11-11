@@ -1,7 +1,11 @@
+use std::collections::HashMap;
+
 use c_str_macro::c_str;
 use cgmath::vec3;
 use serde::{Serialize, Deserialize};
 use engine::prelude::*;
+
+use super::ConeParameters;
 
 use crate::{
     config::Config,
@@ -11,6 +15,15 @@ use crate::{
 pub struct ConeTracer {
     shader: Shader,
     pub toggles: Toggles,
+    framebuffer: Framebuffer<1>,
+    max_color_shader: Shader,
+    post_processing_shader: Shader,
+    processed_framebuffer: Framebuffer<1>,
+}
+
+pub struct VisualTestsParameters<'a> {
+    pub screenshot_name: &'a str,
+    pub should_update: bool,
 }
 
 impl ConeTracer {
@@ -18,19 +31,23 @@ impl ConeTracer {
         Self {
             shader: compile_shaders!("assets/shaders/octree/coneTracing.glsl"),
             toggles: Toggles::default(),
+            framebuffer: unsafe { Framebuffer::<1>::new() },
+            max_color_shader: compile_compute!("assets/shaders/octree/getMaxColor.comp.glsl"),
+            post_processing_shader: compile_shaders!("assets/shaders/octree/postProcessing.glsl"),
+            processed_framebuffer: unsafe { Framebuffer::<1>::new() },
         }
     }
 
     pub unsafe fn run(
         &self,
         light: &Light,
-        half_cone_angle: f32,
         textures: &OctreeTextures,
         geometry_buffers: &Textures<GEOMETRY_BUFFERS>,
         light_maps: (u32, u32, u32),
         quad: &Quad,
         camera: &Camera,
-        visual_tests_data: Option<(&str, &Framebuffer<1>, bool)>, // When specified, will write to a framebuffer instead of to screen, and save the image to disk
+        parameters: &HashMap<&str, ConeParameters>,
+        visual_tests_parameters: Option<&VisualTestsParameters>,
     ) {
         self.shader.use_program();
 
@@ -64,62 +81,34 @@ impl ConeTracer {
             camera.transform.position.y,
             camera.transform.position.z,
         );
-        // TODO: This is the direction of the light??
-        let light_direction = vec3(
-            light.transform().position.x,
-            light.transform().position.y,
-            light.transform().position.z,
-        );
+        if light.is_directional() {
+            self.shader.set_vec3(
+                c_str!("directionalLight.direction"),
+                light.transform().position.x,
+                light.transform().position.y,
+                light.transform().position.z,
+            );
+        } else {
+            self.shader.set_vec3(
+                c_str!("pointLight.position"),
+                light.transform().position.x,
+                light.transform().position.y,
+                light.transform().position.z,
+            );
+        }
         self.shader.set_vec3(
-            c_str!("lightDirection"),
-            light_direction.x,
-            light_direction.y,
-            light_direction.z,
+            c_str!("pointLight.color"),
+            1.0, // White
+            1.0,
+            1.0,
         );
-        self.shader.set_float(c_str!("shininess"), 30.0);
-        self.shader.set_mat4(
-            c_str!("lightViewMatrix"),
-            &light.transform().get_view_matrix(),
-        );
-        self.shader.set_mat4(
-            c_str!("lightProjectionMatrix"),
-            &light.get_projection_matrix(),
-        );
-        self.shader
-            .set_float(c_str!("halfConeAngle"), half_cone_angle as f32);
+        self.shader.set_float(c_str!("shininess"), 30.0); // TODO: This should be decided per material
+        for (key, value) in parameters.iter() {
+            value.set_uniforms(&key, &self.shader);
+        }
         helpers::bind_image_texture(0, textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
 
         let brick_pool_textures = vec![
-            (
-                c_str!("brickPoolColorsX"),
-                textures.brick_pool_colors[0],
-                gl::LINEAR as i32,
-            ),
-            (
-                c_str!("brickPoolColorsXNeg"),
-                textures.brick_pool_colors[1],
-                gl::LINEAR as i32,
-            ),
-            (
-                c_str!("brickPoolColorsY"),
-                textures.brick_pool_colors[2],
-                gl::LINEAR as i32,
-            ),
-            (
-                c_str!("brickPoolColorsYNeg"),
-                textures.brick_pool_colors[3],
-                gl::LINEAR as i32,
-            ),
-            (
-                c_str!("brickPoolColorsZ"),
-                textures.brick_pool_colors[4],
-                gl::LINEAR as i32,
-            ),
-            (
-                c_str!("brickPoolColorsZNeg"),
-                textures.brick_pool_colors[5],
-                gl::LINEAR as i32,
-            ),
             (
                 c_str!("brickPoolNormals"),
                 textures.brick_pool_normals,
@@ -191,46 +180,23 @@ impl ConeTracer {
         }
 
         self.shader.set_bool(c_str!("isDirectional"), light.is_directional());
-        gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
-        // TODO: This is causing an `INVALID_OPERATION` error when using point lights
-        // since in that case it's not a `TEXTURE_2D`.
-        // We should remove this anyway once we have shadow cones, solving the error.
-        gl::BindTexture(gl::TEXTURE_2D, light_maps.2);
-        self.shader
-            .set_int(c_str!("shadowMap"), texture_counter as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
 
-        let quad_vao = quad.get_vao();
         if self.toggles.should_show_final_image_quad() {
-            if let Some((_, framebuffer, _)) = visual_tests_data {
-                gl::BindFramebuffer(gl::FRAMEBUFFER, framebuffer.fbo());
-                gl::Enable(gl::DEPTH_TEST);
-                gl::ClearColor(0.0, 0.0, 0.0, 0.0);
-                gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
-                gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-            }
-            gl::BindVertexArray(quad_vao);
-            gl::DrawElements(
-                gl::TRIANGLES,
-                quad.get_num_indices() as i32,
-                gl::UNSIGNED_INT,
-                std::ptr::null(),
-            );
-            gl::BindVertexArray(0);
-            if let Some((_, framebuffer, _)) = visual_tests_data {
-                gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
-            }
+            self.create_image(quad); // Loads it in the framebuffer
+            let max_color_norm = self.calculate_max_color_norm();
+            self.run_post_processing(quad, max_color_norm); // Runs post processing effects on the framebuffer, stores in final framebuffer
+            self.render_to_screen(quad); // Renders the framebuffer to the screen
         }
 
-        if let Some((filename, framebuffer, should_update)) = visual_tests_data {
-            let filepath = format!("screenshots/{filename}.png");
-            if should_update {
-                framebuffer.save_color_attachment_to_file(0, &filepath);
+        if let Some(VisualTestsParameters {
+            screenshot_name,
+            should_update
+        }) = visual_tests_parameters {
+            let filepath = format!("screenshots/{screenshot_name}.png");
+            if *should_update {
+                self.processed_framebuffer.save_color_attachment_to_file(0, &filepath);
             } else {
-                let result = framebuffer.compare_attachment_to_file(0, &filepath)
+                let result = self.processed_framebuffer.compare_attachment_to_file(0, &filepath)
                     .expect("Image not found for comparing. Generate it with `--update-sceenshots` first.");
                 assert!(
                     result,
@@ -240,6 +206,72 @@ impl ConeTracer {
                 );
             }
         }
+    }
+
+    unsafe fn create_image(&self, quad: &Quad) {
+        gl::BindFramebuffer(gl::FRAMEBUFFER, self.framebuffer.fbo());
+        gl::Enable(gl::DEPTH_TEST);
+        gl::ClearColor(0.0, 0.0, 0.0, 0.0);
+        gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
+        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+        gl::BindVertexArray(quad.get_vao());
+        gl::DrawElements(
+            gl::TRIANGLES,
+            quad.get_num_indices() as i32,
+            gl::UNSIGNED_INT,
+            std::ptr::null(),
+        );
+        gl::BindVertexArray(0);
+        gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
+    }
+
+    unsafe fn calculate_max_color_norm(&self) -> f32 {
+        self.max_color_shader.use_program();
+        gl::ActiveTexture(gl::TEXTURE0);
+        gl::BindTexture(gl::TEXTURE_2D, self.framebuffer.textures()[0]);
+        self.max_color_shader.set_int(c_str!("inputTexture"), 0);
+        let (max_color_texture, max_color_texture_buffer) = helpers::generate_texture_buffer(1, gl::R32UI, 0u32);
+        helpers::bind_image_texture(0, max_color_texture, gl::READ_WRITE, gl::R32UI);
+        self.max_color_shader.dispatch_xyz(vec3(
+            840,
+            840,
+            1,
+        ));
+        self.max_color_shader.wait();
+        let max_color_norm = helpers::get_values_from_texture_buffer(max_color_texture_buffer, 1, 42u32)[0];
+        let normalized_max_color_norm = max_color_norm as f32 / 1000.0; // This same value is used in the shader
+        normalized_max_color_norm
+    }
+
+    unsafe fn run_post_processing(&self, quad: &Quad, max_color_norm: f32) {
+        // Set uniforms
+        self.post_processing_shader.use_program();
+        gl::ActiveTexture(gl::TEXTURE0);
+        gl::BindTexture(gl::TEXTURE_2D, self.framebuffer.textures()[0]);
+        self.post_processing_shader.set_int(c_str!("inputTexture"), 0);
+        self.post_processing_shader.set_float(c_str!("maxNorm"), max_color_norm);
+
+        // Framebuffer
+        gl::BindFramebuffer(gl::FRAMEBUFFER, self.processed_framebuffer.fbo());
+        gl::Enable(gl::DEPTH_TEST);
+        gl::ClearColor(0.0, 0.0, 0.0, 0.0);
+        gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
+        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+
+        // Draw using quad
+        gl::BindVertexArray(quad.get_vao());
+        gl::DrawElements(
+            gl::TRIANGLES,
+            quad.get_num_indices() as i32,
+            gl::UNSIGNED_INT,
+            std::ptr::null(),
+        );
+        gl::BindVertexArray(0);
+        gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
+    }
+
+    unsafe fn render_to_screen(&self, quad: &Quad) {
+        quad.render(self.processed_framebuffer.textures()[0]);
     }
 }
 

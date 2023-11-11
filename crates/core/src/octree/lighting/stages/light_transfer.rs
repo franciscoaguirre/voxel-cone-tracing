@@ -8,16 +8,14 @@ use crate::{
     octree::{NodeData, OctreeTextures},
 };
 
-pub struct BorderTransferPass {
+pub struct LightTransfer {
     shader: Shader,
-    light_view_map: GLuint,
 }
 
-impl BorderTransferPass {
-    pub fn init(light_view_map: GLuint) -> Self {
+impl LightTransfer {
+    pub fn init() -> Self {
         Self {
             shader: compile_compute!("assets/shaders/octree/lightTransfer.comp.glsl"),
-            light_view_map,
         }
     }
 
@@ -27,6 +25,7 @@ impl BorderTransferPass {
         octree_level: u32,
         node_data: &NodeData,
         axis: Axis,
+        light_view_map: GLuint,
     ) {
         self.shader.use_program();
 
@@ -37,7 +36,7 @@ impl BorderTransferPass {
             .set_uint(c_str!("voxelDimension"), config.voxel_dimension());
 
         gl::ActiveTexture(gl::TEXTURE0);
-        gl::BindTexture(gl::TEXTURE_2D_ARRAY, self.light_view_map);
+        gl::BindTexture(gl::TEXTURE_2D_ARRAY, light_view_map);
         self.shader.set_int(c_str!("lightViewMap"), 0);
 
         helpers::bind_3d_image_texture(1, textures.brick_pool_photons, gl::READ_WRITE, gl::R32UI);

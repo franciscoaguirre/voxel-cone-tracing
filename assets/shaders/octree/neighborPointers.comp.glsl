@@ -9,40 +9,31 @@ uniform layout(binding = 1, rgb10_a2ui) uimageBuffer voxelPositions;
 
 uniform layout(binding = 2, r32ui) uimageBuffer nodePoolNeighborsPositive;
 uniform layout(binding = 3, r32ui) uimageBuffer nodePoolNeighborsNegative;
-uniform layout(binding = 4, r32ui) readonly uimageBuffer levelStartIndices;
+uniform layout(binding = 4, rgb10_a2ui) readonly uimageBuffer nodePositions;
 
 uniform int axis;
 uniform uint octreeLevel;
 uniform uint voxelDimension;
+uniform uint levelStart;
+uniform uint nextLevelStart;
 
 #include "./_traversalHelpers.glsl"
 #include "./_helpers.glsl"
 #include "./_octreeTraversal.glsl"
+#include "./_threadNodeUtilNoTexture.glsl"
 
 void main() {
-    const uint threadIndex = gl_GlobalInvocationID.x;
-    uvec3 voxelPosition = imageLoad(voxelPositions, int(threadIndex)).xyz;
-    vec3 normalizedVoxelPosition = normalizedFromIntCoordinates(voxelPosition, float(voxelDimension));
-
-    // In voxel position coordinates, the octree level
-    // defines a different node size, which we need as a step to reach
-    // possible neighbors.
-    // The step is halfNodeSize.
-    float halfNodeSize;
-    vec3 nodeCoordinates;
-    int nodeID = traverseOctree(
-        normalizedVoxelPosition,
-        octreeLevel,
-        nodeCoordinates, // Already normalized
-        halfNodeSize
-    );
-    //// Normalized to NDC
-    //float normalizedHalfNodeSize = halfNodeSize * 2.0;
-    //vec3 nodeCoordinatesToRender = nodeCoordinates * 2.0 - vec3(1.0);
-    //nodeCoordinatesToRender += normalizedHalfNodeSize;
+    int nodeID = getThreadNode();
+    if (nodeID == NODE_NOT_FOUND) {
+        return;
+    }
+    ivec4 nodePosition = ivec4(imageLoad(nodePositions, nodeID));
+    float halfNodeSize = calculateHalfNodeSize(octreeLevel);
+    // Normalized node position
+    vec3 nodeCoordinates = nodePosition.xyz / float(voxelDimension);
 
     // Get center of node
-    nodeCoordinates += halfNodeSize;
+    vec3 centerNodeCoordinates = nodeCoordinates + halfNodeSize;
     
     int neighborPositive = 0;
     int neighborNegative = 0;
@@ -59,25 +50,11 @@ void main() {
     // of the grid. Is this possible? If it is, do we still represent
     // the voxel on a brick?
     vec3 neighborOffset = vec3(0);
-    float coordinatePosibleNeighborPosition;
-    if (axis == 0) {
-      neighborOffset.x = nodeSize;
-    } else if (axis == 1) {
-      neighborOffset.y = nodeSize;
-    } else if (axis == 2) {
-      neighborOffset.z = nodeSize;
-    }
+    neighborOffset[axis] = nodeSize;
 
-    possibleNeighborPosition = nodeCoordinates + neighborOffset;
-    if (axis == 0) {
-      coordinatePosibleNeighborPosition = possibleNeighborPosition.x;
-    } else if (axis == 1) {
-      coordinatePosibleNeighborPosition = possibleNeighborPosition.y;
-    } else if (axis == 2) {
-      coordinatePosibleNeighborPosition = possibleNeighborPosition.z;
-    }
+    possibleNeighborPosition = centerNodeCoordinates + neighborOffset;
 
-    if (coordinatePosibleNeighborPosition < 1) {
+    if (possibleNeighborPosition[axis] < 1) {
       neighborPositive = traverseOctree(
         possibleNeighborPosition,
         octreeLevel,
@@ -90,16 +67,9 @@ void main() {
       }
     }
 
-    possibleNeighborPosition = nodeCoordinates - neighborOffset;
-    if (axis == 0) {
-      coordinatePosibleNeighborPosition = possibleNeighborPosition.x;
-    } else if (axis == 1) {
-      coordinatePosibleNeighborPosition = possibleNeighborPosition.y;
-    } else if (axis == 2) {
-      coordinatePosibleNeighborPosition = possibleNeighborPosition.z;
-    }
+    possibleNeighborPosition = centerNodeCoordinates - neighborOffset;
 
-    if (coordinatePosibleNeighborPosition > 0) {
+    if (possibleNeighborPosition[axis] > 0) {
       neighborNegative = traverseOctree(
         possibleNeighborPosition,
         octreeLevel,

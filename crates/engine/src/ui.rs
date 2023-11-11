@@ -11,7 +11,7 @@ pub mod prelude {
     };
 }
 
-use crate::common::WINDOW;
+use crate::common::{self, WINDOW};
 use once_cell::sync::OnceCell;
 
 static mut INSTANCE: OnceCell<Ui> = OnceCell::new();
@@ -130,6 +130,12 @@ impl Ui {
             let binding = WINDOW.borrow();
             let window = binding.as_ref().unwrap();
             window.get_cursor_pos()
+        }
+    }
+
+    pub fn get_window_size() -> (i32, i32) {
+        unsafe {
+            common::get_framebuffer_size()
         }
     }
 }

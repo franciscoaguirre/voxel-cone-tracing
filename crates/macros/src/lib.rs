@@ -1,14 +1,17 @@
 use proc_macro::TokenStream;
-use quote::quote;
-use syn::{parse_macro_input, parse_quote, ItemStruct};
+use syn::{parse_macro_input, DeriveInput};
 
-#[proc_macro]
-pub fn my_macro(tokens: TokenStream) -> TokenStream {
-    let mut item_struct = parse_macro_input!(tokens as ItemStruct);
-    item_struct.ident = parse_quote!(RenamedStruct);
-    item_struct.vis = parse_quote!(pub);
-    let output = quote! {
-        #item_struct
-    };
-    output.into()
+mod sub_menus;
+
+/// Expects the following to be in scope:
+/// - `SubMenu` trait
+/// - `egui`
+/// - `Ui`
+/// - `get_button_text`
+#[proc_macro_derive(SimplifySubMenus)]
+pub fn simplify_sub_menus(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    sub_menus::simplify_sub_menus_inner(input)
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
 }

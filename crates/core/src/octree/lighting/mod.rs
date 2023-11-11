@@ -47,9 +47,19 @@ impl Octree {
             .store_photons
             .run(store_photons_input);
 
-        self.border_transfer(light_view_map);
-
         let config = Config::instance();
+
+        for axis in Axis::all_axis().iter() {
+            self.builder
+                .light_transfer
+                .run(
+                    &self.textures,
+                    config.last_octree_level(),
+                    &self.geometry_data.node_data,
+                    *axis,
+                    light_view_map
+                );
+        }
 
         self.copy_alpha_to_irradiance();
 
@@ -74,7 +84,6 @@ impl Octree {
         self.builder.leaf_border_transfer_pass.run(
             &self.textures,
             &self.geometry_data.node_data,
-            &self.border_data.node_data,
             BrickPoolValues::Irradiance,
         );
 
@@ -104,21 +113,6 @@ impl Octree {
             config.brick_pool_resolution as i32,
             config.brick_pool_resolution as i32,
         );
-    }
-
-    unsafe fn border_transfer(&self, light_view_map: GLuint) {
-        let border_transfer = BorderTransferPass::init(light_view_map);
-
-        let config = Config::instance();
-
-        for axis in Axis::all_axis().iter() {
-            border_transfer.run(
-                &self.textures,
-                config.last_octree_level(),
-                &self.geometry_data.node_data,
-                *axis,
-            );
-        }
     }
 
     unsafe fn create_light_view_map(

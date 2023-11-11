@@ -17,6 +17,7 @@ pub struct AllocateNodesInput {
     pub first_node_in_level: i32,
     pub first_free_node: i32,
     pub node_pool: BufferTextureV2<u32>,
+    pub previous_level_node_amount: u32,
 }
 
 impl AllocateNodesPass {
@@ -54,13 +55,18 @@ impl ShaderPass for AllocateNodesPass {
         // `voxel_data` and `node_data` need to be the top level split instead of
         // `geometry_data` and `border_data`
         // TODO: Should move to its own function since we use it all over the place
-        let groups_count = (input.voxel_data.number_of_voxel_fragments as f32
+        let groups_count = ((input.previous_level_node_amount * 8) as f32
             / config.working_group_size as f32)
             .ceil() as u32;
 
-        // TODO: Could send even less threads
+        let (debug_texture, debug_texture_buffer) = helpers::generate_texture_buffer(20, gl::R32F, 42f32);
+        helpers::bind_image_texture(1, debug_texture, gl::WRITE_ONLY, gl::R32F);
+
         self.shader.dispatch(groups_count);
         self.shader.wait();
+
+        // let values = helpers::get_values_from_texture_buffer(debug_texture_buffer, 20, 0f32);
+        // dbg!(&values);
     }
 }
 

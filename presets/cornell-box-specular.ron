@@ -43,10 +43,10 @@
             is_showing: true,
             output: (
                 toggles: (
-                    should_show_color: true,
-                    should_show_direct: true,
-                    should_show_indirect: true,
-                    should_show_indirect_specular: false,
+                    should_show_color: false,
+                    should_show_direct: false,
+                    should_show_indirect: false,
+                    should_show_indirect_specular: true,
                     should_show_ambient_occlusion: false,
                 ),
             ),
@@ -55,7 +55,7 @@
             is_showing: false,
         ),
         save_preset: (
-            name: "cornell-box-diffuse",
+            name: "cornell-box-specular",
             is_showing: true,
         ),
         camera: (
@@ -78,12 +78,12 @@
                     max_distance: 0.0,
                 ),
                 diffuse_cone_parameters: (
-                    cone_angle_in_degrees: 60.0,
-                    max_distance: 1.0,
-                ),
-                specular_cone_parameters: (
                     cone_angle_in_degrees: 0.0,
                     max_distance: 0.0,
+                ),
+                specular_cone_parameters: (
+                    cone_angle_in_degrees: 1.0,
+                    max_distance: 1.0,
                 ),
                 debug_cone_parameters: (
                     cone_angle_in_degrees: 0.0,

@@ -8,18 +8,13 @@ uniform layout(binding = 2, r32f) imageBuffer sampledColor;
 
 uniform layout(binding = 0, offset = 0) atomic_uint queriedNodesCounter;
 
+// Parameters
 uniform float halfConeAngle;
 uniform mat4 projection;
 uniform mat4 view;
 uniform uint voxelDimension;
 uniform uint maxOctreeLevel;
-
-uniform sampler3D brickPoolColorsX;
-uniform sampler3D brickPoolColorsXNeg;
-uniform sampler3D brickPoolColorsY;
-uniform sampler3D brickPoolColorsYNeg;
-uniform sampler3D brickPoolColorsZ;
-uniform sampler3D brickPoolColorsZNeg;
+uniform bool pointToLight;
 
 // Irradiance
 uniform sampler3D brickPoolIrradianceX;
@@ -29,16 +24,23 @@ uniform sampler3D brickPoolIrradianceYNeg;
 uniform sampler3D brickPoolIrradianceZ;
 uniform sampler3D brickPoolIrradianceZNeg;
 
+// G-buffers
+uniform sampler2D gBufferColors;
+uniform sampler2D gBufferPositions;
+uniform sampler2D gBufferNormals;
+uniform sampler2D gBufferSpeculars;
+
+uniform vec3 lightPosition;
+
 #include "assets/shaders/octree/_constants.glsl"
 #include "assets/shaders/octree/_helpers.glsl"
 #include "assets/shaders/octree/_traversalHelpers.glsl"
 #include "assets/shaders/octree/_octreeTraversal.glsl"
 #include "assets/shaders/octree/_brickCoordinates.glsl"
-#include "assets/shaders/octree/_anisotropicColor.glsl"
 #include "assets/shaders/octree/_anisotropicIrradiance.glsl"
 #include "assets/shaders/octree/_coneTrace.glsl"
 
-uniform vec3 position;
+uniform vec2 gBufferQueryCoordinates;
 uniform vec3 axis;
 uniform float maxDistance;
 
@@ -49,9 +51,11 @@ out VertexData {
 
 void main() {
     int threadIndex = gl_VertexID;
-    vec3 ndc = position * 2.0 - vec3(1);
-    Out.position = ndc;
-    gl_Position = projection * view * vec4(ndc, 1);
+    vec3 positionWorldSpace = texture(gBufferPositions, gBufferQueryCoordinates).xyz;
+    vec3 normal = texture(gBufferNormals, gBufferQueryCoordinates).xyz;
+    vec3 positionVoxelSpace = (positionWorldSpace + vec3(1)) / 2.0;
+    Out.position = positionWorldSpace;
+    gl_Position = projection * view * vec4(positionWorldSpace, 1);
 
     float angle = 1.0472;
     float sinAngle = sin(angle);
@@ -61,24 +65,29 @@ void main() {
     vec3 tangent = normalize(helper - dot(axis, helper) * axis);
     vec3 bitangent = cross(axis, tangent);
 
+    vec3 direction = normal;
+    if (pointToLight) {
+        direction = normalize(lightPosition - positionWorldSpace);
+    }
+
     if (threadIndex == 0) {
-        Out.direction = axis;
-        coneTrace(position, Out.direction, halfConeAngle, maxDistance, false);
+        Out.direction = direction;
+        coneTrace(positionVoxelSpace, Out.direction, halfConeAngle, maxDistance);
     }
 
     if (threadIndex == 1) {
         Out.direction = sinAngle * axis - cosAngle * tangent;
-        coneTrace(position, Out.direction, halfConeAngle, maxDistance, false);
+        coneTrace(positionVoxelSpace, Out.direction, halfConeAngle, maxDistance);
     }
 
     if (threadIndex == 2) {
         Out.direction = sinAngle * axis + cosAngle * bitangent;
-        coneTrace(position, Out.direction, halfConeAngle, maxDistance, false);
+        coneTrace(positionVoxelSpace, Out.direction, halfConeAngle, maxDistance);
     }
 
     if (threadIndex == 3) {
         Out.direction = sinAngle * axis - cosAngle * bitangent;
-        coneTrace(position, Out.direction, halfConeAngle, maxDistance, false);
+        coneTrace(positionVoxelSpace, Out.direction, halfConeAngle, maxDistance);
     }
 }
 

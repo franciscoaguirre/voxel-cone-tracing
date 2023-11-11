@@ -22,7 +22,6 @@ impl LeafBorderTransferPass {
         &self,
         textures: &OctreeTextures,
         geometry_node_data: &NodeData,
-        border_node_data: &NodeData,
         brick_pool_values: BrickPoolValues,
     ) {
         self.shader.use_program();
@@ -58,10 +57,6 @@ impl LeafBorderTransferPass {
         let geometry_groups_count =
             (geometry_nodes_in_level as f32 / config.working_group_size as f32).ceil() as u32;
 
-        let border_nodes_in_level = border_node_data.nodes_per_level[config.last_octree_level() as usize];
-        let border_groups_count =
-            (border_nodes_in_level as f32 / config.working_group_size as f32).ceil() as u32;
-
         for axis in Axis::all_axis().iter() {
             self.shader.set_uint(c_str!("axis"), (*axis).into());
             let neighbor_texture_index: usize = (*axis).into();
@@ -80,15 +75,6 @@ impl LeafBorderTransferPass {
                 gl::R32UI,
             );
             self.shader.dispatch(geometry_groups_count);
-            self.shader.wait();
-
-            helpers::bind_image_texture(
-                2,
-                border_node_data.level_start_indices.0,
-                gl::READ_ONLY,
-                gl::R32UI,
-            );
-            self.shader.dispatch(border_groups_count);
             self.shader.wait();
         }
     }

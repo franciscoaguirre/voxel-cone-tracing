@@ -3,7 +3,7 @@ use std::fmt;
 use engine::prelude::*;
 
 use c_str_macro::c_str;
-use cgmath::{point3, vec3, Matrix4, Vector3};
+use cgmath::{point3, vec3, Matrix4, Vector3, Vector2};
 use colored::{customcolors, Colorize};
 
 use gl::types::GLuint;
@@ -14,11 +14,12 @@ use crate::{
     octree::OctreeTextures,
 };
 
+use super::ConeParameters;
+
 pub struct DebugCone {
     pub transform: Transform,
-    pub half_cone_angle: f32,
-    pub number_of_cones: u32,
-    pub max_distance: f32,
+    pub parameters: ConeParameters,
+    pub point_to_light: bool,
     shader: Shader,
     direction: Vector3<f32>,
     previous_values: HashSet<u32>,
@@ -64,8 +65,10 @@ impl DebugCone {
         Self {
             shader: compile_shaders!("assets/shaders/debug/debugConeTracing.glsl", debug = true),
             transform,
-            number_of_cones: 1,
-            max_distance: 1.0,
+            parameters: ConeParameters {
+                max_distance: 1.0,
+                cone_angle_in_degrees: 30f32.to_radians(),
+            },
             direction: vec3(0.0, 1.0, 0.0),
             previous_values: HashSet::new(),
             nodes_queried: helpers::generate_texture_buffer_with_hint(
@@ -80,8 +83,8 @@ impl DebugCone {
                 69f32,
                 gl::DYNAMIC_READ,
             ),
-            nodes_queried_counter: helpers::generate_atomic_counter_buffer(),
-            half_cone_angle: 30f32.to_radians(),
+            nodes_queried_counter: helpers::generate_atomic_counter_buffer1(),
+            point_to_light: false,
             vao,
         }
     }
@@ -92,6 +95,9 @@ impl DebugCone {
         projection: &Matrix4<f32>,
         view: &Matrix4<f32>,
         selected_debug_nodes: &mut Vec<DebugNode>,
+        geometry_buffers: &Textures<GEOMETRY_BUFFERS>,
+        geometry_buffer_coordinates: &Vector2<f32>,
+        light: &Light,
     ) {
         helpers::clear_texture_buffer(self.sampled_colors_texture.1, 100, 42f32, gl::DYNAMIC_READ);
         self.shader.use_program();
@@ -105,36 +111,6 @@ impl DebugCone {
         gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, self.nodes_queried_counter);
 
         let brick_pool_textures = vec![
-            (
-                c_str!("brickPoolColorsX"),
-                textures.brick_pool_colors[0],
-                gl::LINEAR as i32,
-            ),
-            (
-                c_str!("brickPoolColorsXNeg"),
-                textures.brick_pool_colors[1],
-                gl::LINEAR as i32,
-            ),
-            (
-                c_str!("brickPoolColorsY"),
-                textures.brick_pool_colors[2],
-                gl::LINEAR as i32,
-            ),
-            (
-                c_str!("brickPoolColorsYNeg"),
-                textures.brick_pool_colors[3],
-                gl::LINEAR as i32,
-            ),
-            (
-                c_str!("brickPoolColorsZ"),
-                textures.brick_pool_colors[4],
-                gl::LINEAR as i32,
-            ),
-            (
-                c_str!("brickPoolColorsZNeg"),
-                textures.brick_pool_colors[5],
-                gl::LINEAR as i32,
-            ),
             (
                 c_str!("brickPoolNormals"),
                 textures.brick_pool_normals,
@@ -187,6 +163,34 @@ impl DebugCone {
             texture_counter += 1;
         }
 
+        let g_buffer_textures = vec![
+            (c_str!("gBufferColors"), geometry_buffers[3]),
+            (c_str!("gBufferPositions"), geometry_buffers[0]),
+            (c_str!("gBufferNormals"), geometry_buffers[2]),
+            (c_str!("gBufferSpeculars"), geometry_buffers[4]),
+        ];
+
+        for &(texture_name, texture) in g_buffer_textures.iter() {
+            gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
+            gl::BindTexture(gl::TEXTURE_2D, texture);
+            self.shader.set_int(texture_name, texture_counter as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+            texture_counter += 1;
+        }
+
+        // Unbind any texture leftover
+        gl::BindTexture(gl::TEXTURE_2D, 0);
+
+        self.shader
+            .set_vec2(
+                c_str!("gBufferQueryCoordinates"),
+                geometry_buffer_coordinates.x,
+                geometry_buffer_coordinates.y
+            );
+
         let config = Config::instance();
 
         self.shader
@@ -201,18 +205,26 @@ impl DebugCone {
             self.transform.position.y,
             self.transform.position.z,
         );
+        self.shader.set_bool(
+            c_str!("pointToLight"),
+            self.point_to_light
+        );
+        self.shader.set_vec3(
+            c_str!("lightPosition"),
+            light.transform().position.x,
+            light.transform().position.y,
+            light.transform().position.z,
+        );
         self.shader.set_vec3(
             c_str!("axis"),
             self.direction.x,
             self.direction.y,
             self.direction.z,
         );
-        self.shader
-            .set_float(c_str!("halfConeAngle"), self.half_cone_angle);
-        self.shader
-            .set_float(c_str!("maxDistance"), self.max_distance);
+        self.parameters.set_uniforms("parameters", &self.shader);
 
-        gl::DrawArrays(gl::POINTS, 0, self.number_of_cones as i32);
+        let number_of_cones = 1; // For now
+        gl::DrawArrays(gl::POINTS, 0, number_of_cones);
 
         let values = helpers::get_values_from_texture_buffer(self.nodes_queried.1, 1000, 42u32);
         let sampled_colors =

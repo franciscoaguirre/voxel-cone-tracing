@@ -30,6 +30,9 @@ pub use camera::{CameraMenu, CameraMenuOutput};
 mod cone_tracing;
 pub use cone_tracing::{ConeTracingMenu, ConeTracingMenuOutput};
 
+mod picker;
+pub use picker::{PickerMenu, PickerMenuOutput};
+
 use serde::{Serialize, Deserialize};
 
 pub trait SubMenu: std::fmt::Debug + Default + for<'a> Deserialize<'a> + Serialize + Clone {

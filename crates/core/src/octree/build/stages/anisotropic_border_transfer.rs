@@ -25,7 +25,6 @@ impl AnisotropicBorderTransferPass {
         &self,
         textures: &OctreeTextures,
         geometry_node_data: &NodeData,
-        border_node_data: &NodeData,
         octree_level: u32,
         brick_pool_values: BrickPoolValues,
         direction: Direction,

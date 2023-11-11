@@ -16,8 +16,19 @@
             material: "green",
             transform: (
                 position: (
+                    x: 0.5,
+                    y: -0.35,
+                    z: -0.5,
+                ),
+            ),
+        ),
+        (
+            model: "sphere",
+            material: "shiny",
+            transform: (
+                position: (
                     x: -0.5,
-                    y: -0.85,
+                    y: -0.75,
                     z: -0.5,
                 ),
             ),
@@ -114,6 +125,10 @@
             name: "plane",
             path: "assets/models/plane.obj",
         ),
+        (
+            name: "sphere",
+            path: "assets/models/sphere.obj",
+        ),
     ],
     materials: [
         (
@@ -134,6 +149,18 @@
                 color: (
                     x: 0.0,
                     y: 1.0,
+                    z: 0.0,
+                ),
+                diffuse: 1.0,
+                specular: 0.0,
+            ),
+        ),
+        (
+            name: "shiny",
+            properties: (
+                color: (
+                    x: 0.0,
+                    y: 0.0,
                     z: 0.0,
                 ),
                 diffuse: 0.0,

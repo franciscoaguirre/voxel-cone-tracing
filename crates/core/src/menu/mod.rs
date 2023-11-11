@@ -2,16 +2,20 @@ use std::fmt;
 use std::fs::File;
 
 use engine::ui::prelude::*;
+use macros::SimplifySubMenus;
 use serde::{Serialize, Deserialize};
+use cgmath::{vec2, Vector2};
 
 pub mod submenus;
 use submenus::*;
 
 pub struct Menu {
     pub sub_menus: SubMenus,
+    quad_coordinates: Vector2<f32>, // These are just to return for debugging
+    pub is_picking: bool,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone, SimplifySubMenus)]
 #[serde(default)]
 pub struct SubMenus {
     all_nodes: AllNodesMenu,
@@ -24,57 +28,16 @@ pub struct SubMenus {
     save_preset: SavePresetMenu,
     camera: CameraMenu,
     cone_tracing: ConeTracingMenu,
+    picker: PickerMenu,
 }
-
-impl SubMenus {
-    /// Returns whether any submenu is showing right now.
-    /// Used to determine whether or not the menu itself should be visible
-    /// after loading a preset.
-    /// We're purposely leaving out `diagnostics` since it's always open and
-    /// `save_preset` since it'll always be open on a preset, unless manually edited.
-    pub fn any_showing(&self) -> bool {
-        self.all_nodes.is_showing()
-            || self.node_search.is_showing()
-            || self.bricks.is_showing()
-            || self.children.is_showing()
-            || self.images.is_showing()
-            || self.photons.is_showing()
-            || self.camera.is_showing()
-            || self.cone_tracing.is_showing()
-    }
-}
-
-type SubMenuInputs<'a> = (
-    <AllNodesMenu as SubMenu>::InputData<'a>,
-    <NodeSearchMenu as SubMenu>::InputData<'a>,
-    <BricksMenu as SubMenu>::InputData<'a>,
-    <ChildrenMenu as SubMenu>::InputData<'a>,
-    <DiagnosticsMenu as SubMenu>::InputData<'a>,
-    <ImagesMenu as SubMenu>::InputData<'a>,
-    <PhotonsMenu as SubMenu>::InputData<'a>,
-    <SavePresetMenu as SubMenu>::InputData<'a>,
-    <CameraMenu as SubMenu>::InputData<'a>,
-    <ConeTracingMenu as SubMenu>::InputData<'a>,
-);
-
-type SubMenuOutputs<'a> = (
-    &'a <AllNodesMenu as SubMenu>::OutputData,
-    &'a <NodeSearchMenu as SubMenu>::OutputData,
-    &'a <BricksMenu as SubMenu>::OutputData,
-    &'a <ChildrenMenu as SubMenu>::OutputData,
-    &'a <DiagnosticsMenu as SubMenu>::OutputData,
-    &'a <ImagesMenu as SubMenu>::OutputData,
-    &'a <PhotonsMenu as SubMenu>::OutputData,
-    &'a <SavePresetMenu as SubMenu>::OutputData,
-    &'a <CameraMenu as SubMenu>::OutputData,
-    &'a <ConeTracingMenu as SubMenu>::OutputData,
-);
 
 impl Menu {
     pub fn new(preset: Preset) -> Self {
         let sub_menus = SubMenus::default();
         let mut menu = Menu {
             sub_menus,
+            quad_coordinates: vec2(0.0, 0.0),
+            is_picking: false,
         };
         menu.process_preset(preset);
         menu
@@ -106,137 +69,29 @@ impl Menu {
     pub fn handle_event(&mut self, event: glfw::WindowEvent) {
         let mut ui = Ui::instance();
 
-        if !ui.is_showing() {
-            return;
-        }
-
         if let glfw::WindowEvent::Key(glfw::Key::LeftShift, _, glfw::Action::Press, _) = event {
             ui.toggle_shift();
         } else if let glfw::WindowEvent::Key(glfw::Key::LeftShift, _, glfw::Action::Release, _) = event {
             ui.toggle_shift();
         }
 
+        if self.is_picking && !ui.context().wants_pointer_input() {
+            if let glfw::WindowEvent::MouseButton(_, glfw::Action::Press, _) = event {
+                let cursor_position = Ui::get_cursor_pos();
+                let viewport_dimensions = Ui::get_window_size();
+                let quad_coordinates = (
+                    cursor_position.0 / viewport_dimensions.0 as f64,
+                    1.0 - (cursor_position.1 / viewport_dimensions.1 as f64)
+                );
+                self.quad_coordinates = vec2(quad_coordinates.0 as f32, quad_coordinates.1 as f32);
+            }
+        }
+
         egui_backend::handle_event(event, ui.input_state_mut());
     }
 
-    pub fn render(&mut self, inputs: SubMenuInputs) {
-        let ui = Ui::instance();
-        self.sub_menus.all_nodes.render(ui.context(), &inputs.0);
-        self.sub_menus
-            .node_search
-            .render(ui.context(), &inputs.1);
-        self.sub_menus.bricks.render(ui.context(), &inputs.2);
-        self.sub_menus.children.render(ui.context(), &inputs.3);
-        self.sub_menus
-            .diagnostics
-            .render(ui.context(), &inputs.4);
-        self.sub_menus.images.render(ui.context(), &inputs.5);
-        self.sub_menus.photons.render(ui.context(), &inputs.6);
-        self.sub_menus.save_preset.render(ui.context(), &inputs.7);
-        self.sub_menus.camera.render(ui.context(), &inputs.8);
-        self.sub_menus.cone_tracing.render(ui.context(), &inputs.9);
-    }
-
-    pub fn get_data(&self) -> SubMenuOutputs {
-        (
-            self.sub_menus.all_nodes.get_data(),
-            self.sub_menus.node_search.get_data(),
-            self.sub_menus.bricks.get_data(),
-            self.sub_menus.children.get_data(),
-            self.sub_menus.diagnostics.get_data(),
-            self.sub_menus.images.get_data(),
-            self.sub_menus.photons.get_data(),
-            self.sub_menus.save_preset.get_data(),
-            self.sub_menus.camera.get_data(),
-            self.sub_menus.cone_tracing.get_data(),
-        )
-    }
-
-    pub fn show_main_window(&mut self) {
-        let ui = Ui::instance();
-        egui::Window::new("Menu").show(ui.context(), |ui| {
-            if ui
-                .button(get_button_text(
-                    "All nodes",
-                    self.sub_menus.all_nodes.is_showing(),
-                ))
-                .clicked()
-            {
-                self.sub_menus.all_nodes.toggle_showing();
-            }
-            if ui
-                .button(get_button_text(
-                    "Node search",
-                    self.sub_menus.node_search.is_showing(),
-                ))
-                .clicked()
-            {
-                self.sub_menus.node_search.toggle_showing();
-            }
-            if ui
-                .button(get_button_text(
-                    "Bricks",
-                    self.sub_menus.bricks.is_showing(),
-                ))
-                .clicked()
-            {
-                self.sub_menus.bricks.toggle_showing();
-            }
-            if ui
-                .button(get_button_text(
-                    "Photons",
-                    self.sub_menus.photons.is_showing(),
-                ))
-                .clicked()
-            {
-                self.sub_menus.photons.toggle_showing();
-            }
-            if ui
-                .button(get_button_text(
-                    "Children",
-                    self.sub_menus.children.is_showing(),
-                ))
-                .clicked()
-            {
-                self.sub_menus.children.toggle_showing();
-            }
-            if ui
-                .button(get_button_text(
-                    "Images",
-                    self.sub_menus.images.is_showing(),
-                ))
-                .clicked()
-            {
-                self.sub_menus.images.toggle_showing();
-            }
-            if ui
-                .button(get_button_text(
-                    "Save Preset",
-                    self.sub_menus.save_preset.is_showing(),
-                ))
-                .clicked()
-            {
-                self.sub_menus.save_preset.toggle_showing();
-            }
-            if ui
-                .button(get_button_text(
-                    "Camera",
-                    self.sub_menus.camera.is_showing(),
-                ))
-                .clicked()
-            {
-                self.sub_menus.camera.toggle_showing();
-            }
-            if ui
-                .button(get_button_text(
-                    "Cone Tracing",
-                    self.sub_menus.cone_tracing.is_showing(),
-                ))
-                .clicked()
-            {
-                self.sub_menus.cone_tracing.toggle_showing();
-            }
-        });
+    pub fn get_quad_coordinates(&self) -> Vector2<f32> {
+        self.quad_coordinates
     }
 }
 

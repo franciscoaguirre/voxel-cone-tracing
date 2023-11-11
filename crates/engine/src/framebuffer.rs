@@ -663,7 +663,7 @@ impl<const N: usize> Framebuffer<N> {
             return Ok(false);
         }
 
-        let tolerance = 0.05f32; // 1 percent
+        let tolerance = 0.05f32; // 5 percent
         let channel_tolerance = (tolerance * 255.0f32).round() as u8;
 
         for y in 0..height_1 {
