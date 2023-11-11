@@ -8,7 +8,7 @@ use c_str_macro::c_str;
 extern crate gl;
 use core::{
     config::Config as CoreConfig,
-    cone_tracing::{ConeTracer, DebugCone},
+    cone_tracing::{ConeTracer, DebugCone, VisualTestsParameters},
     voxelization,
     voxelization::visualize::RenderVoxelFragmentsShader,
     menu::{
@@ -92,6 +92,10 @@ fn main() {
         "assets/shaders/model/renderNormals.frag.glsl",
         "assets/shaders/model/renderNormals.geom.glsl",
     );
+    let visual_tests_parameters = VisualTestsParameters {
+        screenshot_name: &options.preset,
+        should_update: options.update_screenshots,
+    };
     let mut cone_tracer = ConeTracer::init();
     let mut cone_parameters = HashMap::new();
     let mut debug_cone = unsafe { DebugCone::new() };
@@ -159,9 +163,6 @@ fn main() {
     };
     let quad = unsafe { Quad::new() };
     let camera_framebuffer = unsafe { GeometryFramebuffer::new() };
-
-    // Only used when taking a screenshot to compare
-    let final_image_framebuffer = unsafe { Framebuffer::<1>::new() };
 
     let mut current_voxel_fragment_count: u32 = 0;
     let mut current_octree_level: u32 = 0;
@@ -445,11 +446,7 @@ fn main() {
                 &quad,
                 &camera,
                 &cone_parameters,
-                if options.visual_tests { Some((
-                    &options.preset,
-                    &final_image_framebuffer,
-                    options.update_screenshots,
-                )) } else { None },
+                if options.visual_tests { Some(&visual_tests_parameters) } else { None }
             );
 
             if should_show_debug_cone {

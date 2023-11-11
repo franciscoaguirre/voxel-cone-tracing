@@ -8,7 +8,7 @@ mod debug_cone;
 pub use debug_cone::DebugCone;
 
 mod voxel_cone_trace;
-pub use voxel_cone_trace::{ConeTracer, Toggles};
+pub use voxel_cone_trace::{ConeTracer, Toggles, VisualTestsParameters};
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct ConeParameters {

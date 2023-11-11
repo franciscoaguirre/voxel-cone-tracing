@@ -15,6 +15,15 @@ use crate::{
 pub struct ConeTracer {
     shader: Shader,
     pub toggles: Toggles,
+    framebuffer: Framebuffer<1>,
+    max_color_shader: Shader,
+    post_processing_shader: Shader,
+    processed_framebuffer: Framebuffer<1>,
+}
+
+pub struct VisualTestsParameters<'a> {
+    pub screenshot_name: &'a str,
+    pub should_update: bool,
 }
 
 impl ConeTracer {
@@ -22,6 +31,10 @@ impl ConeTracer {
         Self {
             shader: compile_shaders!("assets/shaders/octree/coneTracing.glsl"),
             toggles: Toggles::default(),
+            framebuffer: unsafe { Framebuffer::<1>::new() },
+            max_color_shader: compile_compute!("assets/shaders/octree/getMaxColor.comp.glsl"),
+            post_processing_shader: compile_shaders!("assets/shaders/octree/postProcessing.glsl"),
+            processed_framebuffer: unsafe { Framebuffer::<1>::new() },
         }
     }
 
@@ -34,7 +47,7 @@ impl ConeTracer {
         quad: &Quad,
         camera: &Camera,
         parameters: &HashMap<&str, ConeParameters>,
-        visual_tests_data: Option<(&str, &Framebuffer<1>, bool)>, // When specified, will write to a framebuffer instead of to screen, and save the image to disk
+        visual_tests_parameters: Option<&VisualTestsParameters>,
     ) {
         self.shader.use_program();
 
@@ -168,34 +181,22 @@ impl ConeTracer {
 
         self.shader.set_bool(c_str!("isDirectional"), light.is_directional());
 
-        let quad_vao = quad.get_vao();
         if self.toggles.should_show_final_image_quad() {
-            if let Some((_, framebuffer, _)) = visual_tests_data {
-                gl::BindFramebuffer(gl::FRAMEBUFFER, framebuffer.fbo());
-                gl::Enable(gl::DEPTH_TEST);
-                gl::ClearColor(0.0, 0.0, 0.0, 0.0);
-                gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
-                gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-            }
-            gl::BindVertexArray(quad_vao);
-            gl::DrawElements(
-                gl::TRIANGLES,
-                quad.get_num_indices() as i32,
-                gl::UNSIGNED_INT,
-                std::ptr::null(),
-            );
-            gl::BindVertexArray(0);
-            if let Some((_, framebuffer, _)) = visual_tests_data {
-                gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
-            }
+            self.create_image(quad); // Loads it in the framebuffer
+            let max_color_norm = self.calculate_max_color_norm();
+            self.run_post_processing(quad, max_color_norm); // Runs post processing effects on the framebuffer, stores in final framebuffer
+            self.render_to_screen(quad); // Renders the framebuffer to the screen
         }
 
-        if let Some((filename, framebuffer, should_update)) = visual_tests_data {
-            let filepath = format!("screenshots/{filename}.png");
-            if should_update {
-                framebuffer.save_color_attachment_to_file(0, &filepath);
+        if let Some(VisualTestsParameters {
+            screenshot_name,
+            should_update
+        }) = visual_tests_parameters {
+            let filepath = format!("screenshots/{screenshot_name}.png");
+            if *should_update {
+                self.processed_framebuffer.save_color_attachment_to_file(0, &filepath);
             } else {
-                let result = framebuffer.compare_attachment_to_file(0, &filepath)
+                let result = self.processed_framebuffer.compare_attachment_to_file(0, &filepath)
                     .expect("Image not found for comparing. Generate it with `--update-sceenshots` first.");
                 assert!(
                     result,
@@ -205,6 +206,72 @@ impl ConeTracer {
                 );
             }
         }
+    }
+
+    unsafe fn create_image(&self, quad: &Quad) {
+        gl::BindFramebuffer(gl::FRAMEBUFFER, self.framebuffer.fbo());
+        gl::Enable(gl::DEPTH_TEST);
+        gl::ClearColor(0.0, 0.0, 0.0, 0.0);
+        gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
+        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+        gl::BindVertexArray(quad.get_vao());
+        gl::DrawElements(
+            gl::TRIANGLES,
+            quad.get_num_indices() as i32,
+            gl::UNSIGNED_INT,
+            std::ptr::null(),
+        );
+        gl::BindVertexArray(0);
+        gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
+    }
+
+    unsafe fn calculate_max_color_norm(&self) -> f32 {
+        self.max_color_shader.use_program();
+        gl::ActiveTexture(gl::TEXTURE0);
+        gl::BindTexture(gl::TEXTURE_2D, self.framebuffer.textures()[0]);
+        self.max_color_shader.set_int(c_str!("inputTexture"), 0);
+        let (max_color_texture, max_color_texture_buffer) = helpers::generate_texture_buffer(1, gl::R32UI, 0u32);
+        helpers::bind_image_texture(0, max_color_texture, gl::READ_WRITE, gl::R32UI);
+        self.max_color_shader.dispatch_xyz(vec3(
+            840,
+            840,
+            1,
+        ));
+        self.max_color_shader.wait();
+        let max_color_norm = helpers::get_values_from_texture_buffer(max_color_texture_buffer, 1, 42u32)[0];
+        let normalized_max_color_norm = max_color_norm as f32 / 1000.0; // This same value is used in the shader
+        normalized_max_color_norm
+    }
+
+    unsafe fn run_post_processing(&self, quad: &Quad, max_color_norm: f32) {
+        // Set uniforms
+        self.post_processing_shader.use_program();
+        gl::ActiveTexture(gl::TEXTURE0);
+        gl::BindTexture(gl::TEXTURE_2D, self.framebuffer.textures()[0]);
+        self.post_processing_shader.set_int(c_str!("inputTexture"), 0);
+        self.post_processing_shader.set_float(c_str!("maxNorm"), max_color_norm);
+
+        // Framebuffer
+        gl::BindFramebuffer(gl::FRAMEBUFFER, self.processed_framebuffer.fbo());
+        gl::Enable(gl::DEPTH_TEST);
+        gl::ClearColor(0.0, 0.0, 0.0, 0.0);
+        gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
+        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+
+        // Draw using quad
+        gl::BindVertexArray(quad.get_vao());
+        gl::DrawElements(
+            gl::TRIANGLES,
+            quad.get_num_indices() as i32,
+            gl::UNSIGNED_INT,
+            std::ptr::null(),
+        );
+        gl::BindVertexArray(0);
+        gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
+    }
+
+    unsafe fn render_to_screen(&self, quad: &Quad) {
+        quad.render(self.processed_framebuffer.textures()[0]);
     }
 }
 
