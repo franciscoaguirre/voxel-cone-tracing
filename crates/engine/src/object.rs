@@ -11,6 +11,8 @@ pub struct Object {
     model: AssetHandle,
     material: AssetHandle,
     pub transform: Transform,
+    #[serde(default)]
+    is_dynamic: bool,
     #[serde(skip_deserializing)]
     actual_model: Option<&'static Model>,
     #[serde(skip_deserializing)]
@@ -18,11 +20,17 @@ pub struct Object {
 }
 
 impl Object {
-    pub fn new(model_handle: AssetHandle, material_handle: AssetHandle, transform: Transform) -> Self {
+    pub fn new(
+        model_handle: AssetHandle,
+        material_handle: AssetHandle,
+        transform: Transform,
+        is_dynamic: bool,
+    ) -> Self {
         Self {
             model: model_handle,
             material: material_handle,
             transform,
+            is_dynamic,
             actual_model: None,
             actual_material: None,
         }
@@ -69,5 +77,9 @@ impl Object {
 
     pub fn material_handle(&self) -> &AssetHandle {
         &self.material
+    }
+
+    pub fn is_dynamic(&self) -> bool {
+        self.is_dynamic
     }
 }

@@ -45,6 +45,7 @@ mod tests {
                     "cube".to_string(),
                     "red".to_string(),
                     Transform::default(),
+                    false,
                 ),
             ],
             models: vec![
