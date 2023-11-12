@@ -107,7 +107,7 @@ impl SpotLight {
 
     pub unsafe fn take_photo(
         &self,
-        objects: &mut [Object],
+        objects: &[&Object],
         scene_aabb: &Aabb,
         voxel_dimension: u32, // TODO: Find another way. This breaks separation of concerns
     ) -> Textures<LIGHT_MAP_BUFFERS> {
@@ -128,7 +128,7 @@ impl SpotLight {
         gl::ClearColor(0.0, 0.0, 0.0, 0.0);
         gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
         gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-        for object in objects.iter_mut() {
+        for object in objects.iter() {
             object.draw(&self.light_map_shader, &scene_aabb.normalization_matrix());
         }
         gl::BindFramebuffer(gl::FRAMEBUFFER, 0);

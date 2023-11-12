@@ -231,7 +231,7 @@ impl Transform {
     /// Used to get geometry buffers
     pub unsafe fn take_photo<const N: usize>(
         &self,
-        objects: &mut [Object],
+        objects: &[&Object],
         projection: &Matrix4<f32>,
         scene_aabb: &Aabb,
         framebuffer: &Framebuffer<N>,
@@ -247,7 +247,7 @@ impl Transform {
         gl::ClearColor(0.0, 0.0, 0.0, 0.0);
         gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
         gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-        for object in objects.iter_mut() {
+        for object in objects.iter() {
             object.draw(&self.view_map_shader, &scene_aabb.normalization_matrix());
         }
         gl::BindFramebuffer(gl::FRAMEBUFFER, 0);

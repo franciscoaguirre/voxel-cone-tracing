@@ -114,8 +114,12 @@ fn main() {
     }
     let model_normalization_matrix = scene_aabb.normalization_matrix();
 
+    let (mut static_objects, mut dynamic_objects): (Vec<_>, Vec<_>) = objects
+        .iter()
+        .partition(|object| !object.is_dynamic());
+
     let (voxel_positions, number_of_voxel_fragments, voxel_colors, voxel_normals) =
-        unsafe { voxelization::build_voxel_fragment_list(&mut objects[..], &scene_aabb) };
+        unsafe { voxelization::build_voxel_fragment_list(&static_objects[..], &scene_aabb) };
     info!("Number of voxel fragments: {}", number_of_voxel_fragments);
 
     let mut octree = unsafe {
@@ -156,7 +160,7 @@ fn main() {
 
     let mut light_maps = unsafe {
         octree.inject_light(
-            &mut objects[..],
+            &static_objects[..],
             &light,
             &scene_aabb,
         )
@@ -220,7 +224,7 @@ fn main() {
 
         let geometry_buffers = unsafe {
             camera.transform.take_photo(
-                &mut objects[..],
+                &static_objects[..],
                 &camera.get_projection_matrix(),
                 &scene_aabb,
                 &camera_framebuffer,
@@ -349,7 +353,7 @@ fn main() {
                     // octree.clear_light();
                     // light_maps = // TODO: This takes too long, optimize
                     //     octree.inject_light(
-                    //         &mut objects[..],
+                    //         &static_objects[..],
                     //         &light,
                     //         &scene_aabb,
                     //     );
@@ -433,7 +437,7 @@ fn main() {
                 render_model_shader.set_mat4(c_str!("projection"), &projection);
                 render_model_shader.set_mat4(c_str!("view"), &view);
                 // Model and model normalization matrix get set in the draw call
-                for object in objects.iter_mut() {
+                for object in static_objects.iter_mut() {
                     object.draw(&render_model_shader, &model_normalization_matrix);
                 }
             }

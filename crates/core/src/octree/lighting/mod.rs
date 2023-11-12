@@ -17,20 +17,9 @@ mod stages;
 pub use stages::*;
 
 impl Octree {
-    pub unsafe fn clear_light(&self) {
-        let input = ClearLightInput {
-            brick_pool_photons: self.textures.brick_pool_photons,
-            brick_pool_irradiance: self.textures.brick_pool_irradiance,
-            number_of_nodes: self.number_of_nodes(),
-        };
-        self.builder
-            .clear_light
-            .run(input);
-    }
-
     pub unsafe fn inject_light(
         &self,
-        objects: &mut [Object],
+        objects: &[&Object],
         light: &Light,
         scene_aabb: &Aabb,
     ) -> (GLuint, GLuint, GLuint) {
@@ -92,6 +81,17 @@ impl Octree {
         (light_view_map, light_view_map_view, shadow_map)
     }
 
+    pub unsafe fn clear_light(&self) {
+        let input = ClearLightInput {
+            brick_pool_photons: self.textures.brick_pool_photons,
+            brick_pool_irradiance: self.textures.brick_pool_irradiance,
+            number_of_nodes: self.number_of_nodes(),
+        };
+        self.builder
+            .clear_light
+            .run(input);
+    }
+
     #[inline]
     unsafe fn copy_alpha_to_irradiance(&self) {
         let config = Config::instance();
@@ -117,7 +117,7 @@ impl Octree {
 
     unsafe fn create_light_view_map(
         &self,
-        objects: &mut [Object],
+        objects: &[&Object],
         light: &Light,
         scene_aabb: &Aabb,
     ) -> (GLuint, GLuint, GLuint) {

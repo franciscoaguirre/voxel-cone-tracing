@@ -69,7 +69,7 @@ impl Light {
 
     pub unsafe fn take_photo(
         &self,
-        objects: &mut [Object],
+        objects: &[&Object],
         scene_aabb: &Aabb,
         voxel_dimension: u32, // TODO: Find another way. This breaks separation of concerns
     ) -> Textures<LIGHT_MAP_BUFFERS> {
