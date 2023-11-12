@@ -68,8 +68,8 @@ impl ShaderPass for StorePhotons {
         ));
         shader.wait();
 
-        let total_photons_values =
-            helpers::get_values_from_texture_buffer(total_photons.1, 1, 69u32);
-        log::debug!("Total photons in scene: {}", total_photons_values[0]);
+        // let total_photons_values =
+        //     helpers::get_values_from_texture_buffer(total_photons.1, 1, 69u32);
+        // log::debug!("Total photons in scene: {}", total_photons_values[0]);
     }
 }
