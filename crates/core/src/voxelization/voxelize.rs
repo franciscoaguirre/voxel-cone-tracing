@@ -168,7 +168,7 @@ pub unsafe fn build_voxel_fragment_list(
     gl::MemoryBarrier(gl::SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
     (
-        BufferTextureV2::from_texture_and_buffer(voxel_positions),
+        BufferTextureV2::from_texture_and_buffer_with_length(voxel_positions, number_of_voxel_fragments as usize),
         number_of_voxel_fragments,
         voxel_colors,
         voxel_normals,

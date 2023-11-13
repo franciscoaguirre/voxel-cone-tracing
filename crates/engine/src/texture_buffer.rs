@@ -43,6 +43,15 @@ impl<T: GetGLEnum + Bounded + Clone> BufferTextureV2<T> {
         }
     }
 
+    pub fn from_texture_and_buffer_with_length((texture, buffer): (GLuint, GLuint), length: usize) -> Self {
+        Self {
+            texture,
+            buffer,
+            length,
+            _marker: PhantomData,
+        }
+    }
+
     /// Texture getter
     /// Only gets the index of the texture in the GPU
     pub fn texture(&self) -> Texture {

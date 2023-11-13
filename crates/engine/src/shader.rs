@@ -145,6 +145,9 @@ impl Shader {
     pub unsafe fn set_vec2(&self, name: &CStr, x: f32, y: f32) {
         gl::Uniform2f(gl::GetUniformLocation(self.id, name.as_ptr()), x, y);
     }
+    pub unsafe fn set_uvec3(&self, name: &CStr, x: u32, y: u32, z: u32) {
+        gl::Uniform3ui(gl::GetUniformLocation(self.id, name.as_ptr()), x, y, z);
+    }
     pub unsafe fn set_vec3(&self, name: &CStr, x: f32, y: f32, z: f32) {
         gl::Uniform3f(gl::GetUniformLocation(self.id, name.as_ptr()), x, y, z);
     }

@@ -20,7 +20,6 @@ impl NeighborPointersPass {
     pub unsafe fn run(
         &self,
         voxel_data: &VoxelData,
-        node_data: &NodeData,
         textures: &OctreeTextures,
         current_octree_level: u32,
         level_start: u32,

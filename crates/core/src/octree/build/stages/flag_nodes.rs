@@ -36,6 +36,9 @@ impl ShaderPass for FlagNodesPass {
 
         let config = Config::instance();
 
+        dbg!(&input.voxel_data.number_of_voxel_fragments);
+        dbg!(&input.octree_level);
+
         self.shader.set_uint(
             c_str!("numberOfVoxelFragments"),
             input.voxel_data.number_of_voxel_fragments,

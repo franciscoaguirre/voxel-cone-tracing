@@ -76,7 +76,7 @@ impl Octree {
             BrickPoolValues::Irradiance,
         );
 
-        self.run_mipmap(BrickPoolValues::Irradiance);
+        self.run_mipmap(&self.geometry_data, BrickPoolValues::Irradiance);
 
         (light_view_map, light_view_map_view, shadow_map)
     }

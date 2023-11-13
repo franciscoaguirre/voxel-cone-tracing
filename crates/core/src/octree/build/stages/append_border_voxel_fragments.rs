@@ -19,7 +19,6 @@ impl AppendBorderVoxelFragmentsPass {
 
     pub unsafe fn run(
         &self,
-        geometry_data: &OctreeData,
         border_data: &mut OctreeData,
         octree_level: u32,
         level_start: u32,

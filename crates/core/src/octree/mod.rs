@@ -23,8 +23,11 @@ pub use voxel_data::VoxelData;
 
 pub struct Octree {
     pub geometry_data: OctreeData,
+    pub dynamic_data: OctreeData,
     pub border_data: OctreeData,
     pub textures: OctreeTextures,
+    pub first_free_node: i32,
+    pub allocated_nodes_counter: GLuint,
     renderer: Renderer,
     builder: Builder,
 }
@@ -54,14 +57,16 @@ pub struct OctreeData {
 pub enum OctreeDataType {
     Geometry,
     Border,
+    Dynamic,
 }
 
 impl OctreeDataType {
     pub fn next(&self) -> Self {
         use OctreeDataType::*;
         match self {
-            Geometry => Border,
-            Border => Geometry,
+            Geometry => Dynamic,
+            Dynamic => Geometry,
+            Border => unimplemented!("Not visualizing border nodes on their own anymore"),
         }
     }
 }
@@ -103,6 +108,7 @@ struct Renderer {
     get_children_shader: Shader,
     eye_ray_shader: Shader,
     get_colors_quad_shader: Shader,
+    simple_octree_traversal_shader: Shader,
 }
 
 struct Builder {
@@ -171,6 +177,24 @@ impl Octree {
                 voxel_normals: (0, 0),        // Will be initialized empty later
             },
         };
+        let dynamic_data = OctreeData {
+            node_data: NodeData {
+                nodes_per_level: Vec::new(),
+                level_start_indices: helpers::generate_texture_buffer(
+                    (config.octree_levels() + 1) as usize,
+                    gl::R32UI,
+                    0u32,
+                ),
+            },
+            voxel_data: VoxelData {
+                voxel_positions: BufferTextureV2::from_data(
+                    vec![0u32; number_of_voxel_fragments as usize] // TODO: Should be smaller
+                ),
+                number_of_voxel_fragments: 0, // Will be initialized later
+                voxel_colors: (0, 0),         // Will be initialized later
+                voxel_normals: (0, 0),        // Will be initialized later
+            },
+        };
         let octree_renderer = Renderer {
             vao: 0,
             node_count: 0,
@@ -211,6 +235,7 @@ impl Octree {
             get_colors_quad_shader: compile_shaders!(
                 "assets/shaders/debug/debugInterpolation.glsl",
             ),
+            simple_octree_traversal_shader: compile_compute!("assets/shaders/debug/simpleOctreeTraversal.comp.glsl"),
         };
         let builder = Builder {
             neighbor_pointers_pass: NeighborPointersPass::init(),
@@ -234,10 +259,13 @@ impl Octree {
 
         let mut octree = Self {
             geometry_data,
+            dynamic_data,
             border_data,
             textures,
             renderer: octree_renderer,
             builder,
+            allocated_nodes_counter: helpers::generate_atomic_counter_buffer(),
+            first_free_node: 1,
         };
 
         octree.build();

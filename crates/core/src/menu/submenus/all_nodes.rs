@@ -58,7 +58,8 @@ impl<'a> SubMenu for AllNodesMenu {
                 ui.label("Node type:");
                 let button_text = match self.output.octree_nodes_to_visualize {
                     OctreeDataType::Geometry => "Geometry",
-                    OctreeDataType::Border => "Border",
+                    OctreeDataType::Dynamic => "Dynamic",
+                    OctreeDataType::Border => unimplemented!("Not visualizing border nodes on their own anymore"),
                 };
                 if ui.button(button_text).clicked() {
                     self.output.octree_nodes_to_visualize =

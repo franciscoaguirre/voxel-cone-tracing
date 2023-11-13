@@ -535,6 +535,34 @@ impl Octree {
         self.renderer.get_children_shader.wait();
     }
 
+    pub unsafe fn run_simple_octree_traversal_shader(&self, query_coordinates: Vector3<u32>, octree_level: u32) -> u32 {
+        self.renderer.simple_octree_traversal_shader.use_program();
+
+        let config = Config::instance();
+
+        self.renderer
+            .simple_octree_traversal_shader
+            .set_uint(c_str!("voxelDimension"), config.voxel_dimension());
+        self.renderer
+            .simple_octree_traversal_shader
+            .set_uint(c_str!("octreeLevel"), octree_level);
+        self.renderer
+            .simple_octree_traversal_shader
+            .set_uvec3(
+                c_str!("queryCoordinates"),
+                query_coordinates.x,
+                query_coordinates.y,
+                query_coordinates.z,
+            );
+        let output_buffer = BufferTextureV2::from_data(vec![0u32]);
+        helpers::bind_image_texture(0, self.textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
+        helpers::bind_image_texture(1, output_buffer.texture(), gl::WRITE_ONLY, gl::R32UI);
+        self.renderer.simple_octree_traversal_shader.dispatch(1);
+        self.renderer.simple_octree_traversal_shader.wait();
+        let result = output_buffer.data()[0];
+        result
+    }
+
     pub unsafe fn run_node_bricks_shader(
         &self,
         projection: &Matrix4<f32>,

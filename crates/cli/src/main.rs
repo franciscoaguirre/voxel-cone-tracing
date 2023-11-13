@@ -25,7 +25,7 @@ use engine::prelude::*;
 use engine::ui::glfw::{self, Context};
 use engine::ui::Ui;
 use cgmath::{point3, vec3, vec2, Deg, Matrix4, SquareMatrix};
-use log::info;
+use log;
 use structopt::StructOpt;
 
 mod cli_arguments;
@@ -120,7 +120,7 @@ fn main() {
 
     let (voxel_positions, number_of_voxel_fragments, voxel_colors, voxel_normals) =
         unsafe { voxelization::build_voxel_fragment_list(&static_objects[..], &scene_aabb) };
-    info!("Number of voxel fragments: {}", number_of_voxel_fragments);
+    log::info!("Number of voxel fragments for static objects: {}", number_of_voxel_fragments);
 
     let mut octree = unsafe {
         Octree::new(
@@ -129,6 +129,19 @@ fn main() {
             voxel_colors,
             voxel_normals,
         )
+    };
+
+    unsafe {
+        let (voxel_positions, number_of_voxel_fragments, voxel_colors, voxel_normals) =
+            unsafe { voxelization::build_voxel_fragment_list(&dynamic_objects[..], &scene_aabb) };
+        log::info!("Number of voxel fragments for dynamic objects: {}", number_of_voxel_fragments);
+        dbg!(&voxel_positions.data()[..1].iter().map(|r| helpers::r32ui_to_rgb10_a2ui(*r)).collect::<Vec<_>>());
+        octree.add_dynamic_objects(
+            voxel_positions,
+            number_of_voxel_fragments,
+            voxel_colors,
+            voxel_normals,
+        );
     };
 
     let node_positions = unsafe {
@@ -177,6 +190,9 @@ fn main() {
     let mut geometry_buffer_coordinates = vec2(0.0, 0.0);
 
     let mut node_filter_text = String::new();
+    let mut query_coordinates_text = String::new();
+    let mut should_traverse_octree = false;
+    let mut traverse_octree_level = 0;
     let mut should_show_final_image_quad = false;
 
     let mut should_move_light = false;
@@ -293,6 +309,9 @@ fn main() {
             node_filter_text = outputs.1.filter_text.clone();
             should_show_neighbors = outputs.1.should_show_neighbors;
             selected_debug_nodes_updated = outputs.1.selected_items_updated;
+            query_coordinates_text = outputs.1.query_coordinates_text.clone();
+            should_traverse_octree = outputs.1.should_traverse_octree;
+            traverse_octree_level = outputs.1.traverse_octree_level;
 
             // Bricks
             bricks_to_show = outputs.2.bricks_to_show;
@@ -346,6 +365,22 @@ fn main() {
             }
         }
 
+        if should_traverse_octree {
+            should_traverse_octree = false;
+            let query_coordinates: Vec<_> = query_coordinates_text.split(", ")
+                .map(|coordinate| coordinate.parse::<u32>().unwrap())
+                .collect();
+            let query_coordinates_vec = vec3(
+                query_coordinates[0],
+                query_coordinates[1],
+                query_coordinates[2],
+            );
+            unsafe {
+                let result = octree.run_simple_octree_traversal_shader(query_coordinates_vec, traverse_octree_level);
+                dbg!(&result);
+            };
+        }
+
         // Input
         if !ui.is_showing() {
             let transform = if should_move_light {
@@ -390,7 +425,8 @@ fn main() {
 
             let node_data_to_visualize = match octree_nodes_to_visualize {
                 OctreeDataType::Geometry => &octree.geometry_data.node_data,
-                OctreeDataType::Border => &octree.border_data.node_data,
+                OctreeDataType::Dynamic => &octree.dynamic_data.node_data,
+                OctreeDataType::Border => unimplemented!("Not visualizing border nodes on their own anymore"),
             };
 
             if show_octree {

@@ -34,6 +34,9 @@ impl ShaderPass for AllocateNodesPass {
     unsafe fn run<'a>(&self, input: Self::Input<'a>) {
         self.shader.use_program();
 
+        dbg!(&input.first_node_in_level);
+        dbg!(&input.first_free_node);
+
         self.shader
             .set_int(c_str!("firstNodeInLevel"), input.first_node_in_level);
         self.shader
@@ -58,6 +61,8 @@ impl ShaderPass for AllocateNodesPass {
         let groups_count = ((input.previous_level_node_amount * 8) as f32
             / config.working_group_size as f32)
             .ceil() as u32;
+
+        dbg!(&groups_count);
 
         let (debug_texture, debug_texture_buffer) = helpers::generate_texture_buffer(20, gl::R32F, 42f32);
         helpers::bind_image_texture(1, debug_texture, gl::WRITE_ONLY, gl::R32F);

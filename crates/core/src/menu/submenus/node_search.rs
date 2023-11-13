@@ -3,6 +3,7 @@ use serde::{Serialize, Deserialize};
 
 use super::SubMenu;
 use crate::menu::{get_button_text, DebugNode};
+use crate::config::Config;
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 #[serde(default)]
@@ -28,6 +29,9 @@ pub struct NodeSearchMenuOutput {
     pub filter_text: String,
     pub should_show_neighbors: bool,
     pub selected_items_updated: bool,
+    pub query_coordinates_text: String,
+    pub should_traverse_octree: bool,
+    pub traverse_octree_level: u32,
 }
 
 impl<'a> SubMenu for NodeSearchMenu {
@@ -57,6 +61,7 @@ impl<'a> SubMenu for NodeSearchMenu {
         let mut index_to_remove = None;
 
         let ui_manager = Ui::instance();
+        let config = Config::instance();
 
         egui::Window::new("Node search")
             .resize(|r| r.fixed_size((200., 400.)))
@@ -69,6 +74,13 @@ impl<'a> SubMenu for NodeSearchMenu {
                             .clicked()
                         {
                             self.output.should_show_neighbors = !self.output.should_show_neighbors;
+                        }
+                    });
+                    ui.horizontal(|ui| {
+                        ui.text_edit_singleline(&mut self.output.query_coordinates_text);
+                        ui.add(egui::Slider::new(&mut self.output.traverse_octree_level, 0..=config.last_octree_level()));
+                        if ui.button("Traverse").clicked() {
+                            self.output.should_traverse_octree = true;
                         }
                     });
                     ui.text_edit_singleline(&mut self.output.filter_text);
