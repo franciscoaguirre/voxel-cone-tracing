@@ -62,7 +62,7 @@ impl ShaderPass for ClearLight {
 
         for texture_number in 0..6 {
             helpers::bind_3d_image_texture(
-                1,
+                0,
                 input.brick_pool_irradiance[texture_number as usize],
                 gl::WRITE_ONLY,
                 gl::RGBA8,

@@ -346,13 +346,12 @@ fn main() {
         if !ui.is_showing() {
             let transform = if should_move_light {
                 unsafe {
-                    // octree.clear_light();
-                    // light_maps = // TODO: This takes too long, optimize
-                    //     octree.inject_light(
-                    //         &mut objects[..],
-                    //         &light,
-                    //         &scene_aabb,
-                    //     );
+                    light_maps = // TODO: This takes too long, optimize
+                        octree.inject_light(
+                            &mut objects[..],
+                            &light,
+                            &scene_aabb,
+                        );
                     light.transform_mut()
                 }
             } else if should_move_debug_cone {

@@ -34,6 +34,8 @@ impl Octree {
         light: &Light,
         scene_aabb: &Aabb,
     ) -> (GLuint, GLuint, GLuint) {
+        self.clear_light();
+
         let (light_view_map, light_view_map_view, shadow_map) =
             self.create_light_view_map(objects, light, scene_aabb);
 

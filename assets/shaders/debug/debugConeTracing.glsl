@@ -9,7 +9,11 @@ uniform layout(binding = 2, r32f) imageBuffer sampledColor;
 uniform layout(binding = 0, offset = 0) atomic_uint queriedNodesCounter;
 
 // Parameters
-uniform float halfConeAngle;
+struct ConeParameters {
+    float halfConeAngle;
+    float maxDistance;
+};
+uniform ConeParameters parameters;
 uniform mat4 projection;
 uniform mat4 view;
 uniform uint voxelDimension;
@@ -42,7 +46,6 @@ uniform vec3 lightPosition;
 
 uniform vec2 gBufferQueryCoordinates;
 uniform vec3 axis;
-uniform float maxDistance;
 
 out VertexData {
     vec3 position;
@@ -72,22 +75,22 @@ void main() {
 
     if (threadIndex == 0) {
         Out.direction = direction;
-        coneTrace(positionVoxelSpace, Out.direction, halfConeAngle, maxDistance);
+        coneTrace(positionVoxelSpace, Out.direction, parameters.halfConeAngle, parameters.maxDistance);
     }
 
     if (threadIndex == 1) {
         Out.direction = sinAngle * axis - cosAngle * tangent;
-        coneTrace(positionVoxelSpace, Out.direction, halfConeAngle, maxDistance);
+        coneTrace(positionVoxelSpace, Out.direction, parameters.halfConeAngle, parameters.maxDistance);
     }
 
     if (threadIndex == 2) {
         Out.direction = sinAngle * axis + cosAngle * bitangent;
-        coneTrace(positionVoxelSpace, Out.direction, halfConeAngle, maxDistance);
+        coneTrace(positionVoxelSpace, Out.direction, parameters.halfConeAngle, parameters.maxDistance);
     }
 
     if (threadIndex == 3) {
         Out.direction = sinAngle * axis - cosAngle * bitangent;
-        coneTrace(positionVoxelSpace, Out.direction, halfConeAngle, maxDistance);
+        coneTrace(positionVoxelSpace, Out.direction, parameters.halfConeAngle, parameters.maxDistance);
     }
 }
 
@@ -108,8 +111,11 @@ out vec4 frag_color;
 uniform mat4 projection;
 uniform mat4 view;
 
-uniform float maxDistance;
-uniform float halfConeAngle;
+struct ConeParameters {
+    float halfConeAngle;
+    float maxDistance;
+};
+uniform ConeParameters parameters;
 
 const float PI = 3.14159;
 
@@ -120,8 +126,8 @@ void main() {
 
     frag_color = vec4(1, 1, 0, 1);
 
-    float angleFromPlane = (PI / 2) - halfConeAngle;
-    drawCone(In[0].position, In[0].direction, angleFromPlane, maxDistance);
+    float angleFromPlane = (PI / 2) - parameters.halfConeAngle;
+    drawCone(In[0].position, In[0].direction, angleFromPlane, parameters.maxDistance);
 }
 
 #shader fragment
