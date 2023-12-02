@@ -149,6 +149,9 @@ vec4 coneTrace(
         // imageStore(sampledColor, 4, vec4(float(octreeLevel), 0, 0, 0));
     #endif
 
+    if(returnColor.a >= 0.97) {
+      returnColor.a = 1;
+    }
     returnColor.a = min(returnColor.a, 1.0);
 
     #if debug
