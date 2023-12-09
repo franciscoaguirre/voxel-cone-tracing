@@ -10,27 +10,6 @@ use std::{
 
 use crate::{model::Model, aabb::Aabb, types::*};
 
-pub unsafe fn generate_atomic_counter_buffer() -> GLuint {
-    generate_atomic_counter_buffer1()
-}
-
-pub unsafe fn generate_atomic_counter_buffer1() -> GLuint {
-    let mut buffer: u32 = 0;
-    let initial_value: [u32; 1] = [0];
-
-    gl::GenBuffers(1, &mut buffer);
-    gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, buffer);
-    gl::BufferData(
-        gl::ATOMIC_COUNTER_BUFFER,
-        size_of::<GLuint>() as isize,
-        initial_value.as_ptr() as *const c_void,
-        gl::DYNAMIC_READ,
-    );
-    gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, 0);
-
-    buffer
-}
-
 pub unsafe fn generate_texture_buffer<T>(
     size: usize,
     format: GLenum,
@@ -52,13 +31,13 @@ pub unsafe fn generate_texture_buffer_with_hint<T>(
 where
     T: Clone,
 {
-    generate_texture_buffer_full(size, format, vec![default_value; size], usage_hint)
+    generate_texture_buffer_full(size, format, &vec![default_value; size], usage_hint)
 }
 
 pub unsafe fn generate_texture_buffer_with_initial_data<T>(
     size: usize,
     format: GLenum,
-    initial_data: Vec<T>,
+    initial_data: &[T],
 ) -> BufferTexture {
     generate_texture_buffer_full(size, format, initial_data, gl::STATIC_DRAW)
 }
@@ -66,7 +45,7 @@ pub unsafe fn generate_texture_buffer_with_initial_data<T>(
 pub unsafe fn generate_texture_buffer_full<T>(
     size: usize,
     format: GLenum,
-    initial_data: Vec<T>,
+    initial_data: &[T],
     usage_hint: GLuint,
 ) -> BufferTexture {
     let mut texture_buffer: GLuint = 0;
@@ -88,7 +67,7 @@ pub unsafe fn generate_texture_buffer_full<T>(
 
 pub unsafe fn fill_texture_buffer_with_data<T>(
     texture_buffer: GLuint,
-    data: &Vec<T>,
+    data: &[T],
     usage_hint: GLenum,
 ) {
     gl::BindBuffer(gl::TEXTURE_BUFFER, texture_buffer);
@@ -101,128 +80,12 @@ pub unsafe fn fill_texture_buffer_with_data<T>(
     gl::BindBuffer(gl::TEXTURE_BUFFER, 0);
 }
 
-pub unsafe fn generate_3d_rgba_texture(size_one_dimension: u32) -> GLuint {
-    generate_3d_texture(
-        size_one_dimension,
-        gl::RGBA8,
-        gl::RGBA,
-        gl::UNSIGNED_BYTE,
-        0u32,
-    )
-}
-
-pub unsafe fn generate_3d_rgba32f_texture(size_one_dimension: u32) -> GLuint {
-    generate_3d_texture(size_one_dimension, gl::RGBA32F, gl::RGBA, gl::FLOAT, 0u128)
-}
-
-pub unsafe fn generate_3d_rgb10_a2ui_texture(size_one_dimension: u32) -> GLuint {
-    generate_3d_texture(
-        size_one_dimension,
-        gl::RGB10_A2,
-        gl::RGBA_INTEGER,
-        gl::UNSIGNED_INT_2_10_10_10_REV,
-        0u32,
-    )
-}
-
-pub unsafe fn generate_3d_r32ui_texture(size_one_dimension: u32) -> GLuint {
-    generate_3d_texture(
-        size_one_dimension,
-        gl::R32UI,
-        gl::RED_INTEGER,
-        gl::UNSIGNED_INT,
-        0u32,
-    )
-}
-
-/// Generates a 3D texture
-/// Takes `T` as a default_value to account for size differences in the components
-unsafe fn generate_3d_texture<T: Clone>(
-    size_one_dimension: u32,
-    internal_format: GLenum,
-    format: GLenum,
-    _type: GLenum,
-    default_value: T,
-) -> GLuint {
-    let mut texture: GLuint = 0;
-
-    // TODO: Apparently powers of two are recommended, but using the next power of
-    // two understandably makes this really large really fast.
-    // let size_one_dimension = size_one_dimension.next_power_of_two() as i32;
-
-    let size = size_one_dimension.pow(3);
-
-    let initial_data = vec![default_value; size as usize];
-
-    gl::GenTextures(1, &mut texture);
-    gl::BindTexture(gl::TEXTURE_3D, texture);
-    gl::TexImage3D(
-        gl::TEXTURE_3D,
-        0,
-        internal_format as i32,
-        size_one_dimension as i32,
-        size_one_dimension as i32,
-        size_one_dimension as i32,
-        0,
-        format,
-        _type,
-        initial_data.as_ptr() as *const c_void,
-    );
-    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
-    gl::BindTexture(gl::TEXTURE_3D, 0);
-
-    texture
-}
-
 pub fn get_constant_pointer(number: &u32) -> *const c_void {
     number as *const u32 as *const c_void
 }
 
 pub fn get_mutable_pointer(number: &mut u32) -> *mut c_void {
     number as *mut u32 as *mut c_void
-}
-
-/// Gets the value from the atomic counter passed in AND resets it
-pub unsafe fn get_value_from_atomic_counter(counter: u32) -> GLuint {
-    let mut value: GLuint = 0;
-    gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, counter);
-    gl::GetBufferSubData(
-        gl::ATOMIC_COUNTER_BUFFER,
-        0,
-        size_of::<GLuint>() as isize,
-        get_mutable_pointer(&mut value),
-    );
-    gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, 0);
-    reset_atomic_counter(counter);
-
-    value
-}
-
-pub unsafe fn get_value_from_atomic_counter_without_reset(counter: u32) -> GLuint {
-    let mut value: GLuint = 0;
-    gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, counter);
-    gl::GetBufferSubData(
-        gl::ATOMIC_COUNTER_BUFFER,
-        0,
-        size_of::<GLuint>() as isize,
-        get_mutable_pointer(&mut value),
-    );
-    gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, 0);
-
-    value
-}
-
-pub unsafe fn reset_atomic_counter(counter: u32) {
-    let reset: GLuint = 0;
-    gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, counter);
-    gl::BufferSubData(
-        gl::ATOMIC_COUNTER_BUFFER,
-        0,
-        size_of::<GLuint>() as isize,
-        get_constant_pointer(&reset),
-    );
-    gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, 0);
 }
 
 pub unsafe fn get_values_from_texture_buffer<T>(
@@ -262,24 +125,6 @@ pub unsafe fn clear_texture_buffer<T>(
         usage_hint,
     );
     gl::BindBuffer(gl::TEXTURE_BUFFER, 0);
-}
-
-pub unsafe fn bind_image_texture(
-    image_index: u32,
-    texture: GLuint,
-    access: GLenum, // gl::READ_WRITE, gl::READ_ONLY, gl::WRITE_ONLY
-    format: GLenum, // gl::R32UI, gl::RGB10_A2UI, gl::RGB8
-) {
-    gl::BindImageTexture(image_index, texture, 0, gl::FALSE, 0, access, format);
-}
-
-pub unsafe fn bind_3d_image_texture(
-    image_index: u32,
-    texture: GLuint,
-    access: GLenum,
-    format: GLenum,
-) {
-    gl::BindImageTexture(image_index, texture, 0, gl::TRUE, 0, access, format);
 }
 
 pub extern "system" fn gl_debug_output_callback(

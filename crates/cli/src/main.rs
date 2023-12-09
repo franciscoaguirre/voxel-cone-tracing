@@ -441,7 +441,7 @@ fn main() {
                 &light,
                 &octree.textures,
                 &geometry_buffers,
-                light_maps,
+                &light_maps,
                 &quad,
                 &camera,
                 &cone_parameters,

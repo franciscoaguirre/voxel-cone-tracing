@@ -1,6 +1,5 @@
 use std::{ffi::c_void, mem::size_of};
 
-use gl::types::GLuint;
 use log;
 use serde::{Serialize, Deserialize};
 use engine::prelude::*;
@@ -30,19 +29,19 @@ pub struct Octree {
 }
 
 pub struct OctreeTextures {
-    pub node_pool: BufferTexture,
-    brick_pointers: BufferTexture,
-    pub node_positions: BufferTexture,
-    neighbors: [BufferTexture; 6],
+    pub node_pool: BufferTextureV2<u32>,
+    brick_pointers: BufferTextureV2<u32>,
+    pub node_positions: BufferTextureV2<u32>,
+    neighbors: [BufferTextureV2<u32>; 6],
     pub brick_pool_colors_raw: Texture3D, // Raw colors, they are then moved to `brick_pool_colors`
     pub brick_pool_colors: [Texture3D; 6], // Anisotropic voxels, one texture per main direction
     pub brick_pool_alpha: Texture3D,
     pub brick_pool_irradiance: [Texture3D; 6], // Anisotropic voxels
-    pub brick_pool_normals: Texture3D,
+    pub brick_pool_normals: Texture3DV2,
     pub brick_pool_photons: Texture3D,
-    pub photons_buffer: BufferTexture,
-    pub children_buffer: BufferTexture,
-    pub color_quad_textures: [Texture2D; 2],
+    pub photons_buffer: BufferTextureV2<u32>,
+    pub children_buffer: BufferTextureV2<u32>,
+    pub color_quad_textures: [Texture2DV2; 2],
 }
 
 pub struct OctreeData {
@@ -80,7 +79,7 @@ impl OctreeData {
 
 pub struct NodeData {
     nodes_per_level: Vec<u32>,
-    level_start_indices: BufferTexture,
+    level_start_indices: BufferTextureV2<u32>,
 }
 
 impl NodeData {
@@ -90,7 +89,7 @@ impl NodeData {
 }
 
 struct Renderer {
-    vao: GLuint,
+    vao: Identifier,
     node_count: u32,
     shader: Shader,
     normals_shader: Shader,
@@ -101,7 +100,6 @@ struct Renderer {
     node_bricks_shader: Shader,
     get_photons_shader: Shader,
     get_children_shader: Shader,
-    eye_ray_shader: Shader,
     get_colors_quad_shader: Shader,
 }
 
@@ -135,16 +133,15 @@ impl Octree {
     ) -> Self {
         let config = Config::instance();
         let max_node_pool_size = Self::get_max_node_pool_size();
-        let max_node_pool_size_in_bytes = size_of::<GLuint>() * max_node_pool_size as usize;
+        let max_node_pool_size_in_bytes = size_of::<u32>() * max_node_pool_size as usize;
         let textures = Self::initialize_textures(max_node_pool_size_in_bytes);
         let geometry_data = OctreeData {
             node_data: NodeData {
                 nodes_per_level: Vec::new(),
-                level_start_indices: helpers::generate_texture_buffer(
-                    (config.octree_levels() + 1) as usize,
-                    gl::R32UI,
-                    0u32,
-                ),
+                level_start_indices: BufferTextureV2::from_data(&vec![
+                    0u32;
+                    (config.octree_levels() + 1) as usize
+                ]),
             },
             voxel_data: VoxelData {
                 voxel_positions,
@@ -156,15 +153,14 @@ impl Octree {
         let border_data = OctreeData {
             node_data: NodeData {
                 nodes_per_level: Vec::new(),
-                level_start_indices: helpers::generate_texture_buffer(
+                level_start_indices: BufferTextureV2::from_data(&vec![
+                    0u32;
                     (config.octree_levels() + 1) as usize,
-                    gl::R32UI,
-                    0u32,
-                ),
+                ]),
             },
             voxel_data: VoxelData {
                 voxel_positions: BufferTextureV2::from_data(
-                    vec![0u32; number_of_voxel_fragments as usize], // TODO: Should be smaller
+                    &vec![0u32; number_of_voxel_fragments as usize], // TODO: Should be smaller
                 ),
                 number_of_voxel_fragments: 0, // Will be initialized empty later
                 voxel_colors: (0, 0),         // Will be initialized empty later
@@ -207,7 +203,6 @@ impl Octree {
             ),
             get_photons_shader: compile_compute!("assets/shaders/debug/getPhotons.comp.glsl"),
             get_children_shader: compile_compute!("assets/shaders/debug/getChildren.comp.glsl"),
-            eye_ray_shader: compile_shaders!("assets/shaders/debug/eyeRay.glsl"),
             get_colors_quad_shader: compile_shaders!(
                 "assets/shaders/debug/debugInterpolation.glsl",
             ),
@@ -256,9 +251,8 @@ impl Octree {
             max_node_pool_size
         );
 
-        let mut max_texture_buffer_size = 0; // In bytes
-        gl::GetIntegerv(gl::MAX_TEXTURE_BUFFER_SIZE, &mut max_texture_buffer_size);
-        max_texture_buffer_size /= 8;
+        let mut max_texture_buffer_size = BufferTextureV2::<()>::max_texture_buffer_size();
+        max_texture_buffer_size /= 8; // TODO: Why?
 
         let max_node_pool_size =
             max_node_pool_size.min((max_texture_buffer_size).try_into().unwrap());
@@ -276,17 +270,18 @@ impl Octree {
 
     unsafe fn initialize_textures(max_node_pool_size: usize) -> OctreeTextures {
         let config = Config::instance();
+        let initial_data = vec![0u32; max_node_pool_size];
         OctreeTextures {
-            node_pool: helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32),
-            brick_pointers: helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32),
-            node_positions: helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32),
+            node_pool: BufferTextureV2::from_data(&initial_data),
+            brick_pointers: BufferTextureV2::from_data(&initial_data),
+            node_positions: BufferTextureV2::from_data(&initial_data),
             neighbors: [
-                helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // X
-                helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // -X
-                helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // Y
-                helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // -Y
-                helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // Z
-                helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // -Z
+                BufferTextureV2::from_data(&initial_data), // X
+                BufferTextureV2::from_data(&initial_data), // -X
+                BufferTextureV2::from_data(&initial_data), // Y
+                BufferTextureV2::from_data(&initial_data), // -Y
+                BufferTextureV2::from_data(&initial_data), // Z
+                BufferTextureV2::from_data(&initial_data), // -Z
             ],
             brick_pool_colors_raw: helpers::generate_3d_r32ui_texture(config.brick_pool_resolution),
             brick_pool_colors: [
@@ -306,49 +301,18 @@ impl Octree {
                 helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (Z, +)
                 helpers::generate_3d_rgba_texture(config.brick_pool_resolution), // (Z, -)
             ],
-            brick_pool_normals: helpers::generate_3d_rgba32f_texture(config.brick_pool_resolution),
+            brick_pool_normals: Texture3DV2::new_rgba32f(config.brick_pool_resolution),
             brick_pool_photons: helpers::generate_3d_r32ui_texture(config.brick_pool_resolution),
-            photons_buffer: helpers::generate_texture_buffer(27, gl::R32UI, 0u32), // 27 voxels in a brick
-            children_buffer: helpers::generate_texture_buffer(8, gl::R32UI, 0_u32), // 8 children in a node
+            photons_buffer: BufferTextureV2::from_data(&vec![0u32; 27]), // 27 voxels in a brick
+            children_buffer: BufferTextureV2::from_data(&vec![0u32; 8]), // 8 children in a node
             color_quad_textures: {
                 let mut textures = [0; 2];
-
                 let (viewport_width, viewport_height) = config.viewport_dimensions();
-
-                gl::GenTextures(2, textures.as_mut_ptr());
-                gl::BindTexture(gl::TEXTURE_2D, textures[0]);
-                gl::TexImage2D(
-                    gl::TEXTURE_2D,
-                    0,
-                    gl::RGBA8 as i32,
-                    viewport_width,
-                    viewport_height,
-                    0,
-                    gl::RGBA,
-                    gl::UNSIGNED_BYTE,
-                    std::ptr::null(),
-                );
-                gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-                gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
-                gl::BindTexture(gl::TEXTURE_2D, 0);
-
-                gl::BindTexture(gl::TEXTURE_2D, textures[1]);
-                gl::TexImage2D(
-                    gl::TEXTURE_2D,
-                    0,
-                    gl::RGBA8 as i32,
-                    viewport_width,
-                    viewport_height,
-                    0,
-                    gl::RGBA,
-                    gl::UNSIGNED_BYTE,
-                    std::ptr::null(),
-                );
-                gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-                gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
-                gl::BindTexture(gl::TEXTURE_2D, 0);
-
-                textures
+                // TODO: This generates one texture and then another one instead of both at the same time
+                // The abstraction should allow for creating multiple at the same time
+                let first_texture = Texture2DV2::new_rgba(viewport_width, viewport_height, false);
+                let second_texture = Texture2DV2::new_rgba(viewport_width, viewport_height, false);
+                [first_texture, second_texture]
             },
         }
     }
@@ -358,17 +322,7 @@ impl Octree {
     }
 
     pub unsafe fn show_nodes(&self, offset: usize, number_of_nodes: usize) {
-        let max_node_pool_size = Self::get_max_node_pool_size();
-
-        let values = vec![1u32; max_node_pool_size];
-        gl::BindBuffer(gl::TEXTURE_BUFFER, self.textures.node_pool.1);
-        gl::GetBufferSubData(
-            gl::TEXTURE_BUFFER,
-            0,
-            (size_of::<GLuint>() * max_node_pool_size) as isize,
-            values.as_ptr() as *mut c_void,
-        );
-
+        let values = self.textures.node_pool.data();
         for node in 0..number_of_nodes {
             let lower_limit: usize = (node + offset) * constants::CHILDREN_PER_NODE as usize;
             let upper_limit: usize = lower_limit + constants::CHILDREN_PER_NODE as usize;

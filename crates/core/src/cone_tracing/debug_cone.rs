@@ -23,9 +23,9 @@ pub struct DebugCone {
     shader: Shader,
     direction: Vector3<f32>,
     previous_values: HashSet<u32>,
-    nodes_queried: BufferTexture,
-    nodes_queried_counter: GLuint,
-    sampled_colors_texture: BufferTexture,
+    nodes_queried: BufferTextureV2<u32>,
+    nodes_queried_counter: AtomicCounter,
+    sampled_colors_texture: BufferTextureV2<f32>,
     vao: GLuint,
 }
 
@@ -71,19 +71,9 @@ impl DebugCone {
             },
             direction: vec3(0.0, 1.0, 0.0),
             previous_values: HashSet::new(),
-            nodes_queried: helpers::generate_texture_buffer_with_hint(
-                1000,
-                gl::R32UI,
-                69u32,
-                gl::DYNAMIC_READ,
-            ),
-            sampled_colors_texture: helpers::generate_texture_buffer_with_hint(
-                100,
-                gl::R32F,
-                69f32,
-                gl::DYNAMIC_READ,
-            ),
-            nodes_queried_counter: helpers::generate_atomic_counter_buffer1(),
+            nodes_queried: BufferTextureV2::from_data_and_hint(&vec![0u32; 1000], UsageHint::DynamicRead),
+            sampled_colors_texture: BufferTextureV2::from_data_and_hint(&vec![0f32; 100], UsageHint::DynamicRead),
+            nodes_queried_counter: AtomicCounter::new(),
             point_to_light: false,
             vao,
         }
@@ -99,88 +89,61 @@ impl DebugCone {
         geometry_buffer_coordinates: &Vector2<f32>,
         light: &Light,
     ) {
-        helpers::clear_texture_buffer(self.sampled_colors_texture.1, 100, 42f32, gl::DYNAMIC_READ);
+        self.sampled_colors_texture.fill_with(&vec![0f32; 100], true);
         self.shader.use_program();
 
         gl::BindVertexArray(self.vao);
 
-        helpers::bind_image_texture(0, self.nodes_queried.0, gl::WRITE_ONLY, gl::R32UI);
-        helpers::bind_image_texture(1, textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
-        helpers::bind_image_texture(2, self.sampled_colors_texture.0, gl::WRITE_ONLY, gl::R32F);
+        self.shader.bind_image_texture(0, self.nodes_queried, TextureAccess::WriteOnly);
+        self.shader.bind_image_texture(1, textures.node_pool, TextureAccess::ReadOnly);
+        self.shader.bind_image_texture(2, self.sampled_colors_texture, TextureAccess::WriteOnly);
 
-        gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, self.nodes_queried_counter);
+        self.nodes_queried_counter.bind(0);
 
         let brick_pool_textures = vec![
-            (
-                c_str!("brickPoolNormals"),
-                textures.brick_pool_normals,
-                gl::NEAREST as i32,
-            ),
             // Irradiance textures
             (
-                c_str!("brickPoolIrradianceX"),
+                "brickPoolIrradianceX",
                 textures.brick_pool_irradiance[0],
-                gl::LINEAR as i32,
             ),
             (
-                c_str!("brickPoolIrradianceXNeg"),
+                "brickPoolIrradianceXNeg",
                 textures.brick_pool_irradiance[1],
-                gl::LINEAR as i32,
             ),
             (
-                c_str!("brickPoolIrradianceY"),
+                "brickPoolIrradianceY",
                 textures.brick_pool_irradiance[2],
-                gl::LINEAR as i32,
             ),
             (
-                c_str!("brickPoolIrradianceYNeg"),
+                "brickPoolIrradianceYNeg",
                 textures.brick_pool_irradiance[3],
-                gl::LINEAR as i32,
             ),
             (
-                c_str!("brickPoolIrradianceZ"),
+                "brickPoolIrradianceZ",
                 textures.brick_pool_irradiance[4],
-                gl::LINEAR as i32,
             ),
             (
-                c_str!("brickPoolIrradianceZNeg"),
+                "brickPoolIrradianceZNeg",
                 textures.brick_pool_irradiance[5],
-                gl::LINEAR as i32,
             ),
         ];
 
-        let mut texture_counter = 0;
-
-        for &(texture_name, texture, sample_interpolation) in brick_pool_textures.iter() {
-            gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
-            gl::BindTexture(gl::TEXTURE_3D, texture);
-            self.shader.set_int(texture_name, texture_counter as i32);
-            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
-            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
-            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, sample_interpolation);
-            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, sample_interpolation);
-            texture_counter += 1;
+        for &(texture_name, texture) in brick_pool_textures.iter() {
+            self.shader.bind_3d_texture(texture_name, texture, false);
         }
 
         let g_buffer_textures = vec![
-            (c_str!("gBufferColors"), geometry_buffers[3]),
-            (c_str!("gBufferPositions"), geometry_buffers[0]),
-            (c_str!("gBufferNormals"), geometry_buffers[2]),
-            (c_str!("gBufferSpeculars"), geometry_buffers[4]),
+            ("gBufferColors", geometry_buffers[3]),
+            ("gBufferPositions", geometry_buffers[0]),
+            ("gBufferNormals", geometry_buffers[2]),
+            ("gBufferSpeculars", geometry_buffers[4]),
         ];
 
         for &(texture_name, texture) in g_buffer_textures.iter() {
-            gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
-            gl::BindTexture(gl::TEXTURE_2D, texture);
-            self.shader.set_int(texture_name, texture_counter as i32);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
-            texture_counter += 1;
+            self.shader.bind_texture(texture_name, texture, true);
         }
 
+        // TODO: Remove
         // Unbind any texture leftover
         gl::BindTexture(gl::TEXTURE_2D, 0);
 
@@ -226,14 +189,13 @@ impl DebugCone {
         let number_of_cones = 1; // For now
         gl::DrawArrays(gl::POINTS, 0, number_of_cones);
 
-        let values = helpers::get_values_from_texture_buffer(self.nodes_queried.1, 1000, 42u32);
-        let sampled_colors =
-            helpers::get_values_from_texture_buffer(self.sampled_colors_texture.1, 100, 32f32);
+        let values = self.nodes_queried.data();
+        let sampled_colors = self.sampled_colors_texture.data();
         // dbg!(&sampled_colors[0..5]);
         // pretty_print_data(&sampled_colors[5..]);
 
-        let total_nodes_queried =
-            helpers::get_value_from_atomic_counter(self.nodes_queried_counter) as usize;
+        let total_nodes_queried = self.nodes_queried_counter.value() as usize;
+        self.nodes_queried_counter.reset();
         let values_set = HashSet::from_iter(values[..total_nodes_queried].iter().cloned());
 
         if self.previous_values != values_set {

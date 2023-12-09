@@ -113,7 +113,7 @@ pub unsafe fn build_voxel_fragment_list(
     objects: &mut [Object],
     scene_aabb: &Aabb,
 ) -> (BufferTextureV2<u32>, u32, BufferTexture, BufferTexture) {
-    let mut atomic_counter: u32 = helpers::generate_atomic_counter_buffer();
+    let mut atomic_counter = AtomicCounter::new();
 
     let voxelization_shader = compile_shaders!(
         "assets/shaders/voxel_fragment/voxelize.vert.glsl",
@@ -122,23 +122,21 @@ pub unsafe fn build_voxel_fragment_list(
     );
 
     calculate_voxel_fragment_list_length(&voxelization_shader, objects, scene_aabb, &mut atomic_counter);
-    gl::MemoryBarrier(gl::ATOMIC_COUNTER_BUFFER);
+    atomic_counter.memory_barrier();
+    atomic_counter.bind();
+    let number_of_voxel_fragments = atomic_counter.value();
 
-    gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, atomic_counter);
-    let count = gl::MapBufferRange(
-        gl::ATOMIC_COUNTER_BUFFER,
-        0,
-        size_of::<GLuint>() as isize,
-        gl::MAP_READ_BIT | gl::MAP_WRITE_BIT,
-    ) as *mut GLuint;
+    // gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, atomic_counter);
+    // let count = gl::MapBufferRange(
+    //     gl::ATOMIC_COUNTER_BUFFER,
+    //     0,
+    //     size_of::<GLuint>() as isize,
+    //     gl::MAP_READ_BIT | gl::MAP_WRITE_BIT,
+    // ) as *mut GLuint;
+    // let number_of_voxel_fragments = *count;
 
-    let number_of_voxel_fragments = *count;
-
-    let voxel_positions: (GLuint, GLuint) = helpers::generate_texture_buffer(
-        size_of::<GLuint>() * number_of_voxel_fragments as usize,
-        gl::R32UI,
-        0u32,
-    );
+    let voxel_positions = BufferTextureV2::from_data(&vec![0u32; size_of::<GLuint>() * number_of_voxel_fragments as usize]);
+    // TODO: Need `BufferTextureV2` to support these other formats before making the switch
     let voxel_colors: (GLuint, GLuint) = helpers::generate_texture_buffer(
         size_of::<GLuint>() * number_of_voxel_fragments as usize,
         gl::RGBA8,
@@ -150,10 +148,9 @@ pub unsafe fn build_voxel_fragment_list(
         0u32,
     );
 
-    *count = 0;
+    atomic_counter.reset();
 
-    gl::UnmapBuffer(gl::ATOMIC_COUNTER_BUFFER);
-    gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, 0);
+    // gl::UnmapBuffer(gl::ATOMIC_COUNTER_BUFFER);
 
     populate_voxel_fragment_list(
         &voxelization_shader,
@@ -168,7 +165,7 @@ pub unsafe fn build_voxel_fragment_list(
     gl::MemoryBarrier(gl::SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
     (
-        BufferTextureV2::from_texture_and_buffer(voxel_positions),
+        voxel_positions,
         number_of_voxel_fragments,
         voxel_colors,
         voxel_normals,

@@ -73,7 +73,8 @@ impl Light {
         scene_aabb: &Aabb,
         voxel_dimension: u32, // TODO: Find another way. This breaks separation of concerns
     ) -> Textures<LIGHT_MAP_BUFFERS> {
-        match self {
+        gl::CullFace(gl::FRONT);
+        let textures = match self {
             Self::Point(point_light) => point_light.take_photo(
                 objects,
                 scene_aabb,
@@ -84,7 +85,9 @@ impl Light {
                 scene_aabb,
                 voxel_dimension
             ),
-        }
+        };
+        gl::CullFace(gl::BACK);
+        textures
     }
 }
 

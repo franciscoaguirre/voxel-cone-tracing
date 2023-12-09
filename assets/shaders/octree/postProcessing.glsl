@@ -36,9 +36,9 @@ in VertexData {
 void main() {
     vec4 color = texture(inputTexture, In.textureCoordinates);
 
-    if (maxNorm > 0.0) {
-        color.rgb /= maxNorm;
-    }
+    // if (maxNorm > 0.0) {
+    //     color.rgb /= maxNorm;
+    // }
 
     // TODO: Makes it look worse for some reason
     // float gamma = 2.2;

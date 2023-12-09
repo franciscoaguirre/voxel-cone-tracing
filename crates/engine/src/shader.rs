@@ -6,10 +6,15 @@ use std::{env, ptr, str};
 use cgmath::{vec3, Matrix, Matrix4, Vector3, Matrix3};
 use gl::types::*;
 use log::trace;
+use crate::traits::*;
+use crate::types::*;
+use crate::enums::*;
+use crate::prelude::{BufferTextureV2, Texture3DV2};
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct Shader {
     pub id: u32,
+    number_of_textures: u32,
     is_compute: bool,
 }
 
@@ -60,6 +65,7 @@ impl Shader {
         let mut shader = Shader {
             id: 0,
             is_compute: true,
+            number_of_textures: 0,
         };
 
         let shader_code = Self::process_shader_file(shader_path, is_debug);
@@ -182,6 +188,58 @@ impl Shader {
             gl::FALSE,
             expanded_array.as_ptr(),
         );
+    }
+
+    /// Binds a 2D texture with a particular name.
+    /// Either nearest or linear sampling can be chosen.
+    pub unsafe fn bind_texture(&mut self, name: &str, texture: Texture2D, nearest: bool) {
+        gl::ActiveTexture(gl::TEXTURE0 + self.number_of_textures);
+        gl::BindTexture(gl::TEXTURE_2D, texture);
+        self.set_int(&CString::new(name).unwrap(), self.number_of_textures as i32);
+        self.number_of_textures += 1;
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+        let sampler = if nearest { gl::NEAREST as i32 } else { gl::LINEAR as i32 };
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, sampler);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, sampler);
+    }
+
+    /// Binds a 3D texture with a particular name.
+    /// Either nearest or linear sampling can be chosen.
+    pub unsafe fn bind_3d_texture(&mut self, name: &str, texture: Texture3D, nearest: bool) {
+        gl::ActiveTexture(gl::TEXTURE0 + self.number_of_textures);
+        gl::BindTexture(gl::TEXTURE_3D, texture);
+        self.set_int(&CString::new(name).unwrap(), self.number_of_textures as i32);
+        self.number_of_textures += 1;
+        let sampler = if nearest { gl::NEAREST as i32 } else { gl::LINEAR as i32 };
+        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
+        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
+        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, sampler);
+        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, sampler);
+    }
+
+    /// Binds a buffer texture image.
+    /// The internal format of the buffer texture is used.
+    pub unsafe fn bind_image_texture<T: GetGLEnum + ArbitraryValue + Clone>(&self, index: usize, texture: BufferTextureV2<T>, access: TextureAccess) {
+        gl::BindImageTexture(index as u32, texture.texture(), 0, gl::FALSE, 0, access.into(), T::get_gl_enum());
+    }
+
+    /// Binds a 3D texture image.
+    /// Format needs to be specified.
+    pub unsafe fn bind_3d_image_texture(
+        index: usize,
+        texture: Texture3DV2,
+        access: TextureAccess,
+        format: TextureFormat,
+    ) {
+        gl::BindImageTexture(index as u32, texture.0, 0, gl::TRUE, 0, access.into(), format.into());
+    }
+
+    /// Use a different texture format than the one specified in the `BufferTexture` itself.
+    /// You should make sure OpenGL can convert between those two formats.
+    pub unsafe fn bind_image_texture_with_format<T: GetGLEnum + ArbitraryValue + Clone>(&self, index: usize, texture: BufferTextureV2<T>, access: TextureAccess, format: TextureFormat) {
+        gl::BindImageTexture(index as u32, texture.texture(), 0, gl::FALSE, 0, access.into(), format.into());
     }
 
     fn process_shader_file(file_path: &str, is_debug: bool) -> CString {
