@@ -43,7 +43,7 @@ impl ConeTracer {
         light: &Light,
         textures: &OctreeTextures,
         geometry_buffers: &Textures<GEOMETRY_BUFFERS>,
-        light_maps: (u32, u32, u32),
+        light_maps: &Textures<LIGHT_MAP_BUFFERS>,
         quad: &Quad,
         camera: &Camera,
         parameters: &HashMap<&str, ConeParameters>,
@@ -106,77 +106,49 @@ impl ConeTracer {
         for (key, value) in parameters.iter() {
             value.set_uniforms(&key, &self.shader);
         }
-        helpers::bind_image_texture(0, textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
+        self.shader.bind_image_texture(0, textures.node_pool, TextureAccess::ReadOnly);
 
         let brick_pool_textures = vec![
-            (
-                c_str!("brickPoolNormals"),
-                textures.brick_pool_normals,
-                gl::NEAREST as i32,
-            ),
             // Irradiance textures
             (
-                c_str!("brickPoolIrradianceX"),
+                "brickPoolIrradianceX",
                 textures.brick_pool_irradiance[0],
-                gl::LINEAR as i32,
             ),
             (
-                c_str!("brickPoolIrradianceXNeg"),
+                "brickPoolIrradianceXNeg",
                 textures.brick_pool_irradiance[1],
-                gl::LINEAR as i32,
             ),
             (
-                c_str!("brickPoolIrradianceY"),
+                "brickPoolIrradianceY",
                 textures.brick_pool_irradiance[2],
-                gl::LINEAR as i32,
             ),
             (
-                c_str!("brickPoolIrradianceYNeg"),
+                "brickPoolIrradianceYNeg",
                 textures.brick_pool_irradiance[3],
-                gl::LINEAR as i32,
             ),
             (
-                c_str!("brickPoolIrradianceZ"),
+                "brickPoolIrradianceZ",
                 textures.brick_pool_irradiance[4],
-                gl::LINEAR as i32,
             ),
             (
-                c_str!("brickPoolIrradianceZNeg"),
+                "brickPoolIrradianceZNeg",
                 textures.brick_pool_irradiance[5],
-                gl::LINEAR as i32,
             ),
         ];
 
-        let mut texture_counter = 0;
-
-        for &(texture_name, texture, sample_interpolation) in brick_pool_textures.iter() {
-            gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
-            gl::BindTexture(gl::TEXTURE_3D, texture);
-            self.shader.set_int(texture_name, texture_counter as i32);
-            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
-            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
-            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, sample_interpolation);
-            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, sample_interpolation);
-            texture_counter += 1;
+        for &(texture_name, texture) in brick_pool_textures.iter() {
+            self.shader.bind_3d_texture(texture_name, texture, false);
         }
 
         let g_buffer_textures = vec![
-            (c_str!("gBufferColors"), geometry_buffers[3]),
-            (c_str!("gBufferPositions"), geometry_buffers[0]),
-            (c_str!("gBufferNormals"), geometry_buffers[2]),
-            (c_str!("gBufferSpeculars"), geometry_buffers[4]),
+            ("gBufferColors", geometry_buffers[3]),
+            ("gBufferPositions", geometry_buffers[0]),
+            ("gBufferNormals", geometry_buffers[2]),
+            ("gBufferSpeculars", geometry_buffers[4]),
         ];
 
         for &(texture_name, texture) in g_buffer_textures.iter() {
-            gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
-            gl::BindTexture(gl::TEXTURE_2D, texture);
-            self.shader.set_int(texture_name, texture_counter as i32);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
-            texture_counter += 1;
+            self.shader.bind_texture(texture_name, texture, false);
         }
 
         self.shader.set_bool(c_str!("isDirectional"), light.is_directional());
@@ -209,36 +181,25 @@ impl ConeTracer {
     }
 
     unsafe fn create_image(&self, quad: &Quad) {
-        gl::BindFramebuffer(gl::FRAMEBUFFER, self.framebuffer.fbo());
-        gl::Enable(gl::DEPTH_TEST);
-        gl::ClearColor(0.0, 0.0, 0.0, 0.0);
-        gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
-        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-        gl::BindVertexArray(quad.get_vao());
-        gl::DrawElements(
-            gl::TRIANGLES,
-            quad.get_num_indices() as i32,
-            gl::UNSIGNED_INT,
-            std::ptr::null(),
-        );
-        gl::BindVertexArray(0);
-        gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
+        self.framebuffer.bind();
+        quad.draw(true);
+        self.framebuffer.unbind();
     }
 
     unsafe fn calculate_max_color_norm(&self) -> f32 {
         self.max_color_shader.use_program();
-        gl::ActiveTexture(gl::TEXTURE0);
-        gl::BindTexture(gl::TEXTURE_2D, self.framebuffer.textures()[0]);
-        self.max_color_shader.set_int(c_str!("inputTexture"), 0);
-        let (max_color_texture, max_color_texture_buffer) = helpers::generate_texture_buffer(1, gl::R32UI, 0u32);
-        helpers::bind_image_texture(0, max_color_texture, gl::READ_WRITE, gl::R32UI);
+        self.max_color_shader.bind_texture("inputTexture", self.framebuffer.textures()[0], false);
+        let max_color_texture = BufferTextureV2::from_data(&vec![0u32]);
+        self.max_color_shader.bind_image_texture(0, max_color_texture, TextureAccess::ReadWrite);
+        let config = Config::instance();
+        let (viewport_width, viewport_height) = config.viewport_dimensions();
         self.max_color_shader.dispatch_xyz(vec3(
-            840,
-            840,
+            viewport_width as u32,
+            viewport_height as u32,
             1,
         ));
         self.max_color_shader.wait();
-        let max_color_norm = helpers::get_values_from_texture_buffer(max_color_texture_buffer, 1, 42u32)[0];
+        let max_color_norm = max_color_texture.data()[0];
         let normalized_max_color_norm = max_color_norm as f32 / 1000.0; // This same value is used in the shader
         normalized_max_color_norm
     }
@@ -246,28 +207,14 @@ impl ConeTracer {
     unsafe fn run_post_processing(&self, quad: &Quad, max_color_norm: f32) {
         // Set uniforms
         self.post_processing_shader.use_program();
-        gl::ActiveTexture(gl::TEXTURE0);
-        gl::BindTexture(gl::TEXTURE_2D, self.framebuffer.textures()[0]);
-        self.post_processing_shader.set_int(c_str!("inputTexture"), 0);
+        // TODO: Maybe it's not false
+        self.post_processing_shader.bind_texture("inputTexture", self.framebuffer.textures()[0], false);
         self.post_processing_shader.set_float(c_str!("maxNorm"), max_color_norm);
 
         // Framebuffer
-        gl::BindFramebuffer(gl::FRAMEBUFFER, self.processed_framebuffer.fbo());
-        gl::Enable(gl::DEPTH_TEST);
-        gl::ClearColor(0.0, 0.0, 0.0, 0.0);
-        gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
-        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-
-        // Draw using quad
-        gl::BindVertexArray(quad.get_vao());
-        gl::DrawElements(
-            gl::TRIANGLES,
-            quad.get_num_indices() as i32,
-            gl::UNSIGNED_INT,
-            std::ptr::null(),
-        );
-        gl::BindVertexArray(0);
-        gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
+        self.processed_framebuffer.bind();
+        quad.draw(true);
+        self.processed_framebuffer.unbind();
     }
 
     unsafe fn render_to_screen(&self, quad: &Quad) {

@@ -2,7 +2,6 @@ use std::{ffi::c_void, mem::size_of};
 
 use c_str_macro::c_str;
 use cgmath::{vec3, Matrix4, Vector3};
-use gl::types::GLuint;
 use serde::{Serialize, Deserialize};
 use engine::prelude::*;
 
@@ -38,19 +37,8 @@ impl Octree {
             );
         } else {
             self.renderer.shader.use_program();
-
-            helpers::bind_image_texture(
-                0,
-                self.textures.node_positions.0,
-                gl::READ_ONLY,
-                gl::RGB10_A2UI,
-            );
-            helpers::bind_image_texture(
-                1,
-                node_data.level_start_indices.0,
-                gl::READ_ONLY,
-                gl::R32UI,
-            );
+            self.renderer.shader.bind_image_texture_with_format(0, self.textures.node_positions, TextureFormat::Rgb10A2Ui);
+            self.renderer.shader.bind_image_texture(1, node_data.level_start_indices);
 
             let config = Config::instance();
 
@@ -67,13 +55,8 @@ impl Octree {
             self.renderer.shader.set_mat4(c_str!("view"), view);
             self.renderer.shader.set_mat4(c_str!("model"), model);
 
-            let mut vao = 0;
-            gl::GenVertexArrays(1, &mut vao);
-            gl::BindVertexArray(vao);
-
-            gl::DrawArrays(
-                gl::POINTS,
-                0,
+            let vao = Vao::new();
+            vao.draw_points(
                 // Use necessary per level
                 node_data.nodes_per_level[octree_level as usize] as i32,
             );
@@ -106,39 +89,27 @@ impl Octree {
             .normals_shader
             .set_uint(c_str!("octreeLevel"), octree_level);
 
-        helpers::bind_image_texture(
-            0,
-            self.geometry_data.node_data.level_start_indices.0,
-            gl::READ_ONLY,
-            gl::R32UI,
-        );
-        helpers::bind_image_texture(
-            1,
-            self.textures.node_positions.0,
-            gl::READ_ONLY,
-            gl::RGB10_A2UI,
-        );
-        helpers::bind_3d_image_texture(
-            2,
-            self.textures.brick_pool_normals,
-            gl::READ_ONLY,
-            gl::RGBA32F,
-        );
+        self.renderer
+            .normals_shader
+            .bind_image_texture(0, self.geometry_data.level_start_indices, TextureAccess::ReadOnly);
 
-        let mut vao = 0;
-        gl::GenVertexArrays(1, &mut vao);
-        gl::BindVertexArray(vao);
+        self.renderer
+            .normals_shader
+            .bind_image_texture_with_format(1, self.textures.node_positions, TextureAccess::ReadOnly, TextureFormat::Rgb10A2Ui);
+
+        self.renderer
+            .normals_shader
+            .bind_3d_image_texture(2, self.textures.brick_pool_normals, TextureAccess::ReadOnly, TextureFormat::Rgba32f);
+
+        let vao = Vao::new();
 
         let all_bricks_to_show: u32 = self.renderer.bricks_to_show.into();
-
         if (all_bricks_to_show & 1) > 0 {
             self.renderer
                 .normals_shader
                 .set_uint(c_str!("bricksToShow"), all_bricks_to_show & 1);
 
-            gl::DrawArrays(
-                gl::POINTS,
-                0,
+            vao.draw_points(
                 self.geometry_data.node_data.nodes_per_level[octree_level as usize] as i32,
             );
         }
@@ -148,9 +119,7 @@ impl Octree {
                 .normals_shader
                 .set_uint(c_str!("bricksToShow"), all_bricks_to_show & 2);
 
-            gl::DrawArrays(
-                gl::POINTS,
-                0,
+            vao.draw_points(
                 self.geometry_data.node_data.nodes_per_level[octree_level as usize] as i32,
             );
         }
@@ -160,9 +129,7 @@ impl Octree {
                 .normals_shader
                 .set_uint(c_str!("bricksToShow"), all_bricks_to_show & 4);
 
-            gl::DrawArrays(
-                gl::POINTS,
-                0,
+            vao.draw_points(
                 self.geometry_data.node_data.nodes_per_level[octree_level as usize] as i32,
             );
         }
@@ -217,17 +184,16 @@ impl Octree {
             color_direction.z,
         );
 
-        helpers::bind_image_texture(
+        self.renderer.bricks_shader.bind_image_texture_with_format(
             0,
-            self.textures.node_positions.0,
-            gl::READ_ONLY,
-            gl::RGB10_A2UI,
+            self.textures.node_positions,
+            TextureAccess::ReadOnly,
+            TextureFormat::Rgb10A2Ui,
         );
-        helpers::bind_image_texture(
+        self.renderer.bricks_shader.bind_image_texture(
             1,
-            self.geometry_data.node_data.level_start_indices.0,
-            gl::READ_ONLY,
-            gl::R32UI,
+            self.geometry_data.node_data.level_start_indices,
+            TextureAccess::ReadOnly,
         );
 
         let color_textures = vec![
@@ -282,27 +248,14 @@ impl Octree {
             ),
         ];
 
-        let mut texture_counter = 0;
         for &(texture_name, texture) in color_textures.iter() {
-            gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
-            gl::BindTexture(gl::TEXTURE_3D, texture);
             self.renderer
                 .bricks_shader
-                .set_int(texture_name, texture_counter as i32);
-            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
-            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
-            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
-            texture_counter += 1;
+                .bind_3d_texture(texture_name, texture, false);
         }
 
-        let mut vao = 0;
-        gl::GenVertexArrays(1, &mut vao);
-        gl::BindVertexArray(vao);
-
+        let vao = Vao::new();
         let all_bricks_to_show: u32 = self.renderer.bricks_to_show.into();
-
         for z_layer in 0..3 {
             let mask = 2u32.pow(z_layer);
             let brick_layer_to_show: u32 = self.renderer.bricks_to_show.into();
@@ -312,9 +265,7 @@ impl Octree {
                         .bricks_shader
                         .set_uint(c_str!("bricksToShow"), z_layer * 3 + x_layer);
 
-                    gl::DrawArrays(
-                        gl::POINTS,
-                        0,
+                    vao.draw_points(
                         self.geometry_data.node_data.nodes_per_level[octree_level as usize] as i32,
                     );
                 }
@@ -328,9 +279,8 @@ impl Octree {
 
     pub unsafe fn set_node_indices(&mut self, node_indices: &Vec<u32>) {
         if node_indices.is_empty() {
-            let mut vao = 0;
-            gl::GenVertexArrays(1, &mut vao);
-            gl::BindVertexArray(vao);
+            let vao = Vao::new();
+            vao.bind(); // TODO: Why do we do this?
             self.renderer.node_count = 0;
             self.renderer.vao = vao;
             return;
@@ -393,27 +343,32 @@ impl Octree {
             .node_positions_shader
             .set_mat4(c_str!("model"), &model);
 
-        helpers::bind_image_texture(
-            0,
-            self.textures.node_positions.0,
-            gl::READ_ONLY,
-            gl::RGB10_A2UI,
-        );
-        helpers::bind_image_texture(
-            1,
-            self.geometry_data.node_data.level_start_indices.0,
-            gl::READ_ONLY,
-            gl::R32UI,
-        );
-        helpers::bind_image_texture(
-            2,
-            self.border_data.node_data.level_start_indices.0,
-            gl::READ_ONLY,
-            gl::R32UI,
-        );
+        self.renderer
+            .node_positions_shader
+            .bind_image_texture_with_format(
+                0,
+                self.textures.node_positions,
+                TextureAccess::ReadOnly,
+                TextureFormat::Rgb10A2Ui,
+            );
 
-        gl::BindVertexArray(self.renderer.vao);
-        gl::DrawArrays(gl::POINTS, 0, self.renderer.node_count as i32);
+        self.renderer
+            .node_positions_shader
+            .bind_image_texture(
+                1,
+                self.geometry_data.node_data.level_start_indices,
+                TextureAccess::ReadOnly,
+            );
+
+        self.renderer
+            .node_positions_shader
+            .bind_image_texture(
+                2,
+                self.border_data.node_data.level_start_indices,
+                TextureAccess::ReadOnly,
+            );
+
+        self.renderer.vao.draw_points(self.renderer.node_count as i32);
     }
 
     pub unsafe fn run_node_neighbors_shader(
@@ -447,49 +402,57 @@ impl Octree {
             .node_neighbors_shader
             .set_mat4(c_str!("model"), &model);
 
-        helpers::bind_image_texture(
-            0,
-            self.textures.node_positions.0,
-            gl::READ_ONLY,
-            gl::RGB10_A2UI,
-        );
-        helpers::bind_image_texture(1, self.textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
-        helpers::bind_image_texture(
-            2,
-            self.geometry_data.node_data.level_start_indices.0,
-            gl::READ_ONLY,
-            gl::R32UI,
-        );
-        helpers::bind_image_texture(
-            3,
-            self.border_data.node_data.level_start_indices.0,
-            gl::READ_ONLY,
-            gl::R32UI,
-        );
+        self.renderer
+            .node_neighbors_shader
+            .bind_image_texture_with_format(
+                0,
+                self.textures.node_positions,
+                TextureAccess::ReadOnly,
+                TextureFormat::Rgb10A2Ui,
+            );
+        self.renderer
+            .node_neighbors_shader
+            .bind_image_texture(
+                1,
+                self.textures.node_pool,
+                TextureAccess::ReadOnly,
+            );
+        self.renderer
+            .node_neighbors_shader
+            .bind_image_texture(
+                2,
+                self.geometry_data.node_data.level_start_indices,
+                TextureAccess::ReadOnly,
+            );
+        self.renderer
+            .node_neighbors_shader
+            .bind_image_texture(
+                3,
+                self.border_data.node_data.level_start_indices,
+                TextureAccess::ReadOnly,
+            );
 
         for texture_offset in 0..(self.textures.neighbors.len() / 2) {
-            helpers::bind_image_texture(
-                3 + texture_offset as u32,
-                self.textures.neighbors[texture_offset as usize].0,
-                gl::READ_ONLY,
-                gl::R32UI,
-            );
+            self.renderer
+                .node_neighbors_shader
+                .bind_image_texture(
+                    3 + texture_offset as u32,
+                    self.textures.neighbors[texture_offset as usize],
+                    TextureAccess::ReadOnly,
+                );
         }
-
-        gl::BindVertexArray(self.renderer.vao);
-        gl::DrawArrays(gl::POINTS, 0, self.renderer.node_count as i32);
+        self.renderer.vao.draw_points(self.renderer.node_count as i32);
 
         for texture_offset in 0..(self.textures.neighbors.len() / 2) {
-            helpers::bind_image_texture(
-                3 + texture_offset as u32,
-                self.textures.neighbors[(texture_offset + 3) as usize].0,
-                gl::READ_ONLY,
-                gl::R32UI,
-            );
+            self.renderer
+                .node_neighbors_shader
+                .bind_image_texture(
+                    3 + texture_offset as u32,
+                    self.textures.neighbors[(texture_offset + 3) as usize],
+                    TextureAccess::ReadOnly,
+                );
         }
-
-        gl::BindVertexArray(self.renderer.vao);
-        gl::DrawArrays(gl::POINTS, 0, self.renderer.node_count as i32);
+        self.renderer.vao.draw_points(self.renderer.node_count as i32);
     }
 
     pub unsafe fn run_get_photons_shader(&self, node_index: u32) {
@@ -504,13 +467,21 @@ impl Octree {
             .get_photons_shader
             .set_uint(c_str!("voxelDimension"), config.voxel_dimension());
 
-        helpers::bind_image_texture(0, self.textures.photons_buffer.0, gl::WRITE_ONLY, gl::R32UI);
-        helpers::bind_3d_image_texture(
-            1,
-            self.textures.brick_pool_photons,
-            gl::READ_ONLY,
-            gl::R32UI,
-        );
+        self.renderer
+            .get_photons_shader
+            .bind_image_texture(
+                0,
+                self.textures.photons_buffer,
+                TextureAccess::WriteOnly
+            );
+        self.renderer
+            .get_photons_shader
+            .bind_3d_image_texture(
+                1,
+                self.textures.brick_pool_photons,
+                TextureAccess::ReadOnly,
+                TextureFormat::R32Ui,
+            );
 
         self.renderer.get_photons_shader.dispatch(1);
         self.renderer.get_photons_shader.wait();
@@ -523,13 +494,20 @@ impl Octree {
             .get_children_shader
             .set_uint(c_str!("nodeID"), node_index);
 
-        helpers::bind_image_texture(
-            0,
-            self.textures.children_buffer.0,
-            gl::WRITE_ONLY,
-            gl::R32UI,
-        );
-        helpers::bind_image_texture(1, self.textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
+        self.renderer
+            .get_children_shader
+            .bind_image_texture(
+                0,
+                self.textures.children_buffer,
+                TextureAccess::WriteOnly,
+            );
+        self.renderer
+            .get_children_shader
+            .bind_image_texture(
+                1,
+                self.textures.node_pool,
+                TextureAccess::ReadOnly,
+            );
 
         self.renderer.get_children_shader.dispatch(1);
         self.renderer.get_children_shader.wait();
@@ -584,24 +562,29 @@ impl Octree {
             .node_bricks_shader
             .set_uint(c_str!("mode"), brick_attribute.into());
 
-        helpers::bind_image_texture(
-            0,
-            self.textures.node_positions.0,
-            gl::READ_ONLY,
-            gl::RGB10_A2UI,
-        );
-        helpers::bind_image_texture(
-            1,
-            self.geometry_data.node_data.level_start_indices.0,
-            gl::READ_ONLY,
-            gl::R32UI,
-        );
-        helpers::bind_3d_image_texture(
-            2,
-            self.textures.brick_pool_colors[0 as usize], // TODO: Use `color_direction`
-            gl::READ_ONLY,
-            gl::RGBA8,
-        );
+        self.renderer
+            .node_bricks_shader
+            .bind_image_texture_with_format(
+                0,
+                self.textures.node_positions,
+                TextureAccess::ReadOnly,
+                TextureFormat::Rgb10A2Ui,
+            );
+        self.renderer
+            .node_bricks_shader
+            .bind_image_texture(
+                1,
+                self.geometry_data.node_data.level_start_indices,
+                TextureAccess::ReadOnly,
+            );
+        self.renderer
+            .node_bricks_shader
+            .bind_3d_image_texture(
+                2,
+                self.textures.brick_pool_colors[0 as usize], // TODO: Use `color_direction`
+                TextureAccess::ReadOnly,
+                TextureFormat::Rgba8,
+            );
 
         let color_textures = vec![
             (
@@ -655,39 +638,35 @@ impl Octree {
             ),
         ];
 
-        let mut texture_counter = 0;
         for &(texture_name, texture) in color_textures.iter() {
-            gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
-            gl::BindTexture(gl::TEXTURE_3D, texture);
             self.renderer
                 .node_bricks_shader
-                .set_int(texture_name, texture_counter as i32);
-            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
-            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
-            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-            gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
-            texture_counter += 1;
+                .bind_3d_texture(texture_name, texture, false);
         }
 
-        helpers::bind_3d_image_texture(
-            3,
-            self.textures.brick_pool_photons,
-            gl::READ_ONLY,
-            gl::R32UI,
-        );
-        helpers::bind_3d_image_texture(
-            4,
-            self.textures.brick_pool_normals,
-            gl::READ_ONLY,
-            gl::RGBA32F,
-        );
-        helpers::bind_image_texture(
-            5,
-            self.border_data.node_data.level_start_indices.0,
-            gl::READ_ONLY,
-            gl::R32UI,
-        );
+        self.renderer
+            .node_bricks_shader
+            .bind_3d_image_texture(
+                3,
+                self.textures.brick_pool_photons,
+                TextureAccess::ReadOnly,
+                TextureFormat::R32Ui,
+            );
+        self.renderer
+            .node_bricks_shader
+            .bind_3d_image_texture(
+                4,
+                self.textures.brick_pool_normals,
+                TextureAccess::ReadOnly,
+                TextureFormat::Rgba32f,
+            );
+        self.renderer
+            .node_bricks_shader
+            .bind_image_texture(
+                5,
+                self.border_data.node_data.level_start_indices,
+                TextureAccess::ReadOnly,
+            );
 
         for z_layer in 0..3 {
             let mask = 2u32.pow(z_layer);
@@ -698,8 +677,7 @@ impl Octree {
                         .node_bricks_shader
                         .set_uint(c_str!("bricksToShow"), z_layer * 3 + x_layer);
 
-                    gl::BindVertexArray(self.renderer.vao);
-                    gl::DrawArrays(gl::POINTS, 0, self.renderer.node_count as i32);
+                    self.renderer.vao.draw_points(self.renderer.node_count as i32);
                 }
             }
         }
@@ -746,7 +724,7 @@ impl Octree {
             gl::FRAMEBUFFER,
             gl::COLOR_ATTACHMENT0,
             gl::TEXTURE_2D,
-            self.textures.color_quad_textures[0],
+            self.textures.color_quad_textures[0].0,
             0,
         );
 
@@ -754,7 +732,7 @@ impl Octree {
             gl::FRAMEBUFFER,
             gl::COLOR_ATTACHMENT1,
             gl::TEXTURE_2D,
-            self.textures.color_quad_textures[1],
+            self.textures.color_quad_textures[1].0,
             0,
         );
 
@@ -807,41 +785,6 @@ impl Octree {
         gl::BindVertexArray(0);
         gl::BindTexture(gl::TEXTURE_3D, 0);
         gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
-    }
-
-    pub unsafe fn run_eye_ray_shader(
-        &self,
-        projection: &Matrix4<f32>,
-        view: &Matrix4<f32>,
-        eye: &Transform,
-        eye_view_map: GLuint,
-        eye_view_map_normals: GLuint,
-    ) {
-        let config = Config::instance();
-        self.renderer.eye_ray_shader.use_program();
-        self.renderer
-            .eye_ray_shader
-            .set_mat4(c_str!("projection"), &projection);
-        self.renderer.eye_ray_shader.set_mat4(c_str!("view"), &view);
-        self.renderer
-            .eye_ray_shader
-            .set_mat4(c_str!("model"), &eye.get_model_matrix());
-        self.renderer
-            .eye_ray_shader
-            .set_uint(c_str!("voxelDimension"), config.voxel_dimension());
-        gl::ActiveTexture(gl::TEXTURE0);
-        gl::BindTexture(gl::TEXTURE_2D, eye_view_map);
-        self.renderer
-            .eye_ray_shader
-            .set_int(c_str!("eyeViewMap"), 0);
-        gl::ActiveTexture(gl::TEXTURE1);
-        gl::BindTexture(gl::TEXTURE_2D, eye_view_map_normals);
-        self.renderer
-            .eye_ray_shader
-            .set_int(c_str!("eyeViewMapNormals"), 1);
-
-        gl::BindVertexArray(eye.vao);
-        gl::DrawArrays(gl::POINTS, 0, 1);
     }
 }
 

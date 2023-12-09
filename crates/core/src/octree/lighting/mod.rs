@@ -1,6 +1,5 @@
 use c_str_macro::c_str;
 use cgmath::{vec3, Matrix4};
-use gl::types::GLuint;
 use engine::prelude::*;
 
 use crate::{
@@ -36,11 +35,11 @@ impl Octree {
     ) -> (GLuint, GLuint, GLuint) {
         self.clear_light();
 
-        let (light_view_map, light_view_map_view, shadow_map) =
+        let light_view_map =
             self.create_light_view_map(objects, light, scene_aabb);
 
         let store_photons_input = StorePhotonsInput {
-            light_view_map,
+            light_view_map[0],
             node_pool: self.textures.node_pool,
             brick_pool_photons: self.textures.brick_pool_photons,
             is_directional: light.is_directional(),
@@ -59,18 +58,21 @@ impl Octree {
                     config.last_octree_level(),
                     &self.geometry_data.node_data,
                     *axis,
-                    light_view_map
+                    light_view_map[0]
                 );
         }
 
-        self.copy_alpha_to_irradiance();
+        self.textures.brick_pool_alpha.copy(
+            self.textures.brick_pool_irradiance,
+            config.brick_pool_resolution,
+        );
 
         let photons_to_irradiance_input = PhotonsToIrradianceInput {
             node_pool: self.textures.node_pool,
             brick_pool_colors_last_level: self.textures.brick_pool_colors[0],
             brick_pool_photons: self.textures.brick_pool_photons,
             brick_pool_irradiance_last_level: self.textures.brick_pool_irradiance[0],
-            light_view_map,
+            light_view_map: light_view_map[0],
             is_directional: light.is_directional(),
         };
         self.builder
@@ -91,30 +93,7 @@ impl Octree {
 
         self.run_mipmap(BrickPoolValues::Irradiance);
 
-        (light_view_map, light_view_map_view, shadow_map)
-    }
-
-    #[inline]
-    unsafe fn copy_alpha_to_irradiance(&self) {
-        let config = Config::instance();
-
-        gl::CopyImageSubData(
-            self.textures.brick_pool_alpha,
-            gl::TEXTURE_3D,
-            0,
-            0,
-            0,
-            0,
-            self.textures.brick_pool_irradiance[0],
-            gl::TEXTURE_3D,
-            0,
-            0,
-            0,
-            0,
-            config.brick_pool_resolution as i32,
-            config.brick_pool_resolution as i32,
-            config.brick_pool_resolution as i32,
-        );
+        light_view_map
     }
 
     unsafe fn create_light_view_map(
@@ -122,21 +101,15 @@ impl Octree {
         objects: &mut [Object],
         light: &Light,
         scene_aabb: &Aabb,
-    ) -> (GLuint, GLuint, GLuint) {
+    ) -> Textures<LIGHT_MAP_BUFFERS> {
         let config = Config::instance();
 
-        gl::CullFace(gl::FRONT);
         let light_map_buffers = light.take_photo(
             objects,
             scene_aabb,
             config.voxel_dimension(),
         );
-        gl::CullFace(gl::BACK);
 
-        (
-            light_map_buffers[0],
-            light_map_buffers[1],
-            light_map_buffers[2],
-        )
+        light_map_buffers
     }
 }

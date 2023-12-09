@@ -5,6 +5,7 @@ pub type Textures<const N: usize> = [Texture2D; N];
 pub type Texture2D = GLuint;
 pub type Texture3D = GLuint;
 pub type TextureBuffer = GLuint;
+pub type Identifier = GLuint;
 
 /// Represents a texture buffer
 // Deprecated. We should switch to `BufferTextureV2`

@@ -89,6 +89,24 @@ impl Quad {
         self.indices.len()
     }
 
+    /// Draws the quad with the currently bound shader program
+    pub unsafe fn draw(&self, reset: bool) {
+        if reset {
+            gl::Enable(gl::DEPTH_TEST);
+            gl::ClearColor(0.0, 0.0, 0.0, 0.0);
+            gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
+            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+        }
+        gl::BindVertexArray(self.vao);
+        gl::DrawElements(
+            gl::TRIANGLES,
+            self.indices.len() as i32,
+            gl::UNSIGNED_INT,
+            std::ptr::null(),
+        );
+        gl::BindVertexArray(0);
+    }
+
     pub unsafe fn render(&self, texture: GLuint) {
         self.shader.use_program();
 

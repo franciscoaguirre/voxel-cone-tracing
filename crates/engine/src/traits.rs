@@ -12,21 +12,27 @@ impl GetGLEnum for u32 {
     }
 }
 
-/// Trait for bounded types, i.e. types that have a minimum and maximum value
-pub trait Bounded {
-    /// The maximum possible value for this type
-    fn max() -> Self;
-
-    /// The minimum possible value for this type
-    fn min() -> Self;
+impl GetGLEnum for f32 {
+    fn get_gl_enum() -> GLenum {
+        gl::R32F
+    }
 }
 
-impl Bounded for u32 {
-    fn max() -> Self {
-        u32::MAX
-    }
+/// Trait for types where we'd like to have access to an arbitrary value
+/// of that type. For using as a default in buffers.
+pub trait ArbitraryValue {
+    /// Used to get an arbitrary value of the type.
+    fn arbitrary_value() -> Self;
+}
 
-    fn min() -> Self {
-        u32::MIN
+impl ArbitraryValue for u32 {
+    fn arbitrary_value() -> u32 {
+        42
+    }
+}
+
+impl ArbitraryValue for f32 {
+    fn arbitrary_value() -> f32 {
+        42.0
     }
 }

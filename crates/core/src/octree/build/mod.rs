@@ -20,7 +20,7 @@ pub enum BrickPoolValues {
 
 impl Octree {
     pub unsafe fn build(&mut self) {
-        let allocated_nodes_counter = helpers::generate_atomic_counter_buffer();
+        let allocated_nodes_counter = AtomicCounter::new();
 
         // Root node is in the geometry pool
         self.geometry_data.node_data.nodes_per_level.push(1);
@@ -150,7 +150,7 @@ impl Octree {
                 .run(flag_nodes_input);
             self.builder.allocate_nodes_pass.run(allocate_nodes_input);
 
-            let non_border_nodes_allocated = helpers::get_value_from_atomic_counter_without_reset(allocated_nodes_counter);
+            let non_border_nodes_allocated = allocated_nodes_counter.value();
             log::debug!(
                 "{octree_data_type:?} non border nodes allocated for {}: {}",
                 octree_level,
@@ -200,7 +200,8 @@ impl Octree {
                 .store_node_positions_pass
                 .run(&self.textures, octree_level, &self.border_data.voxel_data);
 
-            let nodes_allocated = helpers::get_value_from_atomic_counter(allocated_nodes_counter);
+            let nodes_allocated = allocated_nodes_counter.value();
+            allocated_nodes_counter.reset();
             self.builder.neighbor_pointers_pass.run(
                 &self.geometry_data.voxel_data,
                 &self.geometry_data.node_data,
@@ -238,11 +239,7 @@ impl Octree {
 
         let octree_data = &self.geometry_data;
 
-        helpers::fill_texture_buffer_with_data(
-            octree_data.node_data.level_start_indices.1,
-            &octree_level_start_indices,
-            gl::STATIC_DRAW,
-        );
+        octree_data.node_data.level_start_indices.fill_with(&octree_level_start_indices, false);
 
         log::debug!(
             "{octree_data_type:?} nodes_per_level: {:?}",

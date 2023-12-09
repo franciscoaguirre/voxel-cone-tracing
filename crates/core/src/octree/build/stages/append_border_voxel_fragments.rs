@@ -54,8 +54,8 @@ impl AppendBorderVoxelFragmentsPass {
         );
         helpers::bind_image_texture(1, textures.node_positions.0, gl::READ_ONLY, gl::RGB10_A2UI);
 
-        let next_voxel_fragment_counter = helpers::generate_atomic_counter_buffer();
-        gl::BindBufferBase(gl::ATOMIC_COUNTER_BUFFER, 0, next_voxel_fragment_counter);
+        let next_voxel_fragment_counter = AtomicCounter::new();
+        next_voxel_fragment_counter.bind();
 
         let (debug_texture, debug_texture_buffer) = helpers::generate_texture_buffer(20, gl::R32F, 42f32);
         helpers::bind_image_texture(5, debug_texture, gl::WRITE_ONLY, gl::R32F);
@@ -66,8 +66,8 @@ impl AppendBorderVoxelFragmentsPass {
         // dbg!(&values);
 
         // Get the number of voxel fragments
-        let number_of_voxel_fragments =
-            helpers::get_value_from_atomic_counter(next_voxel_fragment_counter);
+        let number_of_voxel_fragments = next_voxel_fragment_counter.value();
+        next_voxel_fragment_counter.reset();
         border_data.voxel_data.number_of_voxel_fragments = number_of_voxel_fragments;
         log::debug!(
             "border voxel fragments for {}: {}",

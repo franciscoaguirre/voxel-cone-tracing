@@ -599,6 +599,14 @@ impl<const N: usize> Framebuffer<N> {
         self.fbo
     }
 
+    pub unsafe fn bind(&self) {
+        gl::BindFramebuffer(gl::FRAMEBUFFER, self.fbo);
+    }
+
+    pub unsafe fn unbind(&self) {
+        gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
+    }
+
     pub fn textures(&self) -> [Texture2D; N] {
         let mut result: [Texture2D; N] = unsafe { MaybeUninit::uninit().assume_init() };
         for (index, attachment) in self.attachments.iter().enumerate() {
