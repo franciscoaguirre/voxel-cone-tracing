@@ -1,6 +1,5 @@
 //! Shader that does postprocessing on the final image
 //! Effects:
-//! - Normalization
 //! - Gamma correction
 
 #shader vertex
@@ -27,7 +26,6 @@ void main() {
 layout (location = 0) out vec4 outColor;
 
 uniform sampler2D inputTexture;
-uniform float maxNorm;
 
 in VertexData {
     vec2 textureCoordinates;
@@ -36,13 +34,8 @@ in VertexData {
 void main() {
     vec4 color = texture(inputTexture, In.textureCoordinates);
 
-    if (maxNorm > 0.0) {
-        color.rgb /= maxNorm;
-    }
-
-    // TODO: Makes it look worse for some reason
-    // float gamma = 2.2;
-    // color.rgb = pow(color.rgb, vec3(1.0 / gamma));
+    float gamma = 2.2;
+    color.rgb = pow(color.rgb, vec3(1.0 / gamma));
 
     outColor = color;
 }
