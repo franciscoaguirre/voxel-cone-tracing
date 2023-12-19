@@ -6,7 +6,7 @@ Voxel Cone Tracing implementation
 
 ### Indirect light
 
-![Indirect light in cornell box](./screenshots/cornell-box-diffuse.png)
+![Indirect light in cornell box](./screenshots/cornell-box-full.png)
 
 ![Indirect light in sponza](./screenshots/sponza-windows-diffuse.png)
 
