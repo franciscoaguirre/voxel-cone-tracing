@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use c_str_macro::c_str;
-use cgmath::vec3;
 use engine::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -83,6 +82,8 @@ impl ConeTracer {
                 light.transform().position.y,
                 light.transform().position.z,
             );
+            self.shader
+                .set_float(c_str!("directionalLight.intensity"), light.intensity());
         } else {
             self.shader.set_vec3(
                 c_str!("pointLight.position"),
@@ -90,6 +91,8 @@ impl ConeTracer {
                 light.transform().position.y,
                 light.transform().position.z,
             );
+            self.shader
+                .set_float(c_str!("pointLight.intensity"), light.intensity());
         }
         self.shader.set_vec3(
             c_str!("pointLight.color"),
