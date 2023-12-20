@@ -28,11 +28,13 @@ uniform layout(binding = 0, r32ui) readonly uimageBuffer nodePool;
 struct PointLight {
     vec3 position;
     vec3 color;
+    float intensity;
 };
 
 struct DirectionalLight {
     vec3 direction;
     vec3 color;
+    float intensity;
 };
 
 // Scalar attributes
@@ -138,17 +140,20 @@ void main() {
     // float specular = pow(max(0.0, dot(normal, h)), shininess);
     float visibility = 1.0;
     vec3 lightVector;
+    float lightIntensity;
     if (isDirectional) {
         lightVector = toVoxelSpace(directionalLight.direction);
+        lightIntensity = directionalLight.intensity;
     } else {
         lightVector = toVoxelSpace(pointLight.position) - positionVoxelSpace;
+        lightIntensity = pointLight.intensity;
     }
     vec3 lightDirection = normalize(lightVector);
     visibility = traceShadowCone(positionVoxelSpace, lightDirection, length(lightVector), shadowConeParameters);
     float lightAngle = dot(normal, lightDirection);
     float diffuse = max(lightAngle, 0.0);
-    // TODO: This should be the diffuse factor, not the specular
-    vec3 directLight = (1 - specularFactor) * vec3(diffuse);
+    // TODO: This should be the diffuse factor, not 1 minus the specular
+    vec3 directLight = lightIntensity * (1 - specularFactor) * vec3(diffuse);
 
     bool shouldShowOnlyColor = (
         !shouldShowDirect &&

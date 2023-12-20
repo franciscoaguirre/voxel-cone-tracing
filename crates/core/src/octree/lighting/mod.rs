@@ -1,17 +1,9 @@
-use c_str_macro::c_str;
-use cgmath::{vec3, Matrix4};
-use gl::types::GLuint;
 use engine::prelude::*;
+use gl::types::GLuint;
 
-use crate::{
-    config::Config,
-    constants::Axis,
-};
+use crate::{config::Config, constants::Axis};
 
-use super::{
-    build::{BrickPoolValues, MipmapAnisotropicPass},
-    Octree,
-};
+use super::{build::BrickPoolValues, Octree};
 
 mod stages;
 pub use stages::*;
@@ -23,9 +15,7 @@ impl Octree {
             brick_pool_irradiance: self.textures.brick_pool_irradiance,
             number_of_nodes: self.number_of_nodes(),
         };
-        self.builder
-            .clear_light
-            .run(input);
+        self.builder.clear_light.run(input);
     }
 
     pub unsafe fn inject_light(
@@ -45,22 +35,18 @@ impl Octree {
             brick_pool_photons: self.textures.brick_pool_photons,
             is_directional: light.is_directional(),
         };
-        self.builder
-            .store_photons
-            .run(store_photons_input);
+        self.builder.store_photons.run(store_photons_input);
 
         let config = Config::instance();
 
         for axis in Axis::all_axis().iter() {
-            self.builder
-                .light_transfer
-                .run(
-                    &self.textures,
-                    config.last_octree_level(),
-                    &self.geometry_data.node_data,
-                    *axis,
-                    light_view_map
-                );
+            self.builder.light_transfer.run(
+                &self.textures,
+                config.last_octree_level(),
+                &self.geometry_data.node_data,
+                *axis,
+                light_view_map,
+            );
         }
 
         self.copy_alpha_to_irradiance();
@@ -71,7 +57,7 @@ impl Octree {
             brick_pool_photons: self.textures.brick_pool_photons,
             brick_pool_irradiance_last_level: self.textures.brick_pool_irradiance[0],
             light_view_map,
-            is_directional: light.is_directional(),
+            light,
         };
         self.builder
             .photons_to_irradiance_pass
@@ -126,11 +112,7 @@ impl Octree {
         let config = Config::instance();
 
         gl::CullFace(gl::FRONT);
-        let light_map_buffers = light.take_photo(
-            objects,
-            scene_aabb,
-            config.voxel_dimension(),
-        );
+        let light_map_buffers = light.take_photo(objects, scene_aabb, config.voxel_dimension());
         gl::CullFace(gl::BACK);
 
         (
