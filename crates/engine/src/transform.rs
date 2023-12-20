@@ -2,21 +2,19 @@ use std::{ffi::c_void, mem::size_of};
 
 use c_str_macro::c_str;
 use cgmath::{
-    point3, vec3, Deg, Euler, InnerSpace, Matrix4, Point3, Vector3,
-    Zero, Matrix3, SquareMatrix, Matrix,
+    point3, vec3, Deg, Euler, InnerSpace, Matrix, Matrix3, Matrix4, Point3, SquareMatrix, Vector3,
+    Zero,
 };
 use gl::types::GLuint;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-use super::prelude::{
-    Framebuffer, RenderGizmo, Model, Shader, compile_shaders, Object,
-    Aabb,
-};
+use super::prelude::{compile_shaders, Aabb, Framebuffer, Object, RenderGizmo, Shader};
 use super::types::*;
 
 /// Struct that handles `position`, `rotation` and `scale` for an entity
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Transform {
+    #[serde(default = "default_position")]
     pub position: Point3<f32>,
     #[serde(default = "default_scale")]
     pub scale: Vector3<f32>,
@@ -36,6 +34,10 @@ pub struct Transform {
     shader: Shader,
     #[serde(skip, default = "default_view_map_shader")]
     view_map_shader: Shader, // TODO: It's kind of ugly to store this here
+}
+
+const fn default_position() -> Point3<f32> {
+    point3(0.0, 0.0, 0.0)
 }
 
 const fn default_scale() -> Vector3<f32> {
@@ -132,7 +134,8 @@ impl Transform {
         let mut model = Matrix4::<f32>::from_angle_z(Deg(self.rotation.z))
             * Matrix4::<f32>::from_angle_y(Deg(90.0 - self.rotation.y))
             * Matrix4::<f32>::from_angle_x(Deg(-self.rotation.x));
-        model = Matrix4::<f32>::from_nonuniform_scale(self.scale.x, self.scale.y, self.scale.z) * model;
+        model =
+            Matrix4::<f32>::from_nonuniform_scale(self.scale.x, self.scale.y, self.scale.z) * model;
 
         // We extract the upper-left 3x3 part of the model matrix
         let mat3 = Matrix3::from_cols(
@@ -238,9 +241,12 @@ impl Transform {
         voxel_dimension: u32, // TODO: Find another way. This breaks separation of concerns
     ) -> Textures<N> {
         self.view_map_shader.use_program();
-        self.view_map_shader.set_mat4(c_str!("projection"), &projection);
-        self.view_map_shader.set_mat4(c_str!("view"), &self.get_view_matrix());
-        self.view_map_shader.set_uint(c_str!("voxelDimension"), voxel_dimension);
+        self.view_map_shader
+            .set_mat4(c_str!("projection"), &projection);
+        self.view_map_shader
+            .set_mat4(c_str!("view"), &self.get_view_matrix());
+        self.view_map_shader
+            .set_uint(c_str!("voxelDimension"), voxel_dimension);
 
         gl::BindFramebuffer(gl::FRAMEBUFFER, framebuffer.fbo());
         gl::Enable(gl::DEPTH_TEST);
