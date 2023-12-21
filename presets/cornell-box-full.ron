@@ -43,7 +43,7 @@
             is_showing: true,
             output: (
                 toggles: (
-                    should_show_color: true,
+                    should_show_color: false,
                     should_show_direct: true,
                     should_show_indirect: true,
                     should_show_indirect_specular: true,

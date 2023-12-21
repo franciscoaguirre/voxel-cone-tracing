@@ -60,7 +60,10 @@ void main() {
     Out.position = positionWorldSpace;
     gl_Position = projection * view * vec4(positionWorldSpace, 1);
 
-    float angle = 1.0472;
+    // float angle = 1.0472; // 60 degrees
+    float angle = 0.785398; // 45 degrees
+    // float angle = 0.523599; // 30 degrees
+
     float sinAngle = sin(angle);
     float cosAngle = cos(angle);
 
