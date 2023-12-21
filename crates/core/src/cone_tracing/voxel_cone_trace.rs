@@ -26,7 +26,7 @@ impl ConeTracer {
         Self {
             shader: compile_shaders!("assets/shaders/octree/coneTracing.glsl"),
             toggles: Toggles::default(),
-            framebuffer: unsafe { Framebuffer::<1>::new() },
+            framebuffer: unsafe { Framebuffer::<1>::new_floating_point() },
             post_processing_shader: compile_shaders!("assets/shaders/octree/postProcessing.glsl"),
             processed_framebuffer: unsafe { Framebuffer::<1>::new() },
         }
@@ -232,6 +232,9 @@ impl ConeTracer {
         gl::BindTexture(gl::TEXTURE_2D, self.framebuffer.textures()[0]);
         self.post_processing_shader
             .set_int(c_str!("inputTexture"), 0);
+
+        self.post_processing_shader
+            .set_float(c_str!("exposure"), 1.0);
 
         // Framebuffer
         gl::BindFramebuffer(gl::FRAMEBUFFER, self.processed_framebuffer.fbo());

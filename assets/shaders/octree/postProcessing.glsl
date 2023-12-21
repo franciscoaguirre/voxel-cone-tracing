@@ -1,5 +1,6 @@
 //! Shader that does postprocessing on the final image
 //! Effects:
+//! - HDR
 //! - Gamma correction
 
 #shader vertex
@@ -26,16 +27,21 @@ void main() {
 layout (location = 0) out vec4 outColor;
 
 uniform sampler2D inputTexture;
+uniform float exposure;
 
 in VertexData {
     vec2 textureCoordinates;
 } In;
 
 void main() {
-    vec4 color = texture(inputTexture, In.textureCoordinates);
+    vec3 hdrColor = texture(inputTexture, In.textureCoordinates).rgb;
 
+    // Exposure tone mapping
+    vec3 mapped = vec3(1.0) - exp(-hdrColor * exposure);
+
+    // Gamma correction
     float gamma = 2.2;
-    color.rgb = pow(color.rgb, vec3(1.0 / gamma));
+    mapped = pow(mapped, vec3(1.0 / gamma));
 
-    outColor = color;
+    outColor = vec4(mapped, 1.0);
 }
