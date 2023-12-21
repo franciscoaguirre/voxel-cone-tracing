@@ -61,7 +61,8 @@ vec4 coneTrace(
     int steps = 0;
     
     // Move the cone origin so it doesn't intersect with own voxels
-    vec3 offsetedConeOrigin = coneOrigin + coneDirection * voxelSize * 5.0;
+    // NOTE: I removed this from here in favor of moving the origin for the different type of cones outside of this function.
+    vec3 offsetedConeOrigin = coneOrigin;
     while (distanceAlongCone < maxDistance && returnColor.a < 0.97) {
         float coneDiameter = clamp(coneDiameterCoefficient * distanceAlongCone, 0.0009765625, 100.0);
         float lod = calculateLod(coneDiameter);
