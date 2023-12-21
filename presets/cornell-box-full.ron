@@ -78,7 +78,7 @@
                     max_distance: 0.0,
                 ),
                 diffuse_cone_parameters: (
-                    cone_angle_in_degrees: 30.0,
+                    cone_angle_in_degrees: 45.0,
                     max_distance: 1.0,
                 ),
                 specular_cone_parameters: (
