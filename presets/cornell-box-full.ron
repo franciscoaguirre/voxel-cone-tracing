@@ -82,7 +82,7 @@
                     max_distance: 1.0,
                 ),
                 specular_cone_parameters: (
-                    cone_angle_in_degrees: 1.0,
+                    cone_angle_in_degrees: 5.0,
                     max_distance: 1.0,
                 ),
                 debug_cone_parameters: (

@@ -6,7 +6,7 @@
 use std::mem::MaybeUninit;
 
 use gl::types::*;
-use image::{ImageBuffer, Rgba, RgbaImage, GenericImageView, Pixel};
+use image::{GenericImageView, ImageBuffer, Pixel, Rgba, RgbaImage};
 
 use super::{common, types::*};
 
@@ -36,6 +36,7 @@ pub type LightFramebuffer = Framebuffer<LIGHT_MAP_BUFFERS>;
 /// Implementation of framebuffer with only 1 output buffer.
 /// Meant to be used for easily visualizing and saving any rendering artifact.
 impl Framebuffer<1> {
+    /// Creates a new framebuffer meant for displaying an image on the screen, most likely via a screen-filling quad
     pub unsafe fn new() -> Self {
         let mut fbo = 0;
         gl::GenFramebuffers(1, &mut fbo);
@@ -56,6 +57,77 @@ impl Framebuffer<1> {
             0,
             gl::RGBA,
             gl::UNSIGNED_BYTE,
+            std::ptr::null(),
+        );
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+        gl::BindTexture(gl::TEXTURE_2D, 0);
+
+        let mut rbo = 0;
+        gl::GenRenderbuffers(1, &mut rbo);
+        gl::BindRenderbuffer(gl::RENDERBUFFER, rbo);
+        gl::RenderbufferStorage(
+            gl::RENDERBUFFER,
+            gl::DEPTH24_STENCIL8,
+            width as i32,
+            height as i32,
+        );
+        gl::FramebufferRenderbuffer(
+            gl::FRAMEBUFFER,
+            gl::DEPTH_STENCIL_ATTACHMENT,
+            gl::RENDERBUFFER,
+            rbo,
+        );
+        gl::BindRenderbuffer(gl::RENDERBUFFER, 0);
+
+        gl::FramebufferTexture2D(
+            gl::FRAMEBUFFER,
+            gl::COLOR_ATTACHMENT0,
+            gl::TEXTURE_2D,
+            texture,
+            0,
+        );
+
+        gl::DrawBuffers(1, [gl::COLOR_ATTACHMENT0].as_ptr());
+
+        if gl::CheckFramebufferStatus(gl::FRAMEBUFFER) != gl::FRAMEBUFFER_COMPLETE {
+            println!("ERROR::FRAMEBUFFER: Framebuffer is not complete!");
+        }
+
+        gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
+
+        let attachments = [ColorAttachment {
+            name: "color_output".to_string(),
+            texture_id: texture,
+            width,
+            height,
+            format: gl::RGBA,
+        }];
+
+        Self { fbo, attachments }
+    }
+
+    /// Creates a new floating point framebuffer, that is, one that doesn't clamp values to the range [0.0, 1.0]
+    pub unsafe fn new_floating_point() -> Self {
+        let mut fbo = 0;
+        gl::GenFramebuffers(1, &mut fbo);
+        gl::BindFramebuffer(gl::FRAMEBUFFER, fbo);
+
+        let mut texture = 0;
+        gl::GenTextures(1, &mut texture);
+
+        let (width, height) = common::get_framebuffer_size();
+
+        gl::BindTexture(gl::TEXTURE_2D, texture);
+        gl::TexImage2D(
+            gl::TEXTURE_2D,
+            0,
+            gl::RGBA16F as i32,
+            width,
+            height,
+            0,
+            gl::RGBA,
+            gl::FLOAT,
             std::ptr::null(),
         );
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
@@ -314,7 +386,10 @@ impl Framebuffer<GEOMETRY_BUFFERS> {
 
         gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
 
-        Self { fbo, attachments: attachments.try_into().expect("Too many attachments") }
+        Self {
+            fbo,
+            attachments: attachments.try_into().expect("Too many attachments"),
+        }
     }
 }
 
@@ -350,8 +425,16 @@ impl Framebuffer<LIGHT_MAP_BUFFERS> {
             gl::UNSIGNED_INT_2_10_10_10_REV,
             std::ptr::null(),
         );
-        gl::TexParameteri(gl::TEXTURE_2D_ARRAY, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-        gl::TexParameteri(gl::TEXTURE_2D_ARRAY, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(
+            gl::TEXTURE_2D_ARRAY,
+            gl::TEXTURE_MIN_FILTER,
+            gl::NEAREST as i32,
+        );
+        gl::TexParameteri(
+            gl::TEXTURE_2D_ARRAY,
+            gl::TEXTURE_MAG_FILTER,
+            gl::NEAREST as i32,
+        );
         gl::BindTexture(gl::TEXTURE_2D_ARRAY, 0);
         attachments.push(ColorAttachment {
             name: "positions".to_string(),
@@ -374,8 +457,16 @@ impl Framebuffer<LIGHT_MAP_BUFFERS> {
             gl::UNSIGNED_BYTE,
             std::ptr::null(),
         );
-        gl::TexParameteri(gl::TEXTURE_2D_ARRAY, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-        gl::TexParameteri(gl::TEXTURE_2D_ARRAY, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(
+            gl::TEXTURE_2D_ARRAY,
+            gl::TEXTURE_MIN_FILTER,
+            gl::NEAREST as i32,
+        );
+        gl::TexParameteri(
+            gl::TEXTURE_2D_ARRAY,
+            gl::TEXTURE_MAG_FILTER,
+            gl::NEAREST as i32,
+        );
         gl::BindTexture(gl::TEXTURE_2D_ARRAY, 0);
         attachments.push(ColorAttachment {
             name: "normalized_positions".to_string(),
@@ -398,8 +489,16 @@ impl Framebuffer<LIGHT_MAP_BUFFERS> {
             gl::FLOAT,
             std::ptr::null(),
         );
-        gl::TexParameteri(gl::TEXTURE_2D_ARRAY, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-        gl::TexParameteri(gl::TEXTURE_2D_ARRAY, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(
+            gl::TEXTURE_2D_ARRAY,
+            gl::TEXTURE_MIN_FILTER,
+            gl::NEAREST as i32,
+        );
+        gl::TexParameteri(
+            gl::TEXTURE_2D_ARRAY,
+            gl::TEXTURE_MAG_FILTER,
+            gl::NEAREST as i32,
+        );
         gl::TexParameteri(
             gl::TEXTURE_2D_ARRAY,
             gl::TEXTURE_WRAP_S,
@@ -426,24 +525,9 @@ impl Framebuffer<LIGHT_MAP_BUFFERS> {
             format: gl::DEPTH_COMPONENT,
         });
 
-        gl::FramebufferTexture(
-            gl::FRAMEBUFFER,
-            gl::COLOR_ATTACHMENT0,
-            textures[0],
-            0,
-        );
-        gl::FramebufferTexture(
-            gl::FRAMEBUFFER,
-            gl::COLOR_ATTACHMENT1,
-            textures[1],
-            0,
-        );
-        gl::FramebufferTexture(
-            gl::FRAMEBUFFER,
-            gl::DEPTH_ATTACHMENT,
-            textures[2],
-            0,
-        );
+        gl::FramebufferTexture(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0, textures[0], 0);
+        gl::FramebufferTexture(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT1, textures[1], 0);
+        gl::FramebufferTexture(gl::FRAMEBUFFER, gl::DEPTH_ATTACHMENT, textures[2], 0);
 
         gl::DrawBuffers(2, [gl::COLOR_ATTACHMENT0, gl::COLOR_ATTACHMENT1].as_ptr());
 
@@ -609,7 +693,10 @@ impl<const N: usize> Framebuffer<N> {
 
     /// Gets the image from the attachment
     fn get_image_from_attachment(&self, attachment_index: usize) -> RgbaImage {
-        let attachment = self.attachments.get(attachment_index).expect("Invalid attachment index");
+        let attachment = self
+            .attachments
+            .get(attachment_index)
+            .expect("Invalid attachment index");
         let pixels = unsafe {
             gl::BindFramebuffer(gl::FRAMEBUFFER, self.fbo());
             gl::ReadBuffer(gl::COLOR_ATTACHMENT0 + attachment_index as u32);
@@ -620,7 +707,8 @@ impl<const N: usize> Framebuffer<N> {
             };
             let mut pixels = vec![0u8; size as usize];
             gl::ReadPixels(
-                0, 0,
+                0,
+                0,
                 attachment.width,
                 attachment.height,
                 attachment.format,
@@ -636,7 +724,12 @@ impl<const N: usize> Framebuffer<N> {
         let image: RgbaImage = ImageBuffer::from_fn(width, height, |x, y| {
             let original_y = height - y - 1;
             let base = (original_y * width + x) as usize * 4; // 4 because of RGBA
-            Rgba([pixels[base], pixels[base + 1], pixels[base + 2], pixels[base + 3]])
+            Rgba([
+                pixels[base],
+                pixels[base + 1],
+                pixels[base + 2],
+                pixels[base + 3],
+            ])
         });
         image
     }
@@ -651,10 +744,13 @@ impl<const N: usize> Framebuffer<N> {
     /// Compares the texture in the `attachment_index` attachment of this framebuffer
     /// to an image on disk with path `file_to_compare`.
     /// Returns whether the images were deemed the same.
-    pub fn compare_attachment_to_file(&self, attachment_index: usize, file_to_compare: &str) -> Result<bool, ()> {
+    pub fn compare_attachment_to_file(
+        &self,
+        attachment_index: usize,
+        file_to_compare: &str,
+    ) -> Result<bool, ()> {
         let image = self.get_image_from_attachment(attachment_index);
-        let image_to_compare = image::open(file_to_compare)
-            .map_err(|_| ())?; // We know this error has something to do with creating the file. We'll handle it outside.
+        let image_to_compare = image::open(file_to_compare).map_err(|_| ())?; // We know this error has something to do with creating the file. We'll handle it outside.
 
         // Ensure the two images have the same dimensions
         let (width_1, height_1) = image.dimensions();
@@ -670,11 +766,10 @@ impl<const N: usize> Framebuffer<N> {
             for x in 0..width_1 {
                 let pixel_1 = image.get_pixel(x, y).to_rgb();
                 let pixel_2 = image_to_compare.get_pixel(x, y).to_rgb();
-                if (
-                    (pixel_1[0] as i16 - pixel_2[0] as i16).abs() > channel_tolerance as i16
+                if ((pixel_1[0] as i16 - pixel_2[0] as i16).abs() > channel_tolerance as i16
                     || (pixel_1[1] as i16 - pixel_2[1] as i16).abs() > channel_tolerance as i16
-                    || (pixel_1[2] as i16 - pixel_2[2] as i16).abs() > channel_tolerance as i16
-                ) {
+                    || (pixel_1[2] as i16 - pixel_2[2] as i16).abs() > channel_tolerance as i16)
+                {
                     return Ok(false);
                 }
             }
