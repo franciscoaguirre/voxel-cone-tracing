@@ -46,6 +46,12 @@ impl ShaderPass for PhotonsToIrradiance {
         shader.set_uint(c_str!("voxelDimension"), config.voxel_dimension());
         shader.set_uint(c_str!("octreeLevel"), config.last_octree_level());
         shader.set_float(c_str!("lightIntensity"), input.light.intensity());
+        shader.set_vec3(
+            c_str!("lightPosition"),
+            input.light.transform().position.x,
+            input.light.transform().position.y,
+            input.light.transform().position.z,
+        );
         gl::ActiveTexture(gl::TEXTURE0);
         gl::BindTexture(gl::TEXTURE_3D, input.brick_pool_colors_last_level);
         shader.set_int(c_str!("brickPoolColors"), 0);

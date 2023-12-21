@@ -149,11 +149,17 @@ void main() {
         lightIntensity = pointLight.intensity;
     }
     vec3 lightDirection = normalize(lightVector);
-    visibility = traceShadowCone(positionVoxelSpace + normal * 0.005, lightDirection, length(lightVector), shadowConeParameters);
+    float lightDistance = length(lightVector);
+    visibility = traceShadowCone(positionVoxelSpace + normal * 0.005, lightDirection, lightDistance, shadowConeParameters);
     float lightAngle = dot(normal, lightDirection);
     float diffuse = max(lightAngle, 0.0);
+    // Parameters for the attenuation function
+    float c1 = 1.0;
+    float c2 = 0.09;
+    float c3 = 0.032;
+    float attenuation = c1 + c2 * lightDistance + c3 * lightDistance * lightDistance;
     // TODO: This should be the diffuse factor, not 1 minus the specular
-    vec3 directLight = lightIntensity * (1 - specularFactor) * vec3(diffuse);
+    vec3 directLight = lightIntensity * (1 - specularFactor) / attenuation * vec3(diffuse);
 
     bool shouldShowOnlyColor = (
         !shouldShowDirect &&
