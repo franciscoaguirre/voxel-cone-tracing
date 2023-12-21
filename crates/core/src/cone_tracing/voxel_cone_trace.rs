@@ -234,7 +234,7 @@ impl ConeTracer {
             .set_int(c_str!("inputTexture"), 0);
 
         self.post_processing_shader
-            .set_float(c_str!("exposure"), 1.0);
+            .set_float(c_str!("exposure"), 1.5);
 
         // Framebuffer
         gl::BindFramebuffer(gl::FRAMEBUFFER, self.processed_framebuffer.fbo());

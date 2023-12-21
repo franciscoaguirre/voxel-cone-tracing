@@ -13,6 +13,7 @@ uniform usampler2DArray lightViewMap;
 
 uniform uint voxelDimension;
 uniform uint octreeLevel;
+
 uniform float lightIntensity;
 uniform vec3 lightPosition;
 

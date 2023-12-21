@@ -13,6 +13,7 @@ uniform usampler2D lightViewMap;
 
 uniform uint voxelDimension;
 uniform uint octreeLevel;
+uniform float lightIntensity;
 
 #include "./_helpers.glsl"
 #include "./_traversalHelpers.glsl"
@@ -54,7 +55,7 @@ void main() {
     // 4 (2D section of a voxel is separated in 4 new voxels, each with a fourth of the amount of photons)
     // float multiplier = numberOfPhotons * pow(4, octreeLevel) / float(262144); 
     // float multiplier = clamp(float(numberOfPhotons), 0.0, 1.0);
-    vec4 irradiance = vec4(voxelColor.xyz * numberOfPhotons, 1.0);
+    vec4 irradiance = vec4(voxelColor.xyz * numberOfPhotons * lightIntensity, 1.0);
 
     imageStore(brickPoolIrradiance, brickCoordinates + brickOffset, irradiance);
 }

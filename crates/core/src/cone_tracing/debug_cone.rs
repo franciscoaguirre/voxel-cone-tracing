@@ -1,18 +1,14 @@
+use engine::prelude::*;
 use std::collections::HashSet;
 use std::fmt;
-use engine::prelude::*;
 
 use c_str_macro::c_str;
-use cgmath::{point3, vec3, Matrix4, Vector3, Vector2};
+use cgmath::{point3, vec3, Matrix4, Vector2, Vector3};
 use colored::{customcolors, Colorize};
 
 use gl::types::GLuint;
 
-use crate::{
-    config::Config,
-    menu::DebugNode,
-    octree::OctreeTextures,
-};
+use crate::{config::Config, menu::DebugNode, octree::OctreeTextures};
 
 use super::ConeParameters;
 
@@ -184,12 +180,11 @@ impl DebugCone {
         // Unbind any texture leftover
         gl::BindTexture(gl::TEXTURE_2D, 0);
 
-        self.shader
-            .set_vec2(
-                c_str!("gBufferQueryCoordinates"),
-                geometry_buffer_coordinates.x,
-                geometry_buffer_coordinates.y
-            );
+        self.shader.set_vec2(
+            c_str!("gBufferQueryCoordinates"),
+            geometry_buffer_coordinates.x,
+            geometry_buffer_coordinates.y,
+        );
 
         let config = Config::instance();
 
@@ -205,10 +200,8 @@ impl DebugCone {
             self.transform.position.y,
             self.transform.position.z,
         );
-        self.shader.set_bool(
-            c_str!("pointToLight"),
-            self.point_to_light
-        );
+        self.shader
+            .set_bool(c_str!("pointToLight"), self.point_to_light);
         self.shader.set_vec3(
             c_str!("lightPosition"),
             light.transform().position.x,
