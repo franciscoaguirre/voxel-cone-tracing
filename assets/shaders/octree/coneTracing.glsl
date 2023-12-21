@@ -126,7 +126,7 @@ void main() {
     vec3 indirectLight = vec3(0);
     if (shouldShowIndirect) {
         // We should pre-multiply by alpha probably? Instead of just ignoring it
-        indirectLight = gatherIndirectLight(positionVoxelSpace, normal, tangent, diffuseConeParameters).rgb;
+        indirectLight = gatherIndirectLight(positionVoxelSpace + normal * 0.01, normal, tangent, diffuseConeParameters).rgb;
     }
 
     float specularFactor = texture(gBufferSpeculars, In.textureCoordinates).r;
@@ -149,7 +149,7 @@ void main() {
         lightIntensity = pointLight.intensity;
     }
     vec3 lightDirection = normalize(lightVector);
-    visibility = traceShadowCone(positionVoxelSpace, lightDirection, length(lightVector), shadowConeParameters);
+    visibility = traceShadowCone(positionVoxelSpace + normal * 0.005, lightDirection, length(lightVector), shadowConeParameters);
     float lightAngle = dot(normal, lightDirection);
     float diffuse = max(lightAngle, 0.0);
     // TODO: This should be the diffuse factor, not 1 minus the specular
@@ -193,7 +193,7 @@ float traceShadowCone(vec3 origin, vec3 direction, float targetDistance, ConePar
 
 vec4 gatherSpecularIndirectLight(vec3 position, vec3 eyeDirection, vec3 normal, ConeParameters parameters) {
     vec3 reflectDirection = normalize(reflect(eyeDirection, normalize(normal)));
-    return coneTrace(position, reflectDirection, parameters.halfConeAngle, parameters.maxDistance);
+    return coneTrace(position + normal * 0.01, reflectDirection, parameters.halfConeAngle, parameters.maxDistance);
 }
 
 vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, ConeParameters parameters) {
@@ -211,17 +211,19 @@ vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, ConeParameter
     float coneWeight = (PI / 2) - angleFromAxis; // TODO: Shouldn't it be a cosine?
 
     direction = sinAngle * normal + cosAngle * tangent;
+
+    float distanceAlongNormal = 0.01;
     
-    indirectLight += coneWeight * coneTrace(position, direction, halfConeAngle, maxDistance);
+    indirectLight += coneWeight * coneTrace(position + normal * distanceAlongNormal, direction, halfConeAngle, maxDistance);
 
     direction = sinAngle * normal - cosAngle * tangent;
-    indirectLight += coneWeight * coneTrace(position, direction, halfConeAngle, maxDistance);
+    indirectLight += coneWeight * coneTrace(position + normal * distanceAlongNormal, direction, halfConeAngle, maxDistance);
 
     direction = sinAngle * normal + cosAngle * bitangent;
-    indirectLight += coneWeight * coneTrace(position, direction, halfConeAngle, maxDistance);
+    indirectLight += coneWeight * coneTrace(position + normal * distanceAlongNormal, direction, halfConeAngle, maxDistance);
 
     direction = sinAngle * normal - cosAngle * bitangent;
-    indirectLight += coneWeight * coneTrace(position, direction, halfConeAngle, maxDistance);
+    indirectLight += coneWeight * coneTrace(position + normal * distanceAlongNormal, direction, halfConeAngle, maxDistance);
 
     indirectLight /= coneWeight * 4;
 

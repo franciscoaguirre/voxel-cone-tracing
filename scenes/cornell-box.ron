@@ -5,9 +5,9 @@
             material: "red",
             transform: (
                 position: (
-                    x: 0.5,
+                    x: -0.3,
                     y: -0.75,
-                    z: -0.5,
+                    z: -0.3,
                 ),
             ),
         ),
@@ -16,30 +16,24 @@
             material: "green",
             transform: (
                 position: (
-                    x: 0.5,
+                    x: -0.3,
                     y: -0.35,
-                    z: -0.5,
+                    z: -0.3,
                 ),
             ),
         ),
         (
-            model: "sphere",
-            material: "shiny",
-            transform: (
-                position: (
-                    x: -0.5,
-                    y: -0.75,
-                    z: -0.5,
-                ),
-            ),
-        ),
-        (
-            model: "cylinder",
+            model: "prism",
             material: "blue",
             transform: (
                 position: (
-                    x: 0.0,
+                    x: 0.3,
                     y: -0.5,
+                    z: 0.3,
+                ),
+                scale: (
+                    x: 0.5,
+                    y: 0.5,
                     z: 0.5,
                 ),
             ),
@@ -47,7 +41,7 @@
         (
             // Floor
             model: "plane",
-            material: "white",
+            material: "shiny",
             transform: (
                 position: (
                     x: 0.0,
@@ -118,16 +112,12 @@
             path: "assets/models/bunny.obj",
         ),
         (
-            name: "cylinder",
-            path: "assets/models/cylinder.obj",
+            name: "prism",
+            path: "assets/models/prism.obj",
         ),
         (
             name: "plane",
             path: "assets/models/plane.obj",
-        ),
-        (
-            name: "sphere",
-            path: "assets/models/sphere.obj",
         ),
     ],
     materials: [
@@ -159,12 +149,12 @@
             name: "shiny",
             properties: (
                 color: (
-                    x: 0.0,
-                    y: 0.0,
-                    z: 0.0,
+                    x: 1.0,
+                    y: 1.0,
+                    z: 1.0,
                 ),
                 diffuse: 0.0,
-                specular: 1.0,
+                specular: 0.5,
             ),
         ),
         (

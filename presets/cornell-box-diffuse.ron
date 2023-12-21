@@ -43,8 +43,8 @@
             is_showing: true,
             output: (
                 toggles: (
-                    should_show_color: true,
-                    should_show_direct: true,
+                    should_show_color: false,
+                    should_show_direct: false,
                     should_show_indirect: true,
                     should_show_indirect_specular: false,
                     should_show_ambient_occlusion: false,
@@ -55,7 +55,7 @@
             is_showing: false,
         ),
         save_preset: (
-            name: "cornell-box-diffuse",
+            name: "cornell-box-only-diffuse",
             is_showing: true,
         ),
         camera: (
@@ -70,7 +70,7 @@
                 show_debug_cone: false,
                 move_debug_cone: false,
                 shadow_cone_parameters: (
-                    cone_angle_in_degrees: 0.0,
+                    cone_angle_in_degrees: 5.0,
                     max_distance: 0.0,
                 ),
                 ambient_occlusion_cone_parameters: (
@@ -78,12 +78,12 @@
                     max_distance: 0.0,
                 ),
                 diffuse_cone_parameters: (
-                    cone_angle_in_degrees: 60.0,
+                    cone_angle_in_degrees: 30.0,
                     max_distance: 1.0,
                 ),
                 specular_cone_parameters: (
-                    cone_angle_in_degrees: 0.0,
-                    max_distance: 0.0,
+                    cone_angle_in_degrees: 1.0,
+                    max_distance: 1.0,
                 ),
                 debug_cone_parameters: (
                     cone_angle_in_degrees: 0.0,
@@ -102,9 +102,9 @@
     camera: (
         transform: (
             position: (
-                x: -0.011399127,
-                y: 0.24242206,
-                z: -2.195616,
+                x: 0.014040412,
+                y: 1.2117641,
+                z: -2.140147,
             ),
             scale: (
                 x: 1.0,
@@ -112,8 +112,8 @@
                 z: 1.0,
             ),
             rotation: (
-                x: -0.29999962,
-                y: 89.10003,
+                x: -29.70003,
+                y: 90.600006,
                 z: 0.0,
             ),
             movement_speed: 1.0,
