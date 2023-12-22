@@ -1,14 +1,11 @@
 use std::{ffi::c_void, mem::size_of};
 
+use engine::prelude::*;
 use gl::types::GLuint;
 use log;
-use serde::{Serialize, Deserialize};
-use engine::prelude::*;
+use serde::{Deserialize, Serialize};
 
-use crate::{
-    config::Config,
-    constants,
-};
+use crate::{config::Config, constants};
 
 mod build;
 mod lighting;
@@ -18,7 +15,7 @@ mod voxel_data;
 use build::*;
 pub use visualize::{BrickAttribute, BricksToShow};
 
-use lighting::{PhotonsToIrradiance, StorePhotons, ClearLight, LightTransfer};
+use lighting::{ClearLight, LightTransfer, PhotonsToIrradiance, StorePhotons};
 pub use voxel_data::VoxelData;
 
 pub struct Octree {

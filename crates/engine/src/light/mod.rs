@@ -1,15 +1,7 @@
+use cgmath::{point3, Matrix4, Point3};
 use serde::Deserialize;
-use cgmath::{Point3, point3, Matrix4};
 
-use crate::prelude::{
-    Transform,
-    RenderGizmo,
-    Textures,
-    LIGHT_MAP_BUFFERS,
-    Framebuffer,
-    Aabb,
-    Object,
-};
+use crate::prelude::{Aabb, Object, RenderGizmo, Textures, Transform, LIGHT_MAP_BUFFERS};
 
 mod point;
 use point::PointLight;
@@ -74,16 +66,10 @@ impl Light {
         voxel_dimension: u32, // TODO: Find another way. This breaks separation of concerns
     ) -> Textures<LIGHT_MAP_BUFFERS> {
         match self {
-            Self::Point(point_light) => point_light.take_photo(
-                objects,
-                scene_aabb,
-                voxel_dimension
-            ),
-            Self::Spot(spot_light) => spot_light.take_photo(
-                objects,
-                scene_aabb,
-                voxel_dimension
-            ),
+            Self::Point(point_light) => {
+                point_light.take_photo(objects, scene_aabb, voxel_dimension)
+            }
+            Self::Spot(spot_light) => spot_light.take_photo(objects, scene_aabb, voxel_dimension),
         }
     }
 }

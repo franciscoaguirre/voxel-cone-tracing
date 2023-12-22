@@ -1,30 +1,35 @@
 //! The entrypoint to the VCT application
 
-use std::collections::HashMap;
+use std::fs::{File, OpenOptions};
+use std::io::Write;
+use std::time::Instant;
+use std::{collections::HashMap, sync::mpsc::Receiver};
 
 extern crate c_str_macro;
 
 use c_str_macro::c_str;
 extern crate gl;
+use cgmath::{point3, vec2, vec3, Matrix4};
 use core::{
+    cone_tracing::{ConeTracer, DebugCone},
     config::Config as CoreConfig,
-    cone_tracing::{ConeTracer, DebugCone, VisualTestsParameters},
-    voxelization,
-    voxelization::visualize::RenderVoxelFragmentsShader,
     menu::{
-        Menu,
         submenus::{
             ChildrenMenuInput, DiagnosticsMenuInput, NodeSearchMenuInput, PhotonsMenuInput,
             SavePresetMenuInput,
         },
-        SubMenus, DebugNode,
+        DebugNode, Menu, Preset,
     },
-    octree::{OctreeDataType, BricksToShow, BrickAttribute, Octree},
+    octree::{BrickAttribute, BricksToShow, Octree, OctreeDataType},
+    voxelization,
+    voxelization::visualize::RenderVoxelFragmentsShader,
 };
-use engine::prelude::*;
-use engine::ui::glfw::{self, Context};
+use engine::ui::glfw;
 use engine::ui::Ui;
-use cgmath::{point3, vec3, vec2, Deg, Matrix4, SquareMatrix};
+use engine::{
+    prelude::*,
+    ui::glfw::{Glfw, WindowEvent},
+};
 use log::info;
 use structopt::StructOpt;
 
@@ -33,35 +38,66 @@ use cli_arguments::Options;
 mod preset;
 mod scene;
 
-use preset::PRESET;
-
 fn main() {
     simple_logger::init().unwrap();
-
     let options = Options::from_args();
-
-    // Load configuration file and set it up in core
-    use std::fs::File;
-    let file = File::open("config.ron").expect("Missing config file!");
-    let raw_config: CoreConfig = ron::de::from_reader(file).expect("Config file malformed!");
-    log::info!("Configuration used: {:#?}", raw_config);
-    unsafe {
-        CoreConfig::initialize(raw_config);
-    }
-    let config = CoreConfig::instance();
-
     // NOTE: This is true if the binary was compiled in debug mode
     let debug = cfg!(debug_assertions);
+    let file = File::open(&format!("{}.ron", &options.config)).expect("Missing config file!");
+    let config: CoreConfig = ron::de::from_reader(file).expect("Config file malformed!");
+    log::info!("Configuration used: {:#?}", config);
+
+    let (viewport_width, viewport_height) = config.viewport_dimensions();
+    let (glfw, events) = unsafe {
+        common::setup_glfw(
+            viewport_width,
+            viewport_height,
+            debug,
+            options.screenshot
+                || options.record_octree_build_time
+                || options.seconds_for_fps.is_some(), // Don't run headless
+        )
+    };
+
+    let scene = scene::load_scene(&options.scene);
+    let preset = preset::load_preset(&options.preset);
+
+    let parameters = ApplicationParameters {
+        config,
+        scene,
+        preset,
+        events,
+        options,
+    };
+
+    run_application(parameters, glfw);
+}
+
+struct ApplicationParameters {
+    config: CoreConfig,
+    scene: Scene,
+    preset: Preset,
+    events: Receiver<(f64, WindowEvent)>,
+    options: Options,
+}
+
+fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
+    // Load configuration file and set it up in core
+    unsafe {
+        CoreConfig::initialize(parameters.config);
+    }
+    let config = CoreConfig::instance();
+    let scene = parameters.scene;
+    let preset = parameters.preset;
 
     // Timing setup
     let mut delta_time: f64;
     let mut last_frame: f64 = 0.0;
 
     let (viewport_width, viewport_height) = config.viewport_dimensions();
-    let (mut glfw, events) = unsafe { common::setup_glfw(viewport_width, viewport_height, debug, options.visual_tests) };
 
     // Camera setup
-    let mut camera = PRESET.camera.clone();
+    let mut camera = preset.camera.clone();
     let mut first_mouse = true;
     let mut last_x: f32 = viewport_width as f32 / 2.0;
     let mut last_y: f32 = viewport_height as f32 / 2.0;
@@ -80,27 +116,18 @@ fn main() {
         common::log_device_information();
     };
 
-    let mut menu = Menu::new((*PRESET).clone());
+    let mut menu = Menu::new(preset.clone());
 
     let render_model_shader = compile_shaders!(
         "assets/shaders/model/modelLoading.vert.glsl",
         "assets/shaders/model/modelLoading.frag.glsl",
         "assets/shaders/model/modelLoading.geom.glsl",
     );
-    let render_normals_shader = compile_shaders!(
-        "assets/shaders/model/renderNormals.vert.glsl",
-        "assets/shaders/model/renderNormals.frag.glsl",
-        "assets/shaders/model/renderNormals.geom.glsl",
-    );
-    let visual_tests_parameters = VisualTestsParameters {
-        screenshot_name: &options.preset,
-        should_update: options.update_screenshots,
-    };
     let mut cone_tracer = ConeTracer::init();
     let mut cone_parameters = HashMap::new();
     let mut debug_cone = unsafe { DebugCone::new() };
 
-    let scene = scene::load_scene(&options.scene);
+    // Process scene
     let (mut objects, mut light) = process_scene(scene);
 
     let mut scene_aabb = Aabb::default();
@@ -118,6 +145,7 @@ fn main() {
         unsafe { voxelization::build_voxel_fragment_list(&mut objects[..], &scene_aabb) };
     info!("Number of voxel fragments: {}", number_of_voxel_fragments);
 
+    let _instant_before_octree = Instant::now();
     let mut octree = unsafe {
         Octree::new(
             voxel_positions.clone(),
@@ -126,6 +154,21 @@ fn main() {
             voxel_normals,
         )
     };
+    if parameters.options.record_octree_build_time {
+        let octree_build_time = _instant_before_octree.elapsed().as_millis().to_string();
+        let mut in_bytes = octree_build_time.as_bytes().to_vec();
+        let newline = b'\n';
+        in_bytes.push(newline);
+        let folder = parameters.options.get_name();
+        let file_name = format!("{folder}/octree_build_time.txt");
+        OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(&file_name)
+            .expect("Couldn't open record octree build time file")
+            .write(&in_bytes[..])
+            .expect("Couldn't append to record octree build time file");
+    }
 
     let node_positions = unsafe {
         helpers::get_values_from_texture_buffer(
@@ -154,13 +197,7 @@ fn main() {
     let mut photons: Vec<u32> = Vec::new();
     let mut children: Vec<u32> = Vec::new();
 
-    let mut light_maps = unsafe {
-        octree.inject_light(
-            &mut objects[..],
-            &light,
-            &scene_aabb,
-        )
-    };
+    let mut light_maps = unsafe { octree.inject_light(&mut objects[..], &light, &scene_aabb) };
     let quad = unsafe { Quad::new() };
     let camera_framebuffer = unsafe { GeometryFramebuffer::new() };
 
@@ -202,6 +239,8 @@ fn main() {
     // just how we rendered the UI.
     let ui = Ui::instance();
 
+    let mut fps_values = Vec::new();
+
     // Render loop
     while !common::should_close_window() {
         let current_frame = glfw.get_time();
@@ -214,6 +253,23 @@ fn main() {
 
         if elapsed_time > 1.0 {
             fps = frame_count as f64 / elapsed_time;
+            if let Some(seconds_for_fps) = parameters.options.seconds_for_fps {
+                // Push fps value to vec
+                fps_values.push(fps);
+                if fps_values.len() > seconds_for_fps as usize {
+                    let average: f64 = fps_values.iter().sum::<f64>() / fps_values.len() as f64;
+                    let folder = parameters.options.get_name();
+                    let file_name = format!("{folder}/fps.txt");
+                    OpenOptions::new()
+                        .write(true)
+                        .truncate(true)
+                        .create(true)
+                        .open(&file_name)
+                        .expect("Couldn't open file")
+                        .write_all(average.to_string().as_bytes())
+                        .expect("Couldn't write to file");
+                }
+            }
             frame_count = 0;
             starting_time = current_frame;
         }
@@ -237,7 +293,7 @@ fn main() {
             // gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
         }
 
-        for (_, event) in glfw::flush_messages(&events) {
+        for (_, event) in glfw::flush_messages(&parameters.events) {
             // Events
             if let glfw::WindowEvent::Key(glfw::Key::Escape, _, glfw::Action::Press, _) = event {
                 menu.toggle_showing(&mut last_x, &mut last_y);
@@ -285,7 +341,10 @@ fn main() {
             octree_nodes_to_visualize = outputs.0.octree_nodes_to_visualize.clone();
 
             // Node search
-            selected_debug_nodes = selected_debug_nodes.into_iter().chain(outputs.1.selected_items.clone()).collect();
+            selected_debug_nodes = selected_debug_nodes
+                .into_iter()
+                .chain(outputs.1.selected_items.clone())
+                .collect();
             node_filter_text = outputs.1.filter_text.clone();
             should_show_neighbors = outputs.1.should_show_neighbors;
             selected_debug_nodes_updated = outputs.1.selected_items_updated;
@@ -309,10 +368,22 @@ fn main() {
             // TODO: there is quite a bit of cloning here
             debug_cone.parameters = outputs.9.debug_cone_parameters.clone();
             debug_cone.point_to_light = outputs.9.point_to_light;
-            cone_parameters.insert("shadowConeParameters", outputs.9.shadow_cone_parameters.clone());
-            cone_parameters.insert("ambientOcclusionConeParameters", outputs.9.ambient_occlusion_cone_parameters.clone());
-            cone_parameters.insert("diffuseConeParameters", outputs.9.diffuse_cone_parameters.clone());
-            cone_parameters.insert("specularConeParameters", outputs.9.specular_cone_parameters.clone());
+            cone_parameters.insert(
+                "shadowConeParameters",
+                outputs.9.shadow_cone_parameters.clone(),
+            );
+            cone_parameters.insert(
+                "ambientOcclusionConeParameters",
+                outputs.9.ambient_occlusion_cone_parameters.clone(),
+            );
+            cone_parameters.insert(
+                "diffuseConeParameters",
+                outputs.9.diffuse_cone_parameters.clone(),
+            );
+            cone_parameters.insert(
+                "specularConeParameters",
+                outputs.9.specular_cone_parameters.clone(),
+            );
             // This one doesn't come from `get_data()` but is still relevant to `debug_cone`
             geometry_buffer_coordinates = menu.get_quad_coordinates();
 
@@ -359,7 +430,9 @@ fn main() {
             } else {
                 &mut camera.transform
             };
-            unsafe { common::process_movement_input(delta_time as f32, transform); }
+            unsafe {
+                common::process_movement_input(delta_time as f32, transform);
+            }
         }
 
         // Render
@@ -445,7 +518,11 @@ fn main() {
                 &quad,
                 &camera,
                 &cone_parameters,
-                if options.visual_tests { Some(&visual_tests_parameters) } else { None }
+                if parameters.options.screenshot {
+                    Some(parameters.options.get_name())
+                } else {
+                    None
+                },
             );
 
             if should_show_debug_cone {
@@ -492,8 +569,13 @@ fn main() {
         common::swap_buffers();
         glfw.poll_events();
 
-        // We only run once for visual tests
-        if options.visual_tests {
+        if parameters.options.screenshot
+            || parameters.options.record_octree_build_time
+            || parameters
+                .options
+                .seconds_for_fps
+                .is_some_and(|seconds| fps_values.len() as f64 > seconds as f64)
+        {
             break;
         }
     }

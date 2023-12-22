@@ -1,10 +1,14 @@
+use once_cell::sync::OnceCell;
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Config {
+    #[serde(default = "default_brick_pool_resolution")]
     pub brick_pool_resolution: u32,
     // TODO: This could be different than the one in the shaders right now
+    #[serde(default = "default_working_group_size")]
     pub working_group_size: u32,
+    #[serde(default = "default_viewport_dimensions")]
     viewport_dimensions: (i32, i32),
     voxel_dimension: u32,
     #[serde(skip_deserializing)]
@@ -13,7 +17,17 @@ pub struct Config {
     last_octree_level: u32,
 }
 
-use once_cell::sync::OnceCell;
+const fn default_brick_pool_resolution() -> u32 {
+    384
+}
+
+const fn default_working_group_size() -> u32 {
+    64
+}
+
+const fn default_viewport_dimensions() -> (i32, i32) {
+    (840, 840)
+}
 
 static mut INSTANCE: OnceCell<Config> = OnceCell::new();
 
@@ -23,19 +37,16 @@ impl Config {
         unsafe {
             if let Some(config) = INSTANCE.get() {
                 &config
-            } else { panic!("Must initialize core config"); }
+            } else {
+                panic!("Must initialize core config");
+            }
         }
     }
 
     /// Initializes the config
     /// Must be called before any call to `instance`
+    /// Overrides any previous config
     pub unsafe fn initialize(mut config: Self) {
-        Self::initialize_test_sensitive(config, false);
-    }
-
-    pub unsafe fn initialize_test_sensitive(mut config: Self, is_test: bool) {
-        // We may initialize many times in test mode
-        if INSTANCE.get().is_some() && !is_test { panic!("Can only initialize core config once"); }
         config.set_voxel_dimension(config.voxel_dimension);
         let _ = INSTANCE.set(config);
     }
@@ -59,7 +70,7 @@ impl Config {
     pub fn octree_levels(&self) -> u32 {
         self.octree_levels
     }
-    
+
     pub fn last_octree_level(&self) -> u32 {
         self.last_octree_level
     }

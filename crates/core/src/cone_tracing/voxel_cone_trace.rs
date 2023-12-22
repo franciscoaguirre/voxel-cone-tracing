@@ -16,11 +16,6 @@ pub struct ConeTracer {
     processed_framebuffer: Framebuffer<1>,
 }
 
-pub struct VisualTestsParameters<'a> {
-    pub screenshot_name: &'a str,
-    pub should_update: bool,
-}
-
 impl ConeTracer {
     pub fn init() -> Self {
         Self {
@@ -41,7 +36,7 @@ impl ConeTracer {
         quad: &Quad,
         camera: &Camera,
         parameters: &HashMap<&str, ConeParameters>,
-        visual_tests_parameters: Option<&VisualTestsParameters>,
+        screenshot_folder: Option<String>,
     ) {
         self.shader.use_program();
 
@@ -186,25 +181,10 @@ impl ConeTracer {
             self.render_to_screen(quad); // Renders the framebuffer to the screen
         }
 
-        if let Some(VisualTestsParameters {
-            screenshot_name,
-            should_update,
-        }) = visual_tests_parameters
-        {
-            let filepath = format!("screenshots/{screenshot_name}.png");
-            if *should_update {
-                self.processed_framebuffer
-                    .save_color_attachment_to_file(0, &filepath);
-            } else {
-                let result = self.processed_framebuffer.compare_attachment_to_file(0, &filepath)
-                    .expect("Image not found for comparing. Generate it with `--update-sceenshots` first.");
-                assert!(
-                    result,
-                    "Generated image is not the same as the one in `screenshots`.
-                    Make sure to update the screenshot with `--update-screenshots` if this was intended.
-                    If not, make sure to fix what you broke :)",
-                );
-            }
+        if let Some(folder) = screenshot_folder {
+            let filepath = format!("{folder}/screenshot.png");
+            self.processed_framebuffer
+                .save_color_attachment_to_file(0, &filepath);
         }
     }
 

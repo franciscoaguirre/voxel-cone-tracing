@@ -1,0 +1,20 @@
+(
+    // Viewport settings
+    viewport_dimensions: (840, 840),
+
+    // Voxel dimension
+    // This value is the exponent, the real dimension is 2 to the power of this exponent.
+    // `octree_levels` is calculated based on this, given by: log2(`voxel_dimension`^3) / log2(8).
+    // We use one octree level less than expected so leaves only have bricks (not nodes).
+    // This allows for interpolation inside the bricks.
+    voxel_dimension: 10,
+
+    // This is the value domme uses, I don't know if it is okay.
+    // It could be that we just need voxel_dimension * 3.
+    // We are still not putting voxels on the corners of nodes.
+    // Using voxel_dimension * 3 makes starting up really slow, really fast.
+    brick_pool_resolution: 384,
+
+    // Compute shader settings
+    working_group_size: 64,
+)
