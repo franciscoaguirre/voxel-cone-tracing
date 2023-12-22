@@ -1,8 +1,7 @@
 use once_cell::sync::OnceCell;
 use std::collections::HashMap;
-use std::sync::{Mutex, Arc};
 
-use crate::prelude::{Model, Material, Scene};
+use crate::prelude::{Material, Model, Scene};
 
 pub type AssetHandle = String;
 
@@ -46,11 +45,13 @@ impl AssetRegistry {
     pub fn instance() -> &'static AssetRegistry {
         if let Some(assets) = INSTANCE.get() {
             &assets
-        } else { panic!("Must initialize asset registry"); }
+        } else {
+            panic!("Must initialize asset registry");
+        }
     }
 
+    /// If initialized again, overrides the previous one
     pub unsafe fn initialize(scene: &Scene) {
-        if INSTANCE.get().is_some() { panic!("Can only initialize asset registry once"); }
         let mut assets = Self::new();
         for model in scene.models.iter() {
             let model_content = Model::new(&model.path);

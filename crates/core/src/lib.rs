@@ -5,10 +5,10 @@
 //! - Proper cone tracing
 //! A UI is provided to interact with the different algorithms and tweak parameters.
 
-pub mod voxelization;
-pub mod octree;
 pub mod cone_tracing;
 pub mod menu;
+pub mod octree;
+pub mod voxelization;
 
-mod constants;
 pub mod config;
+mod constants;

@@ -1,4 +1,4 @@
-use std::{ffi::CStr, ptr, sync::{mpsc::Receiver}, cell::RefCell};
+use std::{cell::RefCell, ffi::CStr, ptr, sync::mpsc::Receiver};
 
 use egui_glfw_gl::glfw::{self, Action, Context, Glfw, Key, Window, WindowEvent};
 use log;
@@ -23,7 +23,12 @@ unsafe fn set_window(window: Window) {
     *WINDOW.borrow_mut() = Some(window);
 }
 
-pub unsafe fn setup_glfw(viewport_width: i32, viewport_height: i32, debug: bool, headless: bool) -> (Glfw, Receiver<(f64, WindowEvent)>) {
+pub unsafe fn setup_glfw(
+    viewport_width: i32,
+    viewport_height: i32,
+    debug: bool,
+    headless: bool,
+) -> (Glfw, Receiver<(f64, WindowEvent)>) {
     // GLFW: Setup
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
     glfw.window_hint(glfw::WindowHint::ContextVersion(4, 6));
@@ -83,7 +88,9 @@ pub unsafe fn setup_glfw(viewport_width: i32, viewport_height: i32, debug: bool,
 }
 
 pub fn swap_buffers() {
-    unsafe { WINDOW.borrow_mut().as_mut().unwrap().swap_buffers(); }
+    unsafe {
+        WINDOW.borrow_mut().as_mut().unwrap().swap_buffers();
+    }
 }
 
 pub fn process_events(
@@ -128,10 +135,7 @@ pub fn process_events(
     }
 }
 
-pub unsafe fn process_movement_input(
-    delta_time: f32,
-    transform: &mut Transform,
-) {
+pub unsafe fn process_movement_input(delta_time: f32, transform: &mut Transform) {
     let binding = WINDOW.borrow();
     let window = binding.as_ref().unwrap();
     if window.get_key(Key::W) == Action::Press {

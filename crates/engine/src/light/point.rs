@@ -1,18 +1,18 @@
 use std::{ffi::c_void, mem::size_of};
 
 use c_str_macro::c_str;
-use cgmath::{point3, Matrix4, Point3, Deg, vec3};
+use cgmath::{point3, vec3, Deg, Matrix4, Point3};
 use gl::types::GLuint;
 use serde::Deserialize;
 
 use crate::{
-    gizmo::RenderGizmo,
-    shader::{Shader, compile_shaders},
-    transform::Transform,
-    common,
-    framebuffer::{LIGHT_MAP_BUFFERS, LightFramebuffer},
-    object::Object,
     aabb::Aabb,
+    common,
+    framebuffer::{LightFramebuffer, LIGHT_MAP_BUFFERS},
+    gizmo::RenderGizmo,
+    object::Object,
+    shader::{compile_shaders, Shader},
+    transform::Transform,
     types::Textures,
 };
 
@@ -63,9 +63,7 @@ fn gizmo_shader() -> Shader {
 }
 
 fn light_map_shader() -> Shader {
-    compile_shaders!(
-        "assets/shaders/octree/lightViewMapPoint.glsl",
-    )
+    compile_shaders!("assets/shaders/octree/lightViewMapPoint.glsl",)
 }
 
 impl PointLight {
@@ -81,12 +79,7 @@ impl PointLight {
     pub fn get_projection_matrix(&self) -> Matrix4<f32> {
         let (width, height) = unsafe { common::get_framebuffer_size() };
 
-        cgmath::perspective(
-            Deg(90.0),
-            width as f32 / height as f32,
-            0.0001,
-            FAR_PLANE,
-        )
+        cgmath::perspective(Deg(90.0), width as f32 / height as f32, 0.0001, FAR_PLANE)
     }
 
     pub unsafe fn setup_vao(&mut self) {
@@ -124,22 +117,60 @@ impl PointLight {
         let projection = self.get_projection_matrix();
         self.light_map_shader.use_program();
         let shadow_matrices = vec![
-            projection * Matrix4::look_at_rh(self.transform.position, self.transform.position + vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0)),
-            projection * Matrix4::look_at_rh(self.transform.position, self.transform.position + vec3(-1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0)),
-            projection * Matrix4::look_at_rh(self.transform.position, self.transform.position + vec3(0.0, 1.0, 0.0), vec3(0.0, 0.0, 1.0)),
-            projection * Matrix4::look_at_rh(self.transform.position, self.transform.position + vec3(0.0, -1.0, 0.0), vec3(0.0, 0.0, 1.0)),
-            projection * Matrix4::look_at_rh(self.transform.position, self.transform.position + vec3(0.0, 0.0, 1.0), vec3(0.0, 1.0, 0.0)),
-            projection * Matrix4::look_at_rh(self.transform.position, self.transform.position + vec3(0.0, 0.0, -1.0), vec3(0.0, 1.0, 0.0)),
+            projection
+                * Matrix4::look_at_rh(
+                    self.transform.position,
+                    self.transform.position + vec3(1.0, 0.0, 0.0),
+                    vec3(0.0, 1.0, 0.0),
+                ),
+            projection
+                * Matrix4::look_at_rh(
+                    self.transform.position,
+                    self.transform.position + vec3(-1.0, 0.0, 0.0),
+                    vec3(0.0, 1.0, 0.0),
+                ),
+            projection
+                * Matrix4::look_at_rh(
+                    self.transform.position,
+                    self.transform.position + vec3(0.0, 1.0, 0.0),
+                    vec3(0.0, 0.0, 1.0),
+                ),
+            projection
+                * Matrix4::look_at_rh(
+                    self.transform.position,
+                    self.transform.position + vec3(0.0, -1.0, 0.0),
+                    vec3(0.0, 0.0, 1.0),
+                ),
+            projection
+                * Matrix4::look_at_rh(
+                    self.transform.position,
+                    self.transform.position + vec3(0.0, 0.0, 1.0),
+                    vec3(0.0, 1.0, 0.0),
+                ),
+            projection
+                * Matrix4::look_at_rh(
+                    self.transform.position,
+                    self.transform.position + vec3(0.0, 0.0, -1.0),
+                    vec3(0.0, 1.0, 0.0),
+                ),
         ];
-        self.light_map_shader.set_mat4_array(c_str!("shadowMatrices"), shadow_matrices.iter().collect::<Vec<&Matrix4<f32>>>().as_slice());
-        self.light_map_shader.set_uint(c_str!("voxelDimension"), voxel_dimension);
+        self.light_map_shader.set_mat4_array(
+            c_str!("shadowMatrices"),
+            shadow_matrices
+                .iter()
+                .collect::<Vec<&Matrix4<f32>>>()
+                .as_slice(),
+        );
+        self.light_map_shader
+            .set_uint(c_str!("voxelDimension"), voxel_dimension);
         self.light_map_shader.set_vec3(
             c_str!("lightPosition"),
             self.transform.position.x,
             self.transform.position.y,
             self.transform.position.z,
         );
-        self.light_map_shader.set_float(c_str!("farPlane"), FAR_PLANE);
+        self.light_map_shader
+            .set_float(c_str!("farPlane"), FAR_PLANE);
 
         gl::BindFramebuffer(gl::FRAMEBUFFER, self.framebuffer.fbo());
         gl::Enable(gl::DEPTH_TEST);

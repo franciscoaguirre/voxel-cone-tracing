@@ -4,6 +4,10 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 #[structopt(name = "Options")]
 pub struct Options {
+    /// Config file to load
+    #[structopt(long, default_value = "config")]
+    pub config: String,
+
     /// Scene file to load
     #[structopt(long, default_value = "scene")]
     pub scene: String,
@@ -12,16 +16,24 @@ pub struct Options {
     #[structopt(long, default_value = "")]
     pub preset: String,
 
-    /// Whether or not to run in "visual tests" mode
-    /// This mode runs only once, with a headless window, and
-    /// saves all the images to a folder.
+    /// Whether or not a screenshot should be taken
     #[structopt(long)]
-    pub visual_tests: bool,
+    pub screenshot: bool,
 
-    /// Whether or not the screenshot from visual tests should be upgraded
-    /// with this run.
-    /// By default, visual tests panic if the image is not the same.
-    /// This overrides the image with the one generated this run.
+    /// Count FPS for this many seconds and record the average
     #[structopt(long)]
-    pub update_screenshots: bool,
+    pub seconds_for_fps: Option<u32>,
+
+    /// Record how much time it takes to build the octree
+    #[structopt(long)]
+    pub record_octree_build_time: bool,
+}
+
+impl Options {
+    pub fn get_name(&self) -> String {
+        format!(
+            "benchmarks/{}_{}_{}",
+            &self.config, &self.scene, &self.preset
+        )
+    }
 }

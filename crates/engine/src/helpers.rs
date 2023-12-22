@@ -1,4 +1,3 @@
-use cgmath::Matrix4;
 use gl::types::*;
 use image::{GenericImageView, ImageFormat};
 use std::{
@@ -8,7 +7,7 @@ use std::{
     path::Path,
 };
 
-use crate::{model::Model, aabb::Aabb, types::*};
+use crate::{model::Model, types::*};
 
 pub unsafe fn generate_atomic_counter_buffer() -> GLuint {
     generate_atomic_counter_buffer1()
@@ -440,9 +439,14 @@ mod tests {
     fn r32ui_to_rgb10_a2ui_and_back_works() {
         // Should move both functions and the test to util file
         assert_eq!(r32ui_to_rgb10_a2ui(rgb10_a2ui_to_r32ui(3, 4, 5)), (3, 4, 5));
-        assert_eq!(r32ui_to_rgb10_a2ui(rgb10_a2ui_to_r32ui(1023, 512, 128)), (1023, 512, 128));
+        assert_eq!(
+            r32ui_to_rgb10_a2ui(rgb10_a2ui_to_r32ui(1023, 512, 128)),
+            (1023, 512, 128)
+        );
         // Should consider just 10 bits, so 1025 == 1
-        assert_eq!(r32ui_to_rgb10_a2ui(rgb10_a2ui_to_r32ui(1025, 512, 128)), (1, 512, 128));
+        assert_eq!(
+            r32ui_to_rgb10_a2ui(rgb10_a2ui_to_r32ui(1025, 512, 128)),
+            (1, 512, 128)
+        );
     }
-
 }
