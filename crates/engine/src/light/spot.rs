@@ -1,19 +1,19 @@
 use std::{ffi::c_void, mem::size_of};
 
 use c_str_macro::c_str;
-use cgmath::{point3, Matrix4, Point3, Deg};
+use cgmath::{point3, Deg, Matrix4, Point3};
 use gl::types::GLuint;
 use serde::Deserialize;
 
 use crate::{
-    gizmo::RenderGizmo,
-    shader::{Shader, compile_shaders},
-    transform::Transform,
-    common,
-    framebuffer::{LIGHT_MAP_BUFFERS, LightFramebuffer},
-    types::Textures,
     aabb::Aabb,
+    common,
+    framebuffer::{LightFramebuffer, LIGHT_MAP_BUFFERS},
+    gizmo::RenderGizmo,
     object::Object,
+    shader::{compile_shaders, Shader},
+    transform::Transform,
+    types::Textures,
 };
 
 #[derive(Debug, Deserialize, Clone)]
@@ -113,9 +113,12 @@ impl SpotLight {
     ) -> Textures<LIGHT_MAP_BUFFERS> {
         let projection = self.get_projection_matrix();
         self.light_map_shader.use_program();
-        self.light_map_shader.set_mat4(c_str!("projection"), &projection);
-        self.light_map_shader.set_mat4(c_str!("view"), &self.transform.get_view_matrix());
-        self.light_map_shader.set_uint(c_str!("voxelDimension"), voxel_dimension);
+        self.light_map_shader
+            .set_mat4(c_str!("projection"), &projection);
+        self.light_map_shader
+            .set_mat4(c_str!("view"), &self.transform.get_view_matrix());
+        self.light_map_shader
+            .set_uint(c_str!("voxelDimension"), voxel_dimension);
         self.light_map_shader.set_vec3(
             c_str!("lightPosition"),
             self.transform.position.x,
@@ -146,9 +149,7 @@ fn gizmo_shader() -> Shader {
 }
 
 fn light_map_shader() -> Shader {
-    compile_shaders!(
-        "assets/shaders/octree/lightViewMapDirectional.glsl",
-    )
+    compile_shaders!("assets/shaders/octree/lightViewMapDirectional.glsl",)
 }
 
 impl RenderGizmo for SpotLight {

@@ -1,6 +1,6 @@
 use c_str_macro::c_str;
-use gl::types::GLuint;
 use engine::prelude::*;
+use gl::types::GLuint;
 
 use crate::{
     config::Config,
@@ -25,7 +25,7 @@ impl LightTransfer {
         octree_level: u32,
         node_data: &NodeData,
         axis: Axis,
-        light_view_map: GLuint,
+        _light_view_map: GLuint,
     ) {
         self.shader.use_program();
 
@@ -35,9 +35,10 @@ impl LightTransfer {
         self.shader
             .set_uint(c_str!("voxelDimension"), config.voxel_dimension());
 
-        gl::ActiveTexture(gl::TEXTURE0);
-        gl::BindTexture(gl::TEXTURE_2D_ARRAY, light_view_map);
-        self.shader.set_int(c_str!("lightViewMap"), 0);
+        // TODO: Only needed for the 2D Node Map. Bring back when implementing it.
+        // gl::ActiveTexture(gl::TEXTURE0);
+        // gl::BindTexture(gl::TEXTURE_2D_ARRAY, light_view_map);
+        // self.shader.set_int(c_str!("lightViewMap"), 0);
 
         helpers::bind_3d_image_texture(1, textures.brick_pool_photons, gl::READ_WRITE, gl::R32UI);
         helpers::bind_image_texture(2, textures.node_pool.0, gl::READ_ONLY, gl::R32UI);
