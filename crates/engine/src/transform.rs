@@ -154,6 +154,9 @@ impl Transform {
         Matrix4::look_at_rh(self.position, self.position + self.forward, self.up)
     }
 
+    /// Returns local forward vector.
+    /// Initially, it's the +Z unit vector, but it always points to the local forward direction
+    /// taking into account the transform's rotation.
     pub fn get_forward(&self) -> Vector3<f32> {
         self.forward
     }

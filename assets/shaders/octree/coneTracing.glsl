@@ -142,7 +142,9 @@ void main() {
     vec3 lightVector;
     float lightIntensity;
     if (isDirectional) {
-        lightVector = toVoxelSpace(directionalLight.direction);
+        // We reverse the direction of the light since we care about the direction
+        // TOWARDS the light, not FROM it.
+        lightVector = -directionalLight.direction;
         lightIntensity = directionalLight.intensity;
     } else {
         lightVector = toVoxelSpace(pointLight.position) - positionVoxelSpace;

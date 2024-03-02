@@ -73,9 +73,9 @@ impl ConeTracer {
         if light.is_directional() {
             self.shader.set_vec3(
                 c_str!("directionalLight.direction"),
-                light.transform().position.x,
-                light.transform().position.y,
-                light.transform().position.z,
+                light.transform().get_forward().x,
+                light.transform().get_forward().y,
+                light.transform().get_forward().z,
             );
             self.shader
                 .set_float(c_str!("directionalLight.intensity"), light.intensity());
