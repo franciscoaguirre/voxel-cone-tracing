@@ -241,6 +241,15 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
 
     let mut fps_values = Vec::new();
 
+    // We create a camera from the view of the light.
+    let mut light_camera = Camera::default();
+    light_camera.transform = light.transform().clone();
+
+    // The active camera is a reference to a camera.
+    // All calculations are done with the active camera.
+    // It can be switched at runtime.
+    let active_camera = &mut light_camera;
+
     // Render loop
     while !common::should_close_window() {
         let current_frame = glfw.get_time();
@@ -275,9 +284,9 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
         }
 
         let geometry_buffers = unsafe {
-            camera.transform.take_photo(
+            active_camera.transform.take_photo(
                 &mut objects[..],
-                &camera.get_projection_matrix(),
+                &active_camera.get_projection_matrix(),
                 &scene_aabb,
                 &camera_framebuffer,
                 0,
@@ -304,7 +313,7 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
                     &mut first_mouse,
                     &mut last_x,
                     &mut last_y,
-                    &mut camera,
+                    active_camera,
                     // &mut debug_cone, // TODO: Bring back
                 );
                 common::handle_show_model(&event, &mut show_model);
@@ -328,7 +337,7 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
                 DiagnosticsMenuInput::new(fps),
                 (),
                 PhotonsMenuInput::new(&photons),
-                SavePresetMenuInput::new(&camera, menu.sub_menus.clone()), // TODO: Remove clone
+                SavePresetMenuInput::new(&active_camera, menu.sub_menus.clone()), // TODO: Remove clone
                 (),
                 (),
                 (),
@@ -360,7 +369,7 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
             cone_tracer.toggles = outputs.5.toggles.clone();
 
             // Camera
-            camera.orthographic = outputs.8.orthographic;
+            active_camera.orthographic = outputs.8.orthographic;
 
             // Cone tracing
             should_show_debug_cone = outputs.9.show_debug_cone;
@@ -428,7 +437,7 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
             } else if should_move_debug_cone {
                 &mut debug_cone.transform
             } else {
-                &mut camera.transform
+                &mut active_camera.transform
             };
             unsafe {
                 common::process_movement_input(delta_time as f32, transform);
@@ -438,13 +447,13 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
         // Render
         unsafe {
             // let projection: Matrix4<f32> = perspective(
-            //     Deg(camera.zoom),
+            //     Deg(active_camera.zoom),
             //     viewport_width as f32 / viewport_height as f32,
             //     0.0001,
             //     10000.0,
             // );
-            let projection = camera.get_projection_matrix();
-            let view = camera.transform.get_view_matrix();
+            let projection = active_camera.get_projection_matrix();
+            let view = active_camera.transform.get_view_matrix();
             let mut model = Matrix4::<f32>::from_translation(vec3(0.0, 0.0, 0.0));
             model = model * Matrix4::from_scale(1.);
 
@@ -516,7 +525,7 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
                 &geometry_buffers,
                 light_maps,
                 &quad,
-                &camera,
+                &active_camera,
                 &cone_parameters,
                 if parameters.options.screenshot {
                     Some(parameters.options.get_name())
