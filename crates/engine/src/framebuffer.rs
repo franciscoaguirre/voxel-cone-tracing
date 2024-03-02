@@ -3,7 +3,7 @@
 //! TODO: To make it better, we could have only one `new` function that receives
 //! all the textures already and just assembles the framebuffer.
 
-use std::mem::MaybeUninit;
+use std::{fs, mem::MaybeUninit, path::PathBuf};
 
 use gl::types::*;
 use image::{GenericImageView, ImageBuffer, Pixel, Rgba, RgbaImage};
@@ -738,7 +738,11 @@ impl<const N: usize> Framebuffer<N> {
     /// to an image with the name `filename`
     pub fn save_color_attachment_to_file(&self, attachment_index: usize, filepath: &str) {
         let image = self.get_image_from_attachment(attachment_index);
-        image.save(filepath).expect("Failed to save the image");
+        let error_message = format!("Failed to save the image, path: {:?}", filepath);
+        let path = PathBuf::from(filepath);
+        let parent_dir = path.parent().expect("No parent");
+        fs::create_dir_all(parent_dir).expect(&error_message);
+        image.save(path).expect(&error_message);
     }
 
     /// Compares the texture in the `attachment_index` attachment of this framebuffer
