@@ -63,7 +63,10 @@ void main() {
     //uvec3 unnormalizedGlobalPosition = uvec3(floor(normalizedGlobalPosition.xyz * float(voxelDimension) * 1.5));
     
     viewMapPositions = vec4(In.position.xyz / In.position.w, 1);
-    viewMapNormals = vec4(In.normal, 1);
+    // For some reason normals are not normalized.
+    // Normalizing them here makes everything better.
+    // Might need to look into the models we load.
+    viewMapNormals = vec4(normalize(In.normal), 1);
     if (hasTexture) {
         viewMapColors = texture(texture_diffuse1, In.textureCoordinates);
     } else {
