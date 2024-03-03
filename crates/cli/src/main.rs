@@ -247,8 +247,8 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
 
     // The active camera is a reference to a camera.
     // All calculations are done with the active camera.
-    // It can be switched at runtime.
-    let active_camera = &mut light_camera;
+    // It can be switched at runtime. TODO: Not yet.
+    let active_camera = &mut camera;
 
     // Render loop
     while !common::should_close_window() {
