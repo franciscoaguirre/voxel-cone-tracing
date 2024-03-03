@@ -5,7 +5,7 @@
 
 // Takes up 8 lines -> 16 vertices
 void drawCone(vec3 origin, vec3 axis, float angle, float maxDistance) {
-    vec3 helper = axis + vec3(0.1, 0, 0); // Random values
+    vec3 helper = vec3(0.12, 0.32, 0.82); // Random values
     vec3 tangent = normalize(helper - dot(axis, helper) * axis);
     vec3 bitangent = cross(axis, tangent);
     float sinAngle = sin(angle);

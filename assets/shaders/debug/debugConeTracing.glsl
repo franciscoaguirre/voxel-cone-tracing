@@ -67,7 +67,7 @@ void main() {
     float sinAngle = sin(angle);
     float cosAngle = cos(angle);
 
-    vec3 helper = axis - vec3(0.1, 0, 0); // Random vector
+    vec3 helper = vec3(0.12, 0.32, 0.82); // Random vector
     vec3 tangent = normalize(helper - dot(axis, helper) * axis);
     vec3 bitangent = cross(axis, tangent);
 
@@ -130,7 +130,12 @@ void main() {
     frag_color = vec4(1, 1, 0, 1);
 
     float angleFromPlane = (PI / 2) - parameters.halfConeAngle;
-    drawCone(In[0].position, In[0].direction, angleFromPlane, parameters.maxDistance);
+    drawCone(
+        In[0].position,
+        In[0].direction,
+        angleFromPlane,
+        parameters.maxDistance
+    );
 }
 
 #shader fragment

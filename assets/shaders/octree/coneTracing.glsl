@@ -109,6 +109,7 @@ void main() {
     vec3 eyeDirection = normalize(positionVoxelSpace - toVoxelSpace(eyePosition));
 
     vec3 normal = texture(gBufferNormals, In.textureCoordinates).xyz;
+    // TODO: Probably change this
     vec3 helper = normal - vec3(0.1, 0.1, 0); // Random vector
     vec3 tangent = normalize(helper - dot(normal, helper) * normal);
 
