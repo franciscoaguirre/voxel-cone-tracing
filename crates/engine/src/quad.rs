@@ -1,12 +1,12 @@
-use std::{ffi::c_void, mem::size_of};
+use std::{ffi::c_void, mem};
 
 use gl::types::GLuint;
 
-use super::shader::{Shader, compile_shaders};
+use super::shader::{compile_shaders, Shader};
 
 /// Quad to display textures flat on-screen.
 pub struct Quad {
-    /// `Vertex Array Object`, gets populated in `new` with all 8 vertices that make up a square
+    /// `Vertex Array Object`, gets populated in `new` with all 4 vertices that make up a square
     vao: GLuint,
     /// Indices for `vao`, they exist to reuse vertices.
     indices: Vec<u32>,
@@ -37,7 +37,7 @@ impl Quad {
         ];
         gl::BufferData(
             gl::ARRAY_BUFFER,
-            vertices.len() as isize * size_of::<f32>() as isize,
+            vertices.len() as isize * mem::size_of::<f32>() as isize,
             &vertices[0] as *const f32 as *const c_void,
             gl::STATIC_DRAW,
         );
@@ -48,7 +48,7 @@ impl Quad {
         let indices: [u32; 6] = [0, 1, 3, 1, 2, 3];
         gl::BufferData(
             gl::ELEMENT_ARRAY_BUFFER,
-            indices.len() as isize * size_of::<u32>() as isize,
+            indices.len() as isize * mem::size_of::<u32>() as isize,
             &indices[0] as *const u32 as *const c_void,
             gl::STATIC_DRAW,
         );
@@ -59,7 +59,7 @@ impl Quad {
             3,
             gl::FLOAT,
             gl::FALSE,
-            5 * size_of::<f32>() as i32,
+            5 * mem::size_of::<f32>() as i32,
             0 as *const c_void,
         );
         gl::EnableVertexAttribArray(1);
@@ -68,8 +68,8 @@ impl Quad {
             2,
             gl::FLOAT,
             gl::FALSE,
-            5 * size_of::<f32>() as i32,
-            (3 * size_of::<f32>()) as *const c_void,
+            5 * mem::size_of::<f32>() as i32,
+            (3 * mem::size_of::<f32>()) as *const c_void,
         );
 
         let shader = compile_shaders!("assets/shaders/renderQuad.glsl");

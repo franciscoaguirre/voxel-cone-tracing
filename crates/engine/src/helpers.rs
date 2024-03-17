@@ -281,6 +281,9 @@ pub unsafe fn bind_3d_image_texture(
     gl::BindImageTexture(image_index, texture, 0, gl::TRUE, 0, access, format);
 }
 
+/// Takes a `Texture3D` and renders it to screen
+pub unsafe fn render_3d_texture_to_screen() {} // TODO: This is what I'd like to use.
+
 pub extern "system" fn gl_debug_output_callback(
     source: GLenum,
     type_: GLenum,

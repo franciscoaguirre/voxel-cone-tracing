@@ -1,8 +1,8 @@
-use serde::Deserialize;
 use c_str_macro::c_str;
-use cgmath::{vec3, Matrix4};
+use cgmath::Matrix4;
+use serde::Deserialize;
 
-use crate::prelude::{Transform, AssetHandle, Shader, AssetRegistry, Material, Model};
+use crate::prelude::{AssetHandle, AssetRegistry, Material, Model, Shader, Transform};
 
 /// Object holds a handle to both a [`Model`] and a [`Material`]
 /// These handles will be used to get the actual asset from the [`AssetRegistry`]
@@ -18,7 +18,11 @@ pub struct Object {
 }
 
 impl Object {
-    pub fn new(model_handle: AssetHandle, material_handle: AssetHandle, transform: Transform) -> Self {
+    pub fn new(
+        model_handle: AssetHandle,
+        material_handle: AssetHandle,
+        transform: Transform,
+    ) -> Self {
         Self {
             model: model_handle,
             material: material_handle,
@@ -33,7 +37,10 @@ impl Object {
         unsafe {
             // Transform's model matrix
             shader.set_mat4(c_str!("model"), &self.transform.get_model_matrix());
-            shader.set_mat4(c_str!("modelNormalizationMatrix"), model_normalization_matrix);
+            shader.set_mat4(
+                c_str!("modelNormalizationMatrix"),
+                model_normalization_matrix,
+            );
             shader.set_mat3(c_str!("normalMatrix"), &self.transform.get_normal_matrix());
             // Material properties
             self.material().set_uniforms(shader);

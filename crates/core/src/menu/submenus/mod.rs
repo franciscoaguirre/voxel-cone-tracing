@@ -30,10 +30,13 @@ pub use camera::{CameraMenu, CameraMenuOutput};
 mod cone_tracing;
 pub use cone_tracing::{ConeTracingMenu, ConeTracingMenuOutput};
 
-mod picker;
-pub use picker::{PickerMenu, PickerMenuOutput};
+mod debug_cone_tracing;
+pub use debug_cone_tracing::{DebugConeMenu, DebugConeMenuOutput};
 
-use serde::{Serialize, Deserialize};
+mod helpers;
+use helpers::cone_parameters_inputs;
+
+use serde::{Deserialize, Serialize};
 
 pub trait SubMenu: std::fmt::Debug + Default + for<'a> Deserialize<'a> + Serialize + Clone {
     type InputData<'a>: 'a;

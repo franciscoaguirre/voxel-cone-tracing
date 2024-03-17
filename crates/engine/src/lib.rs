@@ -1,56 +1,54 @@
 //! Simple rendering engine.
 //! Can handle the usual Transforms, Lights, Cameras, etc.
 
+pub mod aabb;
+pub mod asset_registry;
 pub mod camera;
 pub mod common;
+pub mod cube;
 pub mod framebuffer;
 pub mod gizmo;
+pub mod helpers;
 pub mod light;
 pub mod macros;
+pub mod material;
 pub mod mesh;
 pub mod model;
-pub mod quad;
-pub mod shader;
-pub mod transform;
-pub mod aabb;
-pub mod helpers;
-pub mod types;
-pub mod scene;
-pub mod material;
 pub mod object;
-pub mod asset_registry;
+pub mod quad;
+pub mod scene;
+pub mod shader;
 pub mod test_utils;
 pub mod texture_buffer;
 mod traits;
+pub mod transform;
+pub mod types;
 
 #[cfg(feature = "ui")]
 pub mod ui;
 
 pub mod prelude {
     pub use super::{
-        transform::Transform,
-        shader::{Shader, ShaderPass, compile_shaders, compile_compute},
-        helpers,
-        types::*,
-        camera::Camera,
-        framebuffer::{
-            Framebuffer,
-            GeometryFramebuffer,
-            GEOMETRY_BUFFERS,
-            LightFramebuffer,
-            LIGHT_MAP_BUFFERS,
-        },
-        light::Light,
-        model::Model,
-        material::{Material, MaterialProperties},
-        scene::{Scene, process_scene},
-        object::Object,
-        asset_registry::{AssetRegistry, AssetHandle},
-        quad::Quad,
         aabb::Aabb,
-        gizmo::RenderGizmo,
+        asset_registry::{AssetHandle, AssetRegistry},
+        camera::Camera,
         common,
+        cube::Cube,
+        framebuffer::{
+            Framebuffer, GeometryFramebuffer, LightFramebuffer, GEOMETRY_BUFFERS, LIGHT_MAP_BUFFERS,
+        },
+        gizmo::RenderGizmo,
+        helpers,
+        light::Light,
+        material::{Material, MaterialProperties},
+        model::Model,
+        object::Object,
+        quad::Quad,
+        scene::{process_scene, Scene},
+        shader::{compile_compute, compile_shaders, Shader, ShaderPass},
         test_utils,
         texture_buffer::BufferTextureV2,
+        transform::Transform,
+        types::*,
     };
 }

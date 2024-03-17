@@ -1,8 +1,6 @@
 use serde::Deserialize;
 
-use crate::prelude::{
-    Object, Light, Material, MaterialProperties, Model, AssetRegistry,
-};
+use crate::prelude::{AssetRegistry, Light, Material, Object};
 
 #[derive(Deserialize)]
 pub struct Scene {
@@ -23,16 +21,15 @@ pub struct ModelInfo {
 }
 
 pub fn process_scene(scene: Scene) -> (Vec<Object>, Light) {
-    let mut assets = unsafe { AssetRegistry::initialize(&scene) };
+    unsafe { AssetRegistry::initialize(&scene) };
     (scene.objects, scene.light)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::prelude::{test_utils, Transform};
+    use crate::prelude::{test_utils, MaterialProperties, Transform};
 
-    use std::path::PathBuf;
     use std::env;
     use std::fs::File;
 
@@ -40,29 +37,22 @@ mod tests {
 
     fn get_test_scene() -> Scene {
         Scene {
-            objects: vec![
-                Object::new(
-                    "cube".to_string(),
-                    "red".to_string(),
-                    Transform::default(),
-                ),
-            ],
-            models: vec![
-                ModelInfo {
-                    name: "cube".to_string(),
-                    path: "assets/models/cube.obj".to_string(),
+            objects: vec![Object::new(
+                "cube".to_string(),
+                "red".to_string(),
+                Transform::default(),
+            )],
+            models: vec![ModelInfo {
+                name: "cube".to_string(),
+                path: "assets/models/cube.obj".to_string(),
+            }],
+            materials: vec![Material {
+                name: "red".to_string(),
+                properties: MaterialProperties {
+                    color: vec3(1.0, 0.0, 0.0),
+                    specular: 0.0,
                 },
-            ],
-            materials: vec![
-                Material {
-                    name: "red".to_string(),
-                    properties: MaterialProperties {
-                        color: vec3(1.0, 0.0, 0.0),
-                        diffuse: 1.0,
-                        specular: 0.0,
-                    },
-                },
-            ],
+            }],
             light: Light::default(),
         }
     }

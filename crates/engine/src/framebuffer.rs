@@ -36,7 +36,7 @@ pub type LightFramebuffer = Framebuffer<LIGHT_MAP_BUFFERS>;
 /// Implementation of framebuffer with only 1 output buffer.
 /// Meant to be used for easily visualizing and saving any rendering artifact.
 impl Framebuffer<1> {
-    /// Creates a new framebuffer meant for displaying an image on the screen, most likely via a screen-filling quad
+    /// Creates a new framebuffer meant for displaying an image on the screen, most likely via a screen-filling quad.
     pub unsafe fn new() -> Self {
         let mut fbo = 0;
         gl::GenFramebuffers(1, &mut fbo);

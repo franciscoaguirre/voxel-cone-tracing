@@ -1,11 +1,6 @@
-use std::mem::size_of;
-use std::ffi::c_void;
+use cgmath::{vec3, vec4, Deg, Euler, Matrix4, Vector3};
 
-use cgmath::{vec3, Vector3, Matrix4};
-
-use crate::prelude::{Shader, compile_shaders};
-
-// Axis Aligned Bounding Box
+// Axis-Aligned Bounding Box
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Aabb {
     pub min_vertex: Vector3<f32>,
@@ -33,7 +28,21 @@ impl Aabb {
             max_vertex: self.max_vertex + offset,
         }
     }
-    
+
+    pub fn rotated(self, rotation: Euler<f32>) -> Self {
+        let rotation_matrix = Matrix4::<f32>::from_angle_z(Deg(rotation.z))
+            * Matrix4::<f32>::from_angle_y(Deg(90.0 - rotation.y))
+            * Matrix4::<f32>::from_angle_x(Deg(-rotation.x));
+        Self {
+            min_vertex: (rotation_matrix
+                * vec4(self.min_vertex.x, self.min_vertex.y, self.min_vertex.z, 1.0))
+            .xyz(),
+            max_vertex: (rotation_matrix
+                * vec4(self.max_vertex.x, self.max_vertex.y, self.max_vertex.z, 1.0))
+            .xyz(),
+        }
+    }
+
     /// Refreshes Aabb whenever a vertex is added to the structure
     pub fn refresh_aabb(&mut self, pos_x: f32, pos_y: f32, pos_z: f32) {
         self.max_vertex.x = pos_x.max(self.max_vertex.x);

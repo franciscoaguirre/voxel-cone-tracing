@@ -1,10 +1,10 @@
 use std::fmt;
 use std::fs::File;
 
+use cgmath::{vec2, Vector2};
 use engine::ui::prelude::*;
 use macros::SimplifySubMenus;
-use serde::{Serialize, Deserialize};
-use cgmath::{vec2, Vector2};
+use serde::{Deserialize, Serialize};
 
 pub mod submenus;
 use submenus::*;
@@ -28,7 +28,7 @@ pub struct SubMenus {
     save_preset: SavePresetMenu,
     camera: CameraMenu,
     cone_tracing: ConeTracingMenu,
-    picker: PickerMenu,
+    debug_cone: DebugConeMenu,
 }
 
 impl Menu {
@@ -71,7 +71,9 @@ impl Menu {
 
         if let glfw::WindowEvent::Key(glfw::Key::LeftShift, _, glfw::Action::Press, _) = event {
             ui.toggle_shift();
-        } else if let glfw::WindowEvent::Key(glfw::Key::LeftShift, _, glfw::Action::Release, _) = event {
+        } else if let glfw::WindowEvent::Key(glfw::Key::LeftShift, _, glfw::Action::Release, _) =
+            event
+        {
             ui.toggle_shift();
         }
 
@@ -81,7 +83,7 @@ impl Menu {
                 let viewport_dimensions = Ui::get_window_size();
                 let quad_coordinates = (
                     cursor_position.0 / viewport_dimensions.0 as f64,
-                    1.0 - (cursor_position.1 / viewport_dimensions.1 as f64)
+                    1.0 - (cursor_position.1 / viewport_dimensions.1 as f64),
                 );
                 self.quad_coordinates = vec2(quad_coordinates.0 as f32, quad_coordinates.1 as f32);
             }

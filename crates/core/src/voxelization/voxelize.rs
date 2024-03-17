@@ -1,9 +1,9 @@
 use std::mem::size_of;
 
 use c_str_macro::c_str;
-use cgmath::{point3, Matrix4, SquareMatrix};
-use gl::types::*;
+use cgmath::point3;
 use engine::prelude::*;
+use gl::types::*;
 
 use crate::config::Config;
 
@@ -101,12 +101,7 @@ unsafe fn voxelize_scene(
     let (viewport_width, viewport_height) = config.viewport_dimensions();
 
     gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
-    gl::Viewport(
-        0,
-        0,
-        viewport_width,
-        viewport_height,
-    );
+    gl::Viewport(0, 0, viewport_width, viewport_height);
 }
 
 pub unsafe fn build_voxel_fragment_list(
@@ -121,7 +116,12 @@ pub unsafe fn build_voxel_fragment_list(
         "assets/shaders/voxel_fragment/voxelize.geom.glsl",
     );
 
-    calculate_voxel_fragment_list_length(&voxelization_shader, objects, scene_aabb, &mut atomic_counter);
+    calculate_voxel_fragment_list_length(
+        &voxelization_shader,
+        objects,
+        scene_aabb,
+        &mut atomic_counter,
+    );
     gl::MemoryBarrier(gl::ATOMIC_COUNTER_BUFFER);
 
     gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, atomic_counter);

@@ -9,7 +9,7 @@ extern crate c_str_macro;
 
 use c_str_macro::c_str;
 extern crate gl;
-use cgmath::{point3, vec2, vec3, Matrix4};
+use cgmath::{point3, vec2, vec3, Euler, Matrix4};
 use core::{
     cone_tracing::{ConeTracer, DebugCone},
     config::Config as CoreConfig,
@@ -30,7 +30,6 @@ use engine::{
     prelude::*,
     ui::glfw::{Glfw, WindowEvent},
 };
-use log::info;
 use structopt::StructOpt;
 
 mod cli_arguments;
@@ -124,7 +123,7 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
         "assets/shaders/model/modelLoading.geom.glsl",
     );
     let mut cone_tracer = ConeTracer::init();
-    let mut cone_parameters = HashMap::new();
+    // let mut cone_parameters = HashMap::new();
     let mut debug_cone = unsafe { DebugCone::new() };
 
     // Process scene
@@ -137,58 +136,73 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
             object.transform.position.y,
             object.transform.position.z,
         );
-        scene_aabb.join(&object.model().aabb.offsetted(offset));
+        let rotation = Euler {
+            x: object.transform.rotation_x(),
+            y: object.transform.rotation_y(),
+            z: object.transform.rotation_z(),
+        };
+        scene_aabb.join(&object.model().aabb.rotated(rotation).offsetted(offset));
     }
     let model_normalization_matrix = scene_aabb.normalization_matrix();
 
-    let (voxel_positions, number_of_voxel_fragments, voxel_colors, voxel_normals) =
-        unsafe { voxelization::build_voxel_fragment_list(&mut objects[..], &scene_aabb) };
-    info!("Number of voxel fragments: {}", number_of_voxel_fragments);
-
-    let _instant_before_octree = Instant::now();
-    let mut octree = unsafe {
-        Octree::new(
-            voxel_positions.clone(),
-            number_of_voxel_fragments,
-            voxel_colors,
-            voxel_normals,
-        )
-    };
-    if parameters.options.record_octree_build_time {
-        let octree_build_time = _instant_before_octree.elapsed().as_millis().to_string();
-        let mut in_bytes = octree_build_time.as_bytes().to_vec();
-        let newline = b'\n';
-        in_bytes.push(newline);
-        let folder = parameters.options.get_name();
-        let file_name = format!("{folder}/octree_build_time.txt");
-        OpenOptions::new()
-            .append(true)
-            .create(true)
-            .open(&file_name)
-            .expect("Couldn't open record octree build time file")
-            .write(&in_bytes[..])
-            .expect("Couldn't append to record octree build time file");
-    }
-
-    let node_positions = unsafe {
-        helpers::get_values_from_texture_buffer(
-            octree.textures.node_positions.1,
-            octree.number_of_nodes(),
-            0_u32,
+    // Here I'm trying to simplify and use the simple 3D texture approach.
+    let voxels_texture = unsafe {
+        voxelization::voxelize_to_3d_texture::voxelize(
+            &mut objects[..],
+            &scene_aabb,
+            &camera,
+            &light,
         )
     };
 
-    let debug_nodes: Vec<DebugNode> = node_positions
-        .iter()
-        .enumerate()
-        .map(|(index, &node_position)| {
-            let position = helpers::r32ui_to_rgb10_a2ui(node_position);
-            let text = format!("({}, {}, {})", position.0, position.1, position.2);
-            DebugNode::new(index as u32, text)
-        })
-        .collect();
-    let mut selected_debug_nodes: Vec<DebugNode> = Vec::new();
-    let mut selected_debug_nodes_updated = false;
+    // let (voxel_positions, number_of_voxel_fragments, voxel_colors, voxel_normals) =
+    //     unsafe { voxelization::build_voxel_fragment_list(&mut objects[..], &scene_aabb) };
+    // log::info!("Number of voxel fragments: {}", number_of_voxel_fragments);
+
+    // let _instant_before_octree = Instant::now();
+    // let mut octree = unsafe {
+    //     Octree::new(
+    //         voxel_positions.clone(),
+    //         number_of_voxel_fragments,
+    //         voxel_colors,
+    //         voxel_normals,
+    //     )
+    // };
+    // if parameters.options.record_octree_build_time {
+    //     let octree_build_time = _instant_before_octree.elapsed().as_millis().to_string();
+    //     let mut in_bytes = octree_build_time.as_bytes().to_vec();
+    //     let newline = b'\n';
+    //     in_bytes.push(newline);
+    //     let folder = parameters.options.get_name();
+    //     let file_name = format!("{folder}/octree_build_time.txt");
+    //     OpenOptions::new()
+    //         .append(true)
+    //         .create(true)
+    //         .open(&file_name)
+    //         .expect("Couldn't open record octree build time file")
+    //         .write(&in_bytes[..])
+    //         .expect("Couldn't append to record octree build time file");
+    // }
+
+    // let node_positions = unsafe {
+    //     helpers::get_values_from_texture_buffer(
+    //         octree.textures.node_positions.1,
+    //         octree.number_of_nodes(),
+    //         0_u32,
+    //     )
+    // };
+
+    // let debug_nodes: Vec<DebugNode> = node_positions
+    //     .iter()
+    //     .enumerate()
+    //     .map(|(index, &node_position)| {
+    //         let position = helpers::r32ui_to_rgb10_a2ui(node_position);
+    //         let text = format!("({}, {}, {})", position.0, position.1, position.2);
+    //         DebugNode::new(index as u32, text)
+    //     })
+    //     .collect();
+    // let mut selected_debug_nodes: Vec<DebugNode> = Vec::new();
+    // let mut selected_debug_nodes_updated = false;
     let mut color_direction = vec3(1.0, 0.0, 0.0);
     let mut brick_attribute = BrickAttribute::None;
     let mut brick_padding = 0.0;
@@ -197,8 +211,10 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     let mut photons: Vec<u32> = Vec::new();
     let mut children: Vec<u32> = Vec::new();
 
-    let mut light_maps = unsafe { octree.inject_light(&mut objects[..], &light, &scene_aabb) };
+    // let mut light_maps = unsafe { octree.inject_light(&mut objects[..], &light, &scene_aabb) };
     let quad = unsafe { Quad::new() };
+    // let cube = unsafe { Cube::new() };
+    // let very_simple_shader = compile_shaders!("assets/shaders/model/very_simple.glsl");
     let camera_framebuffer = unsafe { GeometryFramebuffer::new() };
 
     let mut current_voxel_fragment_count: u32 = 0;
@@ -220,16 +236,16 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     let mut should_show_debug_cone = false;
     let mut should_move_debug_cone = false;
 
-    let render_voxel_fragments_shader = RenderVoxelFragmentsShader::init(
-        voxel_positions.texture(),
-        voxel_colors.0,
-        number_of_voxel_fragments,
-    );
-    let render_border_voxel_fragments_shader = RenderVoxelFragmentsShader::init(
-        octree.border_data.voxel_data.voxel_positions.texture(),
-        octree.border_data.voxel_data.voxel_colors.0,
-        octree.border_data.voxel_data.number_of_voxel_fragments,
-    );
+    // let render_voxel_fragments_shader = RenderVoxelFragmentsShader::init(
+    //     voxel_positions.texture(),
+    //     voxel_colors.0,
+    //     number_of_voxel_fragments,
+    // );
+    // let render_border_voxel_fragments_shader = RenderVoxelFragmentsShader::init(
+    //     octree.border_data.voxel_data.voxel_positions.texture(),
+    //     octree.border_data.voxel_data.voxel_colors.0,
+    //     octree.border_data.voxel_data.number_of_voxel_fragments,
+    // );
     let render_depth_buffer_shader = compile_shaders!("assets/shaders/renderDepthQuad.glsl");
 
     let photon_power = light.intensity() / (viewport_width * viewport_height) as f32;
@@ -283,15 +299,15 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
             starting_time = current_frame;
         }
 
-        let geometry_buffers = unsafe {
-            active_camera.transform.take_photo(
-                &mut objects[..],
-                &active_camera.get_projection_matrix(),
-                &scene_aabb,
-                &camera_framebuffer,
-                0,
-            )
-        };
+        // let geometry_buffers = unsafe {
+        //     active_camera.transform.take_photo(
+        //         &mut objects[..],
+        //         &active_camera.get_projection_matrix(),
+        //         &scene_aabb,
+        //         &camera_framebuffer,
+        //         0,
+        //     )
+        // };
 
         unsafe {
             gl::ClearColor(0.1, 0.1, 0.1, 1.0);
@@ -327,122 +343,122 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
         ui.begin_frame(current_frame);
 
         // egui render
-        if ui.is_showing() {
-            menu.show_main_window();
-            menu.render((
-                (),
-                NodeSearchMenuInput::new(&debug_nodes),
-                (),
-                ChildrenMenuInput::new(&children),
-                DiagnosticsMenuInput::new(fps),
-                (),
-                PhotonsMenuInput::new(&photons),
-                SavePresetMenuInput::new(&active_camera, menu.sub_menus.clone()), // TODO: Remove clone
-                (),
-                (),
-                (),
-            ));
-            let outputs = menu.get_data();
+        // if ui.is_showing() {
+        //     menu.show_main_window();
+        //     menu.render((
+        //         (),
+        //         NodeSearchMenuInput::new(&debug_nodes),
+        //         (),
+        //         ChildrenMenuInput::new(&children),
+        //         DiagnosticsMenuInput::new(fps),
+        //         (),
+        //         PhotonsMenuInput::new(&photons),
+        //         SavePresetMenuInput::new(&active_camera, menu.sub_menus.clone()), // TODO: Remove clone
+        //         (),
+        //         (),
+        //         (),
+        //     ));
+        //     let outputs = menu.get_data();
 
-            // All nodes
-            show_octree = outputs.0.should_render_octree;
-            current_octree_level = outputs.0.current_octree_level;
-            octree_nodes_to_visualize = outputs.0.octree_nodes_to_visualize.clone();
+        //     // All nodes
+        //     show_octree = outputs.0.should_render_octree;
+        //     current_octree_level = outputs.0.current_octree_level;
+        //     octree_nodes_to_visualize = outputs.0.octree_nodes_to_visualize.clone();
 
-            // Node search
-            selected_debug_nodes = selected_debug_nodes
-                .into_iter()
-                .chain(outputs.1.selected_items.clone())
-                .collect();
-            node_filter_text = outputs.1.filter_text.clone();
-            should_show_neighbors = outputs.1.should_show_neighbors;
-            selected_debug_nodes_updated = outputs.1.selected_items_updated;
+        //     // Node search
+        //     selected_debug_nodes = selected_debug_nodes
+        //         .into_iter()
+        //         .chain(outputs.1.selected_items.clone())
+        //         .collect();
+        //     node_filter_text = outputs.1.filter_text.clone();
+        //     should_show_neighbors = outputs.1.should_show_neighbors;
+        //     selected_debug_nodes_updated = outputs.1.selected_items_updated;
 
-            // Bricks
-            bricks_to_show = outputs.2.bricks_to_show;
-            brick_attribute = outputs.2.brick_attribute;
-            should_show_normals = outputs.2.should_show_brick_normals;
-            color_direction = outputs.2.color_direction;
-            brick_padding = outputs.2.brick_padding;
+        //     // Bricks
+        //     bricks_to_show = outputs.2.bricks_to_show;
+        //     brick_attribute = outputs.2.brick_attribute;
+        //     should_show_normals = outputs.2.should_show_brick_normals;
+        //     color_direction = outputs.2.color_direction;
+        //     brick_padding = outputs.2.brick_padding;
 
-            // Images
-            cone_tracer.toggles = outputs.5.toggles.clone();
+        //     // Images
+        //     cone_tracer.toggles = outputs.5.toggles.clone();
 
-            // Camera
-            active_camera.orthographic = outputs.8.orthographic;
+        //     // Camera
+        //     active_camera.orthographic = outputs.8.orthographic;
 
-            // Cone tracing
-            should_show_debug_cone = outputs.9.show_debug_cone;
-            should_move_debug_cone = outputs.9.move_debug_cone;
-            // TODO: there is quite a bit of cloning here
-            debug_cone.parameters = outputs.9.debug_cone_parameters.clone();
-            debug_cone.point_to_light = outputs.9.point_to_light;
-            cone_parameters.insert(
-                "shadowConeParameters",
-                outputs.9.shadow_cone_parameters.clone(),
-            );
-            cone_parameters.insert(
-                "ambientOcclusionConeParameters",
-                outputs.9.ambient_occlusion_cone_parameters.clone(),
-            );
-            cone_parameters.insert(
-                "diffuseConeParameters",
-                outputs.9.diffuse_cone_parameters.clone(),
-            );
-            cone_parameters.insert(
-                "specularConeParameters",
-                outputs.9.specular_cone_parameters.clone(),
-            );
-            // This one doesn't come from `get_data()` but is still relevant to `debug_cone`
-            geometry_buffer_coordinates = menu.get_quad_coordinates();
+        //     // Cone tracing
+        //     cone_parameters.insert(
+        //         "shadowConeParameters",
+        //         outputs.9.shadow_cone_parameters.clone(),
+        //     );
+        //     cone_parameters.insert(
+        //         "ambientOcclusionConeParameters",
+        //         outputs.9.ambient_occlusion_cone_parameters.clone(),
+        //     );
+        //     cone_parameters.insert(
+        //         "diffuseConeParameters",
+        //         outputs.9.diffuse_cone_parameters.clone(),
+        //     );
+        //     cone_parameters.insert(
+        //         "specularConeParameters",
+        //         outputs.9.specular_cone_parameters.clone(),
+        //     );
+        //     // This one doesn't come from `get_data()` but is still relevant to `debug_cone`
+        //     geometry_buffer_coordinates = menu.get_quad_coordinates();
 
-            menu.is_picking = outputs.10.is_picking;
-        }
+        //     should_show_debug_cone = outputs.10.show_debug_cone;
+        //     should_move_debug_cone = outputs.10.move_debug_cone;
+        //     // TODO: there is quite a bit of cloning here
+        //     debug_cone.parameters = outputs.10.cone_parameters.clone();
+        //     debug_cone.point_to_light = outputs.10.point_to_light;
+        //     menu.is_picking = outputs.10.is_picking;
+        // }
 
         // This is for debugging
-        if selected_debug_nodes_updated {
-            selected_debug_nodes_updated = false;
-            let last_debug_node = selected_debug_nodes.last();
-            if let Some(last_debug_node) = last_debug_node {
-                unsafe {
-                    octree.run_get_photons_shader(last_debug_node.index());
-                    photons = helpers::get_values_from_texture_buffer(
-                        octree.textures.photons_buffer.1,
-                        27, // Voxels in a brick
-                        42_u32,
-                    );
-                    octree.run_get_children_shader(last_debug_node.index());
-                    children = helpers::get_values_from_texture_buffer(
-                        octree.textures.children_buffer.1,
-                        8, // Children in a node
-                        42_u32,
-                    );
-                    // octree.run_colors_quad_shader(last_debug_node.index());
-                };
-            }
-        }
+        // if selected_debug_nodes_updated {
+        //     selected_debug_nodes_updated = false;
+        //     let last_debug_node = selected_debug_nodes.last();
+        //     if let Some(last_debug_node) = last_debug_node {
+        //         unsafe {
+        //             octree.run_get_photons_shader(last_debug_node.index());
+        //             photons = helpers::get_values_from_texture_buffer(
+        //                 octree.textures.photons_buffer.1,
+        //                 27, // Voxels in a brick
+        //                 42_u32,
+        //             );
+        //             octree.run_get_children_shader(last_debug_node.index());
+        //             children = helpers::get_values_from_texture_buffer(
+        //                 octree.textures.children_buffer.1,
+        //                 8, // Children in a node
+        //                 42_u32,
+        //             );
+        //             // octree.run_colors_quad_shader(last_debug_node.index());
+        //         };
+        //     }
+        // }
 
         // Input
-        if !ui.is_showing() {
-            let transform = if should_move_light {
-                unsafe {
-                    light_maps = // TODO: This takes too long, optimize
-                        octree.inject_light(
-                            &mut objects[..],
-                            &light,
-                            &scene_aabb,
-                        );
-                    light.transform_mut()
-                }
-            } else if should_move_debug_cone {
-                &mut debug_cone.transform
-            } else {
-                &mut active_camera.transform
-            };
-            unsafe {
-                common::process_movement_input(delta_time as f32, transform);
-            }
-        }
+        // if !ui.is_showing() {
+        //     let transform = if should_move_light {
+        //         unsafe {
+        //             light_maps = // TODO: This takes too long, optimize
+        //                 octree.inject_light(
+        //                     &mut objects[..],
+        //                     &light,
+        //                     &scene_aabb,
+        //                 );
+        //             light.transform_mut()
+        //         }
+        //     } else if should_move_debug_cone {
+        //         &mut debug_cone.transform
+        //     } else {
+        //         &mut active_camera.transform
+        //     };
+        //     unsafe {
+        //         common::process_movement_input(delta_time as f32, transform);
+        //     }
+        // }
 
         // Render
         unsafe {
@@ -457,56 +473,56 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
             let mut model = Matrix4::<f32>::from_translation(vec3(0.0, 0.0, 0.0));
             model = model * Matrix4::from_scale(1.);
 
-            if show_voxel_fragment_list {
-                if should_move_light {
-                    render_border_voxel_fragments_shader.run(&projection, &view, &model);
-                } else {
-                    render_voxel_fragments_shader.run(&projection, &view, &model);
-                }
-            }
+            // if show_voxel_fragment_list {
+            //     if should_move_light {
+            //         render_border_voxel_fragments_shader.run(&projection, &view, &model);
+            //     } else {
+            //         render_voxel_fragments_shader.run(&projection, &view, &model);
+            //     }
+            // }
 
-            let node_data_to_visualize = match octree_nodes_to_visualize {
-                OctreeDataType::Geometry => &octree.geometry_data.node_data,
-                OctreeDataType::Border => &octree.border_data.node_data,
-            };
+            // let node_data_to_visualize = match octree_nodes_to_visualize {
+            //     OctreeDataType::Geometry => &octree.geometry_data.node_data,
+            //     OctreeDataType::Border => &octree.border_data.node_data,
+            // };
 
-            if show_octree {
-                octree.render(
-                    &model,
-                    &view,
-                    &projection,
-                    current_octree_level,
-                    color_direction,
-                    should_show_normals,
-                    brick_attribute,
-                    brick_padding,
-                    node_data_to_visualize,
-                );
-            }
+            // if show_octree {
+            //     octree.render(
+            //         &model,
+            //         &view,
+            //         &projection,
+            //         current_octree_level,
+            //         color_direction,
+            //         should_show_normals,
+            //         brick_attribute,
+            //         brick_padding,
+            //         node_data_to_visualize,
+            //     );
+            // }
 
-            octree.set_node_indices(
-                &selected_debug_nodes
-                    .iter()
-                    .map(|node| node.index())
-                    .collect(),
-            );
-            octree.run_node_positions_shader(&projection, &view, &model);
-            octree.set_bricks_to_show(bricks_to_show);
+            // octree.set_node_indices(
+            //     &selected_debug_nodes
+            //         .iter()
+            //         .map(|node| node.index())
+            //         .collect(),
+            // );
+            // octree.run_node_positions_shader(&projection, &view, &model);
+            // octree.set_bricks_to_show(bricks_to_show);
 
-            if should_show_neighbors {
-                octree.run_node_neighbors_shader(&projection, &view, &model);
-            }
+            // if should_show_neighbors {
+            //     octree.run_node_neighbors_shader(&projection, &view, &model);
+            // }
 
-            if bricks_to_show.at_least_one() {
-                octree.run_node_bricks_shader(
-                    &projection,
-                    &view,
-                    &model,
-                    color_direction,
-                    brick_attribute,
-                    brick_padding,
-                );
-            }
+            // if bricks_to_show.at_least_one() {
+            //     octree.run_node_bricks_shader(
+            //         &projection,
+            //         &view,
+            //         &model,
+            //         color_direction,
+            //         brick_attribute,
+            //         brick_padding,
+            //     );
+            // }
 
             if show_model {
                 // Render model normally
@@ -519,32 +535,36 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
                 }
             }
 
-            cone_tracer.run(
-                &light,
-                &octree.textures,
-                &geometry_buffers,
-                light_maps,
-                &quad,
-                &active_camera,
-                &cone_parameters,
-                if parameters.options.screenshot {
-                    Some(parameters.options.get_name())
-                } else {
-                    None
-                },
-            );
+            voxelization::voxelize_to_3d_texture::visualize(active_camera, voxels_texture);
 
-            if should_show_debug_cone {
-                debug_cone.run(
-                    &octree.textures,
-                    &projection,
-                    &view,
-                    &mut selected_debug_nodes,
-                    &geometry_buffers,
-                    &geometry_buffer_coordinates,
-                    &light,
-                );
-            }
+            // cube.render(&very_simple_shader, active_camera);
+
+            // cone_tracer.run(
+            //     &light,
+            //     &octree.textures,
+            //     &geometry_buffers,
+            //     light_maps,
+            //     &quad,
+            //     &active_camera,
+            //     &cone_parameters,
+            //     if parameters.options.screenshot {
+            //         Some(parameters.options.get_name())
+            //     } else {
+            //         None
+            //     },
+            // );
+
+            // if should_show_debug_cone {
+            //     debug_cone.run(
+            //         &octree.textures,
+            //         &projection,
+            //         &view,
+            //         &mut selected_debug_nodes,
+            //         &geometry_buffers,
+            //         &geometry_buffer_coordinates,
+            //         &light,
+            //     );
+            // }
             static_eye.draw_gizmo(&projection, &view);
             light.draw_gizmo(&projection, &view);
             // quad.render(light_maps.1);
@@ -571,8 +591,8 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
 
         ui.end_frame();
 
-        current_voxel_fragment_count =
-            (current_voxel_fragment_count + 10000).min(number_of_voxel_fragments);
+        // current_voxel_fragment_count =
+        //     (current_voxel_fragment_count + 10000).min(number_of_voxel_fragments);
 
         // Swap buffers and poll I/O events
         common::swap_buffers();

@@ -52,6 +52,8 @@ Every voxel fragment ends up in an octree leaf.
 Every node has at least one child node unless it's the last level.
 This means there are no leaves on higher levels.
 
+We turn the photons to irradiance by multiplying them by the color.
+
 ## Standards
 
 ### Octree terminology and utils
