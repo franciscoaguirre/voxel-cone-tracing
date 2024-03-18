@@ -107,5 +107,6 @@ void main() {
     vec3 voxel = scaleAndBias(In.worldPosition);
     ivec3 dimension = imageSize(voxelsTexture);
     vec4 result = vec4(vec3(color), 1);
-    imageStore(voxelsTexture, ivec3(dimension * voxel), result);
+    // TODO: Use result instead of `vec4(1)`
+    imageStore(voxelsTexture, ivec3(dimension * voxel), vec4(1));
 }

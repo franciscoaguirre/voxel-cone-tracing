@@ -439,26 +439,26 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
         // }
 
         // Input
-        // if !ui.is_showing() {
-        //     let transform = if should_move_light {
-        //         unsafe {
-        //             light_maps = // TODO: This takes too long, optimize
-        //                 octree.inject_light(
-        //                     &mut objects[..],
-        //                     &light,
-        //                     &scene_aabb,
-        //                 );
-        //             light.transform_mut()
-        //         }
-        //     } else if should_move_debug_cone {
-        //         &mut debug_cone.transform
-        //     } else {
-        //         &mut active_camera.transform
-        //     };
-        //     unsafe {
-        //         common::process_movement_input(delta_time as f32, transform);
-        //     }
-        // }
+        if !ui.is_showing() {
+            // let transform = if should_move_light {
+            //     unsafe {
+            //         light_maps = // TODO: This takes too long, optimize
+            //             octree.inject_light(
+            //                 &mut objects[..],
+            //                 &light,
+            //                 &scene_aabb,
+            //             );
+            //         light.transform_mut()
+            //     }
+            // } else if should_move_debug_cone {
+            //     &mut debug_cone.transform
+            // } else {
+            //     &mut active_camera.transform
+            // };
+            unsafe {
+                common::process_movement_input(delta_time as f32, &mut active_camera.transform);
+            }
+        }
 
         // Render
         unsafe {

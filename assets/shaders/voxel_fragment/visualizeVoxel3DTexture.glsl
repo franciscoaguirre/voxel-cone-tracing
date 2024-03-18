@@ -25,7 +25,7 @@ void main() {
 #define STEP_LENGTH 0.005f
 #define INV_STEP_LENGTH (1.0f / STEP_LENGTH)
 
-// uniform sampler2D textureBack;
+uniform sampler2D textureBack;
 // uniform sampler2D textureFront;
 uniform sampler3D voxelsTexture;
 uniform vec3 cameraPosition;
@@ -46,8 +46,8 @@ vec3 scaleAndBias(vec3 p) {
 // }
 
 void main() {
-    const vec3 origin = scaleAndBias(cameraPosition); // TODO: We might need a front.
-    vec3 direction = vec3(In.textureCoordinates.xy, -1) - origin;
+    const vec3 origin = cameraPosition; // TODO: We might need a front.
+    vec3 direction = texture(textureBack, In.textureCoordinates).xyz - origin;
     const uint numberOfSteps = uint(INV_STEP_LENGTH * length(direction));
     direction = normalize(direction);
 
