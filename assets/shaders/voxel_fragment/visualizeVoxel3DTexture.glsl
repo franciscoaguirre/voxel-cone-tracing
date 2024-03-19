@@ -26,7 +26,7 @@ void main() {
 #define INV_STEP_LENGTH (1.0f / STEP_LENGTH)
 
 uniform sampler2D textureBack;
-// uniform sampler2D textureFront;
+uniform sampler2D textureFront;
 uniform sampler3D voxelsTexture;
 uniform vec3 cameraPosition;
 uniform int mipmapLevel = 0;
@@ -41,12 +41,14 @@ vec3 scaleAndBias(vec3 p) {
     return 0.5f * p + 0.5f;
 }
 
-// bool isInsideCube(vec3 p, float e) {
-//     return abs(p.x) < 1 + e && abs(p.y) < 1 + e && abs(p.z) < 1 + e;
-// }
+bool isInsideCube(vec3 p, float e) {
+    return abs(p.x) < 1 + e && abs(p.y) < 1 + e && abs(p.z) < 1 + e;
+}
 
 void main() {
-    const vec3 origin = cameraPosition; // TODO: We might need a front.
+    const vec3 origin = isInsideCube(cameraPosition, 0.2f)
+        ? cameraPosition
+        : texture(textureFront, In.textureCoordinates).xyz;
     vec3 direction = texture(textureBack, In.textureCoordinates).xyz - origin;
     const uint numberOfSteps = uint(INV_STEP_LENGTH * length(direction));
     direction = normalize(direction);

@@ -39,42 +39,48 @@ impl Cube {
         // ];
 
         let vertices: [f32; 36 * 3] = [
-            -1.0, -1.0, -1.0, // something
-            1.0, -1.0, -1.0, // something
-            1.0, 1.0, -1.0, // something
-            1.0, 1.0, -1.0, // something
-            -1.0, 1.0, -1.0, // something
-            -1.0, -1.0, -1.0, // something
-            -1.0, -1.0, 1.0, // something
-            1.0, -1.0, 1.0, // something
-            1.0, 1.0, 1.0, // something
-            1.0, 1.0, 1.0, // something
-            -1.0, 1.0, 1.0, // something
-            -1.0, -1.0, 1.0, // something
-            -1.0, 1.0, 1.0, // something
-            -1.0, 1.0, -1.0, // something
-            -1.0, -1.0, -1.0, // something
-            -1.0, -1.0, -1.0, // something
-            -1.0, -1.0, 1.0, // something
-            -1.0, 1.0, 1.0, // something
-            1.0, 1.0, 1.0, // something
-            1.0, 1.0, -1.0, // something
-            1.0, -1.0, -1.0, // something
-            1.0, -1.0, -1.0, // something
-            1.0, -1.0, 1.0, // something
-            1.0, 1.0, 1.0, // something
-            -1.0, -1.0, -1.0, // something
-            1.0, -1.0, -1.0, // something
-            1.0, -1.0, 1.0, // something
-            1.0, -1.0, 1.0, // something
-            -1.0, -1.0, 1.0, // something
-            -1.0, -1.0, -1.0, // something
-            -1.0, 1.0, -1.0, // something
-            1.0, 1.0, -1.0, // something
-            1.0, 1.0, 1.0, // something
-            1.0, 1.0, 1.0, // something
-            -1.0, 1.0, 1.0, // something
-            -1.0, 1.0, -1.0, // something
+            // Back face
+            -1.0, -1.0, -1.0, // Bottom-left
+            1.0, 1.0, -1.0, // top-right
+            1.0, -1.0, -1.0, // bottom-right
+            1.0, 1.0, -1.0, // top-right
+            -1.0, -1.0, -1.0, // bottom-left
+            -1.0, 1.0, -1.0, // top-left
+            // Front face
+            -1.0, -1.0, 1.0, // bottom-left
+            1.0, -1.0, 1.0, // bottom-right
+            1.0, 1.0, 1.0, // top-right
+            1.0, 1.0, 1.0, // top-right
+            -1.0, 1.0, 1.0, // top-left
+            -1.0, -1.0, 1.0, // bottom-left
+            // Left face
+            -1.0, 1.0, 1.0, // top-right
+            -1.0, 1.0, -1.0, // top-left
+            -1.0, -1.0, -1.0, // bottom-left
+            -1.0, -1.0, -1.0, // bottom-left
+            -1.0, -1.0, 1.0, // bottom-right
+            -1.0, 1.0, 1.0, // top-right
+            // Right face
+            1.0, 1.0, 1.0, // top-left
+            1.0, -1.0, -1.0, // bottom-right
+            1.0, 1.0, -1.0, // top-right
+            1.0, -1.0, -1.0, // bottom-right
+            1.0, 1.0, 1.0, // top-left
+            1.0, -1.0, 1.0, // bottom-left
+            // Bottom face
+            -1.0, -1.0, -1.0, // top-right
+            1.0, -1.0, -1.0, // top-left
+            1.0, -1.0, 1.0, // bottom-left
+            1.0, -1.0, 1.0, // bottom-left
+            -1.0, -1.0, 1.0, // bottom-right
+            -1.0, -1.0, -1.0, // top-right
+            // Top face
+            -1.0, 1.0, -1.0, // top-left
+            1.0, 1.0, 1.0, // bottom-right
+            1.0, 1.0, -1.0, // top-right
+            1.0, 1.0, 1.0, // bottom-right
+            -1.0, 1.0, -1.0, // top-left
+            -1.0, 1.0, 1.0, // bottom-left
         ];
         gl::BufferData(
             gl::ARRAY_BUFFER,

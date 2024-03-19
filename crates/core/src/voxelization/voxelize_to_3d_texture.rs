@@ -37,112 +37,154 @@ pub unsafe fn voxelize(
     voxels_texture
 }
 
-/// Visualizes the voxel 3D texture.
-/// In order to do this, creates a front and back textures with the world positions of a unit cube.
-/// Then we render a quad where we ray march our voxels 3D texture.
-pub unsafe fn visualize(camera: &Camera, voxels_texture: Texture3D) {
-    let world_positions_shader =
-        compile_shaders!("assets/shaders/voxel_fragment/worldPositions.glsl");
-    world_positions_shader.use_program();
+pub struct Visualizer {
+    visualization_shader: Shader,
+    world_positions_shader: Shader,
+    back_framebuffer: Framebuffer<1>,
+    front_framebuffer: Framebuffer<1>,
+    cube_renderer: Cube,
+    quad_renderer: Quad,
+}
 
-    // Upload camera
-    world_positions_shader.set_mat4(c_str!("projection"), &camera.get_projection_matrix());
-    world_positions_shader.set_mat4(c_str!("view"), &camera.transform.get_view_matrix());
+pub trait GpuKernel {
+    type InitInputs<'a>: 'a;
+    type RunInputs<'b>: 'b;
 
-    // Settings
-    gl::ClearColor(0.0, 0.0, 0.0, 1.0);
-    gl::Enable(gl::CULL_FACE);
-    gl::Enable(gl::DEPTH_TEST);
+    unsafe fn init<'a>(inputs: Self::InitInputs<'a>) -> Self;
+    unsafe fn run<'b>(&self, inputs: Self::RunInputs<'b>);
+}
 
-    let cube = Cube::new();
+pub struct VisualizerRunInputs<'a> {
+    pub camera: &'a Camera,
+    pub voxels_texture: Texture3D,
+    pub mipmap_level: i32,
+}
 
-    // Back
-    let back_framebuffer = Framebuffer::<1>::new_floating_point();
-    gl::CullFace(gl::FRONT);
-    gl::BindFramebuffer(gl::FRAMEBUFFER, back_framebuffer.fbo());
-    let (width, height) = common::get_framebuffer_size();
-    gl::Viewport(0, 0, width, height);
-    gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-    gl::BindVertexArray(cube.get_vao());
-    gl::DrawElements(
-        gl::TRIANGLES,
-        cube.get_num_indices() as i32,
-        gl::UNSIGNED_INT,
-        std::ptr::null(),
-    );
-    gl::BindVertexArray(0);
+impl GpuKernel for Visualizer {
+    type InitInputs<'a> = ();
+    type RunInputs<'a> = VisualizerRunInputs<'a>;
 
-    // Front
-    // TODO: Descomentar esto hace que no se vea nada.
-    // let front_framebuffer = Framebuffer::<1>::new_floating_point();
-    // gl::CullFace(gl::BACK);
-    // gl::BindFramebuffer(gl::FRAMEBUFFER, front_framebuffer.fbo());
-    // let (width, height) = common::get_framebuffer_size();
-    // gl::Viewport(0, 0, width, height);
-    // gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-    // gl::BindVertexArray(cube.get_vao());
-    // gl::DrawElements(
-    //     gl::TRIANGLES,
-    //     cube.get_num_indices() as i32,
-    //     gl::UNSIGNED_INT,
-    //     std::ptr::null(),
-    // );
-    // gl::BindVertexArray(0);
+    /// Initializes the visualizer.
+    unsafe fn init(_: ()) -> Self {
+        Self {
+            world_positions_shader: compile_shaders!(
+                "assets/shaders/voxel_fragment/worldPositions.glsl"
+            ),
+            cube_renderer: Cube::new(),
+            quad_renderer: Quad::new(),
+            back_framebuffer: Framebuffer::<1>::new_floating_point(),
+            front_framebuffer: Framebuffer::<1>::new_floating_point(),
+            visualization_shader: compile_shaders!(
+                "assets/shaders/voxel_fragment/visualizeVoxel3DTexture.glsl"
+            ),
+        }
+    }
 
-    let visualization_shader =
-        compile_shaders!("assets/shaders/voxel_fragment/visualizeVoxel3DTexture.glsl");
-    visualization_shader.use_program();
+    /// Runs the ray marching code against the voxels 3D texture.
+    unsafe fn run<'a>(&self, inputs: Self::RunInputs<'a>) {
+        // Use world positions shader
+        self.world_positions_shader.use_program();
 
-    // Upload camera
-    visualization_shader.set_mat4(c_str!("projection"), &camera.get_projection_matrix());
-    visualization_shader.set_mat4(c_str!("view"), &camera.transform.get_view_matrix());
-    visualization_shader.set_vec3(
-        c_str!("cameraPosition"),
-        camera.transform.position.x,
-        camera.transform.position.y,
-        camera.transform.position.z,
-    );
+        // Upload camera
+        self.world_positions_shader
+            .set_mat4(c_str!("projection"), &inputs.camera.get_projection_matrix());
+        self.world_positions_shader
+            .set_mat4(c_str!("view"), &inputs.camera.transform.get_view_matrix());
 
-    // Unbind framebuffer.
-    // Very important because we are clearing the framebuffer later,
-    // we don't want to clear this one.
-    gl::BindRenderbuffer(gl::RENDERBUFFER, 0);
-    gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
+        // Settings
+        gl::ClearColor(0.0, 0.0, 0.0, 1.0);
+        gl::Enable(gl::CULL_FACE);
+        gl::Enable(gl::DEPTH_TEST);
 
-    gl::Disable(gl::DEPTH_TEST);
-    gl::Enable(gl::CULL_FACE);
+        // Back
+        gl::CullFace(gl::FRONT);
+        gl::BindFramebuffer(gl::FRAMEBUFFER, self.back_framebuffer.fbo());
+        let (width, height) = common::get_framebuffer_size();
+        gl::Viewport(0, 0, width, height);
+        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+        gl::BindVertexArray(self.cube_renderer.get_vao());
+        gl::DrawElements(
+            gl::TRIANGLES,
+            self.cube_renderer.get_num_indices() as i32,
+            gl::UNSIGNED_INT,
+            std::ptr::null(),
+        );
+        gl::BindVertexArray(0);
 
-    gl::ActiveTexture(gl::TEXTURE0);
-    gl::BindTexture(gl::TEXTURE_2D, back_framebuffer.textures()[0]);
-    visualization_shader.set_int(c_str!("textureBack"), 0);
-    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+        // Front
+        // TODO: Descomentar esto hace que no se vea nada.
+        gl::CullFace(gl::BACK);
+        gl::BindFramebuffer(gl::FRAMEBUFFER, self.front_framebuffer.fbo());
+        let (width, height) = common::get_framebuffer_size();
+        gl::Viewport(0, 0, width, height);
+        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+        gl::BindVertexArray(self.cube_renderer.get_vao());
+        gl::DrawElements(
+            gl::TRIANGLES,
+            self.cube_renderer.get_num_indices() as i32,
+            gl::UNSIGNED_INT,
+            std::ptr::null(),
+        );
+        gl::BindVertexArray(0);
 
-    // gl::ActiveTexture(gl::TEXTURE1);
-    // gl::BindTexture(gl::TEXTURE_2D, front_framebuffer.textures()[0]);
-    // visualization_shader.set_int(c_str!("textureFront"), 1);
-    // gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-    // gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+        self.visualization_shader.use_program();
 
-    gl::ActiveTexture(gl::TEXTURE2);
-    gl::BindTexture(gl::TEXTURE_3D, voxels_texture);
-    visualization_shader.set_int(c_str!("voxelsTexture"), 2);
-    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
-    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
-    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::REPEAT as i32);
-    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-    gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+        // Upload camera
+        self.visualization_shader
+            .set_mat4(c_str!("projection"), &inputs.camera.get_projection_matrix());
+        self.visualization_shader
+            .set_mat4(c_str!("view"), &inputs.camera.transform.get_view_matrix());
+        self.visualization_shader.set_vec3(
+            c_str!("cameraPosition"),
+            inputs.camera.transform.position.x,
+            inputs.camera.transform.position.y,
+            inputs.camera.transform.position.z,
+        );
+        self.visualization_shader
+            .set_int(c_str!("mipmapLevel"), inputs.mipmap_level);
 
-    gl::Viewport(0, 0, width, height);
-    gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+        // Unbind framebuffer.
+        // Very important because we are clearing the framebuffer later,
+        // we don't want to clear this one.
+        gl::BindRenderbuffer(gl::RENDERBUFFER, 0);
+        gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
 
-    let quad = Quad::new();
-    gl::BindVertexArray(quad.get_vao());
-    gl::DrawElements(
-        gl::TRIANGLES,
-        quad.get_num_indices() as i32,
-        gl::UNSIGNED_INT,
-        std::ptr::null(),
-    );
-    gl::BindVertexArray(0);
+        gl::Disable(gl::DEPTH_TEST);
+        gl::Disable(gl::CULL_FACE);
+
+        gl::ActiveTexture(gl::TEXTURE0);
+        gl::BindTexture(gl::TEXTURE_2D, self.back_framebuffer.textures()[0]);
+        self.visualization_shader.set_int(c_str!("textureBack"), 0);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+
+        gl::ActiveTexture(gl::TEXTURE1);
+        gl::BindTexture(gl::TEXTURE_2D, self.front_framebuffer.textures()[0]);
+        self.visualization_shader.set_int(c_str!("textureFront"), 1);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+
+        gl::ActiveTexture(gl::TEXTURE2);
+        gl::BindTexture(gl::TEXTURE_3D, inputs.voxels_texture);
+        self.visualization_shader
+            .set_int(c_str!("voxelsTexture"), 2);
+        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
+        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
+        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_WRAP_R, gl::REPEAT as i32);
+        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+        gl::TexParameteri(gl::TEXTURE_3D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+
+        let (width, height) = common::get_framebuffer_size();
+        gl::Viewport(0, 0, width, height);
+        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+
+        gl::BindVertexArray(self.quad_renderer.get_vao());
+        gl::DrawElements(
+            gl::TRIANGLES,
+            self.quad_renderer.get_num_indices() as i32,
+            gl::UNSIGNED_INT,
+            std::ptr::null(),
+        );
+        gl::BindVertexArray(0);
+    }
 }

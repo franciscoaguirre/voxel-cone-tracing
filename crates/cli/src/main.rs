@@ -1,5 +1,6 @@
 //! The entrypoint to the VCT application
 
+use core::voxelization::voxelize_to_3d_texture::VisualizerRunInputs;
 use std::fs::{File, OpenOptions};
 use std::io::Write;
 use std::time::Instant;
@@ -23,6 +24,7 @@ use core::{
     octree::{BrickAttribute, BricksToShow, Octree, OctreeDataType},
     voxelization,
     voxelization::visualize::RenderVoxelFragmentsShader,
+    voxelization::voxelize_to_3d_texture::GpuKernel,
 };
 use engine::ui::glfw;
 use engine::ui::Ui;
@@ -154,6 +156,8 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
             &light,
         )
     };
+    let voxels_visualizer = unsafe { voxelization::voxelize_to_3d_texture::Visualizer::init(()) };
+    let mut mipmap_level = 0;
 
     // let (voxel_positions, number_of_voxel_fragments, voxel_colors, voxel_normals) =
     //     unsafe { voxelization::build_voxel_fragment_list(&mut objects[..], &scene_aabb) };
@@ -335,6 +339,7 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
                 common::handle_show_model(&event, &mut show_model);
                 common::handle_show_voxel_fragment_list(&event, &mut show_voxel_fragment_list);
                 common::handle_light_movement(&event, &mut should_move_light);
+                common::handle_mipmap_level(&event, &mut mipmap_level);
             } else {
                 menu.handle_event(event);
             }
@@ -535,7 +540,11 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
                 }
             }
 
-            voxelization::voxelize_to_3d_texture::visualize(active_camera, voxels_texture);
+            voxels_visualizer.run(VisualizerRunInputs {
+                camera: active_camera,
+                voxels_texture,
+                mipmap_level,
+            });
 
             // cube.render(&very_simple_shader, active_camera);
 

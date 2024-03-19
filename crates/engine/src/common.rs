@@ -7,7 +7,7 @@ use super::{
     camera::Camera,
     transform::{Direction, Transform},
 };
-use crate::{helpers, toggle_boolean};
+use crate::{handle_increments, helpers, toggle_boolean};
 
 #[cfg(feature = "ui")]
 use crate::ui::Ui;
@@ -169,6 +169,16 @@ pub fn should_close_window() -> bool {
 toggle_boolean!(C, handle_light_movement);
 toggle_boolean!(Num1, handle_show_model);
 toggle_boolean!(Num2, handle_show_voxel_fragment_list);
+handle_increments!(
+    "Mipmap level",
+    Right,
+    Left,
+    handle_mipmap_level,
+    i32,
+    1,
+    0,
+    7
+);
 
 pub unsafe fn log_device_information() {
     let vendor = unsafe {
