@@ -10,5 +10,8 @@ pub mod menu;
 pub mod octree;
 pub mod voxelization;
 
+/// Simple implementation storing voxels in a 3D texture instead of using a Sparse Voxel Octree.
+pub mod simple_texture;
+
 pub mod config;
 mod constants;

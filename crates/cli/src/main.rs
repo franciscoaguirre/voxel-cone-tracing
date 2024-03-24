@@ -1,6 +1,9 @@
 //! The entrypoint to the VCT application
 
-use core::voxelization::voxelize_to_3d_texture::VisualizerRunInputs;
+use core::simple_texture::{
+    ConeTracer as SimpleConeTracer, ConeTracerRunInputs, GpuKernel, Visualizer,
+    VisualizerRunInputs, Voxelizer, VoxelizerRunInputs,
+};
 use std::fs::{File, OpenOptions};
 use std::io::Write;
 use std::time::Instant;
@@ -24,7 +27,6 @@ use core::{
     octree::{BrickAttribute, BricksToShow, Octree, OctreeDataType},
     voxelization,
     voxelization::visualize::RenderVoxelFragmentsShader,
-    voxelization::voxelize_to_3d_texture::GpuKernel,
 };
 use engine::ui::glfw;
 use engine::ui::Ui;
@@ -148,16 +150,19 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     let model_normalization_matrix = scene_aabb.normalization_matrix();
 
     // Here I'm trying to simplify and use the simple 3D texture approach.
+    let voxelizer = unsafe { Voxelizer::init(()) };
     let voxels_texture = unsafe {
-        voxelization::voxelize_to_3d_texture::voxelize(
-            &mut objects[..],
-            &scene_aabb,
-            &camera,
-            &light,
-        )
+        voxelizer.run(VoxelizerRunInputs {
+            objects: &mut objects[..],
+            scene_aabb: &scene_aabb,
+            camera: &camera,
+            light: &light,
+        });
+        voxelizer.voxels_texture
     };
-    let voxels_visualizer = unsafe { voxelization::voxelize_to_3d_texture::Visualizer::init(()) };
+    let voxels_visualizer = unsafe { Visualizer::init(()) };
     let mut mipmap_level = 0;
+    let simple_cone_tracer = unsafe { SimpleConeTracer::init(()) };
 
     // let (voxel_positions, number_of_voxel_fragments, voxel_colors, voxel_normals) =
     //     unsafe { voxelization::build_voxel_fragment_list(&mut objects[..], &scene_aabb) };
@@ -445,23 +450,23 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
 
         // Input
         if !ui.is_showing() {
-            // let transform = if should_move_light {
-            //     unsafe {
-            //         light_maps = // TODO: This takes too long, optimize
-            //             octree.inject_light(
-            //                 &mut objects[..],
-            //                 &light,
-            //                 &scene_aabb,
-            //             );
-            //         light.transform_mut()
-            //     }
-            // } else if should_move_debug_cone {
-            //     &mut debug_cone.transform
-            // } else {
-            //     &mut active_camera.transform
-            // };
+            let transform = if should_move_light {
+                // unsafe {
+                // light_maps = // TODO: This takes too long, optimize
+                //     octree.inject_light(
+                //         &mut objects[..],
+                //         &light,
+                //         &scene_aabb,
+                //     );
+                light.transform_mut()
+                // }
+            } else if should_move_debug_cone {
+                &mut debug_cone.transform
+            } else {
+                &mut active_camera.transform
+            };
             unsafe {
-                common::process_movement_input(delta_time as f32, &mut active_camera.transform);
+                common::process_movement_input(delta_time as f32, transform);
             }
         }
 
@@ -531,19 +536,33 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
 
             if show_model {
                 // Render model normally
-                render_model_shader.use_program();
-                render_model_shader.set_mat4(c_str!("projection"), &projection);
-                render_model_shader.set_mat4(c_str!("view"), &view);
+                // render_model_shader.use_program();
+                // render_model_shader.set_mat4(c_str!("projection"), &projection);
+                // render_model_shader.set_mat4(c_str!("view"), &view);
                 // Model and model normalization matrix get set in the draw call
-                for object in objects.iter_mut() {
-                    object.draw(&render_model_shader, &model_normalization_matrix);
-                }
+                // for object in objects.iter_mut() {
+                //     object.draw(&render_model_shader, &model_normalization_matrix);
+                // }
+                simple_cone_tracer.run(ConeTracerRunInputs {
+                    camera: active_camera,
+                    voxels_texture,
+                    light: &light,
+                    scene_aabb: &scene_aabb,
+                    objects: &mut objects[..],
+                });
+            } else {
+                voxels_visualizer.run(VisualizerRunInputs {
+                    camera: active_camera,
+                    voxels_texture,
+                    mipmap_level,
+                });
             }
 
-            voxels_visualizer.run(VisualizerRunInputs {
+            voxelizer.run(VoxelizerRunInputs {
+                objects: &mut objects[..],
+                scene_aabb: &scene_aabb,
                 camera: active_camera,
-                voxels_texture,
-                mipmap_level,
+                light: &light,
             });
 
             // cube.render(&very_simple_shader, active_camera);

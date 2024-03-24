@@ -19,6 +19,7 @@ pub mod quad;
 pub mod scene;
 pub mod shader;
 pub mod test_utils;
+pub mod texture_3d;
 pub mod texture_buffer;
 mod traits;
 pub mod transform;
@@ -47,6 +48,7 @@ pub mod prelude {
         scene::{process_scene, Scene},
         shader::{compile_compute, compile_shaders, Shader, ShaderPass},
         test_utils,
+        texture_3d::Texture3Dv2,
         texture_buffer::BufferTextureV2,
         transform::Transform,
         types::*,

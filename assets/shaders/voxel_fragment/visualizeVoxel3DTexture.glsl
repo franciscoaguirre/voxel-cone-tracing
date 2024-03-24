@@ -29,7 +29,7 @@ uniform sampler2D textureBack;
 uniform sampler2D textureFront;
 uniform sampler3D voxelsTexture;
 uniform vec3 cameraPosition;
-uniform int mipmapLevel = 0;
+uniform int level = 0;
 
 in VertexData {
     vec2 textureCoordinates;
@@ -46,6 +46,8 @@ bool isInsideCube(vec3 p, float e) {
 }
 
 void main() {
+    const float mipmapLevel = level;
+
     const vec3 origin = isInsideCube(cameraPosition, 0.2f)
         ? cameraPosition
         : texture(textureFront, In.textureCoordinates).xyz;

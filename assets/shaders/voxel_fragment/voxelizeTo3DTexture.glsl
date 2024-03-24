@@ -72,8 +72,12 @@ struct PointLight {
     vec3 position;
     vec3 color;
 };
-
 uniform PointLight pointLight;
+
+struct Material {
+    vec3 color;
+};
+uniform Material material;
 
 layout (binding = 0, rgba8) uniform image3D voxelsTexture;
 
@@ -103,6 +107,7 @@ vec3 scaleAndBias(vec3 p) {
 void main() {
     vec3 color = vec3(0);
     color += calculatePointLightContribution(pointLight);
+    color = material.color * color;
     // Output lighting to 3D texture.
     vec3 voxel = scaleAndBias(In.worldPosition);
     ivec3 dimension = imageSize(voxelsTexture);
