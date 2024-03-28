@@ -8,6 +8,8 @@ use cgmath::{
 use gl::types::GLuint;
 use serde::{Deserialize, Serialize};
 
+use crate::common;
+
 use super::prelude::{compile_shaders, Aabb, Framebuffer, Object, RenderGizmo, Shader};
 use super::types::*;
 
@@ -251,6 +253,8 @@ impl Transform {
         self.view_map_shader
             .set_uint(c_str!("voxelDimension"), voxel_dimension);
 
+        let (width, height) = common::get_framebuffer_size();
+        gl::Viewport(0, 0, width, height);
         gl::BindFramebuffer(gl::FRAMEBUFFER, framebuffer.fbo());
         gl::Enable(gl::DEPTH_TEST);
         gl::ClearColor(0.0, 0.0, 0.0, 0.0);

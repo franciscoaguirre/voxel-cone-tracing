@@ -308,15 +308,15 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
             starting_time = current_frame;
         }
 
-        // let geometry_buffers = unsafe {
-        //     active_camera.transform.take_photo(
-        //         &mut objects[..],
-        //         &active_camera.get_projection_matrix(),
-        //         &scene_aabb,
-        //         &camera_framebuffer,
-        //         0,
-        //     )
-        // };
+        let geometry_buffers = unsafe {
+            active_camera.transform.take_photo(
+                &mut objects[..],
+                &active_camera.get_projection_matrix(),
+                &scene_aabb,
+                &camera_framebuffer,
+                0,
+            )
+        };
 
         unsafe {
             gl::ClearColor(0.1, 0.1, 0.1, 1.0);
@@ -548,7 +548,7 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
                     voxels_texture,
                     light: &light,
                     scene_aabb: &scene_aabb,
-                    objects: &mut objects[..],
+                    geometry_buffers: &geometry_buffers,
                 });
             } else {
                 voxels_visualizer.run(VisualizerRunInputs {
