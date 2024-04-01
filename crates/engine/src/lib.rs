@@ -9,6 +9,7 @@ pub mod cube;
 pub mod framebuffer;
 pub mod gizmo;
 pub mod helpers;
+pub mod kernel;
 pub mod light;
 pub mod macros;
 pub mod material;
@@ -16,6 +17,7 @@ pub mod mesh;
 pub mod model;
 pub mod object;
 pub mod quad;
+pub mod render_loop;
 pub mod scene;
 pub mod shader;
 pub mod test_utils;
@@ -40,11 +42,13 @@ pub mod prelude {
         },
         gizmo::RenderGizmo,
         helpers,
+        kernel::Kernel,
         light::Light,
         material::{Material, MaterialProperties},
         model::Model,
         object::Object,
         quad::Quad,
+        render_loop::RenderLoop,
         scene::{process_scene, Scene},
         shader::{compile_compute, compile_shaders, Shader, ShaderPass},
         test_utils,

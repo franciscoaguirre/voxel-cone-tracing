@@ -7,7 +7,7 @@ use super::{
     camera::Camera,
     transform::{Direction, Transform},
 };
-use crate::{handle_increments, helpers, toggle_boolean};
+use crate::{handle_increments, helpers, render_loop::MouseInfo, toggle_boolean};
 
 #[cfg(feature = "ui")]
 use crate::ui::Ui;
@@ -54,7 +54,9 @@ pub unsafe fn setup_glfw(
     window.set_cursor_pos_polling(true);
     window.set_scroll_polling(true);
     window.set_mouse_button_polling(true);
+    println!("Por acá");
     window.set_cursor_mode(glfw::CursorMode::Disabled);
+    println!("Funciono?");
     glfw.set_swap_interval(glfw::SwapInterval::Sync(1));
 
     // GL: Load all OpenGL function pointers
@@ -95,9 +97,7 @@ pub fn swap_buffers() {
 
 pub fn process_events(
     event: &glfw::WindowEvent,
-    first_mouse: &mut bool,
-    last_x: &mut f32,
-    last_y: &mut f32,
+    mouse_info: &mut MouseInfo,
     camera: &mut Camera,
     // TODO: Bring back
     // debug_cone: &mut DebugCone,
@@ -110,17 +110,17 @@ pub fn process_events(
         }
         glfw::WindowEvent::CursorPos(x_position, y_position) => {
             let (x_position, y_position) = (x_position as f32, y_position as f32);
-            if *first_mouse {
-                *last_x = x_position;
-                *last_y = y_position;
-                *first_mouse = false;
+            if mouse_info.first_mouse {
+                mouse_info.last_x = x_position;
+                mouse_info.last_y = y_position;
+                mouse_info.first_mouse = false;
             }
 
-            let x_offset = x_position - *last_x;
-            let y_offset = *last_y - y_position; // reversed since y-coordinates go from bottom to top
+            let x_offset = x_position - mouse_info.last_x;
+            let y_offset = mouse_info.last_y - y_position; // reversed since y-coordinates go from bottom to top
 
-            *last_x = x_position;
-            *last_y = y_position;
+            mouse_info.last_x = x_position;
+            mouse_info.last_y = y_position;
 
             camera.process_mouse_movement(x_offset, y_offset, true);
 

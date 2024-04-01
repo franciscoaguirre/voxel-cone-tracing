@@ -1,17 +1,31 @@
+use std::cell::RefCell;
+
+use cgmath::{vec3, Euler};
 use serde::Deserialize;
 
-use crate::prelude::{AssetRegistry, Light, Material, Object};
+use crate::{
+    aabb::Aabb,
+    prelude::{AssetRegistry, Camera, Light, Material, Object},
+};
 
 #[derive(Deserialize)]
 pub struct Scene {
     /// Objects in the scene
-    pub objects: Vec<Object>,
+    pub objects: Vec<RefCell<Object>>,
     /// Models to load in the `AssetRegistry`
     pub models: Vec<ModelInfo>,
     /// Materials to load in the `AssetsRegistry`
     pub materials: Vec<Material>,
     /// Light of the scene for both direct and indirect illumination
     pub light: Light,
+    /// Cameras.
+    #[serde(skip)]
+    pub cameras: Vec<RefCell<Camera>>,
+    #[serde(skip)]
+    pub active_camera: Option<usize>,
+    /// For getting the model normalization matrix.
+    #[serde(skip)]
+    pub aabb: Aabb,
 }
 
 #[derive(Debug, Deserialize)]
@@ -20,9 +34,26 @@ pub struct ModelInfo {
     pub path: String,
 }
 
-pub fn process_scene(scene: Scene) -> (Vec<Object>, Light) {
-    unsafe { AssetRegistry::initialize(&scene) };
-    (scene.objects, scene.light)
+// TODO: I should still use the Scene object.
+// I should put the asset registry initialization in the RenderLoop.
+pub fn process_scene(scene: &mut Scene) {
+    unsafe { AssetRegistry::initialize(scene) };
+    for object in scene.objects.iter() {
+        let mut object = object.borrow_mut();
+        let offset = vec3(
+            object.transform.position.x,
+            object.transform.position.y,
+            object.transform.position.z,
+        );
+        let rotation = Euler {
+            x: object.transform.rotation_x(),
+            y: object.transform.rotation_y(),
+            z: object.transform.rotation_z(),
+        };
+        scene
+            .aabb
+            .join(&object.model().aabb.rotated(rotation).offsetted(offset));
+    }
 }
 
 #[cfg(test)]
@@ -54,6 +85,9 @@ mod tests {
                 },
             }],
             light: Light::default(),
+            cameras: Vec::new(),
+            active_camera: None,
+            aabb: Aabb::default(),
         }
     }
 
@@ -87,10 +121,10 @@ mod tests {
         path.pop();
         env::set_current_dir(path).unwrap();
 
-        let scene = get_test_scene();
+        let mut scene = get_test_scene();
 
         // Process the scene
-        let (objects, _light) = process_scene(scene);
+        process_scene(&mut scene);
 
         {
             // Models and materials are now loaded
@@ -99,9 +133,9 @@ mod tests {
             assert!(&assets.get_material("red").is_some());
         }
 
-        assert_eq!(objects.len(), 1);
-        assert_eq!(objects[0].model_handle(), "cube");
-        assert_eq!(objects[0].material_handle(), "red");
+        assert_eq!(scene.objects.len(), 1);
+        assert_eq!(scene.objects[0].model_handle(), "cube");
+        assert_eq!(scene.objects[0].material_handle(), "red");
 
         // Reset dir in the end
         env::set_current_dir(previous_path).unwrap();
