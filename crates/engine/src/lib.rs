@@ -6,12 +6,12 @@ pub mod asset_registry;
 pub mod camera;
 pub mod common;
 pub mod cube;
+pub mod decl_macros;
 pub mod framebuffer;
 pub mod gizmo;
 pub mod helpers;
 pub mod kernel;
 pub mod light;
-pub mod macros;
 pub mod material;
 pub mod mesh;
 pub mod model;
@@ -27,12 +27,15 @@ mod traits;
 pub mod transform;
 pub mod types;
 
+pub use macros::aggregated_kernel;
+
 #[cfg(feature = "ui")]
 pub mod ui;
 
 pub mod prelude {
     pub use super::{
         aabb::Aabb,
+        aggregated_kernel,
         asset_registry::{AssetHandle, AssetRegistry},
         camera::Camera,
         common,

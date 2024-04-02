@@ -94,9 +94,7 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     let mut scene = parameters.scene;
     let preset = parameters.preset;
 
-    // Timing setup
-    let mut delta_time: f64;
-    let mut last_frame: f64 = 0.0;
+    // Timing setup was here.
 
     let (viewport_width, viewport_height) = config.viewport_dimensions();
 
@@ -287,7 +285,12 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     // It can be switched at runtime. TODO: Not yet.
     // let active_camera = &mut camera;
 
-    let mut render_loop = RenderLoop::<RenderObjects>::new(
+    #[aggregated_kernel]
+    enum AggregatedKernel {
+        RenderObjects,
+    }
+
+    let mut render_loop = RenderLoop::<AggregatedKernel>::new(
         glfw,
         parameters.events,
         (viewport_width, viewport_height),
@@ -297,8 +300,7 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     // Render loop.
     unsafe {
         // Register kernels.
-        // render_loop.register_kernel(ExampleKernel);
-        render_loop.register_kernel(RenderObjects::new());
+        render_loop.register_kernel(AggregatedKernel::RenderObjects(RenderObjects::new()));
 
         render_loop.run();
     };
