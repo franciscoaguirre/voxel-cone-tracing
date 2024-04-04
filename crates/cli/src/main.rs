@@ -32,6 +32,7 @@ use core::{
 use engine::ui::glfw;
 use engine::ui::Ui;
 use engine::{
+    kernels::{GeometryBuffers, RenderObjects},
     prelude::*,
     ui::glfw::{Glfw, WindowEvent},
 };
@@ -94,26 +95,13 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     let mut scene = parameters.scene;
     let preset = parameters.preset;
 
-    // Timing setup was here.
-
     let (viewport_width, viewport_height) = config.viewport_dimensions();
 
     // Camera setup
     let mut camera = preset.camera.clone();
-    // MouseInfo was here.
 
     // TODO: Remove once we handle cameras properly.
     scene.cameras.push(RefCell::new(camera));
-
-    // Static eye
-    let mut static_eye = Transform::default();
-    static_eye.position = point3(0.0, 0.0, -2.0);
-
-    // FPS variables
-    let mut frame_count = 0;
-    let mut starting_time: f64 = glfw.get_time();
-    let mut elapsed_time: f64;
-    let mut fps: f64 = 0.0;
 
     unsafe {
         common::log_device_information();
@@ -121,43 +109,9 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
 
     // let mut menu = Menu::new(preset.clone());
 
-    struct RenderObjects {
-        shader: Shader,
-    }
-    impl RenderObjects {
-        pub fn new() -> Self {
-            Self {
-                shader: compile_shaders!(
-                    "assets/shaders/model/modelLoading.vert.glsl",
-                    "assets/shaders/model/modelLoading.frag.glsl",
-                    "assets/shaders/model/modelLoading.geom.glsl",
-                ),
-            }
-        }
-    }
-    impl Kernel for RenderObjects {
-        unsafe fn setup(&mut self) {}
-        unsafe fn update(&mut self, scene: &Scene) {
-            self.shader.use_program();
-            let camera = &scene.cameras[scene.active_camera.unwrap_or(0)].borrow();
-            self.shader
-                .set_mat4(c_str!("projection"), &camera.get_projection_matrix());
-            self.shader
-                .set_mat4(c_str!("view"), &camera.transform.get_view_matrix());
-            for object in scene.objects.iter() {
-                object
-                    .borrow_mut()
-                    .draw(&self.shader, &scene.aabb.normalization_matrix());
-            }
-        }
-    }
-
     let mut cone_tracer = ConeTracer::init();
     // let mut cone_parameters = HashMap::new();
     let mut debug_cone = unsafe { DebugCone::new() };
-
-    // Process scene
-    process_scene(&mut scene);
 
     // Here I'm trying to simplify and use the simple 3D texture approach.
     let voxelizer = unsafe { Voxelizer::init(()) };
@@ -232,9 +186,6 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
 
     // let mut light_maps = unsafe { octree.inject_light(&mut objects[..], &light, &scene_aabb) };
     let quad = unsafe { Quad::new() };
-    // let cube = unsafe { Cube::new() };
-    // let very_simple_shader = compile_shaders!("assets/shaders/model/very_simple.glsl");
-    let camera_framebuffer = unsafe { GeometryFramebuffer::new() };
 
     let mut current_voxel_fragment_count: u32 = 0;
     let mut current_octree_level: u32 = 0;
@@ -285,9 +236,37 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     // It can be switched at runtime. TODO: Not yet.
     // let active_camera = &mut camera;
 
+    struct Kernel1;
+    impl Kernel for Kernel1 {
+        unsafe fn setup(&mut self, _assets: &mut AssetRegistry) {}
+        unsafe fn update(&mut self, _scene: &Scene, _assets: &AssetRegistry) {}
+    }
+    struct Kernel2;
+    impl Kernel for Kernel2 {
+        unsafe fn setup(&mut self, _assets: &mut AssetRegistry) {}
+        unsafe fn update(&mut self, _scene: &Scene, _assets: &AssetRegistry) {}
+    }
+
+    #[kernel_group]
+    struct TestGroup {
+        kernel_1: Kernel1,
+        kernel_2: Kernel2,
+    }
+    impl TestGroup {
+        pub fn new() -> Self {
+            Self {
+                kernel_1: Kernel1,
+                kernel_2: Kernel2,
+                paused: false,
+            }
+        }
+    }
+
     #[aggregated_kernel]
     enum AggregatedKernel {
         RenderObjects,
+        GeometryBuffers,
+        TestGroup,
     }
 
     let mut render_loop = RenderLoop::<AggregatedKernel>::new(
@@ -300,18 +279,18 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     // Render loop.
     unsafe {
         // Register kernels.
-        render_loop.register_kernel(AggregatedKernel::RenderObjects(RenderObjects::new()));
+        render_loop.register_kernel(
+            "RenderObjects",
+            AggregatedKernel::RenderObjects(RenderObjects::new()),
+        );
+        render_loop.register_kernel(
+            "GeometryBuffers",
+            AggregatedKernel::GeometryBuffers(GeometryBuffers::new()),
+        );
+        render_loop.register_kernel("TestGroup", AggregatedKernel::TestGroup(TestGroup::new()));
 
         render_loop.run();
     };
-
-    //     let current_frame = glfw.get_time();
-
-    //     frame_count += 1;
-    //     delta_time = current_frame - last_frame;
-    //     last_frame = current_frame;
-
-    //     elapsed_time = current_frame - starting_time;
 
     //     if elapsed_time > 1.0 {
     //         fps = frame_count as f64 / elapsed_time;
@@ -335,20 +314,6 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     //         frame_count = 0;
     //         starting_time = current_frame;
     //     }
-
-    //     let geometry_buffers = unsafe {
-    //         active_camera.transform.take_photo(
-    //             &mut objects[..],
-    //             &active_camera.get_projection_matrix(),
-    //             &scene_aabb,
-    //             &camera_framebuffer,
-    //             0,
-    //         )
-    //     };
-
-    // GL settings were here.
-
-    // Event handling was here.
 
     //     ui.begin_frame(current_frame);
 
@@ -560,7 +525,6 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     //         //         &light,
     //         //     );
     //         // }
-    //         static_eye.draw_gizmo(&projection, &view);
     //         light.draw_gizmo(&projection, &view);
     //         // quad.render(light_maps.1);
 

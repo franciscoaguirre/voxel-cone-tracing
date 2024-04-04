@@ -3,7 +3,7 @@
 //! TODO: To make it better, we could have only one `new` function that receives
 //! all the textures already and just assembles the framebuffer.
 
-use std::{fs, mem::MaybeUninit, path::PathBuf};
+use std::{fs, path::PathBuf};
 
 use gl::types::*;
 use image::{GenericImageView, ImageBuffer, Pixel, Rgba, RgbaImage};
@@ -683,12 +683,12 @@ impl<const N: usize> Framebuffer<N> {
         self.fbo
     }
 
-    pub fn textures(&self) -> [Texture2D; N] {
-        let mut result: [Texture2D; N] = unsafe { MaybeUninit::uninit().assume_init() };
-        for (index, attachment) in self.attachments.iter().enumerate() {
-            result[index] = attachment.texture_id;
+    pub fn textures(&self) -> [(String, Texture2D); N] {
+        let mut result = Vec::new();
+        for attachment in self.attachments.iter() {
+            result.push((attachment.name.clone(), attachment.texture_id));
         }
-        result
+        result.try_into().expect("The length should be fine.")
     }
 
     /// Gets the image from the attachment
@@ -770,9 +770,9 @@ impl<const N: usize> Framebuffer<N> {
             for x in 0..width_1 {
                 let pixel_1 = image.get_pixel(x, y).to_rgb();
                 let pixel_2 = image_to_compare.get_pixel(x, y).to_rgb();
-                if ((pixel_1[0] as i16 - pixel_2[0] as i16).abs() > channel_tolerance as i16
+                if (pixel_1[0] as i16 - pixel_2[0] as i16).abs() > channel_tolerance as i16
                     || (pixel_1[1] as i16 - pixel_2[1] as i16).abs() > channel_tolerance as i16
-                    || (pixel_1[2] as i16 - pixel_2[2] as i16).abs() > channel_tolerance as i16)
+                    || (pixel_1[2] as i16 - pixel_2[2] as i16).abs() > channel_tolerance as i16
                 {
                     return Ok(false);
                 }

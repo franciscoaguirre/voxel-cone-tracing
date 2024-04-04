@@ -11,6 +11,7 @@ pub mod framebuffer;
 pub mod gizmo;
 pub mod helpers;
 pub mod kernel;
+pub mod kernels;
 pub mod light;
 pub mod material;
 pub mod mesh;
@@ -27,7 +28,7 @@ mod traits;
 pub mod transform;
 pub mod types;
 
-pub use macros::aggregated_kernel;
+pub use macros;
 
 #[cfg(feature = "ui")]
 pub mod ui;
@@ -35,7 +36,6 @@ pub mod ui;
 pub mod prelude {
     pub use super::{
         aabb::Aabb,
-        aggregated_kernel,
         asset_registry::{AssetHandle, AssetRegistry},
         camera::Camera,
         common,
@@ -45,14 +45,16 @@ pub mod prelude {
         },
         gizmo::RenderGizmo,
         helpers,
-        kernel::Kernel,
+        kernel::{Kernel, Pausable},
+        kernels,
         light::Light,
+        macros::{aggregated_kernel, kernel_group, pausable},
         material::{Material, MaterialProperties},
         model::Model,
         object::Object,
         quad::Quad,
         render_loop::RenderLoop,
-        scene::{process_scene, Scene},
+        scene::Scene,
         shader::{compile_compute, compile_shaders, Shader, ShaderPass},
         test_utils,
         texture_3d::Texture3Dv2,

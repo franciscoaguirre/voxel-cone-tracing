@@ -94,9 +94,10 @@ unsafe fn voxelize_scene(
     gl::Disable(gl::CULL_FACE);
     gl::Disable(gl::DEPTH_TEST);
     // TODO: We should apparently disable depth test and colormask false flase flase
-    for object in objects.iter_mut() {
-        object.draw(voxelization_shader, &model_normalization_matrix);
-    }
+    // TODO: Move to Kernel.
+    // for object in objects.iter_mut() {
+    //     object.draw(voxelization_shader, &model_normalization_matrix);
+    // }
 
     let (viewport_width, viewport_height) = config.viewport_dimensions();
 

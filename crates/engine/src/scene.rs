@@ -34,25 +34,28 @@ pub struct ModelInfo {
     pub path: String,
 }
 
-// TODO: I should still use the Scene object.
-// I should put the asset registry initialization in the RenderLoop.
-pub fn process_scene(scene: &mut Scene) {
-    unsafe { AssetRegistry::initialize(scene) };
-    for object in scene.objects.iter() {
-        let mut object = object.borrow_mut();
-        let offset = vec3(
-            object.transform.position.x,
-            object.transform.position.y,
-            object.transform.position.z,
-        );
-        let rotation = Euler {
-            x: object.transform.rotation_x(),
-            y: object.transform.rotation_y(),
-            z: object.transform.rotation_z(),
-        };
-        scene
-            .aabb
-            .join(&object.model().aabb.rotated(rotation).offsetted(offset));
+impl Scene {
+    pub fn calculate_aabb(&mut self, assets: &AssetRegistry) {
+        for object in self.objects.iter() {
+            let mut object = object.borrow_mut();
+            let offset = vec3(
+                object.transform.position.x,
+                object.transform.position.y,
+                object.transform.position.z,
+            );
+            let rotation = Euler {
+                x: object.transform.rotation_x(),
+                y: object.transform.rotation_y(),
+                z: object.transform.rotation_z(),
+            };
+            self.aabb.join(
+                &object
+                    .model(assets)
+                    .aabb
+                    .rotated(rotation)
+                    .offsetted(offset),
+            );
+        }
     }
 }
 

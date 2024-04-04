@@ -1,13 +1,12 @@
 use std::{ffi::c_void, mem::size_of};
 
 use c_str_macro::c_str;
-use cgmath::{point3, Deg, Matrix4, Point3};
+use cgmath::{point3, Matrix4, Point3};
 use gl::types::GLuint;
 use serde::Deserialize;
 
 use crate::{
     aabb::Aabb,
-    common,
     framebuffer::{LightFramebuffer, LIGHT_MAP_BUFFERS},
     gizmo::RenderGizmo,
     object::Object,
@@ -131,12 +130,17 @@ impl SpotLight {
         gl::ClearColor(0.0, 0.0, 0.0, 0.0);
         gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
         gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-        for object in objects.iter_mut() {
-            object.draw(&self.light_map_shader, &scene_aabb.normalization_matrix());
-        }
+        // TODO: Move to Kernel.
+        // for object in objects.iter_mut() {
+        //     object.draw(&self.light_map_shader, &scene_aabb.normalization_matrix());
+        // }
         gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
 
-        self.framebuffer.textures()
+        [
+            self.framebuffer.textures()[0].1,
+            self.framebuffer.textures()[1].1,
+            self.framebuffer.textures()[2].1,
+        ]
     }
 }
 

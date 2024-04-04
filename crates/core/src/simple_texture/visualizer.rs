@@ -110,11 +110,11 @@ impl GpuKernel for Visualizer {
         gl::Disable(gl::CULL_FACE);
 
         gl::ActiveTexture(gl::TEXTURE0);
-        gl::BindTexture(gl::TEXTURE_2D, self.back_framebuffer.textures()[0]);
+        gl::BindTexture(gl::TEXTURE_2D, self.back_framebuffer.textures()[0].1);
         self.visualization_shader.set_int(c_str!("textureBack"), 0);
 
         gl::ActiveTexture(gl::TEXTURE1);
-        gl::BindTexture(gl::TEXTURE_2D, self.front_framebuffer.textures()[0]);
+        gl::BindTexture(gl::TEXTURE_2D, self.front_framebuffer.textures()[0].1);
         self.visualization_shader.set_int(c_str!("textureFront"), 1);
 
         gl::ActiveTexture(gl::TEXTURE2);

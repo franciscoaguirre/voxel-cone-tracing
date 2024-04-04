@@ -41,3 +41,25 @@ macro_rules! handle_increments {
         }
     };
 }
+
+#[macro_export]
+macro_rules! pause_kernels_with_number_keys {
+    ($kernels:expr, $event:expr, $($num:literal),*) => {
+        paste::paste! {
+            $(
+                match $event {
+                    egui_glfw_gl::glfw::WindowEvent::Key(egui_glfw_gl::glfw::Key::[<Num $num>], _, egui_glfw_gl::glfw::Action::Press, _) => {
+                        if $kernels[$num].1.is_paused() {
+                            $kernels[$num].1.unpause();
+                            println!("Kernel number {} unpaused.", $num);
+                        } else {
+                            $kernels[$num].1.pause();
+                            println!("Kernel number {} paused.", $num);
+                        }
+                    }
+                    _ => {}
+                }
+            )*
+        }
+    };
+}

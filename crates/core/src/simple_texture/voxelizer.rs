@@ -69,9 +69,10 @@ impl GpuKernel for Voxelizer {
         gl::BindTexture(gl::TEXTURE_3D, self.voxels_texture.id());
         helpers::bind_3d_image_texture(0, self.voxels_texture.id(), gl::READ_WRITE, gl::RGBA8);
         let model_normalization_matrix = inputs.scene_aabb.normalization_matrix();
-        for object in inputs.objects.iter_mut() {
-            object.draw(&self.voxelization_shader, &model_normalization_matrix);
-        }
+        // TODO: Move to Kernel.
+        // for object in inputs.objects.iter_mut() {
+        //     object.draw(&self.voxelization_shader, &model_normalization_matrix);
+        // }
         gl::GenerateMipmap(gl::TEXTURE_3D);
         gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
     }

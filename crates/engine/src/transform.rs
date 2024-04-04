@@ -34,8 +34,6 @@ pub struct Transform {
     pub vao: GLuint,
     #[serde(skip, default = "gizmo_shader")]
     shader: Shader,
-    #[serde(skip, default = "default_view_map_shader")]
-    view_map_shader: Shader, // TODO: It's kind of ugly to store this here
 }
 
 const fn default_position() -> Point3<f32> {
@@ -78,7 +76,6 @@ impl Default for Transform {
             vao: 0,                 // Initialized later
             movement_speed: 1.0,
             shader: gizmo_shader(),
-            view_map_shader: default_view_map_shader(),
         };
         unsafe {
             this.setup_vao();
@@ -94,11 +91,6 @@ fn gizmo_shader() -> Shader {
         "assets/shaders/debug/cubicGizmo.frag.glsl",
         "assets/shaders/debug/cubicGizmo.geom.glsl",
     )
-}
-
-// TODO: Weird to have this here
-fn default_view_map_shader() -> Shader {
-    compile_shaders!("assets/shaders/octree/viewMap.glsl")
 }
 
 impl RenderGizmo for Transform {
@@ -233,39 +225,6 @@ impl Transform {
         // However, we should start doing that on the CPU once instead of on the GPU every frame
         // in the geometry shader. Will speed things up a lot.
         // Not that relevant since it's debugging code.
-    }
-
-    /// Writes to a framebuffer from the transform's POV of `objects`.
-    /// Used to get geometry buffers
-    pub unsafe fn take_photo<const N: usize>(
-        &self,
-        objects: &mut [Object],
-        projection: &Matrix4<f32>,
-        scene_aabb: &Aabb,
-        framebuffer: &Framebuffer<N>,
-        voxel_dimension: u32, // TODO: Find another way. This breaks separation of concerns
-    ) -> Textures<N> {
-        self.view_map_shader.use_program();
-        self.view_map_shader
-            .set_mat4(c_str!("projection"), &projection);
-        self.view_map_shader
-            .set_mat4(c_str!("view"), &self.get_view_matrix());
-        self.view_map_shader
-            .set_uint(c_str!("voxelDimension"), voxel_dimension);
-
-        let (width, height) = common::get_framebuffer_size();
-        gl::Viewport(0, 0, width, height);
-        gl::BindFramebuffer(gl::FRAMEBUFFER, framebuffer.fbo());
-        gl::Enable(gl::DEPTH_TEST);
-        gl::ClearColor(0.0, 0.0, 0.0, 0.0);
-        gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
-        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-        for object in objects.iter_mut() {
-            object.draw(&self.view_map_shader, &scene_aabb.normalization_matrix());
-        }
-        gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
-
-        framebuffer.textures()
     }
 
     /// Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)

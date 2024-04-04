@@ -11,10 +11,6 @@ pub struct Object {
     model: AssetHandle,
     material: AssetHandle,
     pub transform: Transform,
-    #[serde(skip_deserializing)]
-    actual_model: Option<&'static Model>,
-    #[serde(skip_deserializing)]
-    actual_material: Option<&'static Material>,
 }
 
 impl Object {
@@ -27,13 +23,15 @@ impl Object {
             model: model_handle,
             material: material_handle,
             transform,
-            actual_model: None,
-            actual_material: None,
         }
     }
 
-    // TODO: Shouldn't need mut, but does for optimization purposes
-    pub fn draw(&mut self, shader: &Shader, model_normalization_matrix: &Matrix4<f32>) {
+    pub fn draw(
+        &self,
+        shader: &Shader,
+        model_normalization_matrix: &Matrix4<f32>,
+        assets: &AssetRegistry,
+    ) {
         unsafe {
             // Transform's model matrix
             shader.set_mat4(c_str!("model"), &self.transform.get_model_matrix());
@@ -43,35 +41,27 @@ impl Object {
             );
             shader.set_mat3(c_str!("normalMatrix"), &self.transform.get_normal_matrix());
             // Material properties
-            self.material().set_uniforms(shader);
+            self.material(assets).set_uniforms(shader);
         };
-        self.model().draw(&shader);
+        self.model(assets).draw(&shader);
     }
 
-    pub fn model(&mut self) -> &Model {
-        if let Some(model) = self.actual_model {
-            model
-        } else {
-            let assets = AssetRegistry::instance();
-            let model = assets.get_model(&self.model).unwrap();
-            self.actual_model = Some(model);
-            model
-        }
+    pub fn model<'a>(&self, assets: &'a AssetRegistry) -> &'a Model {
+        let model = assets
+            .get_model(&self.model)
+            .expect("Model should exist at this point.");
+        model
     }
 
     pub fn model_handle(&self) -> &AssetHandle {
         &self.model
     }
 
-    pub fn material(&mut self) -> &Material {
-        if let Some(material) = self.actual_material {
-            material
-        } else {
-            let assets = AssetRegistry::instance();
-            let material = assets.get_material(&self.material).unwrap();
-            self.actual_material = Some(material);
-            material
-        }
+    pub fn material<'a>(&self, assets: &'a AssetRegistry) -> &'a Material {
+        let material = assets
+            .get_material(&self.material)
+            .expect("Material should exist at this point.");
+        material
     }
 
     pub fn material_handle(&self) -> &AssetHandle {

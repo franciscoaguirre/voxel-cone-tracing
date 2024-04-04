@@ -1,11 +1,13 @@
-use std::{cell::RefCell, sync::mpsc::Receiver};
+use std::sync::mpsc::Receiver;
+
+use crate::pause_kernels_with_number_keys;
 
 use egui_glfw_gl::glfw::{self, Glfw, WindowEvent};
 
 use crate::{
     camera::Camera,
-    common,
-    prelude::{Kernel, Scene},
+    common::{self, WINDOW},
+    prelude::{AssetRegistry, Kernel, Pausable, Scene},
 };
 
 pub struct RenderLoop<T> {
@@ -13,10 +15,11 @@ pub struct RenderLoop<T> {
     events: Events,
     mouse_info: MouseInfo,
     scene: Option<Scene>,
-    kernels: Vec<T>,
+    kernels: Vec<(String, T)>,
+    asset_registry: AssetRegistry,
 }
 
-impl<T: Kernel> RenderLoop<T> {
+impl<T: Kernel + Pausable> RenderLoop<T> {
     pub fn new(glfw: Glfw, events: Events, viewport_dimensions: (i32, i32)) -> Self {
         Self {
             glfw,
@@ -28,19 +31,36 @@ impl<T: Kernel> RenderLoop<T> {
             },
             scene: None,
             kernels: Vec::new(),
+            asset_registry: AssetRegistry::new(),
         }
     }
 
-    pub unsafe fn register_kernel(&mut self, kernel: T) {
-        self.kernels.push(kernel);
+    pub unsafe fn register_kernel(&mut self, name: &str, kernel: T) {
+        self.kernels.push((name.to_string(), kernel));
     }
 
     pub unsafe fn run(&mut self) {
+        println!(
+            "Kernels: {:?}",
+            self.kernels
+                .iter()
+                .map(|(name, _)| name)
+                .collect::<Vec<_>>()
+        );
+
         let scene = self.scene.as_ref().expect("Scene should've been set");
 
-        for kernel in &mut self.kernels {
-            kernel.setup();
+        for (_, kernel) in &mut self.kernels {
+            kernel.setup(&mut self.asset_registry);
         }
+
+        println!("Textures: {:?}", self.asset_registry.textures);
+
+        // FPS variables.
+        let mut frame_count = 0;
+        let mut starting_time: f64 = self.glfw.get_time();
+        let mut elapsed_time: f64;
+        let mut fps: f64 = 0.0;
 
         // Time setup.
         // TODO: Create TimeManager.
@@ -51,8 +71,10 @@ impl<T: Kernel> RenderLoop<T> {
         while !common::should_close_window() {
             // Time update.
             let current_frame = self.glfw.get_time();
+            frame_count += 1;
             delta_time = current_frame - last_frame;
             last_frame = current_frame;
+            elapsed_time = current_frame - starting_time;
 
             // GL settings.
             Self::gl_start_settings();
@@ -62,8 +84,10 @@ impl<T: Kernel> RenderLoop<T> {
                 &self.events,
                 &mut self.mouse_info,
                 &mut scene.cameras[scene.active_camera.unwrap_or(0)].borrow_mut(),
+                &mut self.kernels,
             );
 
+            // Camera movement.
             common::process_movement_input(
                 delta_time as f32,
                 &mut scene.cameras[scene.active_camera.unwrap_or(0)]
@@ -72,8 +96,8 @@ impl<T: Kernel> RenderLoop<T> {
             );
 
             // Run all updates.
-            for kernel in &mut self.kernels {
-                kernel.update(&scene);
+            for (_, kernel) in &mut self.kernels {
+                kernel.update(&scene, &mut self.asset_registry);
             }
 
             // Probably rendering a full-screen quad.
@@ -84,7 +108,9 @@ impl<T: Kernel> RenderLoop<T> {
         }
     }
 
-    pub fn set_scene(&mut self, scene: Scene) {
+    pub fn set_scene(&mut self, mut scene: Scene) {
+        self.process_scene(&scene);
+        scene.calculate_aabb(&self.asset_registry);
         self.scene = Some(scene);
     }
 
@@ -98,7 +124,16 @@ impl<T: Kernel> RenderLoop<T> {
         // gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
     }
 
-    fn process_events(events: &Events, mouse_info: &mut MouseInfo, camera: &mut Camera) {
+    fn process_scene(&mut self, scene: &Scene) {
+        self.asset_registry.process_scene(scene);
+    }
+
+    fn process_events(
+        events: &Events,
+        mouse_info: &mut MouseInfo,
+        camera: &mut Camera,
+        kernels: &mut [(String, T)],
+    ) {
         for (_, event) in glfw::flush_messages(events) {
             // events
             // if let glfw::WindowEvent::Key(glfw::Key::Escape, _, glfw::Action::Press, _) = event {
@@ -109,6 +144,7 @@ impl<T: Kernel> RenderLoop<T> {
                 &event, mouse_info, camera,
                 // &mut debug_cone, // todo: bring back
             );
+            Self::process_pausing_kernels(kernels, &event);
             // common::handle_show_model(&event, &mut show_model);
             // common::handle_show_voxel_fragment_list(&event, &mut show_voxel_fragment_list);
             // common::handle_light_movement(&event, &mut should_move_light);
@@ -117,6 +153,10 @@ impl<T: Kernel> RenderLoop<T> {
             //     menu.handle_event(event);
             // }
         }
+    }
+
+    fn process_pausing_kernels(kernels: &mut [(String, T)], event: &glfw::WindowEvent) {
+        pause_kernels_with_number_keys!(kernels, event, 0, 1, 2);
     }
 }
 
