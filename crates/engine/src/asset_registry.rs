@@ -30,8 +30,8 @@ impl AssetRegistry {
         }
     }
 
-    pub fn register_texture(&mut self, id: AssetHandle, texture: Texture) {
-        if self.textures.insert(id, texture).is_some() {
+    pub fn register_texture(&mut self, id: &str, texture: Texture) {
+        if self.textures.insert(id.to_string(), texture).is_some() {
             // Handle overwriting an existing model if necessary.
         }
     }
@@ -54,5 +54,9 @@ impl AssetRegistry {
 
     pub fn get_material(&self, id: &str) -> Option<&Material> {
         self.materials.get(id)
+    }
+
+    pub fn get_texture(&self, id: &str) -> Option<&Texture> {
+        self.textures.get(id)
     }
 }

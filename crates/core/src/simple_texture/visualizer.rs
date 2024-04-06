@@ -1,8 +1,7 @@
 use c_str_macro::c_str;
 use engine::prelude::*;
 
-use super::GpuKernel;
-
+#[pausable]
 pub struct Visualizer {
     visualization_shader: Shader,
     world_positions_shader: Shader,
@@ -12,18 +11,8 @@ pub struct Visualizer {
     quad_renderer: Quad,
 }
 
-pub struct VisualizerRunInputs<'a> {
-    pub camera: &'a Camera,
-    pub voxels_texture: Texture3Dv2,
-    pub mipmap_level: i32,
-}
-
-impl GpuKernel for Visualizer {
-    type InitInputs<'a> = ();
-    type RunInputs<'a> = VisualizerRunInputs<'a>;
-
-    /// Initializes the visualizer.
-    unsafe fn init(_: ()) -> Self {
+impl Visualizer {
+    pub unsafe fn new() -> Self {
         Self {
             world_positions_shader: compile_shaders!(
                 "assets/shaders/voxel_fragment/worldPositions.glsl"
@@ -35,19 +24,27 @@ impl GpuKernel for Visualizer {
             visualization_shader: compile_shaders!(
                 "assets/shaders/voxel_fragment/visualizeVoxel3DTexture.glsl"
             ),
+            paused: false,
         }
     }
+}
+
+impl Kernel for Visualizer {
+    /// Initializes the visualizer.
+    unsafe fn setup(&mut self, _assets: &mut AssetRegistry) {}
 
     /// Runs the ray marching code against the voxels 3D texture.
-    unsafe fn run<'a>(&self, inputs: Self::RunInputs<'a>) {
+    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry) {
+        let active_camera = &scene.cameras[scene.active_camera.unwrap_or(0)].borrow();
+
         // Use world positions shader
         self.world_positions_shader.use_program();
 
         // Upload camera
         self.world_positions_shader
-            .set_mat4(c_str!("projection"), &inputs.camera.get_projection_matrix());
+            .set_mat4(c_str!("projection"), &active_camera.get_projection_matrix());
         self.world_positions_shader
-            .set_mat4(c_str!("view"), &inputs.camera.transform.get_view_matrix());
+            .set_mat4(c_str!("view"), &active_camera.transform.get_view_matrix());
 
         // Settings
         gl::ClearColor(0.0, 0.0, 0.0, 1.0);
@@ -88,17 +85,17 @@ impl GpuKernel for Visualizer {
 
         // Upload camera
         self.visualization_shader
-            .set_mat4(c_str!("projection"), &inputs.camera.get_projection_matrix());
+            .set_mat4(c_str!("projection"), &active_camera.get_projection_matrix());
         self.visualization_shader
-            .set_mat4(c_str!("view"), &inputs.camera.transform.get_view_matrix());
+            .set_mat4(c_str!("view"), &active_camera.transform.get_view_matrix());
         self.visualization_shader.set_vec3(
             c_str!("cameraPosition"),
-            inputs.camera.transform.position.x,
-            inputs.camera.transform.position.y,
-            inputs.camera.transform.position.z,
+            active_camera.transform.position.x,
+            active_camera.transform.position.y,
+            active_camera.transform.position.z,
         );
-        self.visualization_shader
-            .set_int(c_str!("level"), inputs.mipmap_level);
+        // self.visualization_shader
+        //     .set_int(c_str!("level"), inputs.mipmap_level); // TODO: How do I handle these uniforms specific to each kernel?
 
         // Unbind framebuffer.
         // Very important because we are clearing the framebuffer later,
@@ -118,7 +115,10 @@ impl GpuKernel for Visualizer {
         self.visualization_shader.set_int(c_str!("textureFront"), 1);
 
         gl::ActiveTexture(gl::TEXTURE2);
-        gl::BindTexture(gl::TEXTURE_3D, inputs.voxels_texture.id());
+        gl::BindTexture(
+            gl::TEXTURE_3D,
+            *assets.get_texture("voxels_texture").unwrap(),
+        );
         self.visualization_shader
             .set_int(c_str!("voxelsTexture"), 2);
 

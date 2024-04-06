@@ -23,7 +23,7 @@ impl GeometryBuffers {
 impl Kernel for GeometryBuffers {
     unsafe fn setup(&mut self, assets: &mut AssetRegistry) {
         for (name, texture) in self.framebuffer.textures().iter() {
-            assets.register_texture(name.clone(), *texture); // TODO: Everything breaks. Figure it out.
+            assets.register_texture(name, *texture);
         }
     }
     unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry) {

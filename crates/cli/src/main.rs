@@ -1,8 +1,7 @@
 //! The entrypoint to the VCT application
 
 use core::simple_texture::{
-    ConeTracer as SimpleConeTracer, ConeTracerRunInputs, GpuKernel, Visualizer,
-    VisualizerRunInputs, Voxelizer, VoxelizerRunInputs,
+    ConeTracer as SimpleConeTracer, Visualizer as VoxelVisualizer, Voxelizer,
 };
 use std::cell::RefCell;
 use std::fs::{File, OpenOptions};
@@ -113,21 +112,6 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     // let mut cone_parameters = HashMap::new();
     let mut debug_cone = unsafe { DebugCone::new() };
 
-    // Here I'm trying to simplify and use the simple 3D texture approach.
-    let voxelizer = unsafe { Voxelizer::init(()) };
-    // let voxels_texture = unsafe {
-    //     voxelizer.run(VoxelizerRunInputs {
-    //         objects: &mut objects[..],
-    //         scene_aabb: &scene_aabb,
-    //         camera: &camera,
-    //         light: &light,
-    //     });
-    //     voxelizer.voxels_texture
-    // };
-    let voxels_visualizer = unsafe { Visualizer::init(()) };
-    let mut mipmap_level = 0;
-    let simple_cone_tracer = unsafe { SimpleConeTracer::init(()) };
-
     // let (voxel_positions, number_of_voxel_fragments, voxel_colors, voxel_normals) =
     //     unsafe { voxelization::build_voxel_fragment_list(&mut objects[..], &scene_aabb) };
     // log::info!("Number of voxel fragments: {}", number_of_voxel_fragments);
@@ -236,37 +220,15 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     // It can be switched at runtime. TODO: Not yet.
     // let active_camera = &mut camera;
 
-    struct Kernel1;
-    impl Kernel for Kernel1 {
-        unsafe fn setup(&mut self, _assets: &mut AssetRegistry) {}
-        unsafe fn update(&mut self, _scene: &Scene, _assets: &AssetRegistry) {}
-    }
-    struct Kernel2;
-    impl Kernel for Kernel2 {
-        unsafe fn setup(&mut self, _assets: &mut AssetRegistry) {}
-        unsafe fn update(&mut self, _scene: &Scene, _assets: &AssetRegistry) {}
-    }
-
-    #[kernel_group]
-    struct TestGroup {
-        kernel_1: Kernel1,
-        kernel_2: Kernel2,
-    }
-    impl TestGroup {
-        pub fn new() -> Self {
-            Self {
-                kernel_1: Kernel1,
-                kernel_2: Kernel2,
-                paused: false,
-            }
-        }
-    }
+    let mut mipmap_level = 0;
 
     #[aggregated_kernel]
     enum AggregatedKernel {
         RenderObjects,
         GeometryBuffers,
-        TestGroup,
+        Voxelizer,
+        VoxelVisualizer,
+        SimpleConeTracer,
     }
 
     let mut render_loop = RenderLoop::<AggregatedKernel>::new(
@@ -287,7 +249,15 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
             "GeometryBuffers",
             AggregatedKernel::GeometryBuffers(GeometryBuffers::new()),
         );
-        render_loop.register_kernel("TestGroup", AggregatedKernel::TestGroup(TestGroup::new()));
+        render_loop.register_kernel("Voxelizer", AggregatedKernel::Voxelizer(Voxelizer::new()));
+        render_loop.register_kernel(
+            "VoxelsVisualizer",
+            AggregatedKernel::VoxelVisualizer(VoxelVisualizer::new()),
+        );
+        render_loop.register_kernel(
+            "SimpleConeTracer",
+            AggregatedKernel::SimpleConeTracer(SimpleConeTracer::new()),
+        );
 
         render_loop.run();
     };
@@ -413,8 +383,6 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     //     //     }
     //     // }
 
-    //     // Moving the camera was here.
-
     //     // Render
     //     unsafe {
     //         // let projection: Matrix4<f32> = perspective(
@@ -427,14 +395,6 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     //         let view = active_camera.transform.get_view_matrix();
     //         let mut model = Matrix4::<f32>::from_translation(vec3(0.0, 0.0, 0.0));
     //         model = model * Matrix4::from_scale(1.);
-
-    //         // if show_voxel_fragment_list {
-    //         //     if should_move_light {
-    //         //         render_border_voxel_fragments_shader.run(&projection, &view, &model);
-    //         //     } else {
-    //         //         render_voxel_fragments_shader.run(&projection, &view, &model);
-    //         //     }
-    //         // }
 
     //         // if show_octree {
     //         //     octree.render(

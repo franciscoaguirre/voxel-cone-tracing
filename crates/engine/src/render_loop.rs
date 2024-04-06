@@ -6,7 +6,7 @@ use egui_glfw_gl::glfw::{self, Glfw, WindowEvent};
 
 use crate::{
     camera::Camera,
-    common::{self, WINDOW},
+    common,
     prelude::{AssetRegistry, Kernel, Pausable, Scene},
 };
 
@@ -156,7 +156,7 @@ impl<T: Kernel + Pausable> RenderLoop<T> {
     }
 
     fn process_pausing_kernels(kernels: &mut [(String, T)], event: &glfw::WindowEvent) {
-        pause_kernels_with_number_keys!(kernels, event, 0, 1, 2);
+        pause_kernels_with_number_keys!(kernels, event, 0, 1, 2, 3, 4);
     }
 }
 

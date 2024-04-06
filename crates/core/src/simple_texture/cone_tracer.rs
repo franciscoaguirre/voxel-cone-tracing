@@ -1,35 +1,30 @@
 use c_str_macro::c_str;
 use engine::prelude::*;
 
-use super::GpuKernel;
-
+#[pausable]
 pub struct ConeTracer {
     cone_tracing_shader: Shader,
     quad: Quad,
 }
 
-pub struct ConeTracerRunInputs<'a> {
-    pub camera: &'a Camera,
-    pub light: &'a Light,
-    pub geometry_buffers: &'a Textures<GEOMETRY_BUFFERS>,
-    pub scene_aabb: &'a Aabb,
-    pub voxels_texture: Texture3Dv2,
-}
-
-impl GpuKernel for ConeTracer {
-    type InitInputs<'a> = ();
-    type RunInputs<'a> = ConeTracerRunInputs<'a>;
-
-    unsafe fn init(_: ()) -> Self {
+impl ConeTracer {
+    pub unsafe fn new() -> Self {
         Self {
             cone_tracing_shader: compile_shaders!(
                 "assets/shaders/simple_texture/cone_tracing.glsl"
             ),
             quad: Quad::new(),
+            paused: false,
         }
     }
+}
 
-    unsafe fn run<'a>(&self, inputs: ConeTracerRunInputs<'a>) {
+impl Kernel for ConeTracer {
+    unsafe fn setup(&mut self, _assets: &mut AssetRegistry) {}
+
+    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry) {
+        let active_camera = &scene.cameras[scene.active_camera.unwrap_or(0)].borrow();
+
         self.cone_tracing_shader.use_program();
 
         // OpenGL settings.
@@ -45,9 +40,9 @@ impl GpuKernel for ConeTracer {
         // Upload uniforms.
         self.cone_tracing_shader.set_vec3(
             c_str!("pointLight.position"),
-            inputs.light.transform().position.x,
-            inputs.light.transform().position.y,
-            inputs.light.transform().position.z,
+            scene.light.transform().position.x,
+            scene.light.transform().position.y,
+            scene.light.transform().position.z,
         );
         self.cone_tracing_shader
             .set_vec3(c_str!("pointLight.color"), 1.0, 1.0, 1.0);
@@ -56,17 +51,32 @@ impl GpuKernel for ConeTracer {
         let mut texture_counter = 0;
 
         gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
-        gl::BindTexture(gl::TEXTURE_3D, inputs.voxels_texture.id());
+        gl::BindTexture(
+            gl::TEXTURE_3D,
+            *assets.get_texture("voxels_texture").unwrap(),
+        ); // TODO: Need to register it.
         self.cone_tracing_shader
             .set_int(c_str!("voxelsTexture"), texture_counter as i32);
         texture_counter += 1;
 
         // Set geometry buffers.
         let g_buffer_textures = vec![
-            (c_str!("gBufferColors"), inputs.geometry_buffers[3]),
-            (c_str!("gBufferPositions"), inputs.geometry_buffers[0]),
-            (c_str!("gBufferNormals"), inputs.geometry_buffers[2]),
-            (c_str!("gBufferSpeculars"), inputs.geometry_buffers[4]),
+            (
+                c_str!("gBufferColors"),
+                *assets.get_texture("colors").unwrap(),
+            ),
+            (
+                c_str!("gBufferPositions"),
+                *assets.get_texture("positions").unwrap(),
+            ),
+            (
+                c_str!("gBufferNormals"),
+                *assets.get_texture("normals").unwrap(),
+            ),
+            (
+                c_str!("gBufferSpeculars"),
+                *assets.get_texture("specular").unwrap(),
+            ),
         ];
         for &(texture_name, texture) in g_buffer_textures.iter() {
             gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
