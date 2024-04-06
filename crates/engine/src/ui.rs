@@ -1,34 +1,56 @@
-pub use egui_glfw_gl as egui_backend;
+use std::cell::RefCell;
+
 pub use egui_backend::egui;
 pub use egui_backend::glfw;
+pub use egui_glfw_gl as egui_backend;
 
 pub mod prelude {
-    pub use super::{
-        egui,
-        glfw,
-        Ui,
-        egui_backend,
-    };
+    pub use super::{egui, egui_backend, glfw, Ui};
 }
 
 use crate::common::{self, WINDOW};
-use once_cell::sync::OnceCell;
+use crate::prelude::AssetRegistry;
+use crate::submenu::Showable;
+use crate::submenu::SubMenu;
 
-static mut INSTANCE: OnceCell<Ui> = OnceCell::new();
-
-pub struct Ui {
+/// UI manager.
+/// Consumer can register a custom menu that uses the available UI system.
+/// TODO: Theory. See if EGUI breaks the rendering in some way.
+/// I remember it did some weird things with opacity, but maybe that was
+/// just how we rendered the UI.
+pub struct Ui<S> {
     painter: egui_backend::Painter,
     context: egui::Context,
     input_state: egui_backend::EguiInputState,
     modifier_keys: egui::Modifiers,
     native_pixels_per_point: f32,
-    is_showing: bool,
+    should_show: bool,
+    submenus: Vec<RefCell<(String, S)>>,
 }
 
-impl Ui {
-    pub fn instance() -> &'static mut Ui {
-        unsafe {
-            INSTANCE.get_mut().expect("UI should have been initialized")
+impl<S: SubMenu + Showable> Ui<S> {
+    pub fn new(window: &mut egui_backend::glfw::Window) -> Self {
+        let painter = egui_backend::Painter::new(window);
+        let context = egui::Context::default();
+        let native_pixels_per_point = window.get_content_scale().0;
+        let (viewport_width, viewport_height) = window.get_framebuffer_size();
+        let input_state = egui_backend::EguiInputState::new(egui::RawInput {
+            screen_rect: Some(egui::Rect::from_min_size(
+                egui::Pos2::new(0_f32, 0_f32),
+                egui::vec2(viewport_width as f32, viewport_height as f32) / native_pixels_per_point,
+            )),
+            pixels_per_point: Some(native_pixels_per_point),
+            ..Default::default()
+        });
+        let modifier_keys = egui::Modifiers::default();
+        Self {
+            painter,
+            context,
+            input_state,
+            modifier_keys,
+            native_pixels_per_point,
+            should_show: false,
+            submenus: Vec::new(),
         }
     }
 
@@ -48,55 +70,27 @@ impl Ui {
         self.modifier_keys.shift = !self.modifier_keys.shift;
     }
 
-    pub fn setup(window: &mut egui_backend::glfw::Window) {
-        let painter = egui_backend::Painter::new(window);
-        let context = egui::Context::default();
-        let native_pixels_per_point = window.get_content_scale().0;
-        let (viewport_width, viewport_height) = window.get_framebuffer_size();
-        let input_state = egui_backend::EguiInputState::new(egui::RawInput {
-            screen_rect: Some(egui::Rect::from_min_size(
-                egui::Pos2::new(0_f32, 0_f32),
-                egui::vec2(viewport_width as f32, viewport_height as f32)
-                    / native_pixels_per_point,
-            )),
-            pixels_per_point: Some(native_pixels_per_point),
-            ..Default::default()
-        });
-        let modifier_keys = egui::Modifiers::default();
-        let ui = Ui {
-            painter,
-            context,
-            input_state,
-            modifier_keys,
-            native_pixels_per_point,
-            is_showing: false,
-        };
-        unsafe { let _ = INSTANCE.set(ui); }
-    }
-
     pub fn toggle_showing(&mut self) {
-        self.is_showing = !self.is_showing;
+        self.should_show = !self.should_show;
     }
 
-    pub fn is_showing(&self) -> bool {
-        self.is_showing
+    pub fn should_show(&self) -> bool {
+        self.should_show
     }
 
     pub fn begin_frame(&mut self, current_frame: f64) {
-        if !self.is_showing {
+        if !self.should_show {
             return;
         }
 
         self.input_state.input.time = Some(current_frame);
         self.input_state.input.modifiers = self.modifier_keys;
-        self.context
-            .begin_frame(self.input_state.input.take());
-        self.input_state.input.pixels_per_point =
-            Some(self.native_pixels_per_point);
+        self.context.begin_frame(self.input_state.input.take());
+        self.input_state.input.pixels_per_point = Some(self.native_pixels_per_point);
     }
 
     pub fn end_frame(&mut self) {
-        if !self.is_showing {
+        if !self.should_show {
             return;
         }
 
@@ -107,16 +101,42 @@ impl Ui {
             shapes,
         } = self.context.end_frame();
         if !platform_output.copied_text.is_empty() {
-            egui_backend::copy_to_clipboard(
-                &mut self.input_state,
-                platform_output.copied_text,
-            );
+            egui_backend::copy_to_clipboard(&mut self.input_state, platform_output.copied_text);
         }
         let clipped_shapes = self.context.tessellate(shapes);
         self.painter
             .paint_and_update_textures(1.0, &clipped_shapes, &textures_delta);
     }
 
+    pub fn register_submenu(&mut self, name: &str, submenu: S) {
+        self.submenus
+            .push(RefCell::new((name.to_string(), submenu)));
+    }
+
+    pub fn show(&mut self) {
+        egui::Window::new("Menu").show(self.context(), |ui| {
+            for submenu in self.submenus.iter() {
+                let mut submenu = submenu.borrow_mut();
+                if ui
+                    .button(get_button_text(&submenu.0, submenu.1.should_show()))
+                    .clicked()
+                {
+                    submenu.1.toggle_showing();
+                }
+            }
+        });
+    }
+
+    pub fn handle_event(&mut self, event: glfw::WindowEvent, assets: &mut AssetRegistry) {
+        for submenu in self.submenus.iter() {
+            let mut submenu = submenu.borrow_mut();
+            submenu.1.handle_event(&event, self.context(), assets);
+        }
+        egui_backend::handle_event(event, self.input_state_mut());
+    }
+}
+
+impl Ui<()> {
     pub fn set_cursor_mode(mode: glfw::CursorMode) {
         unsafe {
             let mut binding = WINDOW.borrow_mut();
@@ -134,8 +154,14 @@ impl Ui {
     }
 
     pub fn get_window_size() -> (i32, i32) {
-        unsafe {
-            common::get_framebuffer_size()
-        }
+        unsafe { common::get_framebuffer_size() }
     }
+}
+
+pub fn get_button_text(text: &str, clicked: bool) -> egui::RichText {
+    let mut button_text = egui::RichText::new(text);
+    if clicked {
+        button_text = button_text.color(egui::Color32::RED);
+    }
+    button_text
 }

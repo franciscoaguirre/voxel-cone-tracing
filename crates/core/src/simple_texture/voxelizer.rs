@@ -3,10 +3,11 @@ use std::ffi::c_void;
 use c_str_macro::c_str;
 use engine::prelude::*;
 
-#[pausable]
+#[derive(Pausable)]
 pub struct Voxelizer {
     voxelization_shader: Shader,
     pub voxels_texture: Texture3Dv2,
+    paused: bool,
 }
 
 impl Voxelizer {

@@ -8,7 +8,31 @@ use colored::{customcolors, Colorize};
 
 use gl::types::GLuint;
 
-use crate::{config::Config, menu::DebugNode, octree::OctreeTextures};
+use serde::{Deserialize, Serialize};
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct DebugNode {
+    index: u32,
+    text: String,
+}
+
+impl DebugNode {
+    pub fn new(index: u32, text: String) -> Self {
+        Self { index, text }
+    }
+
+    pub fn index(&self) -> u32 {
+        self.index
+    }
+}
+
+impl fmt::Display for DebugNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}: {}", self.index, self.text)
+    }
+}
+
+use crate::{config::Config, octree::OctreeTextures};
 
 use super::ConeParameters;
 

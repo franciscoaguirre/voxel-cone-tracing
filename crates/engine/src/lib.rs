@@ -30,7 +30,7 @@ pub mod types;
 
 pub use macros;
 
-#[cfg(feature = "ui")]
+pub mod submenu;
 pub mod ui;
 
 pub mod prelude {
@@ -48,7 +48,7 @@ pub mod prelude {
         kernel::{Kernel, Pausable},
         kernels,
         light::Light,
-        macros::{aggregated_kernel, kernel_group, pausable},
+        macros::{Kernel, Pausable, Showable, SubMenu},
         material::{Material, MaterialProperties},
         model::Model,
         object::Object,
@@ -56,6 +56,7 @@ pub mod prelude {
         render_loop::RenderLoop,
         scene::Scene,
         shader::{compile_compute, compile_shaders, Shader, ShaderPass},
+        submenu::{Showable, SubMenu},
         test_utils,
         texture_3d::Texture3Dv2,
         texture_buffer::BufferTextureV2,

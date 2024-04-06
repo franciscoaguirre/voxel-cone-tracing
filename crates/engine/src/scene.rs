@@ -21,6 +21,8 @@ pub struct Scene {
     /// Cameras.
     #[serde(skip)]
     pub cameras: Vec<RefCell<Camera>>,
+    /// Scenes can have many cameras, which could be switched at runtime.
+    /// This index references the active camera.
     #[serde(skip)]
     pub active_camera: Option<usize>,
     /// For getting the model normalization matrix.

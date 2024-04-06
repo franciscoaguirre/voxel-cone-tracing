@@ -1,9 +1,10 @@
-use crate::prelude::{compile_shaders, pausable, AssetRegistry, Kernel, Pausable, Scene, Shader};
+use crate::prelude::{compile_shaders, AssetRegistry, Kernel, Pausable, Scene, Shader};
 use c_str_macro::c_str;
 
-#[pausable]
+#[derive(Pausable)]
 pub struct RenderObjects {
     shader: Shader,
+    paused: bool,
 }
 
 impl RenderObjects {

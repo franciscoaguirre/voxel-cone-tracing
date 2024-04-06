@@ -16,7 +16,6 @@ pub struct DebugConeMenu {
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 #[serde(default)]
 pub struct DebugConeMenuOutput {
-    pub is_picking: bool,
     pub show_debug_cone: bool,
     pub move_debug_cone: bool,
     pub point_to_light: bool,
@@ -46,12 +45,6 @@ impl<'a> SubMenu for DebugConeMenu {
 
         egui::Window::new("Debug Cone").show(context, |ui| {
             ui.horizontal(|ui| {
-                if ui
-                    .button(get_button_text("Picker", self.output.is_picking))
-                    .clicked()
-                {
-                    self.output.is_picking = !self.output.is_picking;
-                }
                 if ui
                     .button(get_button_text("Show", self.output.show_debug_cone))
                     .clicked()

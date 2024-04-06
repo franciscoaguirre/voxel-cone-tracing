@@ -85,7 +85,7 @@ vec3 calculateDirectLight(const PointLight light) {
     vec3 normal = texture(gBufferNormals, In.textureCoordinates).xyz;
     vec3 lightDirection = light.position - worldPosition;
     const float distanceToLight = length(lightDirection);
-    lightDirection = lightDirection / distanceToLight;
+    lightDirection = normalize(lightDirection);
     const float lightAngle = dot(normal, lightDirection);
     float diffuseAngle = max(lightAngle, 0.0f);
     float shadowBlend = 1;

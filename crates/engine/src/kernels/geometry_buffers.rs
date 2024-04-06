@@ -1,13 +1,13 @@
 use crate::prelude::{
-    common, compile_shaders, pausable, AssetRegistry, GeometryFramebuffer, Kernel, Pausable, Scene,
-    Shader,
+    common, compile_shaders, AssetRegistry, GeometryFramebuffer, Kernel, Pausable, Scene, Shader,
 };
 use c_str_macro::c_str;
 
-#[pausable]
+#[derive(Pausable)]
 pub struct GeometryBuffers {
     shader: Shader,
     framebuffer: GeometryFramebuffer,
+    paused: bool,
 }
 
 impl GeometryBuffers {

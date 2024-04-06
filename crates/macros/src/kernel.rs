@@ -1,27 +1,27 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use syn::{Error, Item, Result};
+use syn::{Data, DataEnum, DataStruct, DeriveInput, Error, Ident, Result};
 
-pub(crate) fn aggregated_kernel_inner(_args: TokenStream2, input: Item) -> Result<TokenStream2> {
-    let data_enum = match &input {
-        Item::Enum(data_enum) => data_enum,
-        _ => return Err(Error::new_spanned(&input, "Expected an enum")),
+pub(crate) fn derive_kernel_inner(input: DeriveInput) -> Result<TokenStream2> {
+    let kernel_impl = match &input.data {
+        Data::Enum(data_enum) => kernel_enum_impl(&input.ident, data_enum),
+        Data::Struct(data_struct) => kernel_struct_impl(&input.ident, data_struct),
+        _ => return Err(Error::new_spanned(&input, "Expected a struct or an enum")),
     };
 
+    Ok(quote! {
+        #kernel_impl
+    })
+}
+
+fn kernel_enum_impl(ident: &Ident, data_enum: &DataEnum) -> TokenStream2 {
     let variant_idents: Vec<_> = data_enum
         .variants
         .iter()
         .map(|variant| &variant.ident)
         .collect();
-
-    let aggregated_enum_ident = &data_enum.ident;
-    let aggregated_enum = quote! {
-        enum #aggregated_enum_ident {
-            #(#variant_idents(#variant_idents)),*
-        }
-    };
     let kernel_impl = quote! {
-        impl Kernel for #aggregated_enum_ident {
+        impl Kernel for #ident {
             unsafe fn setup(&mut self, assets: &mut AssetRegistry) {
                 match self {
                     #(Self::#variant_idents(inner_kernel) => {
@@ -31,6 +31,7 @@ pub(crate) fn aggregated_kernel_inner(_args: TokenStream2, input: Item) -> Resul
                     }),*
                 }
             }
+
             unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry) {
                 match self {
                     #(Self::#variant_idents(inner_kernel) => {
@@ -42,8 +43,49 @@ pub(crate) fn aggregated_kernel_inner(_args: TokenStream2, input: Item) -> Resul
             }
         }
     };
+    kernel_impl
+}
+
+fn kernel_struct_impl(ident: &Ident, data_struct: &DataStruct) -> TokenStream2 {
+    let field_idents: Vec<_> = data_struct
+        .fields
+        .iter()
+        .map(|field| &field.ident)
+        .collect();
+    let field_types: Vec<_> = data_struct.fields.iter().map(|field| &field.ty).collect();
+    let kernel_impl = quote! {
+        impl Kernel for #ident {
+            unsafe fn setup(&mut self, assets: &mut AssetRegistry) {
+                #(self.#field_idents.setup(assets));*;
+            }
+            unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry) {
+                #(self.#field_idents.update(scene, assets));*;
+            }
+        }
+    };
+    kernel_impl
+}
+
+pub(crate) fn derive_pausable_inner(input: DeriveInput) -> Result<TokenStream2> {
+    let pausable_impl = match &input.data {
+        Data::Enum(data_enum) => pausable_enum_impl(&input.ident, data_enum),
+        Data::Struct(data_struct) => pausable_struct_impl(&input.ident, data_struct),
+        _ => return Err(Error::new_spanned(&input, "Expected struct or enum.")),
+    };
+
+    Ok(quote! {
+        #pausable_impl
+    })
+}
+
+fn pausable_enum_impl(ident: &Ident, data_enum: &DataEnum) -> TokenStream2 {
+    let variant_idents: Vec<_> = data_enum
+        .variants
+        .iter()
+        .map(|variant| &variant.ident)
+        .collect();
     let pausable_impl = quote! {
-        impl Pausable for #aggregated_enum_ident {
+        impl Pausable for #ident {
             fn pause(&mut self) {
                 match self {
                     #(Self::#variant_idents(inner_kernel) => inner_kernel.pause()),*
@@ -61,43 +103,11 @@ pub(crate) fn aggregated_kernel_inner(_args: TokenStream2, input: Item) -> Resul
             }
         }
     };
-
-    Ok(quote! {
-        #aggregated_enum
-        #kernel_impl
-        #pausable_impl
-    })
+    pausable_impl
 }
 
-pub(crate) fn kernel_group_inner(_args: TokenStream2, input: Item) -> Result<TokenStream2> {
-    let data_struct = match &input {
-        Item::Struct(data_struct) => data_struct,
-        _ => return Err(Error::new_spanned(&input, "Expected struct.")),
-    };
-    let ident = &data_struct.ident;
-    let field_idents: Vec<_> = data_struct
-        .fields
-        .iter()
-        .map(|field| &field.ident)
-        .collect();
-    let field_types: Vec<_> = data_struct.fields.iter().map(|field| &field.ty).collect();
-
-    let modified_struct = quote! {
-        struct #ident {
-            #(#field_idents: #field_types),*,
-            paused: bool,
-        }
-    };
-    let kernel_impl = quote! {
-        impl Kernel for #ident {
-            unsafe fn setup(&mut self, assets: &mut AssetRegistry) {
-                #(self.#field_idents.setup(assets));*;
-            }
-            unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry) {
-                #(self.#field_idents.update(scene, assets));*;
-            }
-        }
-    };
+// TODO: Should return a custom error if struct doesn't have the `paused` field.
+fn pausable_struct_impl(ident: &Ident, _data_struct: &DataStruct) -> TokenStream2 {
     let pausable_impl = quote! {
         impl Pausable for #ident {
             fn pause(&mut self) {
@@ -111,50 +121,5 @@ pub(crate) fn kernel_group_inner(_args: TokenStream2, input: Item) -> Result<Tok
             }
         }
     };
-
-    Ok(quote! {
-        #modified_struct
-        #kernel_impl
-        #pausable_impl
-    })
-}
-
-pub(crate) fn pausable_inner(_args: TokenStream2, input: Item) -> Result<TokenStream2> {
-    let data_struct = match &input {
-        Item::Struct(data_struct) => data_struct,
-        _ => return Err(Error::new_spanned(&input, "Expected struct.")),
-    };
-    let ident = &data_struct.ident;
-    let visibility = &data_struct.vis;
-    let field_idents: Vec<_> = data_struct
-        .fields
-        .iter()
-        .map(|field| &field.ident)
-        .collect();
-    let field_types: Vec<_> = data_struct.fields.iter().map(|field| &field.ty).collect();
-
-    let modified_struct = quote! {
-        #visibility struct #ident {
-            #(#field_idents: #field_types),*,
-            paused: bool,
-        }
-    };
-    let pausable_impl = quote! {
-        impl Pausable for #ident {
-            fn pause(&mut self) {
-                self.paused = true;
-            }
-            fn unpause(&mut self) {
-                self.paused = false;
-            }
-            fn is_paused(&self) -> bool {
-                self.paused
-            }
-        }
-    };
-
-    Ok(quote! {
-        #modified_struct
-        #pausable_impl
-    })
+    pausable_impl
 }

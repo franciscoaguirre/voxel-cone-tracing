@@ -9,6 +9,7 @@ pub struct AssetRegistry {
     models: HashMap<AssetHandle, Model>,
     materials: HashMap<AssetHandle, Material>,
     pub textures: HashMap<AssetHandle, Texture>,
+    pub uniforms: HashMap<AssetHandle, Uniform>,
 }
 
 impl AssetRegistry {
@@ -17,6 +18,7 @@ impl AssetRegistry {
             models: HashMap::new(),
             materials: HashMap::new(),
             textures: HashMap::new(),
+            uniforms: HashMap::new(),
         }
     }
 
@@ -48,6 +50,12 @@ impl AssetRegistry {
         }
     }
 
+    pub fn register_uniform(&mut self, id: &str, uniform: Uniform) {
+        if self.uniforms.insert(id.to_string(), uniform).is_some() {
+            // Handle overwriting an existing material if necessary.
+        }
+    }
+
     pub fn get_model(&self, id: &str) -> Option<&Model> {
         self.models.get(id)
     }
@@ -58,5 +66,13 @@ impl AssetRegistry {
 
     pub fn get_texture(&self, id: &str) -> Option<&Texture> {
         self.textures.get(id)
+    }
+
+    pub fn get_uniform(&self, id: &str) -> Option<&Uniform> {
+        self.uniforms.get(id)
+    }
+
+    pub fn get_uniform_mut(&mut self, id: &str) -> Option<&mut Uniform> {
+        self.uniforms.get_mut(id)
     }
 }

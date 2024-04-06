@@ -1,7 +1,7 @@
 use c_str_macro::c_str;
 use engine::prelude::*;
 
-#[pausable]
+#[derive(Pausable)]
 pub struct Visualizer {
     visualization_shader: Shader,
     world_positions_shader: Shader,
@@ -9,6 +9,7 @@ pub struct Visualizer {
     front_framebuffer: Framebuffer<1>,
     cube_renderer: Cube,
     quad_renderer: Quad,
+    paused: bool,
 }
 
 impl Visualizer {

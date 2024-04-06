@@ -1,6 +1,11 @@
 use std::sync::mpsc::Receiver;
 
-use crate::pause_kernels_with_number_keys;
+use crate::{
+    common::WINDOW,
+    pause_kernels_with_number_keys,
+    submenu::{Showable, SubMenu},
+    ui::Ui,
+};
 
 use egui_glfw_gl::glfw::{self, Glfw, WindowEvent};
 
@@ -10,17 +15,21 @@ use crate::{
     prelude::{AssetRegistry, Kernel, Pausable, Scene},
 };
 
-pub struct RenderLoop<T> {
+pub struct RenderLoop<T, S> {
     glfw: Glfw, // TODO: Remove from here.
     events: Events,
     mouse_info: MouseInfo,
     scene: Option<Scene>,
     kernels: Vec<(String, T)>,
     asset_registry: AssetRegistry,
+    ui: Ui<S>,
 }
 
-impl<T: Kernel + Pausable> RenderLoop<T> {
+impl<T: Kernel + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
     pub fn new(glfw: Glfw, events: Events, viewport_dimensions: (i32, i32)) -> Self {
+        let mut binding = unsafe { WINDOW.borrow_mut() };
+        let mut window = binding.as_mut().unwrap();
+
         Self {
             glfw,
             events,
@@ -32,11 +41,16 @@ impl<T: Kernel + Pausable> RenderLoop<T> {
             scene: None,
             kernels: Vec::new(),
             asset_registry: AssetRegistry::new(),
+            ui: Ui::<S>::new(&mut window),
         }
     }
 
-    pub unsafe fn register_kernel(&mut self, name: &str, kernel: T) {
+    pub fn register_kernel(&mut self, name: &str, kernel: T) {
         self.kernels.push((name.to_string(), kernel));
+    }
+
+    pub fn register_submenu(&mut self, name: &str, submenu: S) {
+        self.ui.register_submenu(name, submenu);
     }
 
     pub unsafe fn run(&mut self) {
@@ -85,6 +99,8 @@ impl<T: Kernel + Pausable> RenderLoop<T> {
                 &mut self.mouse_info,
                 &mut scene.cameras[scene.active_camera.unwrap_or(0)].borrow_mut(),
                 &mut self.kernels,
+                &mut self.ui,
+                &mut self.asset_registry,
             );
 
             // Camera movement.
@@ -95,12 +111,26 @@ impl<T: Kernel + Pausable> RenderLoop<T> {
                     .transform,
             );
 
+            // UI.
+            self.ui.begin_frame(current_frame);
+
+            // Menu.
+            if self.ui.should_show() {
+                self.ui.show();
+            }
+
             // Run all updates.
             for (_, kernel) in &mut self.kernels {
                 kernel.update(&scene, &mut self.asset_registry);
             }
 
             // Probably rendering a full-screen quad.
+
+            // Needed for the menu to render.
+            gl::Disable(gl::DEPTH_TEST);
+
+            // UI end.
+            self.ui.end_frame();
 
             // Swap buffers and poll I/O events.
             common::swap_buffers();
@@ -133,25 +163,37 @@ impl<T: Kernel + Pausable> RenderLoop<T> {
         mouse_info: &mut MouseInfo,
         camera: &mut Camera,
         kernels: &mut [(String, T)],
+        ui: &mut Ui<S>,
+        assets: &mut AssetRegistry,
     ) {
         for (_, event) in glfw::flush_messages(events) {
             // events
-            // if let glfw::WindowEvent::Key(glfw::Key::Escape, _, glfw::Action::Press, _) = event {
-            //     menu.toggle_showing(&mut last_x, &mut last_y);
-            // };
-            // if !ui.is_showing() {
-            common::process_events(
-                &event, mouse_info, camera,
-                // &mut debug_cone, // todo: bring back
-            );
-            Self::process_pausing_kernels(kernels, &event);
+            if let glfw::WindowEvent::Key(glfw::Key::Escape, _, glfw::Action::Press, _) = event {
+                ui.toggle_showing();
+                if ui.should_show() {
+                    Ui::set_cursor_mode(glfw::CursorMode::Normal);
+                } else {
+                    Ui::set_cursor_mode(glfw::CursorMode::Disabled);
+
+                    // So that we don't take into account mouse movements while using the menu
+                    let cursor_position = Ui::get_cursor_pos();
+                    mouse_info.last_x = cursor_position.0 as f32;
+                    mouse_info.last_y = cursor_position.1 as f32;
+                }
+            };
+            if !ui.should_show() {
+                common::process_events(
+                    &event, mouse_info, camera,
+                    // &mut debug_cone, // todo: bring back
+                );
+                Self::process_pausing_kernels(kernels, &event);
             // common::handle_show_model(&event, &mut show_model);
             // common::handle_show_voxel_fragment_list(&event, &mut show_voxel_fragment_list);
             // common::handle_light_movement(&event, &mut should_move_light);
             // common::handle_mipmap_level(&event, &mut mipmap_level);
-            // } else {
-            //     menu.handle_event(event);
-            // }
+            } else {
+                ui.handle_event(event, assets);
+            }
         }
     }
 

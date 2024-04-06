@@ -1,10 +1,11 @@
 use c_str_macro::c_str;
 use engine::prelude::*;
 
-#[pausable]
+#[derive(Pausable)]
 pub struct ConeTracer {
     cone_tracing_shader: Shader,
     quad: Quad,
+    paused: bool,
 }
 
 impl ConeTracer {

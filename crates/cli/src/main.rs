@@ -1,5 +1,6 @@
 //! The entrypoint to the VCT application
 
+use core::menu::submenus::PickerMenu;
 use core::simple_texture::{
     ConeTracer as SimpleConeTracer, Visualizer as VoxelVisualizer, Voxelizer,
 };
@@ -17,13 +18,7 @@ use cgmath::{point3, vec2, vec3, Euler, Matrix4};
 use core::{
     cone_tracing::{ConeTracer, DebugCone},
     config::Config as CoreConfig,
-    menu::{
-        submenus::{
-            ChildrenMenuInput, DiagnosticsMenuInput, NodeSearchMenuInput, PhotonsMenuInput,
-            SavePresetMenuInput,
-        },
-        DebugNode, Menu, Preset,
-    },
+    menu::Preset,
     octree::{BrickAttribute, BricksToShow, Octree, OctreeDataType},
     voxelization,
     voxelization::visualize::RenderVoxelFragmentsShader,
@@ -204,34 +199,29 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
 
     let photon_power = scene.light.intensity() / (viewport_width * viewport_height) as f32;
 
-    // TODO: Theory. See if EGUI breaks the rendering in some way.
-    // I remember it did some weird things with opacity, but maybe that was
-    // just how we rendered the UI.
-    let ui = Ui::instance();
-
     // let mut fps_values = Vec::new();
 
     // We create a camera from the view of the light.
     let mut light_camera = Camera::default();
     light_camera.transform = scene.light.transform().clone();
 
-    // The active camera is a reference to a camera.
-    // All calculations are done with the active camera.
-    // It can be switched at runtime. TODO: Not yet.
-    // let active_camera = &mut camera;
-
     let mut mipmap_level = 0;
 
-    #[aggregated_kernel]
-    enum AggregatedKernel {
-        RenderObjects,
-        GeometryBuffers,
-        Voxelizer,
-        VoxelVisualizer,
-        SimpleConeTracer,
+    #[derive(SubMenu, Showable)]
+    enum AggregatedSubMenus {
+        Picker(PickerMenu),
     }
 
-    let mut render_loop = RenderLoop::<AggregatedKernel>::new(
+    #[derive(Kernel, Pausable)]
+    enum AggregatedKernel {
+        RenderObjects(RenderObjects),
+        GeometryBuffers(GeometryBuffers),
+        Voxelizer(Voxelizer),
+        VoxelVisualizer(VoxelVisualizer),
+        SimpleConeTracer(SimpleConeTracer),
+    }
+
+    let mut render_loop = RenderLoop::<AggregatedKernel, AggregatedSubMenus>::new(
         glfw,
         parameters.events,
         (viewport_width, viewport_height),
@@ -259,6 +249,8 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
             AggregatedKernel::SimpleConeTracer(SimpleConeTracer::new()),
         );
 
+        render_loop.register_submenu("Picker", AggregatedSubMenus::Picker(PickerMenu::new()));
+
         render_loop.run();
     };
 
@@ -284,8 +276,6 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     //         frame_count = 0;
     //         starting_time = current_frame;
     //     }
-
-    //     ui.begin_frame(current_frame);
 
     //     // egui render
     //     // if ui.is_showing() {
@@ -385,17 +375,6 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
 
     //     // Render
     //     unsafe {
-    //         // let projection: Matrix4<f32> = perspective(
-    //         //     Deg(active_camera.zoom),
-    //         //     viewport_width as f32 / viewport_height as f32,
-    //         //     0.0001,
-    //         //     10000.0,
-    //         // );
-    //         let projection = active_camera.get_projection_matrix();
-    //         let view = active_camera.transform.get_view_matrix();
-    //         let mut model = Matrix4::<f32>::from_translation(vec3(0.0, 0.0, 0.0));
-    //         model = model * Matrix4::from_scale(1.);
-
     //         // if show_octree {
     //         //     octree.render(
     //         //         &model,
@@ -433,31 +412,6 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     //         //         brick_padding,
     //         //     );
     //         // }
-
-    //         if show_model {
-    //             simple_cone_tracer.run(ConeTracerRunInputs {
-    //                 camera: active_camera,
-    //                 voxels_texture,
-    //                 light: &light,
-    //                 scene_aabb: &scene_aabb,
-    //                 geometry_buffers: &geometry_buffers,
-    //             });
-    //         } else {
-    //             voxels_visualizer.run(VisualizerRunInputs {
-    //                 camera: active_camera,
-    //                 voxels_texture,
-    //                 mipmap_level,
-    //             });
-    //         }
-
-    //         voxelizer.run(VoxelizerRunInputs {
-    //             objects: &mut objects[..],
-    //             scene_aabb: &scene_aabb,
-    //             camera: active_camera,
-    //             light: &light,
-    //         });
-
-    //         // cube.render(&very_simple_shader, active_camera);
 
     //         // cone_tracer.run(
     //         //     &light,
@@ -503,12 +457,6 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     //         // );
     //         // gl::BindVertexArray(0);
     //     }
-
-    //     unsafe {
-    //         gl::Disable(gl::DEPTH_TEST);
-    //     }
-
-    //     ui.end_frame();
 
     //     // current_voxel_fragment_count =
     //     //     (current_voxel_fragment_count + 10000).min(number_of_voxel_fragments);

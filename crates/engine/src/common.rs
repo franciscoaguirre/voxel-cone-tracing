@@ -81,9 +81,6 @@ pub unsafe fn setup_glfw(
         println!("Debug Context not active");
     }
 
-    #[cfg(feature = "ui")]
-    Ui::setup(&mut window);
-
     set_window(window);
 
     (glfw, events)
