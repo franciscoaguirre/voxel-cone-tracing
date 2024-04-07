@@ -2,7 +2,8 @@
 
 use core::menu::submenus::PickerMenu;
 use core::simple_texture::{
-    ConeTracer as SimpleConeTracer, Visualizer as VoxelVisualizer, Voxelizer,
+    ConeTracer as SimpleConeTracer, DebugConeTracer as SimpleDebugConeTracer,
+    Visualizer as VoxelVisualizer, Voxelizer,
 };
 use std::cell::RefCell;
 use std::fs::{File, OpenOptions};
@@ -219,6 +220,7 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
         Voxelizer(Voxelizer),
         VoxelVisualizer(VoxelVisualizer),
         SimpleConeTracer(SimpleConeTracer),
+        SimpleDebugConeTracer(SimpleDebugConeTracer),
     }
 
     let mut render_loop = RenderLoop::<AggregatedKernel, AggregatedSubMenus>::new(
@@ -247,6 +249,10 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
         render_loop.register_kernel(
             "SimpleConeTracer",
             AggregatedKernel::SimpleConeTracer(SimpleConeTracer::new()),
+        );
+        render_loop.register_kernel(
+            "SimpleDebugConeTracer",
+            AggregatedKernel::SimpleDebugConeTracer(SimpleDebugConeTracer::new()),
         );
 
         render_loop.register_submenu("Picker", AggregatedSubMenus::Picker(PickerMenu::new()));
@@ -279,21 +285,6 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
 
     //     // egui render
     //     // if ui.is_showing() {
-    //     //     menu.show_main_window();
-    //     //     menu.render((
-    //     //         (),
-    //     //         NodeSearchMenuInput::new(&debug_nodes),
-    //     //         (),
-    //     //         ChildrenMenuInput::new(&children),
-    //     //         DiagnosticsMenuInput::new(fps),
-    //     //         (),
-    //     //         PhotonsMenuInput::new(&photons),
-    //     //         SavePresetMenuInput::new(&active_camera, menu.sub_menus.clone()), // TODO: Remove clone
-    //     //         (),
-    //     //         (),
-    //     //         (),
-    //     //     ));
-    //     //     let outputs = menu.get_data();
 
     //     //     // All nodes
     //     //     show_octree = outputs.0.should_render_octree;
@@ -347,7 +338,6 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     //     //     // TODO: there is quite a bit of cloning here
     //     //     debug_cone.parameters = outputs.10.cone_parameters.clone();
     //     //     debug_cone.point_to_light = outputs.10.point_to_light;
-    //     //     menu.is_picking = outputs.10.is_picking;
     //     // }
 
     //     // This is for debugging

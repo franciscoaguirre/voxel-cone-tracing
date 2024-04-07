@@ -10,6 +10,7 @@ pub mod prelude {
 
 use crate::common::{self, WINDOW};
 use crate::prelude::AssetRegistry;
+use crate::prelude::Scene;
 use crate::submenu::Showable;
 use crate::submenu::SubMenu;
 
@@ -113,7 +114,8 @@ impl<S: SubMenu + Showable> Ui<S> {
             .push(RefCell::new((name.to_string(), submenu)));
     }
 
-    pub fn show(&mut self) {
+    pub fn show(&mut self, scene: &Scene, assets: &mut AssetRegistry) {
+        // Main menu to toggle submenus.
         egui::Window::new("Menu").show(self.context(), |ui| {
             for submenu in self.submenus.iter() {
                 let mut submenu = submenu.borrow_mut();
@@ -125,6 +127,12 @@ impl<S: SubMenu + Showable> Ui<S> {
                 }
             }
         });
+
+        // Actual submenus.
+        for submenu in self.submenus.iter() {
+            let mut submenu = submenu.borrow_mut();
+            submenu.1.show(self.context(), scene, assets);
+        }
     }
 
     pub fn handle_event(&mut self, event: glfw::WindowEvent, assets: &mut AssetRegistry) {

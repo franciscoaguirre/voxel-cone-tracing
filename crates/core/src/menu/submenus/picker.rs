@@ -4,26 +4,27 @@ use engine::ui::prelude::*;
 
 #[derive(Showable)]
 pub struct PickerMenu {
+    is_picking: bool,
     should_show: bool,
 }
 
 impl PickerMenu {
     pub fn new() -> Self {
-        Self { should_show: false }
+        Self {
+            is_picking: false,
+            should_show: false,
+        }
     }
 }
 
 impl SubMenu for PickerMenu {
-    fn show(&self, context: &egui::Context, _scene: &Scene, assets: &mut AssetRegistry) {
-        let is_picking = {
-            let Uniform::Bool(inner) = assets.get_uniform_mut("is_picking").unwrap() else {
-                unreachable!()
-            };
-            inner
-        };
+    fn show(&mut self, context: &egui::Context, _scene: &Scene, _assets: &mut AssetRegistry) {
         egui::Window::new("Picker").show(context, |ui| {
-            if ui.button(get_button_text("Picker", *is_picking)).clicked() {
-                *is_picking = !*is_picking;
+            if ui
+                .button(get_button_text("Picker", self.is_picking))
+                .clicked()
+            {
+                self.is_picking = !self.is_picking;
             }
         });
     }
@@ -34,14 +35,7 @@ impl SubMenu for PickerMenu {
         context: &egui::Context,
         assets: &mut AssetRegistry,
     ) {
-        let is_picking = {
-            let Uniform::Bool(inner) = assets.get_uniform("is_picking").unwrap() else {
-                unreachable!()
-            };
-            inner
-        };
-
-        if *is_picking && !context.wants_pointer_input() {
+        if self.is_picking && !context.wants_pointer_input() {
             if let glfw::WindowEvent::MouseButton(_, glfw::Action::Press, _) = event {
                 let cursor_position = Ui::get_cursor_pos();
                 let viewport_dimensions = Ui::get_window_size();

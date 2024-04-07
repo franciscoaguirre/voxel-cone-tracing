@@ -68,20 +68,6 @@ fn generate_for_fields(name: Ident, fields: &FieldsNamed) -> Result<TokenStream2
                     #( self.sub_menus.#field_idents.get_data(), )*
                 )
             }
-
-            pub fn show_main_window(&mut self) {
-                let ui = Ui::instance();
-                egui::Window::new("Menu").show(ui.context(), |ui| {
-                    #(
-                        if ui.button(get_button_text(
-                            #sub_menu_names,
-                            self.sub_menus.#field_idents.is_showing()
-                        )).clicked() {
-                            self.sub_menus.#field_idents.toggle_showing();
-                        }
-                    )*
-                });
-            }
         }
     };
     Ok(quote! {
@@ -105,12 +91,20 @@ pub(crate) fn derive_submenu_inner(input: DeriveInput) -> Result<TokenStream2> {
         .collect();
     let submenu_impl = quote! {
         impl SubMenu for #ident {
-            fn show(&self, context: &engine::ui::egui::Context, scene: &Scene, assets: &mut AssetRegistry) {
+            fn show(&mut self, context: &engine::ui::egui::Context, scene: &Scene, assets: &mut AssetRegistry) {
                 match self {
                     #(Self::#variant_idents(inner_submenu) => {
-                        if !inner_submenu.should_show() {
+                        if inner_submenu.should_show() {
                             inner_submenu.show(context, scene, assets);
                         }
+                    }),*
+                }
+            }
+
+            fn handle_event(&mut self, event: &engine::ui::glfw::WindowEvent, context: &engine::ui::egui::Context, assets: &mut AssetRegistry) {
+                match self {
+                    #(Self::#variant_idents(inner_submenu) => {
+                        inner_submenu.handle_event(event, context, assets);
                     }),*
                 }
             }

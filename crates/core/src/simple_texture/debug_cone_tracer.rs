@@ -1,17 +1,23 @@
 use c_str_macro::c_str;
 use engine::prelude::*;
+use gl::types::GLuint;
 
 #[derive(Pausable)]
 pub struct DebugConeTracer {
     shader: Shader,
+    vao: GLuint,
     paused: bool,
 }
 
 impl DebugConeTracer {
     pub unsafe fn new() -> Self {
+        let mut vao = 0;
+        gl::GenVertexArrays(1, &mut vao);
+
         Self {
             shader: compile_shaders!("assets/shaders/simple_texture/debugConeTracing.glsl"),
             paused: false,
+            vao,
         }
     }
 }
@@ -28,16 +34,12 @@ impl Kernel for DebugConeTracer {
         let active_camera = &scene.cameras[scene.active_camera.unwrap_or(0)].borrow();
 
         self.shader.use_program();
+        gl::BindVertexArray(self.vao);
 
-        // OpenGL settings. TODO: Maybe move to the trait?
+        // OpenGL settings. TODO: Maybe add pre and post update stages to the trait.
         gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
         let (width, height) = common::get_framebuffer_size();
         gl::Viewport(0, 0, width, height);
-        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-        gl::Enable(gl::DEPTH_TEST);
-        gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
-        gl::Enable(gl::BLEND);
-        gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
 
         // Upload uniforms.
         let g_buffer_query_coordinates = {
@@ -67,6 +69,13 @@ impl Kernel for DebugConeTracer {
         self.shader
             .set_vec3(c_str!("pointLight.color"), 1.0, 1.0, 1.0);
 
+        gl::ActiveTexture(gl::TEXTURE0);
+        gl::BindTexture(gl::TEXTURE_2D, *assets.get_texture("positions").unwrap());
+        self.shader.set_int(c_str!("gBufferPositions"), 0);
+
         gl::DrawArrays(gl::POINTS, 0, 1);
+
+        gl::BindTexture(gl::TEXTURE_2D, 0);
+        gl::BindVertexArray(0);
     }
 }

@@ -11,16 +11,21 @@ struct PointLight {
 
 uniform PointLight pointLight;
 
+uniform sampler2D gBufferPositions;
+
+uniform mat4 projection;
+uniform mat4 view;
+
 out VertexData {
     vec3 position;
     vec3 direction;
 } Out;
 
 void main() {
-    int threadIndex = gl_VertexID;
     vec3 positionWorldSpace = texture(gBufferPositions, gBufferQueryCoordinates).xyz;
     Out.position = positionWorldSpace;
     Out.direction = normalize(pointLight.position - positionWorldSpace);
+    gl_Position = projection * view * vec4(positionWorldSpace, 1);
 }
 
 #shader geometry
@@ -28,7 +33,7 @@ void main() {
 #version 460 core
 
 layout (points) in;
-layout (line_strip, max_vertices = 10) out;
+layout (line_strip, max_vertices = 256) out;
 
 uniform mat4 projection;
 uniform mat4 view;
@@ -36,26 +41,24 @@ uniform mat4 view;
 in VertexData {
     vec3 position;
     vec3 direction;
-} In;
-
-vec3 toVoxelSpace(vec3 positionInWorldSpace) {
-    return 0.5f * positionInWorldSpace + 0.5f;
-}
+} In[];
 
 void main() {
-    vec3 from = In.position;
-    vec3 direction = In.direction;
+    vec3 from = In[0].position;
+    vec3 direction = In[0].direction;
     float distance = 0;
 
     float voxelSize = 1.f / 256.f;
-    int steps = 100;
+    int steps = 256;
 
     for (int i = 0; i < steps; i++) {
         vec3 current = from + distance * direction;
-        gl_Position = projection * view * current;
+        gl_Position = projection * view * vec4(current, 1);
         EmitVertex();
         distance += voxelSize;
     }
+
+    EndPrimitive();
 }
 
 #shader fragment
@@ -65,5 +68,5 @@ void main() {
 out vec4 color;
 
 void main() {
-    color = vec4(1, 0, 0, 1);
+    color = vec4(1, 0, 1, 1);
 }

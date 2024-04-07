@@ -23,6 +23,7 @@ pub struct RenderLoop<T, S> {
     kernels: Vec<(String, T)>,
     asset_registry: AssetRegistry,
     ui: Ui<S>,
+    should_move_light: bool,
 }
 
 impl<T: Kernel + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
@@ -42,6 +43,7 @@ impl<T: Kernel + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
             kernels: Vec::new(),
             asset_registry: AssetRegistry::new(),
             ui: Ui::<S>::new(&mut window),
+            should_move_light: false,
         }
     }
 
@@ -101,6 +103,7 @@ impl<T: Kernel + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
                 &mut self.kernels,
                 &mut self.ui,
                 &mut self.asset_registry,
+                &mut self.should_move_light,
             );
 
             // Camera movement.
@@ -116,7 +119,7 @@ impl<T: Kernel + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
 
             // Menu.
             if self.ui.should_show() {
-                self.ui.show();
+                self.ui.show(scene, &mut self.asset_registry);
             }
 
             // Run all updates.
@@ -165,6 +168,7 @@ impl<T: Kernel + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
         kernels: &mut [(String, T)],
         ui: &mut Ui<S>,
         assets: &mut AssetRegistry,
+        should_move_light: &mut bool, // TODO: Not a good place.
     ) {
         for (_, event) in glfw::flush_messages(events) {
             // events
@@ -187,9 +191,9 @@ impl<T: Kernel + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
                     // &mut debug_cone, // todo: bring back
                 );
                 Self::process_pausing_kernels(kernels, &event);
-            // common::handle_show_model(&event, &mut show_model);
-            // common::handle_show_voxel_fragment_list(&event, &mut show_voxel_fragment_list);
-            // common::handle_light_movement(&event, &mut should_move_light);
+                // common::handle_show_model(&event, &mut show_model);
+                // common::handle_show_voxel_fragment_list(&event, &mut show_voxel_fragment_list);
+                common::handle_light_movement(&event, should_move_light);
             // common::handle_mipmap_level(&event, &mut mipmap_level);
             } else {
                 ui.handle_event(event, assets);
@@ -198,7 +202,7 @@ impl<T: Kernel + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
     }
 
     fn process_pausing_kernels(kernels: &mut [(String, T)], event: &glfw::WindowEvent) {
-        pause_kernels_with_number_keys!(kernels, event, 0, 1, 2, 3, 4);
+        pause_kernels_with_number_keys!(kernels, event, 0, 1, 2, 3, 4, 5);
     }
 }
 
