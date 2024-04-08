@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::cell::{RefCell, RefMut};
 
 use cgmath::{vec3, Euler};
 use serde::Deserialize;
@@ -39,7 +39,7 @@ pub struct ModelInfo {
 impl Scene {
     pub fn calculate_aabb(&mut self, assets: &AssetRegistry) {
         for object in self.objects.iter() {
-            let mut object = object.borrow_mut();
+            let object = object.borrow();
             let offset = vec3(
                 object.transform.position.x,
                 object.transform.position.y,
@@ -59,6 +59,10 @@ impl Scene {
             );
         }
     }
+
+    pub fn active_camera_mut(&self) -> RefMut<Camera> {
+        self.cameras[self.active_camera.unwrap_or(0)].borrow_mut()
+    }
 }
 
 #[cfg(test)]
@@ -73,11 +77,11 @@ mod tests {
 
     fn get_test_scene() -> Scene {
         Scene {
-            objects: vec![Object::new(
+            objects: vec![RefCell::new(Object::new(
                 "cube".to_string(),
                 "red".to_string(),
                 Transform::default(),
-            )],
+            ))],
             models: vec![ModelInfo {
                 name: "cube".to_string(),
                 path: "assets/models/cube.obj".to_string(),
@@ -126,21 +130,19 @@ mod tests {
         path.pop();
         env::set_current_dir(path).unwrap();
 
-        let mut scene = get_test_scene();
-
-        // Process the scene
-        process_scene(&mut scene);
+        let scene = get_test_scene();
 
         {
             // Models and materials are now loaded
-            let assets = AssetRegistry::instance();
+            let mut assets = AssetRegistry::new();
+            assets.process_scene(&scene);
             assert!(&assets.get_model("cube").is_some());
             assert!(&assets.get_material("red").is_some());
         }
 
         assert_eq!(scene.objects.len(), 1);
-        assert_eq!(scene.objects[0].model_handle(), "cube");
-        assert_eq!(scene.objects[0].material_handle(), "red");
+        assert_eq!(scene.objects[0].borrow().model_handle(), "cube");
+        assert_eq!(scene.objects[0].borrow().material_handle(), "red");
 
         // Reset dir in the end
         env::set_current_dir(previous_path).unwrap();

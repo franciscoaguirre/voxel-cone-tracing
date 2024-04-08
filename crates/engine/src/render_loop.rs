@@ -10,7 +10,6 @@ use crate::{
 use egui_glfw_gl::glfw::{self, Glfw, WindowEvent};
 
 use crate::{
-    camera::Camera,
     common,
     prelude::{AssetRegistry, Kernel, Pausable, Scene},
 };
@@ -64,8 +63,6 @@ impl<T: Kernel + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
                 .collect::<Vec<_>>()
         );
 
-        let scene = self.scene.as_ref().expect("Scene should've been set");
-
         for (_, kernel) in &mut self.kernels {
             kernel.setup(&mut self.asset_registry);
         }
@@ -95,36 +92,37 @@ impl<T: Kernel + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
             // GL settings.
             Self::gl_start_settings();
 
-            // Process events.
-            Self::process_events(
-                &self.events,
-                &mut self.mouse_info,
-                &mut scene.cameras[scene.active_camera.unwrap_or(0)].borrow_mut(),
-                &mut self.kernels,
-                &mut self.ui,
-                &mut self.asset_registry,
-                &mut self.should_move_light,
-            );
-
             // Camera movement.
             common::process_movement_input(
                 delta_time as f32,
-                &mut scene.cameras[scene.active_camera.unwrap_or(0)]
-                    .borrow_mut()
+                &mut self
+                    .scene
+                    .as_ref()
+                    .expect("Scene should've been set.")
+                    .active_camera_mut()
                     .transform,
             );
+
+            // Process events.
+            self.process_events();
 
             // UI.
             self.ui.begin_frame(current_frame);
 
             // Menu.
             if self.ui.should_show() {
-                self.ui.show(scene, &mut self.asset_registry);
+                self.ui.show(
+                    self.scene.as_ref().expect("Scene should've been set"),
+                    &mut self.asset_registry,
+                );
             }
 
             // Run all updates.
             for (_, kernel) in &mut self.kernels {
-                kernel.update(&scene, &mut self.asset_registry);
+                kernel.update(
+                    &self.scene.as_ref().expect("Scene should've been set."),
+                    &mut self.asset_registry,
+                );
             }
 
             // Probably rendering a full-screen quad.
@@ -161,42 +159,40 @@ impl<T: Kernel + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
         self.asset_registry.process_scene(scene);
     }
 
-    fn process_events(
-        events: &Events,
-        mouse_info: &mut MouseInfo,
-        camera: &mut Camera,
-        kernels: &mut [(String, T)],
-        ui: &mut Ui<S>,
-        assets: &mut AssetRegistry,
-        should_move_light: &mut bool, // TODO: Not a good place.
-    ) {
-        for (_, event) in glfw::flush_messages(events) {
+    fn process_events(&mut self) {
+        for (_, event) in glfw::flush_messages(&self.events) {
             // events
             if let glfw::WindowEvent::Key(glfw::Key::Escape, _, glfw::Action::Press, _) = event {
-                ui.toggle_showing();
-                if ui.should_show() {
+                self.ui.toggle_showing();
+                if self.ui.should_show() {
                     Ui::set_cursor_mode(glfw::CursorMode::Normal);
                 } else {
                     Ui::set_cursor_mode(glfw::CursorMode::Disabled);
 
                     // So that we don't take into account mouse movements while using the menu
                     let cursor_position = Ui::get_cursor_pos();
-                    mouse_info.last_x = cursor_position.0 as f32;
-                    mouse_info.last_y = cursor_position.1 as f32;
+                    self.mouse_info.last_x = cursor_position.0 as f32;
+                    self.mouse_info.last_y = cursor_position.1 as f32;
                 }
             };
-            if !ui.should_show() {
+            if !self.ui.should_show() {
                 common::process_events(
-                    &event, mouse_info, camera,
+                    &event,
+                    &mut self.mouse_info,
+                    &mut self
+                        .scene
+                        .as_ref()
+                        .expect("Scene should've been set.")
+                        .active_camera_mut(),
                     // &mut debug_cone, // todo: bring back
                 );
-                Self::process_pausing_kernels(kernels, &event);
+                Self::process_pausing_kernels(&mut self.kernels, &event);
                 // common::handle_show_model(&event, &mut show_model);
                 // common::handle_show_voxel_fragment_list(&event, &mut show_voxel_fragment_list);
-                common::handle_light_movement(&event, should_move_light);
+                common::handle_light_movement(&event, &mut self.should_move_light);
             // common::handle_mipmap_level(&event, &mut mipmap_level);
             } else {
-                ui.handle_event(event, assets);
+                self.ui.handle_event(event, &mut self.asset_registry);
             }
         }
     }
