@@ -1,5 +1,9 @@
-use crate::prelude::{
-    common, compile_shaders, AssetRegistry, GeometryFramebuffer, Kernel, Pausable, Scene, Shader,
+use crate::{
+    prelude::{
+        common, compile_shaders, AssetRegistry, GeometryFramebuffer, Kernel, Pausable, Scene,
+        Shader,
+    },
+    time::TimeManager,
 };
 use c_str_macro::c_str;
 
@@ -26,7 +30,7 @@ impl Kernel for GeometryBuffers {
             assets.register_texture(name, *texture);
         }
     }
-    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry) {
+    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry, time: &TimeManager) {
         let active_camera = &scene.cameras[scene.active_camera.unwrap_or(0)].borrow();
         self.shader.use_program();
         self.shader

@@ -132,29 +132,6 @@ pub fn process_events(
     }
 }
 
-pub unsafe fn process_movement_input(delta_time: f32, transform: &mut Transform) {
-    let binding = WINDOW.borrow();
-    let window = binding.as_ref().unwrap();
-    if window.get_key(Key::W) == Action::Press {
-        transform.process_keyboard(Direction::Forward, delta_time);
-    }
-    if window.get_key(Key::S) == Action::Press {
-        transform.process_keyboard(Direction::Backward, delta_time);
-    }
-    if window.get_key(Key::A) == Action::Press {
-        transform.process_keyboard(Direction::Left, delta_time);
-    }
-    if window.get_key(Key::D) == Action::Press {
-        transform.process_keyboard(Direction::Right, delta_time);
-    }
-    if window.get_key(Key::Space) == Action::Press {
-        transform.process_keyboard(Direction::Up, delta_time);
-    }
-    if window.get_key(Key::LeftShift) == Action::Press {
-        transform.process_keyboard(Direction::Down, delta_time);
-    }
-}
-
 pub fn should_close_window() -> bool {
     unsafe {
         let binding = WINDOW.borrow();

@@ -1,7 +1,7 @@
 use std::ffi::c_void;
 
 use c_str_macro::c_str;
-use engine::prelude::*;
+use engine::{prelude::*, time::TimeManager};
 
 #[derive(Pausable)]
 pub struct Voxelizer {
@@ -27,7 +27,7 @@ impl Kernel for Voxelizer {
         assets.register_texture("voxels_texture", self.voxels_texture.id());
     }
 
-    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry) {
+    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry, time: &TimeManager) {
         let active_camera = &scene.cameras[scene.active_camera.unwrap_or(0)].borrow();
 
         // Clear previous voxels texture

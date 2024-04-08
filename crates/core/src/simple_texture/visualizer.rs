@@ -1,5 +1,5 @@
 use c_str_macro::c_str;
-use engine::prelude::*;
+use engine::{prelude::*, time::TimeManager};
 
 #[derive(Pausable)]
 pub struct Visualizer {
@@ -35,7 +35,7 @@ impl Kernel for Visualizer {
     unsafe fn setup(&mut self, _assets: &mut AssetRegistry) {}
 
     /// Runs the ray marching code against the voxels 3D texture.
-    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry) {
+    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry, time: &TimeManager) {
         let active_camera = &scene.cameras[scene.active_camera.unwrap_or(0)].borrow();
 
         // Use world positions shader

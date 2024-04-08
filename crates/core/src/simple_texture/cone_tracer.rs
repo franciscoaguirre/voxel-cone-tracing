@@ -1,5 +1,5 @@
 use c_str_macro::c_str;
-use engine::prelude::*;
+use engine::{prelude::*, time::TimeManager};
 
 #[derive(Pausable)]
 pub struct ConeTracer {
@@ -23,7 +23,7 @@ impl ConeTracer {
 impl Kernel for ConeTracer {
     unsafe fn setup(&mut self, _assets: &mut AssetRegistry) {}
 
-    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry) {
+    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry, time: &TimeManager) {
         let active_camera = &scene.cameras[scene.active_camera.unwrap_or(0)].borrow();
 
         self.cone_tracing_shader.use_program();

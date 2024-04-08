@@ -24,6 +24,7 @@ use core::{
     voxelization,
     voxelization::visualize::RenderVoxelFragmentsShader,
 };
+use engine::kernels::MoveCamera;
 use engine::ui::glfw;
 use engine::ui::Ui;
 use engine::{
@@ -221,6 +222,7 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
         VoxelVisualizer(VoxelVisualizer),
         SimpleConeTracer(SimpleConeTracer),
         SimpleDebugConeTracer(SimpleDebugConeTracer),
+        MoveCamera(MoveCamera),
     }
 
     let mut render_loop = RenderLoop::<AggregatedKernel, AggregatedSubMenus>::new(
@@ -253,6 +255,10 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
         render_loop.register_kernel(
             "SimpleDebugConeTracer",
             AggregatedKernel::SimpleDebugConeTracer(SimpleDebugConeTracer::new()),
+        );
+        render_loop.register_kernel(
+            "MoveCamera",
+            AggregatedKernel::MoveCamera(MoveCamera::new()),
         );
 
         render_loop.register_submenu("Picker", AggregatedSubMenus::Picker(PickerMenu::new()));

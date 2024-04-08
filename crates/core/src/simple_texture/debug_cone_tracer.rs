@@ -1,5 +1,5 @@
 use c_str_macro::c_str;
-use engine::prelude::*;
+use engine::{prelude::*, time::TimeManager};
 use gl::types::GLuint;
 
 #[derive(Pausable)]
@@ -30,7 +30,7 @@ impl Kernel for DebugConeTracer {
         );
     }
 
-    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry) {
+    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry, _time: &TimeManager) {
         let active_camera = &scene.cameras[scene.active_camera.unwrap_or(0)].borrow();
 
         self.shader.use_program();

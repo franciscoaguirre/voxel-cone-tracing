@@ -10,6 +10,7 @@ pub mod decl_macros;
 pub mod framebuffer;
 pub mod gizmo;
 pub mod helpers;
+pub mod input;
 pub mod kernel;
 pub mod kernels;
 pub mod light;
@@ -24,6 +25,7 @@ pub mod shader;
 pub mod test_utils;
 pub mod texture_3d;
 pub mod texture_buffer;
+pub mod time;
 mod traits;
 pub mod transform;
 pub mod types;
@@ -60,6 +62,7 @@ pub mod prelude {
         test_utils,
         texture_3d::Texture3Dv2,
         texture_buffer::BufferTextureV2,
+        time::TimeManager,
         transform::Transform,
         types::*,
     };

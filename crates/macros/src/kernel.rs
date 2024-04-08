@@ -32,11 +32,11 @@ fn kernel_enum_impl(ident: &Ident, data_enum: &DataEnum) -> TokenStream2 {
                 }
             }
 
-            unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry) {
+            unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry, time: &TimeManager) {
                 match self {
                     #(Self::#variant_idents(inner_kernel) => {
                         if !inner_kernel.is_paused() {
-                            inner_kernel.update(scene, assets);
+                            inner_kernel.update(scene, assets, time);
                         }
                     }),*
                 }
@@ -52,14 +52,13 @@ fn kernel_struct_impl(ident: &Ident, data_struct: &DataStruct) -> TokenStream2 {
         .iter()
         .map(|field| &field.ident)
         .collect();
-    let field_types: Vec<_> = data_struct.fields.iter().map(|field| &field.ty).collect();
     let kernel_impl = quote! {
         impl Kernel for #ident {
             unsafe fn setup(&mut self, assets: &mut AssetRegistry) {
                 #(self.#field_idents.setup(assets));*;
             }
-            unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry) {
-                #(self.#field_idents.update(scene, assets));*;
+            unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry, time: &TimeManager) {
+                #(self.#field_idents.update(scene, assets, time));*;
             }
         }
     };

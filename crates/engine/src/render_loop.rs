@@ -4,6 +4,7 @@ use crate::{
     common::WINDOW,
     pause_kernels_with_number_keys,
     submenu::{Showable, SubMenu},
+    time::TimeManager,
     ui::Ui,
 };
 
@@ -75,33 +76,17 @@ impl<T: Kernel + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
         let mut elapsed_time: f64;
         let mut fps: f64 = 0.0;
 
-        // Time setup.
-        // TODO: Create TimeManager.
-        let mut delta_time: f64;
-        let mut last_frame: f64 = 0.0;
+        let mut time = TimeManager::new();
 
         // Main rendering loop.
         while !common::should_close_window() {
-            // Time update.
-            let current_frame = self.glfw.get_time();
+            let current_frame = time.update(&self.glfw);
+
             frame_count += 1;
-            delta_time = current_frame - last_frame;
-            last_frame = current_frame;
             elapsed_time = current_frame - starting_time;
 
             // GL settings.
             Self::gl_start_settings();
-
-            // Camera movement.
-            common::process_movement_input(
-                delta_time as f32,
-                &mut self
-                    .scene
-                    .as_ref()
-                    .expect("Scene should've been set.")
-                    .active_camera_mut()
-                    .transform,
-            );
 
             // Process events.
             self.process_events();
@@ -122,6 +107,7 @@ impl<T: Kernel + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
                 kernel.update(
                     &self.scene.as_ref().expect("Scene should've been set."),
                     &mut self.asset_registry,
+                    &time,
                 );
             }
 

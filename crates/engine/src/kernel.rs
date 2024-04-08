@@ -1,9 +1,12 @@
-use crate::prelude::{AssetRegistry, Scene};
+use crate::{
+    prelude::{AssetRegistry, Scene},
+    time::TimeManager,
+};
 
 /// Represents a program that will be run by the `RenderLoop`.
 pub trait Kernel {
     unsafe fn setup(&mut self, assets: &mut AssetRegistry);
-    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry);
+    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry, time: &TimeManager);
 }
 
 /// Represents a program that can be paused.

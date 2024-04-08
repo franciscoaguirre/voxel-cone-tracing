@@ -1,4 +1,7 @@
-use crate::prelude::{compile_shaders, AssetRegistry, Kernel, Pausable, Scene, Shader};
+use crate::{
+    prelude::{compile_shaders, AssetRegistry, Kernel, Pausable, Scene, Shader},
+    time::TimeManager,
+};
 use c_str_macro::c_str;
 
 #[derive(Pausable)]
@@ -22,7 +25,7 @@ impl RenderObjects {
 
 impl Kernel for RenderObjects {
     unsafe fn setup(&mut self, _assets: &mut AssetRegistry) {}
-    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry) {
+    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry, time: &TimeManager) {
         self.shader.use_program();
         let camera = &scene.cameras[scene.active_camera.unwrap_or(0)].borrow();
         self.shader
