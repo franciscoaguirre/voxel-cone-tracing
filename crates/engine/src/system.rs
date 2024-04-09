@@ -4,7 +4,7 @@ use crate::{
 };
 
 /// Represents a program that will be run by the `RenderLoop`.
-pub trait Kernel {
+pub trait System {
     unsafe fn setup(&mut self, assets: &mut AssetRegistry);
     unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry, time: &TimeManager);
 }

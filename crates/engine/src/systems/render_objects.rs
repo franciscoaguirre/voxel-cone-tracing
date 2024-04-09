@@ -1,5 +1,5 @@
 use crate::{
-    prelude::{compile_shaders, AssetRegistry, Kernel, Pausable, Scene, Shader},
+    prelude::{compile_shaders, AssetRegistry, Pausable, Scene, Shader, System},
     time::TimeManager,
 };
 use c_str_macro::c_str;
@@ -23,7 +23,7 @@ impl RenderObjects {
     }
 }
 
-impl Kernel for RenderObjects {
+impl System for RenderObjects {
     unsafe fn setup(&mut self, _assets: &mut AssetRegistry) {}
     unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry, time: &TimeManager) {
         self.shader.use_program();

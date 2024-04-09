@@ -22,7 +22,7 @@ impl DebugConeTracer {
     }
 }
 
-impl Kernel for DebugConeTracer {
+impl System for DebugConeTracer {
     unsafe fn setup(&mut self, assets: &mut AssetRegistry) {
         assets.register_uniform(
             "SimpleDebugConeTracer.gBufferQueryCoordinates",

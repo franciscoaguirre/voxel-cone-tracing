@@ -2,31 +2,31 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::{Data, DataEnum, DataStruct, DeriveInput, Error, Ident, Result};
 
-pub(crate) fn derive_kernel_inner(input: DeriveInput) -> Result<TokenStream2> {
-    let kernel_impl = match &input.data {
-        Data::Enum(data_enum) => kernel_enum_impl(&input.ident, data_enum),
-        Data::Struct(data_struct) => kernel_struct_impl(&input.ident, data_struct),
+pub(crate) fn derive_system_inner(input: DeriveInput) -> Result<TokenStream2> {
+    let system_impl = match &input.data {
+        Data::Enum(data_enum) => system_enum_impl(&input.ident, data_enum),
+        Data::Struct(data_struct) => system_struct_impl(&input.ident, data_struct),
         _ => return Err(Error::new_spanned(&input, "Expected a struct or an enum")),
     };
 
     Ok(quote! {
-        #kernel_impl
+        #system_impl
     })
 }
 
-fn kernel_enum_impl(ident: &Ident, data_enum: &DataEnum) -> TokenStream2 {
+fn system_enum_impl(ident: &Ident, data_enum: &DataEnum) -> TokenStream2 {
     let variant_idents: Vec<_> = data_enum
         .variants
         .iter()
         .map(|variant| &variant.ident)
         .collect();
-    let kernel_impl = quote! {
-        impl Kernel for #ident {
+    let system_impl = quote! {
+        impl System for #ident {
             unsafe fn setup(&mut self, assets: &mut AssetRegistry) {
                 match self {
-                    #(Self::#variant_idents(inner_kernel) => {
-                        if !inner_kernel.is_paused() {
-                            inner_kernel.setup(assets);
+                    #(Self::#variant_idents(inner_system) => {
+                        if !inner_system.is_paused() {
+                            inner_system.setup(assets);
                         }
                     }),*
                 }
@@ -34,26 +34,26 @@ fn kernel_enum_impl(ident: &Ident, data_enum: &DataEnum) -> TokenStream2 {
 
             unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry, time: &TimeManager) {
                 match self {
-                    #(Self::#variant_idents(inner_kernel) => {
-                        if !inner_kernel.is_paused() {
-                            inner_kernel.update(scene, assets, time);
+                    #(Self::#variant_idents(inner_system) => {
+                        if !inner_system.is_paused() {
+                            inner_system.update(scene, assets, time);
                         }
                     }),*
                 }
             }
         }
     };
-    kernel_impl
+    system_impl
 }
 
-fn kernel_struct_impl(ident: &Ident, data_struct: &DataStruct) -> TokenStream2 {
+fn system_struct_impl(ident: &Ident, data_struct: &DataStruct) -> TokenStream2 {
     let field_idents: Vec<_> = data_struct
         .fields
         .iter()
         .map(|field| &field.ident)
         .collect();
-    let kernel_impl = quote! {
-        impl Kernel for #ident {
+    let system_impl = quote! {
+        impl System for #ident {
             unsafe fn setup(&mut self, assets: &mut AssetRegistry) {
                 #(self.#field_idents.setup(assets));*;
             }
@@ -62,7 +62,7 @@ fn kernel_struct_impl(ident: &Ident, data_struct: &DataStruct) -> TokenStream2 {
             }
         }
     };
-    kernel_impl
+    system_impl
 }
 
 pub(crate) fn derive_pausable_inner(input: DeriveInput) -> Result<TokenStream2> {
@@ -87,17 +87,17 @@ fn pausable_enum_impl(ident: &Ident, data_enum: &DataEnum) -> TokenStream2 {
         impl Pausable for #ident {
             fn pause(&mut self) {
                 match self {
-                    #(Self::#variant_idents(inner_kernel) => inner_kernel.pause()),*
+                    #(Self::#variant_idents(inner_system) => inner_system.pause()),*
                 }
             }
             fn unpause(&mut self) {
                 match self {
-                    #(Self::#variant_idents(inner_kernel) => inner_kernel.unpause()),*
+                    #(Self::#variant_idents(inner_system) => inner_system.unpause()),*
                 }
             }
             fn is_paused(&self) -> bool {
                 match self {
-                    #(Self::#variant_idents(inner_kernel) => inner_kernel.is_paused()),*
+                    #(Self::#variant_idents(inner_system) => inner_system.is_paused()),*
                 }
             }
         }

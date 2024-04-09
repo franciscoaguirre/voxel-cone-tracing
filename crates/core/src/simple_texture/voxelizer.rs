@@ -22,7 +22,7 @@ impl Voxelizer {
     }
 }
 
-impl Kernel for Voxelizer {
+impl System for Voxelizer {
     unsafe fn setup(&mut self, assets: &mut AssetRegistry) {
         assets.register_texture("voxels_texture", self.voxels_texture.id());
     }

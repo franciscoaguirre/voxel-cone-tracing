@@ -11,8 +11,6 @@ pub mod framebuffer;
 pub mod gizmo;
 pub mod helpers;
 pub mod input;
-pub mod kernel;
-pub mod kernels;
 pub mod light;
 pub mod material;
 pub mod mesh;
@@ -22,6 +20,8 @@ pub mod quad;
 pub mod render_loop;
 pub mod scene;
 pub mod shader;
+pub mod system;
+pub mod systems;
 pub mod test_utils;
 pub mod texture_3d;
 pub mod texture_buffer;
@@ -47,10 +47,8 @@ pub mod prelude {
         },
         gizmo::RenderGizmo,
         helpers,
-        kernel::{Kernel, Pausable},
-        kernels,
         light::Light,
-        macros::{Kernel, Pausable, Showable, SubMenu},
+        macros::{Pausable, Showable, SubMenu, System},
         material::{Material, MaterialProperties},
         model::Model,
         object::Object,
@@ -59,7 +57,8 @@ pub mod prelude {
         scene::Scene,
         shader::{compile_compute, compile_shaders, Shader, ShaderPass},
         submenu::{Showable, SubMenu},
-        test_utils,
+        system::{Pausable, System},
+        systems, test_utils,
         texture_3d::Texture3Dv2,
         texture_buffer::BufferTextureV2,
         time::TimeManager,

@@ -2,7 +2,7 @@ use std::sync::mpsc::Receiver;
 
 use crate::{
     common::WINDOW,
-    pause_kernels_with_number_keys,
+    pause_systems_with_number_keys,
     submenu::{Showable, SubMenu},
     time::TimeManager,
     ui::Ui,
@@ -12,7 +12,7 @@ use egui_glfw_gl::glfw::{self, Glfw, WindowEvent};
 
 use crate::{
     common,
-    prelude::{AssetRegistry, Kernel, Pausable, Scene},
+    prelude::{AssetRegistry, Pausable, Scene, System},
 };
 
 pub struct RenderLoop<T, S> {
@@ -20,13 +20,13 @@ pub struct RenderLoop<T, S> {
     events: Events,
     mouse_info: MouseInfo,
     scene: Option<Scene>,
-    kernels: Vec<(String, T)>,
+    systems: Vec<(String, T)>,
     asset_registry: AssetRegistry,
     ui: Ui<S>,
     should_move_light: bool,
 }
 
-impl<T: Kernel + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
+impl<T: System + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
     pub fn new(glfw: Glfw, events: Events, viewport_dimensions: (i32, i32)) -> Self {
         let mut binding = unsafe { WINDOW.borrow_mut() };
         let mut window = binding.as_mut().unwrap();
@@ -40,15 +40,15 @@ impl<T: Kernel + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
                 last_y: viewport_dimensions.1 as f32 / 2.0,
             },
             scene: None,
-            kernels: Vec::new(),
+            systems: Vec::new(),
             asset_registry: AssetRegistry::new(),
             ui: Ui::<S>::new(&mut window),
             should_move_light: false,
         }
     }
 
-    pub fn register_kernel(&mut self, name: &str, kernel: T) {
-        self.kernels.push((name.to_string(), kernel));
+    pub fn register_system(&mut self, name: &str, system: T) {
+        self.systems.push((name.to_string(), system));
     }
 
     pub fn register_submenu(&mut self, name: &str, submenu: S) {
@@ -57,15 +57,15 @@ impl<T: Kernel + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
 
     pub unsafe fn run(&mut self) {
         println!(
-            "Kernels: {:?}",
-            self.kernels
+            "Systems: {:?}",
+            self.systems
                 .iter()
                 .map(|(name, _)| name)
                 .collect::<Vec<_>>()
         );
 
-        for (_, kernel) in &mut self.kernels {
-            kernel.setup(&mut self.asset_registry);
+        for (_, system) in &mut self.systems {
+            system.setup(&mut self.asset_registry);
         }
 
         println!("Textures: {:?}", self.asset_registry.textures);
@@ -103,8 +103,8 @@ impl<T: Kernel + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
             }
 
             // Run all updates.
-            for (_, kernel) in &mut self.kernels {
-                kernel.update(
+            for (_, system) in &mut self.systems {
+                system.update(
                     &self.scene.as_ref().expect("Scene should've been set."),
                     &mut self.asset_registry,
                     &time,
@@ -172,7 +172,7 @@ impl<T: Kernel + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
                         .active_camera_mut(),
                     // &mut debug_cone, // todo: bring back
                 );
-                Self::process_pausing_kernels(&mut self.kernels, &event);
+                Self::process_pausing_systems(&mut self.systems, &event);
                 // common::handle_show_model(&event, &mut show_model);
                 // common::handle_show_voxel_fragment_list(&event, &mut show_voxel_fragment_list);
                 common::handle_light_movement(&event, &mut self.should_move_light);
@@ -183,8 +183,8 @@ impl<T: Kernel + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
         }
     }
 
-    fn process_pausing_kernels(kernels: &mut [(String, T)], event: &glfw::WindowEvent) {
-        pause_kernels_with_number_keys!(kernels, event, 0, 1, 2, 3, 4, 5);
+    fn process_pausing_systems(systems: &mut [(String, T)], event: &glfw::WindowEvent) {
+        pause_systems_with_number_keys!(systems, event, 0, 1, 2, 3, 4, 5);
     }
 }
 

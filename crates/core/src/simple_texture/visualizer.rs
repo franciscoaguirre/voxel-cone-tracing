@@ -30,7 +30,7 @@ impl Visualizer {
     }
 }
 
-impl Kernel for Visualizer {
+impl System for Visualizer {
     /// Initializes the visualizer.
     unsafe fn setup(&mut self, _assets: &mut AssetRegistry) {}
 
@@ -96,7 +96,7 @@ impl Kernel for Visualizer {
             active_camera.transform.position.z,
         );
         // self.visualization_shader
-        //     .set_int(c_str!("level"), inputs.mipmap_level); // TODO: How do I handle these uniforms specific to each kernel?
+        //     .set_int(c_str!("level"), inputs.mipmap_level); // TODO: How do I handle these uniforms specific to each system?
 
         // Unbind framebuffer.
         // Very important because we are clearing the framebuffer later,

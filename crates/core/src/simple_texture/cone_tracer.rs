@@ -20,7 +20,7 @@ impl ConeTracer {
     }
 }
 
-impl Kernel for ConeTracer {
+impl System for ConeTracer {
     unsafe fn setup(&mut self, _assets: &mut AssetRegistry) {}
 
     unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry, time: &TimeManager) {

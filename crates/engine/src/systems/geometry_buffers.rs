@@ -1,7 +1,7 @@
 use crate::{
     prelude::{
-        common, compile_shaders, AssetRegistry, GeometryFramebuffer, Kernel, Pausable, Scene,
-        Shader,
+        common, compile_shaders, AssetRegistry, GeometryFramebuffer, Pausable, Scene, Shader,
+        System,
     },
     time::TimeManager,
 };
@@ -24,7 +24,7 @@ impl GeometryBuffers {
     }
 }
 
-impl Kernel for GeometryBuffers {
+impl System for GeometryBuffers {
     unsafe fn setup(&mut self, assets: &mut AssetRegistry) {
         for (name, texture) in self.framebuffer.textures().iter() {
             assets.register_texture(name, *texture);

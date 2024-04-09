@@ -1,6 +1,6 @@
 use crate::{
     input::InputManager,
-    prelude::{AssetRegistry, Kernel, Pausable, Scene},
+    prelude::{AssetRegistry, Pausable, Scene, System},
     time::TimeManager,
     transform::Direction,
 };
@@ -16,7 +16,7 @@ impl MoveCamera {
     }
 }
 
-impl Kernel for MoveCamera {
+impl System for MoveCamera {
     unsafe fn setup(&mut self, _assets: &mut AssetRegistry) {}
     unsafe fn update(&mut self, scene: &Scene, _assets: &AssetRegistry, time: &TimeManager) {
         let camera = &mut scene.active_camera_mut();

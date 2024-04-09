@@ -1,8 +1,8 @@
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, DeriveInput};
 
-mod kernel;
 mod sub_menus;
+mod system;
 
 /// Expects the following to be in scope:
 /// - `SubMenu` trait
@@ -18,9 +18,9 @@ pub fn simplify_sub_menus(input: TokenStream) -> TokenStream {
 }
 
 /// To use on an enum or a struct that only holds types that implement
-/// `Kernel`.
+/// `System`.
 ///
-/// If used on an enum, it will implement `Kernel` on it such that
+/// If used on an enum, it will implement `System` on it such that
 /// all methods are forwarded to the corresponding variant.
 ///
 /// If used on a struct, it will effectively create a group, where
@@ -28,22 +28,22 @@ pub fn simplify_sub_menus(input: TokenStream) -> TokenStream {
 /// variants.
 ///
 /// All methods generated respect pausing.
-#[proc_macro_derive(Kernel)]
-pub fn derive_kernel(input: TokenStream) -> TokenStream {
+#[proc_macro_derive(System)]
+pub fn derive_system(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
-    kernel::derive_kernel_inner(input)
+    system::derive_system_inner(input)
         .unwrap_or_else(syn::Error::into_compile_error)
         .into()
 }
 
-/// For help creating a `Kernel` implementation.
+/// For help creating a `System` implementation.
 /// Only adds the pause functionality.
 /// Requires an attribute `paused: bool`.
 // TODO: Could support an argument: `can_pause: bool`.
 #[proc_macro_derive(Pausable)]
 pub fn derive_pausable(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
-    kernel::derive_pausable_inner(input)
+    system::derive_pausable_inner(input)
         .unwrap_or_else(syn::Error::into_compile_error)
         .into()
 }
@@ -61,7 +61,7 @@ pub fn derive_submenu(input: TokenStream) -> TokenStream {
 
 /// Basically the same as `derive_pausable` but with `should_show`
 /// instead of `paused`.
-/// Meant to be used with submenus instead of kernels.
+/// Meant to be used with submenus instead of systems.
 #[proc_macro_derive(Showable)]
 pub fn derive_showable(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);

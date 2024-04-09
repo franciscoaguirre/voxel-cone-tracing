@@ -24,12 +24,11 @@ use core::{
     voxelization,
     voxelization::visualize::RenderVoxelFragmentsShader,
 };
-use engine::kernels::MoveCamera;
 use engine::ui::glfw;
 use engine::ui::Ui;
 use engine::{
-    kernels::{GeometryBuffers, RenderObjects},
     prelude::*,
+    systems::{GeometryBuffers, MoveCamera, RenderObjects},
     ui::glfw::{Glfw, WindowEvent},
 };
 use structopt::StructOpt;
@@ -214,8 +213,8 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
         Picker(PickerMenu),
     }
 
-    #[derive(Kernel, Pausable)]
-    enum AggregatedKernel {
+    #[derive(System, Pausable)]
+    enum AggregatedSystem {
         RenderObjects(RenderObjects),
         GeometryBuffers(GeometryBuffers),
         Voxelizer(Voxelizer),
@@ -225,7 +224,7 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
         MoveCamera(MoveCamera),
     }
 
-    let mut render_loop = RenderLoop::<AggregatedKernel, AggregatedSubMenus>::new(
+    let mut render_loop = RenderLoop::<AggregatedSystem, AggregatedSubMenus>::new(
         glfw,
         parameters.events,
         (viewport_width, viewport_height),
@@ -234,31 +233,31 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
 
     // Render loop.
     unsafe {
-        // Register kernels.
-        render_loop.register_kernel(
+        // Register systems.
+        render_loop.register_system(
             "RenderObjects",
-            AggregatedKernel::RenderObjects(RenderObjects::new()),
+            AggregatedSystem::RenderObjects(RenderObjects::new()),
         );
-        render_loop.register_kernel(
+        render_loop.register_system(
             "GeometryBuffers",
-            AggregatedKernel::GeometryBuffers(GeometryBuffers::new()),
+            AggregatedSystem::GeometryBuffers(GeometryBuffers::new()),
         );
-        render_loop.register_kernel("Voxelizer", AggregatedKernel::Voxelizer(Voxelizer::new()));
-        render_loop.register_kernel(
+        render_loop.register_system("Voxelizer", AggregatedSystem::Voxelizer(Voxelizer::new()));
+        render_loop.register_system(
             "VoxelsVisualizer",
-            AggregatedKernel::VoxelVisualizer(VoxelVisualizer::new()),
+            AggregatedSystem::VoxelVisualizer(VoxelVisualizer::new()),
         );
-        render_loop.register_kernel(
+        render_loop.register_system(
             "SimpleConeTracer",
-            AggregatedKernel::SimpleConeTracer(SimpleConeTracer::new()),
+            AggregatedSystem::SimpleConeTracer(SimpleConeTracer::new()),
         );
-        render_loop.register_kernel(
+        render_loop.register_system(
             "SimpleDebugConeTracer",
-            AggregatedKernel::SimpleDebugConeTracer(SimpleDebugConeTracer::new()),
+            AggregatedSystem::SimpleDebugConeTracer(SimpleDebugConeTracer::new()),
         );
-        render_loop.register_kernel(
+        render_loop.register_system(
             "MoveCamera",
-            AggregatedKernel::MoveCamera(MoveCamera::new()),
+            AggregatedSystem::MoveCamera(MoveCamera::new()),
         );
 
         render_loop.register_submenu("Picker", AggregatedSubMenus::Picker(PickerMenu::new()));
