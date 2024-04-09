@@ -1,5 +1,5 @@
 use c_str_macro::c_str;
-use engine::{prelude::*, time::TimeManager};
+use engine::prelude::*;
 use gl::types::GLuint;
 
 #[derive(Pausable)]
@@ -30,8 +30,8 @@ impl System for DebugConeTracer {
         );
     }
 
-    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry, _time: &TimeManager) {
-        let active_camera = &scene.cameras[scene.active_camera.unwrap_or(0)].borrow();
+    unsafe fn update(&mut self, inputs: SystemInputs) {
+        let active_camera = &inputs.scene.cameras[inputs.scene.active_camera.unwrap_or(0)].borrow();
 
         self.shader.use_program();
         gl::BindVertexArray(self.vao);
@@ -43,7 +43,8 @@ impl System for DebugConeTracer {
 
         // Upload uniforms.
         let g_buffer_query_coordinates = {
-            let Uniform::Vec2(x, y) = assets
+            let Uniform::Vec2(x, y) = inputs
+                .assets
                 .get_uniform("SimpleDebugConeTracer.gBufferQueryCoordinates")
                 .unwrap()
             else {
@@ -62,15 +63,18 @@ impl System for DebugConeTracer {
             .set_mat4(c_str!("view"), &active_camera.transform.get_view_matrix());
         self.shader.set_vec3(
             c_str!("pointLight.position"),
-            scene.light.transform().position.x,
-            scene.light.transform().position.y,
-            scene.light.transform().position.z,
+            inputs.scene.light.transform().position.x,
+            inputs.scene.light.transform().position.y,
+            inputs.scene.light.transform().position.z,
         );
         self.shader
             .set_vec3(c_str!("pointLight.color"), 1.0, 1.0, 1.0);
 
         gl::ActiveTexture(gl::TEXTURE0);
-        gl::BindTexture(gl::TEXTURE_2D, *assets.get_texture("positions").unwrap());
+        gl::BindTexture(
+            gl::TEXTURE_2D,
+            *inputs.assets.get_texture("positions").unwrap(),
+        );
         self.shader.set_int(c_str!("gBufferPositions"), 0);
 
         gl::DrawArrays(gl::POINTS, 0, 1);

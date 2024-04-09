@@ -1,6 +1,6 @@
 //! The entrypoint to the VCT application
 
-use core::menu::submenus::PickerMenu;
+use core::menu::submenus::{PickerMenu, SystemsMenu};
 use core::simple_texture::{
     ConeTracer as SimpleConeTracer, DebugConeTracer as SimpleDebugConeTracer,
     Visualizer as VoxelVisualizer, Voxelizer,
@@ -210,6 +210,7 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
 
     #[derive(SubMenu, Showable)]
     enum AggregatedSubMenus {
+        Systems(SystemsMenu),
         Picker(PickerMenu),
     }
 
@@ -260,6 +261,7 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
             AggregatedSystem::MoveCamera(MoveCamera::new()),
         );
 
+        render_loop.register_submenu("Systems", AggregatedSubMenus::Systems(SystemsMenu::new()));
         render_loop.register_submenu("Picker", AggregatedSubMenus::Picker(PickerMenu::new()));
 
         render_loop.run();

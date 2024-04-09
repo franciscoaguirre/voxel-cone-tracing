@@ -1,7 +1,7 @@
 use std::ffi::c_void;
 
 use c_str_macro::c_str;
-use engine::{prelude::*, time::TimeManager};
+use engine::prelude::*;
 
 #[derive(Pausable)]
 pub struct Voxelizer {
@@ -27,8 +27,8 @@ impl System for Voxelizer {
         assets.register_texture("voxels_texture", self.voxels_texture.id());
     }
 
-    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry, time: &TimeManager) {
-        let active_camera = &scene.cameras[scene.active_camera.unwrap_or(0)].borrow();
+    unsafe fn update(&mut self, inputs: SystemInputs) {
+        let active_camera = &inputs.scene.cameras[inputs.scene.active_camera.unwrap_or(0)].borrow();
 
         // Clear previous voxels texture
         let clear_color = [0f32; 4];
@@ -58,21 +58,21 @@ impl System for Voxelizer {
             .set_mat4(c_str!("view"), &active_camera.transform.get_view_matrix());
         self.voxelization_shader.set_vec3(
             c_str!("pointLight.position"),
-            scene.light.transform().position.x,
-            scene.light.transform().position.y,
-            scene.light.transform().position.z,
+            inputs.scene.light.transform().position.x,
+            inputs.scene.light.transform().position.y,
+            inputs.scene.light.transform().position.z,
         );
         self.voxelization_shader
             .set_vec3(c_str!("pointLight.color"), 1.0, 1.0, 1.0);
         // TODO: Do not hardcode to white.
         gl::BindTexture(gl::TEXTURE_3D, self.voxels_texture.id());
         helpers::bind_3d_image_texture(0, self.voxels_texture.id(), gl::READ_WRITE, gl::RGBA8);
-        let model_normalization_matrix = scene.aabb.normalization_matrix();
-        for object in scene.objects.iter() {
+        let model_normalization_matrix = inputs.scene.aabb.normalization_matrix();
+        for object in inputs.scene.objects.iter() {
             object.borrow_mut().draw(
                 &self.voxelization_shader,
                 &model_normalization_matrix,
-                assets,
+                inputs.assets,
             );
         }
         gl::GenerateMipmap(gl::TEXTURE_3D);

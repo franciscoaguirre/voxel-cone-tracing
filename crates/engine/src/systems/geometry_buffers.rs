@@ -1,9 +1,8 @@
 use crate::{
     prelude::{
-        common, compile_shaders, AssetRegistry, GeometryFramebuffer, Pausable, Scene, Shader,
-        System,
+        common, compile_shaders, AssetRegistry, GeometryFramebuffer, Pausable, Shader, System,
     },
-    time::TimeManager,
+    system::SystemInputs,
 };
 use c_str_macro::c_str;
 
@@ -30,8 +29,8 @@ impl System for GeometryBuffers {
             assets.register_texture(name, *texture);
         }
     }
-    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry, time: &TimeManager) {
-        let active_camera = &scene.cameras[scene.active_camera.unwrap_or(0)].borrow();
+    unsafe fn update(&mut self, inputs: SystemInputs) {
+        let active_camera = &inputs.scene.cameras[inputs.scene.active_camera.unwrap_or(0)].borrow();
         self.shader.use_program();
         self.shader
             .set_mat4(c_str!("projection"), &active_camera.get_projection_matrix());
@@ -45,10 +44,12 @@ impl System for GeometryBuffers {
         gl::ClearColor(0.0, 0.0, 0.0, 0.0);
         gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
         gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-        for object in scene.objects.iter() {
-            object
-                .borrow()
-                .draw(&self.shader, &scene.aabb.normalization_matrix(), assets);
+        for object in inputs.scene.objects.iter() {
+            object.borrow().draw(
+                &self.shader,
+                &inputs.scene.aabb.normalization_matrix(),
+                inputs.assets,
+            );
         }
         gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
     }

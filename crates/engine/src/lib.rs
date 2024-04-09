@@ -57,7 +57,7 @@ pub mod prelude {
         scene::Scene,
         shader::{compile_compute, compile_shaders, Shader, ShaderPass},
         submenu::{Showable, SubMenu},
-        system::{Pausable, System},
+        system::{Pausable, System, SystemInputs},
         systems, test_utils,
         texture_3d::Texture3Dv2,
         texture_buffer::BufferTextureV2,

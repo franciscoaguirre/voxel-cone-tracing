@@ -1,5 +1,5 @@
 use c_str_macro::c_str;
-use engine::{prelude::*, time::TimeManager};
+use engine::prelude::*;
 
 #[derive(Pausable)]
 pub struct ConeTracer {
@@ -23,8 +23,8 @@ impl ConeTracer {
 impl System for ConeTracer {
     unsafe fn setup(&mut self, _assets: &mut AssetRegistry) {}
 
-    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry, time: &TimeManager) {
-        let active_camera = &scene.cameras[scene.active_camera.unwrap_or(0)].borrow();
+    unsafe fn update(&mut self, inputs: SystemInputs) {
+        let active_camera = &inputs.scene.cameras[inputs.scene.active_camera.unwrap_or(0)].borrow();
 
         self.cone_tracing_shader.use_program();
 
@@ -41,9 +41,9 @@ impl System for ConeTracer {
         // Upload uniforms.
         self.cone_tracing_shader.set_vec3(
             c_str!("pointLight.position"),
-            scene.light.transform().position.x,
-            scene.light.transform().position.y,
-            scene.light.transform().position.z,
+            inputs.scene.light.transform().position.x,
+            inputs.scene.light.transform().position.y,
+            inputs.scene.light.transform().position.z,
         );
         self.cone_tracing_shader
             .set_vec3(c_str!("pointLight.color"), 1.0, 1.0, 1.0);
@@ -54,7 +54,7 @@ impl System for ConeTracer {
         gl::ActiveTexture(gl::TEXTURE0 + texture_counter);
         gl::BindTexture(
             gl::TEXTURE_3D,
-            *assets.get_texture("voxels_texture").unwrap(),
+            *inputs.assets.get_texture("voxels_texture").unwrap(),
         ); // TODO: Need to register it.
         self.cone_tracing_shader
             .set_int(c_str!("voxelsTexture"), texture_counter as i32);
@@ -64,19 +64,19 @@ impl System for ConeTracer {
         let g_buffer_textures = vec![
             (
                 c_str!("gBufferColors"),
-                *assets.get_texture("colors").unwrap(),
+                *inputs.assets.get_texture("colors").unwrap(),
             ),
             (
                 c_str!("gBufferPositions"),
-                *assets.get_texture("positions").unwrap(),
+                *inputs.assets.get_texture("positions").unwrap(),
             ),
             (
                 c_str!("gBufferNormals"),
-                *assets.get_texture("normals").unwrap(),
+                *inputs.assets.get_texture("normals").unwrap(),
             ),
             (
                 c_str!("gBufferSpeculars"),
-                *assets.get_texture("specular").unwrap(),
+                *inputs.assets.get_texture("specular").unwrap(),
             ),
         ];
         for &(texture_name, texture) in g_buffer_textures.iter() {

@@ -32,11 +32,11 @@ fn system_enum_impl(ident: &Ident, data_enum: &DataEnum) -> TokenStream2 {
                 }
             }
 
-            unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry, time: &TimeManager) {
+            unsafe fn update(&mut self, inputs: SystemInputs) {
                 match self {
                     #(Self::#variant_idents(inner_system) => {
                         if !inner_system.is_paused() {
-                            inner_system.update(scene, assets, time);
+                            inner_system.update(inputs);
                         }
                     }),*
                 }
@@ -57,8 +57,8 @@ fn system_struct_impl(ident: &Ident, data_struct: &DataStruct) -> TokenStream2 {
             unsafe fn setup(&mut self, assets: &mut AssetRegistry) {
                 #(self.#field_idents.setup(assets));*;
             }
-            unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry, time: &TimeManager) {
-                #(self.#field_idents.update(scene, assets, time));*;
+            unsafe fn update(&mut self, inputs: SystemInputs) {
+                #(self.#field_idents.update(inputs));*;
             }
         }
     };

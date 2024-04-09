@@ -1,7 +1,7 @@
 use crate::{
     input::InputManager,
-    prelude::{AssetRegistry, Pausable, Scene, System},
-    time::TimeManager,
+    prelude::{AssetRegistry, Pausable, System},
+    system::SystemInputs,
     transform::Direction,
 };
 
@@ -18,13 +18,13 @@ impl MoveCamera {
 
 impl System for MoveCamera {
     unsafe fn setup(&mut self, _assets: &mut AssetRegistry) {}
-    unsafe fn update(&mut self, scene: &Scene, _assets: &AssetRegistry, time: &TimeManager) {
-        let camera = &mut scene.active_camera_mut();
+    unsafe fn update(&mut self, inputs: SystemInputs) {
+        let camera = &mut inputs.scene.active_camera_mut();
         let input = InputManager::new();
 
         use egui_glfw_gl::glfw::Key;
 
-        let delta_time = time.delta_time() as f32;
+        let delta_time = inputs.time.delta_time() as f32;
 
         if input.get_key(Key::W) {
             camera

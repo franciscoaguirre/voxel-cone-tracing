@@ -3,10 +3,17 @@ use crate::{
     time::TimeManager,
 };
 
+#[derive(Clone, Copy)]
+pub struct SystemInputs<'a> {
+    pub scene: &'a Scene,
+    pub assets: &'a AssetRegistry,
+    pub time: &'a TimeManager,
+}
+
 /// Represents a program that will be run by the `RenderLoop`.
 pub trait System {
     unsafe fn setup(&mut self, assets: &mut AssetRegistry);
-    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry, time: &TimeManager);
+    unsafe fn update(&mut self, inputs: SystemInputs);
 }
 
 /// Represents a program that can be paused.

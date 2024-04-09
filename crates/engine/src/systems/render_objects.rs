@@ -1,6 +1,6 @@
 use crate::{
-    prelude::{compile_shaders, AssetRegistry, Pausable, Scene, Shader, System},
-    time::TimeManager,
+    prelude::{compile_shaders, AssetRegistry, Pausable, Shader, System},
+    system::SystemInputs,
 };
 use c_str_macro::c_str;
 
@@ -25,17 +25,19 @@ impl RenderObjects {
 
 impl System for RenderObjects {
     unsafe fn setup(&mut self, _assets: &mut AssetRegistry) {}
-    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry, time: &TimeManager) {
+    unsafe fn update(&mut self, inputs: SystemInputs) {
         self.shader.use_program();
-        let camera = &scene.cameras[scene.active_camera.unwrap_or(0)].borrow();
+        let camera = &inputs.scene.cameras[inputs.scene.active_camera.unwrap_or(0)].borrow();
         self.shader
             .set_mat4(c_str!("projection"), &camera.get_projection_matrix());
         self.shader
             .set_mat4(c_str!("view"), &camera.transform.get_view_matrix());
-        for object in scene.objects.iter() {
-            object
-                .borrow_mut()
-                .draw(&self.shader, &scene.aabb.normalization_matrix(), assets);
+        for object in inputs.scene.objects.iter() {
+            object.borrow_mut().draw(
+                &self.shader,
+                &inputs.scene.aabb.normalization_matrix(),
+                inputs.assets,
+            );
         }
     }
 }

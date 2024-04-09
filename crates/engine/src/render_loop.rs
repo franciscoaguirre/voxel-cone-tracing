@@ -4,6 +4,7 @@ use crate::{
     common::WINDOW,
     pause_systems_with_number_keys,
     submenu::{Showable, SubMenu},
+    system::SystemInputs,
     time::TimeManager,
     ui::Ui,
 };
@@ -102,13 +103,15 @@ impl<T: System + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
                 );
             }
 
+            let system_inputs = SystemInputs {
+                scene: &self.scene.as_ref().expect("Scene should've been set."),
+                assets: &self.asset_registry,
+                time: &time,
+            };
+
             // Run all updates.
             for (_, system) in &mut self.systems {
-                system.update(
-                    &self.scene.as_ref().expect("Scene should've been set."),
-                    &mut self.asset_registry,
-                    &time,
-                );
+                system.update(system_inputs);
             }
 
             // Probably rendering a full-screen quad.

@@ -35,8 +35,8 @@ impl System for Visualizer {
     unsafe fn setup(&mut self, _assets: &mut AssetRegistry) {}
 
     /// Runs the ray marching code against the voxels 3D texture.
-    unsafe fn update(&mut self, scene: &Scene, assets: &AssetRegistry, time: &TimeManager) {
-        let active_camera = &scene.cameras[scene.active_camera.unwrap_or(0)].borrow();
+    unsafe fn update(&mut self, inputs: SystemInputs) {
+        let active_camera = &inputs.scene.cameras[inputs.scene.active_camera.unwrap_or(0)].borrow();
 
         // Use world positions shader
         self.world_positions_shader.use_program();
@@ -118,7 +118,7 @@ impl System for Visualizer {
         gl::ActiveTexture(gl::TEXTURE2);
         gl::BindTexture(
             gl::TEXTURE_3D,
-            *assets.get_texture("voxels_texture").unwrap(),
+            *inputs.assets.get_texture("voxels_texture").unwrap(),
         );
         self.visualization_shader
             .set_int(c_str!("voxelsTexture"), 2);
