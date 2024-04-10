@@ -3,8 +3,8 @@ use std::sync::mpsc::Receiver;
 use crate::{
     common::WINDOW,
     pause_systems_with_number_keys,
-    submenu::{Showable, SubMenu},
-    system::SystemInputs,
+    submenu::{Showable, SubMenu, SubMenuInputs},
+    system::{SystemInfo, SystemInputs},
     time::TimeManager,
     ui::Ui,
 };
@@ -16,18 +16,20 @@ use crate::{
     prelude::{AssetRegistry, Pausable, Scene, System},
 };
 
-pub struct RenderLoop<T, S> {
+pub struct RenderLoop<SystemType, SubMenuType> {
     glfw: Glfw, // TODO: Remove from here.
     events: Events,
     mouse_info: MouseInfo,
     scene: Option<Scene>,
-    systems: Vec<(String, T)>,
+    systems: Vec<SystemType>,
     asset_registry: AssetRegistry,
-    ui: Ui<S>,
+    ui: Ui<SubMenuType, SystemType>,
     should_move_light: bool,
 }
 
-impl<T: System + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
+impl<SystemType: System + Pausable, SubMenuType: SubMenu<SystemType> + Showable>
+    RenderLoop<SystemType, SubMenuType>
+{
     pub fn new(glfw: Glfw, events: Events, viewport_dimensions: (i32, i32)) -> Self {
         let mut binding = unsafe { WINDOW.borrow_mut() };
         let mut window = binding.as_mut().unwrap();
@@ -43,29 +45,28 @@ impl<T: System + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
             scene: None,
             systems: Vec::new(),
             asset_registry: AssetRegistry::new(),
-            ui: Ui::<S>::new(&mut window),
+            ui: Ui::<SubMenuType, SystemType>::new(&mut window),
             should_move_light: false,
         }
     }
 
-    pub fn register_system(&mut self, name: &str, system: T) {
-        self.systems.push((name.to_string(), system));
+    pub fn register_system(&mut self, system: SystemType) {
+        self.systems.push(system);
     }
 
-    pub fn register_submenu(&mut self, name: &str, submenu: S) {
+    pub fn register_submenu(&mut self, name: &str, submenu: SubMenuType) {
         self.ui.register_submenu(name, submenu);
     }
 
     pub unsafe fn run(&mut self) {
-        println!(
-            "Systems: {:?}",
-            self.systems
-                .iter()
-                .map(|(name, _)| name)
-                .collect::<Vec<_>>()
-        );
+        let system_info: Vec<SystemInfo> = self
+            .systems
+            .iter()
+            .map(|system| system.get_info())
+            .collect();
+        println!("Systems: {:?}", system_info);
 
-        for (_, system) in &mut self.systems {
+        for system in &mut self.systems {
             system.setup(&mut self.asset_registry);
         }
 
@@ -95,12 +96,16 @@ impl<T: System + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
             // UI.
             self.ui.begin_frame(current_frame);
 
+            let mut submenu_inputs = SubMenuInputs::<SystemType> {
+                scene: &self.scene.as_ref().expect("Scene should've been set."),
+                assets: &mut self.asset_registry,
+                system_info: &system_info,
+                systems: &mut self.systems,
+            };
+
             // Menu.
             if self.ui.should_show() {
-                self.ui.show(
-                    self.scene.as_ref().expect("Scene should've been set"),
-                    &mut self.asset_registry,
-                );
+                self.ui.show(&mut submenu_inputs);
             }
 
             let system_inputs = SystemInputs {
@@ -110,7 +115,7 @@ impl<T: System + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
             };
 
             // Run all updates.
-            for (_, system) in &mut self.systems {
+            for system in &mut self.systems {
                 system.update(system_inputs);
             }
 
@@ -181,12 +186,23 @@ impl<T: System + Pausable, S: SubMenu + Showable> RenderLoop<T, S> {
                 common::handle_light_movement(&event, &mut self.should_move_light);
             // common::handle_mipmap_level(&event, &mut mipmap_level);
             } else {
-                self.ui.handle_event(event, &mut self.asset_registry);
+                let system_info: Vec<SystemInfo> = self
+                    .systems
+                    .iter()
+                    .map(|system| system.get_info())
+                    .collect();
+                let mut submenu_inputs = SubMenuInputs::<SystemType> {
+                    scene: &self.scene.as_ref().expect("Scene should've been set."),
+                    assets: &mut self.asset_registry,
+                    system_info: &system_info,
+                    systems: &mut self.systems,
+                };
+                self.ui.handle_event(event, &mut submenu_inputs);
             }
         }
     }
 
-    fn process_pausing_systems(systems: &mut [(String, T)], event: &glfw::WindowEvent) {
+    fn process_pausing_systems(systems: &mut [SystemType], event: &glfw::WindowEvent) {
         pause_systems_with_number_keys!(systems, event, 0, 1, 2, 3, 4, 5);
     }
 }

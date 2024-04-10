@@ -41,6 +41,12 @@ fn system_enum_impl(ident: &Ident, data_enum: &DataEnum) -> TokenStream2 {
                     }),*
                 }
             }
+
+            fn get_info(&self) -> SystemInfo {
+                match self {
+                    #(Self::#variant_idents(inner_system) => inner_system.get_info()),*
+                }
+            }
         }
     };
     system_impl
@@ -59,6 +65,11 @@ fn system_struct_impl(ident: &Ident, data_struct: &DataStruct) -> TokenStream2 {
             }
             unsafe fn update(&mut self, inputs: SystemInputs) {
                 #(self.#field_idents.update(inputs));*;
+            }
+            fn get_info(&self) -> SystemInfo {
+                let mut group_name = String::new();
+                #(group_name.push_str(self.#field_idents.get_info().name));*;
+                SystemInfo { name: group_name }
             }
         }
     };

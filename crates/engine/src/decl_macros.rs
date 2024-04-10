@@ -49,11 +49,11 @@ macro_rules! pause_systems_with_number_keys {
             $(
                 match $event {
                     egui_glfw_gl::glfw::WindowEvent::Key(egui_glfw_gl::glfw::Key::[<Num $num>], _, egui_glfw_gl::glfw::Action::Press, _) => {
-                        if $systems[$num].1.is_paused() {
-                            $systems[$num].1.unpause();
+                        if $systems[$num].is_paused() {
+                            $systems[$num].unpause();
                             println!("System number {} unpaused.", $num);
                         } else {
-                            $systems[$num].1.pause();
+                            $systems[$num].pause();
                             println!("System number {} paused.", $num);
                         }
                     }

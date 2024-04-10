@@ -82,4 +82,9 @@ impl System for DebugConeTracer {
         gl::BindTexture(gl::TEXTURE_2D, 0);
         gl::BindVertexArray(0);
     }
+    fn get_info(&self) -> SystemInfo {
+        SystemInfo {
+            name: "DebugConeTracer",
+        }
+    }
 }

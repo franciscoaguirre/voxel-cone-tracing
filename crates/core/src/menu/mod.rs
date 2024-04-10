@@ -3,7 +3,6 @@ use std::fs::File;
 
 use cgmath::{vec2, Vector2};
 use engine::ui::prelude::*;
-use macros::SimplifySubMenus;
 use serde::{Deserialize, Serialize};
 
 pub mod submenus;
@@ -13,7 +12,7 @@ pub struct Menu {
     // pub sub_menus: SubMenus,
 }
 
-// #[derive(Debug, Default, Serialize, Deserialize, Clone, SimplifySubMenus)]
+// #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 // #[serde(default)]
 // pub struct SubMenus {
 //     all_nodes: AllNodesMenu,

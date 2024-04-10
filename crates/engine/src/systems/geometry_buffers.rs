@@ -2,7 +2,7 @@ use crate::{
     prelude::{
         common, compile_shaders, AssetRegistry, GeometryFramebuffer, Pausable, Shader, System,
     },
-    system::SystemInputs,
+    system::{SystemInfo, SystemInputs},
 };
 use c_str_macro::c_str;
 
@@ -52,5 +52,10 @@ impl System for GeometryBuffers {
             );
         }
         gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
+    }
+    fn get_info(&self) -> SystemInfo {
+        SystemInfo {
+            name: "GeometryBuffers",
+        }
     }
 }

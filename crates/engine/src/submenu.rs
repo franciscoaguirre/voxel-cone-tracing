@@ -1,12 +1,22 @@
 use egui_glfw_gl::{egui, glfw};
 
-use crate::prelude::{AssetRegistry, Scene};
+use crate::{
+    prelude::{AssetRegistry, Scene},
+    system::SystemInfo,
+};
+
+pub struct SubMenuInputs<'a, SystemType> {
+    pub scene: &'a Scene,
+    pub assets: &'a mut AssetRegistry,
+    pub system_info: &'a [SystemInfo],
+    pub systems: &'a mut [SystemType],
+}
 
 /// The menu is made up of submenus.
 /// Every submenu must implement the `SubMenu` trait.
-pub trait SubMenu {
+pub trait SubMenu<SystemType> {
     /// Show the submenu.
-    fn show(&mut self, context: &egui::Context, scene: &Scene, assets: &mut AssetRegistry);
+    fn show(&mut self, context: &egui::Context, inputs: &mut SubMenuInputs<SystemType>);
 
     /// Handle window events while the menu is on.
     /// Most submenus won't need to implement this, that's why
@@ -15,7 +25,7 @@ pub trait SubMenu {
         &mut self,
         event: &glfw::WindowEvent,
         context: &egui::Context,
-        assets: &mut AssetRegistry,
+        inputs: &mut SubMenuInputs<SystemType>,
     ) {
     }
 }

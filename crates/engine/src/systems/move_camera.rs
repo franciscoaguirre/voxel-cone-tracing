@@ -1,7 +1,7 @@
 use crate::{
     input::InputManager,
     prelude::{AssetRegistry, Pausable, System},
-    system::SystemInputs,
+    system::{SystemInfo, SystemInputs},
     transform::Direction,
 };
 
@@ -54,5 +54,8 @@ impl System for MoveCamera {
                 .transform
                 .process_keyboard(Direction::Down, delta_time);
         }
+    }
+    fn get_info(&self) -> SystemInfo {
+        SystemInfo { name: "MoveCamera" }
     }
 }

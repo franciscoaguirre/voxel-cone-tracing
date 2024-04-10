@@ -24,8 +24,8 @@ use core::{
     voxelization,
     voxelization::visualize::RenderVoxelFragmentsShader,
 };
-use engine::ui::glfw;
 use engine::ui::Ui;
+use engine::ui::{egui, glfw};
 use engine::{
     prelude::*,
     systems::{GeometryBuffers, MoveCamera, RenderObjects},
@@ -235,31 +235,15 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     // Render loop.
     unsafe {
         // Register systems.
-        render_loop.register_system(
-            "RenderObjects",
-            AggregatedSystem::RenderObjects(RenderObjects::new()),
-        );
-        render_loop.register_system(
-            "GeometryBuffers",
-            AggregatedSystem::GeometryBuffers(GeometryBuffers::new()),
-        );
-        render_loop.register_system("Voxelizer", AggregatedSystem::Voxelizer(Voxelizer::new()));
-        render_loop.register_system(
-            "VoxelsVisualizer",
-            AggregatedSystem::VoxelVisualizer(VoxelVisualizer::new()),
-        );
-        render_loop.register_system(
-            "SimpleConeTracer",
-            AggregatedSystem::SimpleConeTracer(SimpleConeTracer::new()),
-        );
-        render_loop.register_system(
-            "SimpleDebugConeTracer",
-            AggregatedSystem::SimpleDebugConeTracer(SimpleDebugConeTracer::new()),
-        );
-        render_loop.register_system(
-            "MoveCamera",
-            AggregatedSystem::MoveCamera(MoveCamera::new()),
-        );
+        render_loop.register_system(AggregatedSystem::RenderObjects(RenderObjects::new()));
+        render_loop.register_system(AggregatedSystem::GeometryBuffers(GeometryBuffers::new()));
+        render_loop.register_system(AggregatedSystem::Voxelizer(Voxelizer::new()));
+        render_loop.register_system(AggregatedSystem::VoxelVisualizer(VoxelVisualizer::new()));
+        render_loop.register_system(AggregatedSystem::SimpleConeTracer(SimpleConeTracer::new()));
+        render_loop.register_system(AggregatedSystem::SimpleDebugConeTracer(
+            SimpleDebugConeTracer::new(),
+        ));
+        render_loop.register_system(AggregatedSystem::MoveCamera(MoveCamera::new()));
 
         render_loop.register_submenu("Systems", AggregatedSubMenus::Systems(SystemsMenu::new()));
         render_loop.register_submenu("Picker", AggregatedSubMenus::Picker(PickerMenu::new()));

@@ -100,4 +100,7 @@ impl System for ConeTracer {
         );
         gl::BindVertexArray(0);
     }
+    fn get_info(&self) -> SystemInfo {
+        SystemInfo { name: "ConeTracer" }
+    }
 }

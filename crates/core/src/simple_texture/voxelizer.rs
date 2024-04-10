@@ -78,4 +78,7 @@ impl System for Voxelizer {
         gl::GenerateMipmap(gl::TEXTURE_3D);
         gl::ColorMask(gl::TRUE, gl::TRUE, gl::TRUE, gl::TRUE);
     }
+    fn get_info(&self) -> SystemInfo {
+        SystemInfo { name: "Voxelizer" }
+    }
 }

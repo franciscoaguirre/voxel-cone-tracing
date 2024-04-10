@@ -1,6 +1,6 @@
 use crate::{
     prelude::{compile_shaders, AssetRegistry, Pausable, Shader, System},
-    system::SystemInputs,
+    system::{SystemInfo, SystemInputs},
 };
 use c_str_macro::c_str;
 
@@ -38,6 +38,11 @@ impl System for RenderObjects {
                 &inputs.scene.aabb.normalization_matrix(),
                 inputs.assets,
             );
+        }
+    }
+    fn get_info(&self) -> SystemInfo {
+        SystemInfo {
+            name: "RenderObjects",
         }
     }
 }

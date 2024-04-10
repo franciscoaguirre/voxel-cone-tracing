@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::marker::PhantomData;
 
 pub use egui_backend::egui;
 pub use egui_backend::glfw;
@@ -10,16 +11,18 @@ pub mod prelude {
 
 use crate::common::{self, WINDOW};
 use crate::prelude::AssetRegistry;
-use crate::prelude::Scene;
 use crate::submenu::Showable;
 use crate::submenu::SubMenu;
+use crate::submenu::SubMenuInputs;
+use crate::system::Pausable;
+use crate::system::System;
 
 /// UI manager.
 /// Consumer can register a custom menu that uses the available UI system.
 /// TODO: Theory. See if EGUI breaks the rendering in some way.
 /// I remember it did some weird things with opacity, but maybe that was
 /// just how we rendered the UI.
-pub struct Ui<S> {
+pub struct Ui<S, SystemType> {
     painter: egui_backend::Painter,
     context: egui::Context,
     input_state: egui_backend::EguiInputState,
@@ -27,9 +30,10 @@ pub struct Ui<S> {
     native_pixels_per_point: f32,
     should_show: bool,
     submenus: Vec<RefCell<(String, S)>>,
+    _phantom: PhantomData<SystemType>,
 }
 
-impl<S: SubMenu + Showable> Ui<S> {
+impl<S: SubMenu<SystemType> + Showable, SystemType: System + Pausable> Ui<S, SystemType> {
     pub fn new(window: &mut egui_backend::glfw::Window) -> Self {
         let painter = egui_backend::Painter::new(window);
         let context = egui::Context::default();
@@ -52,6 +56,7 @@ impl<S: SubMenu + Showable> Ui<S> {
             native_pixels_per_point,
             should_show: false,
             submenus: Vec::new(),
+            _phantom: PhantomData,
         }
     }
 
@@ -114,7 +119,7 @@ impl<S: SubMenu + Showable> Ui<S> {
             .push(RefCell::new((name.to_string(), submenu)));
     }
 
-    pub fn show(&mut self, scene: &Scene, assets: &mut AssetRegistry) {
+    pub fn show(&mut self, inputs: &mut SubMenuInputs<SystemType>) {
         // Main menu to toggle submenus.
         egui::Window::new("Menu").show(self.context(), |ui| {
             for submenu in self.submenus.iter() {
@@ -131,20 +136,24 @@ impl<S: SubMenu + Showable> Ui<S> {
         // Actual submenus.
         for submenu in self.submenus.iter() {
             let mut submenu = submenu.borrow_mut();
-            submenu.1.show(self.context(), scene, assets);
+            submenu.1.show(self.context(), inputs);
         }
     }
 
-    pub fn handle_event(&mut self, event: glfw::WindowEvent, assets: &mut AssetRegistry) {
+    pub fn handle_event(
+        &mut self,
+        event: glfw::WindowEvent,
+        inputs: &mut SubMenuInputs<SystemType>,
+    ) {
         for submenu in self.submenus.iter() {
             let mut submenu = submenu.borrow_mut();
-            submenu.1.handle_event(&event, self.context(), assets);
+            submenu.1.handle_event(&event, self.context(), inputs);
         }
         egui_backend::handle_event(event, self.input_state_mut());
     }
 }
 
-impl Ui<()> {
+impl Ui<(), ()> {
     pub fn set_cursor_mode(mode: glfw::CursorMode) {
         unsafe {
             let mut binding = WINDOW.borrow_mut();

@@ -1,5 +1,5 @@
 use c_str_macro::c_str;
-use engine::{prelude::*, time::TimeManager};
+use engine::prelude::*;
 
 #[derive(Pausable)]
 pub struct Visualizer {
@@ -135,5 +135,8 @@ impl System for Visualizer {
             std::ptr::null(),
         );
         gl::BindVertexArray(0);
+    }
+    fn get_info(&self) -> SystemInfo {
+        SystemInfo { name: "Visualizer" }
     }
 }
