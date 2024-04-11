@@ -198,13 +198,9 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     // );
     let render_depth_buffer_shader = compile_shaders!("assets/shaders/renderDepthQuad.glsl");
 
-    let photon_power = scene.light.intensity() / (viewport_width * viewport_height) as f32;
+    // let photon_power = scene.light.intensity() / (viewport_width * viewport_height) as f32;
 
     // let mut fps_values = Vec::new();
-
-    // We create a camera from the view of the light.
-    let mut light_camera = Camera::default();
-    light_camera.transform = scene.light.transform().clone();
 
     let mut mipmap_level = 0;
 

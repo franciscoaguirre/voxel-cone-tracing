@@ -19,40 +19,37 @@ impl MoveCamera {
 impl System for MoveCamera {
     unsafe fn setup(&mut self, _assets: &mut AssetRegistry) {}
     unsafe fn update(&mut self, inputs: SystemInputs) {
-        let camera = &mut inputs.scene.active_camera_mut();
         let input = InputManager::new();
-
         use egui_glfw_gl::glfw::Key;
+
+        let camera = &mut inputs.scene.active_camera_mut();
+        let light = &mut inputs.scene.light.borrow_mut();
+
+        let transform = if input.get_key(Key::C) {
+            light.transform_mut()
+        } else {
+            &mut camera.transform
+        };
 
         let delta_time = inputs.time.delta_time() as f32;
 
         if input.get_key(Key::W) {
-            camera
-                .transform
-                .process_keyboard(Direction::Forward, delta_time);
+            transform.process_keyboard(Direction::Forward, delta_time);
         }
         if input.get_key(Key::S) {
-            camera
-                .transform
-                .process_keyboard(Direction::Backward, delta_time);
+            transform.process_keyboard(Direction::Backward, delta_time);
         }
         if input.get_key(Key::A) {
-            camera
-                .transform
-                .process_keyboard(Direction::Left, delta_time);
+            transform.process_keyboard(Direction::Left, delta_time);
         }
         if input.get_key(Key::D) {
-            camera
-                .transform
-                .process_keyboard(Direction::Right, delta_time);
+            transform.process_keyboard(Direction::Right, delta_time);
         }
         if input.get_key(Key::Space) {
-            camera.transform.process_keyboard(Direction::Up, delta_time);
+            transform.process_keyboard(Direction::Up, delta_time);
         }
         if input.get_key(Key::LeftShift) {
-            camera
-                .transform
-                .process_keyboard(Direction::Down, delta_time);
+            transform.process_keyboard(Direction::Down, delta_time);
         }
     }
     fn get_info(&self) -> SystemInfo {

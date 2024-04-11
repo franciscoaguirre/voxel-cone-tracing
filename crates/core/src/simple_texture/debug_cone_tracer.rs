@@ -61,11 +61,12 @@ impl System for DebugConeTracer {
             .set_mat4(c_str!("projection"), &active_camera.get_projection_matrix());
         self.shader
             .set_mat4(c_str!("view"), &active_camera.transform.get_view_matrix());
+        let light = inputs.scene.light.borrow();
         self.shader.set_vec3(
             c_str!("pointLight.position"),
-            inputs.scene.light.transform().position.x,
-            inputs.scene.light.transform().position.y,
-            inputs.scene.light.transform().position.z,
+            light.transform().position.x,
+            light.transform().position.y,
+            light.transform().position.z,
         );
         self.shader
             .set_vec3(c_str!("pointLight.color"), 1.0, 1.0, 1.0);

@@ -17,7 +17,7 @@ pub struct Scene {
     /// Materials to load in the `AssetsRegistry`
     pub materials: Vec<Material>,
     /// Light of the scene for both direct and indirect illumination
-    pub light: Light,
+    pub light: RefCell<Light>,
     /// Cameras.
     #[serde(skip)]
     pub cameras: Vec<RefCell<Camera>>,
@@ -93,7 +93,7 @@ mod tests {
                     specular: 0.0,
                 },
             }],
-            light: Light::default(),
+            light: RefCell::new(Light::default()),
             cameras: Vec::new(),
             active_camera: None,
             aabb: Aabb::default(),

@@ -17,7 +17,7 @@ impl SystemsMenu {
 impl<SystemType: System + Pausable> SubMenu<SystemType> for SystemsMenu {
     fn show(&mut self, context: &egui::Context, inputs: &mut SubMenuInputs<SystemType>) {
         egui::Window::new("Systems").show(context, |ui| {
-            for (info, mut system) in inputs.system_info.iter().zip(inputs.systems.iter_mut()) {
+            for (info, system) in inputs.system_info.iter().zip(inputs.systems.iter_mut()) {
                 ui.horizontal(|ui| {
                     ui.label(info.name);
                     if ui

@@ -38,12 +38,13 @@ impl System for ConeTracer {
         gl::Enable(gl::BLEND);
         gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
 
+        let light = inputs.scene.light.borrow();
         // Upload uniforms.
         self.cone_tracing_shader.set_vec3(
             c_str!("pointLight.position"),
-            inputs.scene.light.transform().position.x,
-            inputs.scene.light.transform().position.y,
-            inputs.scene.light.transform().position.z,
+            light.transform().position.x,
+            light.transform().position.y,
+            light.transform().position.z,
         );
         self.cone_tracing_shader
             .set_vec3(c_str!("pointLight.color"), 1.0, 1.0, 1.0);
