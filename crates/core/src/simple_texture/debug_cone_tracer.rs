@@ -78,7 +78,16 @@ impl System for DebugConeTracer {
         );
         self.shader.set_int(c_str!("gBufferPositions"), 0);
 
+        gl::ActiveTexture(gl::TEXTURE1);
+        gl::BindTexture(
+            gl::TEXTURE_3D,
+            *inputs.assets.get_texture("voxels_texture").unwrap(),
+        );
+        self.shader.set_int(c_str!("voxelsTexture"), 1);
+
+        gl::PointSize(10.0);
         gl::DrawArrays(gl::POINTS, 0, 1);
+        gl::PointSize(1.0);
 
         gl::BindTexture(gl::TEXTURE_2D, 0);
         gl::BindVertexArray(0);

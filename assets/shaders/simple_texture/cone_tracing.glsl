@@ -26,7 +26,8 @@ void main() {
 #define QUADRATIC 1
 
 // Voxels
-#define VOXEL_SIZE (1/256)
+#define STEP_LENGTH 0.005f
+#define INV_STEP_LENGTH (1.0f / STEP_LENGTH)
 
 struct PointLight {
     vec3 position;
@@ -59,11 +60,10 @@ vec3 scaleAndBias(const vec3 p) {
 
 float traceShadowCone(vec3 from, vec3 direction, float targetDistance) {
     float accumulator = 0;
-    float distance = 0 * VOXEL_SIZE;
-    const float STOP = targetDistance - 1 * VOXEL_SIZE;
+    const uint numberOfSteps = uint(INV_STEP_LENGTH * targetDistance);
     int steps = 0;
-    while (distance < STOP && accumulator < 1 && steps < 500) {
-        vec3 current = from + distance * direction;
+    while (accumulator < 0.99f && steps < numberOfSteps) {
+        vec3 current = from + STEP_LENGTH * steps * direction;
         // if (!isInsideCube(current, 0)) {
         //     break;
         // }
@@ -74,7 +74,6 @@ float traceShadowCone(vec3 from, vec3 direction, float targetDistance) {
         // float interpolatedSample = 0.062 * sample1 + 0.135 * sample2;
         float interpolatedSample = textureLod(voxelsTexture, current, 0).a;
         accumulator += (1 - accumulator) * interpolatedSample;
-        distance += 0.9 * VOXEL_SIZE;
         steps += 1;
     }
     return 1 - accumulator;

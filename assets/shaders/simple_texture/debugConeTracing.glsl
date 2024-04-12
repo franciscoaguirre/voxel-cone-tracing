@@ -24,7 +24,7 @@ out VertexData {
 void main() {
     vec3 positionWorldSpace = texture(gBufferPositions, gBufferQueryCoordinates).xyz;
     Out.position = positionWorldSpace;
-    Out.direction = normalize(pointLight.position - positionWorldSpace);
+    Out.direction = pointLight.position - positionWorldSpace;
     gl_Position = projection * view * vec4(positionWorldSpace, 1);
 }
 
@@ -32,30 +32,49 @@ void main() {
 
 #version 460 core
 
+#define STEP_LENGTH 0.005f
+#define INV_STEP_LENGTH (1.0f / STEP_LENGTH)
+
 layout (points) in;
-layout (line_strip, max_vertices = 256) out;
+layout (points, max_vertices = 256) out;
 
 uniform mat4 projection;
 uniform mat4 view;
+
+uniform sampler3D voxelsTexture;
 
 in VertexData {
     vec3 position;
     vec3 direction;
 } In[];
 
+out GeometryData {
+    vec4 color;
+} Out;
+
+vec3 scaleAndBias(const vec3 p) {
+    return 0.5f * p + 0.5f;
+}
+
+// For debugging, they show up in renderDoc.
+out uint numberOfSteps;
+out vec3 voxelSpaceCoordinates;
+out float targetDistance;
+
 void main() {
     vec3 from = In[0].position;
     vec3 direction = In[0].direction;
-    float distance = 0;
 
-    float voxelSize = 1.f / 256.f;
-    int steps = 256;
+    targetDistance = length(direction);
+    numberOfSteps = uint(INV_STEP_LENGTH * targetDistance);
+    direction = normalize(direction);
 
-    for (int i = 0; i < steps; i++) {
-        vec3 current = from + distance * direction;
+    for (int step = 0; step < numberOfSteps; ++step) {
+        vec3 current = from + STEP_LENGTH * step * direction;
         gl_Position = projection * view * vec4(current, 1);
+        voxelSpaceCoordinates = scaleAndBias(current);
+        Out.color = textureLod(voxelsTexture, voxelSpaceCoordinates, 0);
         EmitVertex();
-        distance += voxelSize;
     }
 
     EndPrimitive();
@@ -65,8 +84,15 @@ void main() {
 
 #version 460 core
 
+in GeometryData {
+    vec4 color;
+} In;
+
 out vec4 color;
 
 void main() {
-    color = vec4(1, 0, 1, 1);
+    color = In.color;
+    if (color.a == 0) {
+        discard;
+    }
 }

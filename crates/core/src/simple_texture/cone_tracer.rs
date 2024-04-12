@@ -56,7 +56,7 @@ impl System for ConeTracer {
         gl::BindTexture(
             gl::TEXTURE_3D,
             *inputs.assets.get_texture("voxels_texture").unwrap(),
-        ); // TODO: Need to register it.
+        );
         self.cone_tracing_shader
             .set_int(c_str!("voxelsTexture"), texture_counter as i32);
         texture_counter += 1;
