@@ -111,6 +111,11 @@ fn pausable_enum_impl(ident: &Ident, data_enum: &DataEnum) -> TokenStream2 {
                     #(Self::#variant_idents(inner_system) => inner_system.is_paused()),*
                 }
             }
+            fn is_paused_mut(&mut self) -> &mut bool {
+                match self {
+                    #(Self::#variant_idents(inner_system) => inner_system.is_paused_mut()),*
+                }
+            }
         }
     };
     pausable_impl
@@ -128,6 +133,9 @@ fn pausable_struct_impl(ident: &Ident, _data_struct: &DataStruct) -> TokenStream
             }
             fn is_paused(&self) -> bool {
                 self.paused
+            }
+            fn is_paused_mut(&mut self) -> &mut bool {
+                &mut self.paused
             }
         }
     };

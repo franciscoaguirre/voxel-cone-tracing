@@ -53,6 +53,9 @@ in VertexData {
 
 out vec4 color;
 
+// Returns true if the point p is inside the unity cube. 
+bool isInsideCube(const vec3 p, float e) { return abs(p.x) < 1 + e && abs(p.y) < 1 + e && abs(p.z) < 1 + e; }
+
 // Scales and bias a given vector (i.e. from [-1, 1] to [0, 1]).
 vec3 scaleAndBias(const vec3 p) {
     return 0.5f * p + 0.5f;
@@ -64,15 +67,14 @@ float traceShadowCone(vec3 from, vec3 direction, float targetDistance) {
     int steps = 0;
     while (accumulator < 0.99f && steps < numberOfSteps) {
         vec3 current = from + STEP_LENGTH * steps * direction;
-        // if (!isInsideCube(current, 0)) {
-        //     break;
-        // }
+        if (!isInsideCube(current, 0)) {
+            break;
+        }
         current = scaleAndBias(current);
-        // float lod = pow(distance, 2); // Inverse square falloff for shadows.
-        // float sample1 = textureLod(voxelsTexture, current, 1 + 0.75 * lod).a;
-        // float sample2 = textureLod(voxelsTexture, current, 4.5 * lod).a;
-        // float interpolatedSample = 0.062 * sample1 + 0.135 * sample2;
-        float interpolatedSample = textureLod(voxelsTexture, current, 0).a;
+        float lod = pow(STEP_LENGTH * steps, 2); // Inverse square falloff for shadows.
+        float sample1 = textureLod(voxelsTexture, current, 1 + 0.75 * lod).a;
+        float sample2 = textureLod(voxelsTexture, current, 4.5 * lod).a;
+        float interpolatedSample = 0.062 * sample1 + 0.135 * sample2;
         accumulator += (1 - accumulator) * interpolatedSample;
         steps += 1;
     }

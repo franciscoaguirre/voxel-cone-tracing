@@ -22,9 +22,15 @@ pub trait System {
     fn get_info(&self) -> SystemInfo;
 }
 
-/// Represents a program that can be paused.
+/// Represents a system that can be paused.
 pub trait Pausable {
+    /// Pause it.
     fn pause(&mut self);
+    /// Unpause it.
     fn unpause(&mut self);
+    /// Is it paused right now?
     fn is_paused(&self) -> bool;
+    /// Return a mutable reference to the paused value, useful for
+    /// UI manipulating it.
+    fn is_paused_mut(&mut self) -> &mut bool;
 }
