@@ -25,9 +25,9 @@ fn system_enum_impl(ident: &Ident, data_enum: &DataEnum) -> TokenStream2 {
             unsafe fn setup(&mut self, assets: &mut AssetRegistry) {
                 match self {
                     #(Self::#variant_idents(inner_system) => {
-                        if !inner_system.is_paused() {
-                            inner_system.setup(assets);
-                        }
+                        // Systems should always be setup, even if they start paused.
+                        // This is because if not, they lose their chance.
+                        inner_system.setup(assets);
                     }),*
                 }
             }

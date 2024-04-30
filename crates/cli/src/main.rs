@@ -231,15 +231,25 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     // Render loop.
     unsafe {
         // Register systems.
-        render_loop.register_system(AggregatedSystem::RenderObjects(RenderObjects::new()));
-        render_loop.register_system(AggregatedSystem::GeometryBuffers(GeometryBuffers::new()));
-        render_loop.register_system(AggregatedSystem::Voxelizer(Voxelizer::new()));
-        render_loop.register_system(AggregatedSystem::VoxelVisualizer(VoxelVisualizer::new()));
-        render_loop.register_system(AggregatedSystem::SimpleConeTracer(SimpleConeTracer::new()));
-        render_loop.register_system(AggregatedSystem::SimpleDebugConeTracer(
-            SimpleDebugConeTracer::new(),
-        ));
-        render_loop.register_system(AggregatedSystem::MoveCamera(MoveCamera::new()));
+        render_loop.register_system(AggregatedSystem::RenderObjects(RenderObjects::new()), true);
+        render_loop.register_system(
+            AggregatedSystem::GeometryBuffers(GeometryBuffers::new()),
+            false,
+        );
+        render_loop.register_system(AggregatedSystem::Voxelizer(Voxelizer::new()), false);
+        render_loop.register_system(
+            AggregatedSystem::VoxelVisualizer(VoxelVisualizer::new()),
+            false,
+        );
+        render_loop.register_system(
+            AggregatedSystem::SimpleConeTracer(SimpleConeTracer::new()),
+            false,
+        );
+        render_loop.register_system(
+            AggregatedSystem::SimpleDebugConeTracer(SimpleDebugConeTracer::new()),
+            false,
+        );
+        render_loop.register_system(AggregatedSystem::MoveCamera(MoveCamera::new()), true);
 
         // Register submenus.
         render_loop.register_submenu("Systems", AggregatedSubMenus::Systems(SystemsMenu::new()));

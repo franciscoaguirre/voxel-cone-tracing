@@ -50,7 +50,11 @@ impl<SystemType: System + Pausable, SubMenuType: SubMenu<SystemType> + Showable>
         }
     }
 
-    pub fn register_system(&mut self, system: SystemType) {
+    pub fn register_system(&mut self, system: SystemType, running: bool) {
+        let mut system = system;
+        if !running {
+            system.pause();
+        }
         self.systems.push(system);
     }
 
