@@ -241,9 +241,11 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
         ));
         render_loop.register_system(AggregatedSystem::MoveCamera(MoveCamera::new()));
 
+        // Register submenus.
         render_loop.register_submenu("Systems", AggregatedSubMenus::Systems(SystemsMenu::new()));
         render_loop.register_submenu("Picker", AggregatedSubMenus::Picker(PickerMenu::new()));
 
+        // Run.
         render_loop.run();
     };
 
