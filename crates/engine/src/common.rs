@@ -54,9 +54,7 @@ pub unsafe fn setup_glfw(
     window.set_cursor_pos_polling(true);
     window.set_scroll_polling(true);
     window.set_mouse_button_polling(true);
-    println!("Por acá");
     window.set_cursor_mode(glfw::CursorMode::Disabled);
-    println!("Funciono?");
     glfw.set_swap_interval(glfw::SwapInterval::Sync(1));
 
     // GL: Load all OpenGL function pointers

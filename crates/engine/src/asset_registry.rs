@@ -9,7 +9,10 @@ pub struct AssetRegistry {
     models: HashMap<AssetHandle, Model>,
     materials: HashMap<AssetHandle, Material>,
     pub textures: HashMap<AssetHandle, Texture>,
-    pub uniforms: HashMap<AssetHandle, Uniform>,
+    pub uniforms: HashMap<AssetHandle, Uniform>, // TODO: Makes sense, but they could probably be grouped by system.
+                                                 // Will a uniform be used by more than one system?
+                                                 // Probably not.
+                                                 // Probably they'll all be scoped to their system.
 }
 
 impl AssetRegistry {
