@@ -43,8 +43,8 @@ impl System for DebugConeTracer {
 
         // Upload uniforms.
         let g_buffer_query_coordinates = {
-            let Uniform::Vec2(x, y) = inputs
-                .assets
+            let assets = inputs.assets;
+            let Uniform::Vec2(x, y) = assets
                 .get_uniform("SimpleDebugConeTracer.gBufferQueryCoordinates")
                 .unwrap()
             else {

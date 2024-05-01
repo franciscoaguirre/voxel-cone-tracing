@@ -14,5 +14,6 @@ pub enum Uniform {
     Vec2(f32, f32),
     Vec3(f32, f32, f32),
     Bool(bool),
+    Uint(u32),
     // TODO: Add all others.
 }

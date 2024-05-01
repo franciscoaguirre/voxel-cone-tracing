@@ -21,8 +21,8 @@ use core::{
     config::Config as CoreConfig,
     menu::Preset,
     octree::{BrickAttribute, BricksToShow, Octree, OctreeDataType},
-    voxelization,
-    voxelization::visualize::RenderVoxelFragmentsShader,
+    voxelization::VoxelVisualizer as SVOVoxelVisualizer,
+    voxelization::Voxelizer as SVOVoxelizer,
 };
 use engine::ui::Ui;
 use engine::ui::{egui, glfw};
@@ -219,6 +219,8 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
         SimpleConeTracer(SimpleConeTracer),
         SimpleDebugConeTracer(SimpleDebugConeTracer),
         MoveCamera(MoveCamera),
+        SVOVoxelizer(SVOVoxelizer),
+        SVOVoxelVisualizer(SVOVoxelVisualizer),
     }
 
     let mut render_loop = RenderLoop::<AggregatedSystem, AggregatedSubMenus>::new(
@@ -250,6 +252,11 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
             false,
         );
         render_loop.register_system(AggregatedSystem::MoveCamera(MoveCamera::new()), true);
+        render_loop.register_system(AggregatedSystem::SVOVoxelizer(SVOVoxelizer::new()), false);
+        render_loop.register_system(
+            AggregatedSystem::SVOVoxelVisualizer(SVOVoxelVisualizer::new()),
+            false,
+        );
 
         // Register submenus.
         render_loop.register_submenu("Systems", AggregatedSubMenus::Systems(SystemsMenu::new()));

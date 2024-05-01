@@ -62,6 +62,22 @@ pub unsafe fn generate_texture_buffer_with_initial_data<T>(
     generate_texture_buffer_full(size, format, initial_data, gl::STATIC_DRAW)
 }
 
+pub unsafe fn initialize_texture_buffer(format: GLenum) -> (GLuint, GLuint) {
+    let mut texture_buffer: GLuint = 0;
+    gl::GenBuffers(1, &mut texture_buffer);
+
+    gl::BindBuffer(gl::TEXTURE_BUFFER, texture_buffer);
+
+    let mut texture: GLuint = 0;
+
+    gl::GenTextures(1, &mut texture);
+    gl::BindTexture(gl::TEXTURE_BUFFER, texture);
+    gl::TexBuffer(gl::TEXTURE_BUFFER, format, texture_buffer);
+    gl::BindBuffer(gl::TEXTURE_BUFFER, 0);
+
+    (texture, texture_buffer)
+}
+
 pub unsafe fn generate_texture_buffer_full<T>(
     size: usize,
     format: GLenum,
@@ -212,6 +228,7 @@ pub unsafe fn get_value_from_atomic_counter_without_reset(counter: u32) -> GLuin
     value
 }
 
+/// Resets an atomic counter to 0.
 pub unsafe fn reset_atomic_counter(counter: u32) {
     let reset: GLuint = 0;
     gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, counter);
