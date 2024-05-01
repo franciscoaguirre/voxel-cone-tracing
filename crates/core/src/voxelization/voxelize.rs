@@ -14,6 +14,7 @@ pub struct Voxelizer {
     voxel_positions: (GLuint, GLuint),
     voxel_colors: (GLuint, GLuint),
     voxel_normals: (GLuint, GLuint),
+    number_of_voxel_fragments: u32,
     paused: bool,
 }
 
@@ -29,6 +30,7 @@ impl Voxelizer {
             voxel_positions: helpers::initialize_texture_buffer(gl::R32UI),
             voxel_colors: helpers::initialize_texture_buffer(gl::RGBA8),
             voxel_normals: helpers::initialize_texture_buffer(gl::RGBA32F),
+            number_of_voxel_fragments: 0,
             paused: false,
         }
     }
@@ -135,20 +137,20 @@ impl System for Voxelizer {
             size_of::<GLuint>() as isize,
             gl::MAP_READ_BIT | gl::MAP_WRITE_BIT,
         ) as *mut GLuint;
-        let number_of_voxel_fragments = *count;
+        self.number_of_voxel_fragments = *count;
         helpers::fill_texture_buffer_with_data(
             self.voxel_positions.1,
-            &vec![0u32; number_of_voxel_fragments as usize],
+            &vec![0u32; self.number_of_voxel_fragments as usize],
             gl::STATIC_DRAW,
         );
         helpers::fill_texture_buffer_with_data(
             self.voxel_colors.1,
-            &vec![0u32; number_of_voxel_fragments as usize],
+            &vec![0u32; self.number_of_voxel_fragments as usize],
             gl::STATIC_DRAW,
         );
         helpers::fill_texture_buffer_with_data(
             self.voxel_normals.1,
-            &vec![0u32; number_of_voxel_fragments as usize],
+            &vec![0u32; self.number_of_voxel_fragments as usize],
             gl::STATIC_DRAW,
         );
         *count = 0;
@@ -156,11 +158,11 @@ impl System for Voxelizer {
         gl::BindBuffer(gl::ATOMIC_COUNTER_BUFFER, 0);
         self.populate_voxel_fragment_list(&inputs);
         gl::MemoryBarrier(gl::SHADER_IMAGE_ACCESS_BARRIER_BIT);
-        // TODO: Cannot borrow `&'a AssetRegistry` as mutable.
-        *inputs
-            .assets
-            .get_uniform_mut("number_of_voxel_fragments")
-            .unwrap() = Uniform::Uint(number_of_voxel_fragments);
+    }
+
+    unsafe fn post_update(&mut self, assets: &mut AssetRegistry) {
+        *assets.get_uniform_mut("number_of_voxel_fragments").unwrap() =
+            Uniform::Uint(self.number_of_voxel_fragments);
     }
 
     fn get_info(&self) -> SystemInfo {

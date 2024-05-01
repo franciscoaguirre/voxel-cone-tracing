@@ -17,8 +17,21 @@ pub struct SystemInputs<'a> {
 
 /// Represents a program that will be run by the `RenderLoop`.
 pub trait System {
+    /// Runs once at the start of the RenderLoop.
+    /// Meant to be used for registering textures and uniforms.
     unsafe fn setup(&mut self, assets: &mut AssetRegistry);
+
+    /// Runs every frame.
+    /// Meant to render, perform calculations, anything really.
     unsafe fn update(&mut self, inputs: SystemInputs);
+
+    /// Runs every frame after `update`.
+    /// Meant to mutate the asset registry with results from the
+    /// `update` stage.
+    unsafe fn post_update(&mut self, _assets: &mut AssetRegistry) {}
+
+    /// Returns some information about the system.
+    /// Displayed in UIs.
     fn get_info(&self) -> SystemInfo;
 }
 

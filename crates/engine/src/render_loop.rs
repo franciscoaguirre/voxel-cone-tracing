@@ -112,15 +112,16 @@ impl<SystemType: System + Pausable, SubMenuType: SubMenu<SystemType> + Showable>
                 self.ui.show(&mut submenu_inputs);
             }
 
-            let system_inputs = SystemInputs {
-                scene: &self.scene.as_ref().expect("Scene should've been set."),
-                assets: &self.asset_registry,
-                time: &time,
-            };
-
             // Run all updates.
             for system in &mut self.systems {
+                let system_inputs = SystemInputs {
+                    scene: &self.scene.as_ref().expect("Scene should've been set."),
+                    assets: &self.asset_registry,
+                    time: &time,
+                };
+
                 system.update(system_inputs);
+                system.post_update(&mut self.asset_registry);
             }
 
             // Probably rendering a full-screen quad.

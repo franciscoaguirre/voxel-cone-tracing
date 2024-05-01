@@ -1,4 +1,5 @@
 use c_str_macro::c_str;
+use cgmath::{vec3, Matrix4};
 use engine::prelude::*;
 use gl::types::*;
 
@@ -38,11 +39,6 @@ impl System for VoxelVisualizer {
 
         self.shader.use_program();
 
-        let camera = inputs.scene.cameras[inputs.scene.active_camera.unwrap_or(0)].borrow();
-        let projection = camera.get_projection_matrix();
-        let view = camera.transform.get_view_matrix();
-        let model = camera.transform.get_model_matrix();
-
         let voxel_positions_texture = *inputs.assets.get_texture("voxel_positions").unwrap();
         let voxel_colors_texture = *inputs.assets.get_texture("voxel_colors").unwrap();
         let Uniform::Uint(number_of_voxel_fragments) = *inputs
@@ -73,9 +69,16 @@ impl System for VoxelVisualizer {
             gl::RGBA8,
         );
 
-        self.shader.set_mat4(c_str!("projection"), &projection);
-        self.shader.set_mat4(c_str!("view"), &view);
-        self.shader.set_mat4(c_str!("model"), &model);
+        let camera = inputs.scene.cameras[inputs.scene.active_camera.unwrap_or(0)].borrow();
+
+        self.shader
+            .set_mat4(c_str!("projection"), &camera.get_projection_matrix());
+        self.shader
+            .set_mat4(c_str!("view"), &camera.transform.get_view_matrix());
+        self.shader.set_mat4(
+            c_str!("model"),
+            &Matrix4::<f32>::from_translation(vec3(0., 0., 0.)),
+        );
 
         let config = Config::instance();
         self.shader

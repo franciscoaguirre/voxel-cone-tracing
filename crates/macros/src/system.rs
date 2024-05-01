@@ -42,6 +42,16 @@ fn system_enum_impl(ident: &Ident, data_enum: &DataEnum) -> TokenStream2 {
                 }
             }
 
+            unsafe fn post_update(&mut self, assets: &mut AssetRegistry) {
+                match self {
+                    #(Self::#variant_idents(inner_system) => {
+                        if !inner_system.is_paused() {
+                            inner_system.post_update(assets);
+                        }
+                    }),*
+                }
+            }
+
             fn get_info(&self) -> SystemInfo {
                 match self {
                     #(Self::#variant_idents(inner_system) => inner_system.get_info()),*
@@ -65,6 +75,9 @@ fn system_struct_impl(ident: &Ident, data_struct: &DataStruct) -> TokenStream2 {
             }
             unsafe fn update(&mut self, inputs: SystemInputs) {
                 #(self.#field_idents.update(inputs));*;
+            }
+            unsafe fn post_update(&mut self, assets: &mut AssetRegistry) {
+                #(self.#field_idents.post_update(assets));*;
             }
             fn get_info(&self) -> SystemInfo {
                 let mut group_name = String::new();
