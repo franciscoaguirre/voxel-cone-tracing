@@ -43,7 +43,7 @@ impl System for VoxelVisualizer {
         let voxel_colors_texture = *inputs.assets.get_texture("voxel_colors").unwrap();
         let Uniform::Uint(number_of_voxel_fragments) = *inputs
             .assets
-            .get_uniform("number_of_voxel_fragments")
+            .get_uniform("SVOVoxelizer", "number_of_voxel_fragments")
             .unwrap()
         else {
             panic!("number_of_voxel_fragments should be a uint")

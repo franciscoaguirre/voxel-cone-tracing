@@ -4,15 +4,13 @@ use crate::prelude::{Material, Model, Scene};
 use crate::types::*;
 
 pub type AssetHandle = String;
+pub type SystemName = String; // TODO: Could make an enum with all system names.
 
 pub struct AssetRegistry {
     models: HashMap<AssetHandle, Model>,
     materials: HashMap<AssetHandle, Material>,
     pub textures: HashMap<AssetHandle, Texture>,
-    pub uniforms: HashMap<AssetHandle, Uniform>, // TODO: Makes sense, but they could probably be grouped by system.
-                                                 // Will a uniform be used by more than one system?
-                                                 // Probably not.
-                                                 // Probably they'll all be scoped to their system.
+    pub uniforms: HashMap<SystemName, HashMap<AssetHandle, Uniform>>,
 }
 
 impl AssetRegistry {
@@ -53,8 +51,14 @@ impl AssetRegistry {
         }
     }
 
-    pub fn register_uniform(&mut self, id: &str, uniform: Uniform) {
-        if self.uniforms.insert(id.to_string(), uniform).is_some() {
+    pub fn register_uniform(&mut self, system_name: &str, id: &str, uniform: Uniform) {
+        if self
+            .uniforms
+            .entry(system_name.to_string())
+            .or_insert(HashMap::new())
+            .insert(id.to_string(), uniform)
+            .is_some()
+        {
             // Handle overwriting an existing material if necessary.
         }
     }
@@ -71,11 +75,22 @@ impl AssetRegistry {
         self.textures.get(id)
     }
 
-    pub fn get_uniform(&self, id: &str) -> Option<&Uniform> {
-        self.uniforms.get(id)
+    pub fn get_uniform(&self, system_name: &str, id: &str) -> Option<&Uniform> {
+        let error_message = format!("No registered uniforms for system: {:?}", system_name);
+        let system_uniforms = self.uniforms.get(system_name).expect(&error_message);
+        system_uniforms.get(id)
     }
 
-    pub fn get_uniform_mut(&mut self, id: &str) -> Option<&mut Uniform> {
-        self.uniforms.get_mut(id)
+    pub fn get_uniform_mut(&mut self, system_name: &str, id: &str) -> Option<&mut Uniform> {
+        let error_message = format!("No registered uniforms for system: {:?}", system_name);
+        let system_uniforms = self.uniforms.get_mut(system_name).expect(&error_message);
+        system_uniforms.get_mut(id)
+    }
+
+    pub fn get_system_uniforms(
+        &mut self,
+        system_name: &str,
+    ) -> Option<&mut HashMap<String, Uniform>> {
+        self.uniforms.get_mut(system_name)
     }
 }

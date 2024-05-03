@@ -25,7 +25,8 @@ impl DebugConeTracer {
 impl System for DebugConeTracer {
     unsafe fn setup(&mut self, assets: &mut AssetRegistry) {
         assets.register_uniform(
-            "SimpleDebugConeTracer.gBufferQueryCoordinates",
+            self.get_info().name,
+            "gBufferQueryCoordinates",
             Uniform::Vec2(0., 0.),
         );
     }
@@ -45,7 +46,7 @@ impl System for DebugConeTracer {
         let g_buffer_query_coordinates = {
             let assets = inputs.assets;
             let Uniform::Vec2(x, y) = assets
-                .get_uniform("SimpleDebugConeTracer.gBufferQueryCoordinates")
+                .get_uniform(self.get_info().name, "gBufferQueryCoordinates")
                 .unwrap()
             else {
                 unreachable!()

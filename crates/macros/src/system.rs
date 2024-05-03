@@ -57,32 +57,44 @@ fn system_enum_impl(ident: &Ident, data_enum: &DataEnum) -> TokenStream2 {
                     #(Self::#variant_idents(inner_system) => inner_system.get_info()),*
                 }
             }
+
+            fn subsystems(&mut self) -> &mut [Box<dyn PausableSystem>] {
+                match self {
+                    #(Self::#variant_idents(inner_system) => inner_system.subsystems()),*
+                }
+            }
         }
     };
     system_impl
 }
 
-fn system_struct_impl(ident: &Ident, data_struct: &DataStruct) -> TokenStream2 {
-    let field_idents: Vec<_> = data_struct
-        .fields
-        .iter()
-        .map(|field| &field.ident)
-        .collect();
+fn system_struct_impl(ident: &Ident, _data_struct: &DataStruct) -> TokenStream2 {
     let system_impl = quote! {
         impl System for #ident {
             unsafe fn setup(&mut self, assets: &mut AssetRegistry) {
-                #(self.#field_idents.setup(assets));*;
+                for subsystem in self.subsystems.iter_mut() {
+                    subsystem.setup(assets);
+                }
             }
+
             unsafe fn update(&mut self, inputs: SystemInputs) {
-                #(self.#field_idents.update(inputs));*;
+                for subsystem in self.subsystems.iter_mut() {
+                    subsystem.update(inputs);
+                }
             }
+
             unsafe fn post_update(&mut self, assets: &mut AssetRegistry) {
-                #(self.#field_idents.post_update(assets));*;
+                for subsystem in self.subsystems.iter_mut() {
+                    subsystem.post_update(assets);
+                }
             }
+
             fn get_info(&self) -> SystemInfo {
-                let mut group_name = String::new();
-                #(group_name.push_str(self.#field_idents.get_info().name));*;
-                SystemInfo { name: group_name }
+                SystemInfo { name: stringify!(#ident) }
+            }
+
+            fn subsystems(&mut self) -> &mut [Box<dyn PausableSystem>] {
+                &mut self.subsystems
             }
         }
     };

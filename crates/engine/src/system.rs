@@ -1,3 +1,5 @@
+use std::ptr::addr_of_mut;
+
 use crate::{
     prelude::{AssetRegistry, Scene},
     time::TimeManager,
@@ -15,15 +17,17 @@ pub struct SystemInputs<'a> {
     pub time: &'a TimeManager,
 }
 
+pub trait PausableSystem: System + Pausable {}
+
 /// Represents a program that will be run by the `RenderLoop`.
 pub trait System {
     /// Runs once at the start of the RenderLoop.
     /// Meant to be used for registering textures and uniforms.
-    unsafe fn setup(&mut self, assets: &mut AssetRegistry);
+    unsafe fn setup(&mut self, _assets: &mut AssetRegistry) {}
 
     /// Runs every frame.
     /// Meant to render, perform calculations, anything really.
-    unsafe fn update(&mut self, inputs: SystemInputs);
+    unsafe fn update(&mut self, _inputs: SystemInputs) {}
 
     /// Runs every frame after `update`.
     /// Meant to mutate the asset registry with results from the
@@ -33,6 +37,31 @@ pub trait System {
     /// Returns some information about the system.
     /// Displayed in UIs.
     fn get_info(&self) -> SystemInfo;
+
+    /// Returns subsystems that make up this system.
+    /// If empty, this system is not a group.
+    fn subsystems(&mut self) -> &mut [Box<dyn PausableSystem>] {
+        &mut []
+    }
+}
+
+impl System for () {
+    fn get_info(&self) -> SystemInfo {
+        SystemInfo { name: "" }
+    }
+}
+
+impl Pausable for () {
+    fn pause(&mut self) {}
+    fn unpause(&mut self) {}
+    fn is_paused(&self) -> bool {
+        false
+    }
+    fn is_paused_mut(&mut self) -> &mut bool {
+        // Did some fancy stuff to make it compile.
+        static mut VALUE: bool = false;
+        unsafe { &mut *addr_of_mut!(VALUE) }
+    }
 }
 
 /// Represents a system that can be paused.

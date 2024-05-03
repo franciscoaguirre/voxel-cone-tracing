@@ -120,7 +120,11 @@ impl Voxelizer {
 
 impl System for Voxelizer {
     unsafe fn setup(&mut self, assets: &mut AssetRegistry) {
-        assets.register_uniform("number_of_voxel_fragments", Uniform::Uint(0));
+        assets.register_uniform(
+            self.get_info().name,
+            "number_of_voxel_fragments",
+            Uniform::Uint(0),
+        );
         assets.register_texture("voxel_positions", self.voxel_positions.0);
         assets.register_texture("voxel_colors", self.voxel_colors.0);
         assets.register_texture("voxel_normals", self.voxel_normals.0);
@@ -161,8 +165,9 @@ impl System for Voxelizer {
     }
 
     unsafe fn post_update(&mut self, assets: &mut AssetRegistry) {
-        *assets.get_uniform_mut("number_of_voxel_fragments").unwrap() =
-            Uniform::Uint(self.number_of_voxel_fragments);
+        *assets
+            .get_uniform_mut(self.get_info().name, "number_of_voxel_fragments")
+            .unwrap() = Uniform::Uint(self.number_of_voxel_fragments);
     }
 
     fn get_info(&self) -> SystemInfo {

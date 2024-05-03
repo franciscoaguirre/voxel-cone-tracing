@@ -210,7 +210,7 @@ impl Octree {
         };
         let builder = Builder {
             neighbor_pointers_pass: NeighborPointersPass::init(),
-            flag_nodes_pass: FlagNodesPass::init(),
+            flag_nodes_pass: FlagNodesPass::new(),
             allocate_nodes_pass: AllocateNodesPass::init(),
             store_node_positions_pass: StoreNodePositions::init(),
             write_leaf_nodes_pass: WriteLeafNodesPass::init(),

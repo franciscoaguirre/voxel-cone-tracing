@@ -45,7 +45,7 @@ impl<SystemType: System + Pausable> SubMenu<SystemType> for PickerMenu {
                 );
                 *inputs
                     .assets
-                    .get_uniform_mut("SimpleDebugConeTracer.gBufferQueryCoordinates")
+                    .get_uniform_mut("SimpleDebugConeTracer", "gBufferQueryCoordinates")
                     .unwrap() = Uniform::Vec2(quad_coordinates.0 as f32, quad_coordinates.1 as f32);
             }
         }

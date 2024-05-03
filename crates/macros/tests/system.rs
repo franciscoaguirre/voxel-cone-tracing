@@ -1,4 +1,4 @@
-use macros::aggregated_kernel;
+use macros::System;
 
 struct Scene;
 struct AssetRegistry;

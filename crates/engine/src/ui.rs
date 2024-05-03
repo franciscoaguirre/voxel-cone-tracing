@@ -10,7 +10,6 @@ pub mod prelude {
 }
 
 use crate::common::{self, WINDOW};
-use crate::prelude::AssetRegistry;
 use crate::submenu::Showable;
 use crate::submenu::SubMenu;
 use crate::submenu::SubMenuInputs;
