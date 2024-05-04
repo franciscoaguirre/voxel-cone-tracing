@@ -211,75 +211,6 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
         Picker(PickerMenu),
     }
 
-    // TODO: Move all this to `system` macro tests.
-    #[derive(Pausable)]
-    struct System1 {
-        paused: bool,
-    }
-
-    impl System1 {
-        pub fn new() -> Self {
-            Self { paused: false }
-        }
-    }
-
-    impl System for System1 {
-        unsafe fn update(&mut self, _inputs: SystemInputs) {
-            println!("System1");
-        }
-
-        fn get_info(&self) -> SystemInfo {
-            SystemInfo { name: "System1" }
-        }
-    }
-
-    #[derive(Pausable)]
-    struct System2 {
-        paused: bool,
-    }
-
-    impl System2 {
-        pub fn new() -> Self {
-            Self { paused: false }
-        }
-    }
-
-    impl System for System2 {
-        unsafe fn update(&mut self, _inputs: SystemInputs) {
-            println!("System2");
-        }
-
-        fn get_info(&self) -> SystemInfo {
-            SystemInfo { name: "System2" }
-        }
-    }
-
-    #[derive(System, Pausable)]
-    enum TestSubsystem {
-        System1(System1),
-        System2(System2),
-    }
-
-    impl PausableSystem for TestSubsystem {}
-
-    #[derive(System, Pausable)]
-    struct TestGroup {
-        subsystems: Vec<Box<dyn PausableSystem>>,
-        paused: bool,
-    }
-
-    impl TestGroup {
-        pub fn new() -> Self {
-            Self {
-                subsystems: vec![
-                    Box::new(TestSubsystem::System1(System1::new())),
-                    Box::new(TestSubsystem::System2(System2::new())),
-                ],
-                paused: false,
-            }
-        }
-    }
-
     #[derive(System, Pausable)]
     enum AggregatedSystem {
         RenderObjects(RenderObjects),
@@ -291,7 +222,6 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
         MoveCamera(MoveCamera),
         SVOVoxelizer(SVOVoxelizer),
         SVOVoxelVisualizer(SVOVoxelVisualizer),
-        TestGroup(TestGroup),
     }
 
     let mut render_loop = RenderLoop::<AggregatedSystem, AggregatedSubMenus>::new(
@@ -328,7 +258,6 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
             AggregatedSystem::SVOVoxelVisualizer(SVOVoxelVisualizer::new()),
             false,
         );
-        render_loop.register_system(AggregatedSystem::TestGroup(TestGroup::new()), false);
 
         // Register submenus.
         render_loop.register_submenu("Systems", AggregatedSubMenus::Systems(SystemsMenu::new()));
