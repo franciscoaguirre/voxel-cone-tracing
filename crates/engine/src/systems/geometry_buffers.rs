@@ -11,6 +11,7 @@ pub struct GeometryBuffers {
     shader: Shader,
     framebuffer: GeometryFramebuffer,
     paused: bool,
+    pause_next_frame: bool,
 }
 
 impl GeometryBuffers {
@@ -19,6 +20,7 @@ impl GeometryBuffers {
             shader: compile_shaders!("assets/shaders/octree/viewMap.glsl"),
             framebuffer: GeometryFramebuffer::new(),
             paused: false,
+            pause_next_frame: false,
         }
     }
 }

@@ -10,6 +10,7 @@ pub struct Visualizer {
     cube_renderer: Cube,
     quad_renderer: Quad,
     paused: bool,
+    pause_next_frame: bool,
 }
 
 impl Visualizer {
@@ -26,6 +27,7 @@ impl Visualizer {
                 "assets/shaders/voxel_fragment/visualizeVoxel3DTexture.glsl"
             ),
             paused: false,
+            pause_next_frame: false,
         }
     }
 }

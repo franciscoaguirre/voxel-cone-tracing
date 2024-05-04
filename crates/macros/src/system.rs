@@ -78,14 +78,22 @@ fn system_struct_impl(ident: &Ident, _data_struct: &DataStruct) -> TokenStream2 
             }
 
             unsafe fn update(&mut self, inputs: SystemInputs) {
-                for subsystem in self.subsystems.iter_mut() {
-                    subsystem.update(inputs);
+                if !self.is_paused() {
+                    for subsystem in self.subsystems.iter_mut() {
+                        if !subsystem.is_paused() {
+                            subsystem.update(inputs);
+                        }
+                    }
                 }
             }
 
             unsafe fn post_update(&mut self, assets: &mut AssetRegistry) {
-                for subsystem in self.subsystems.iter_mut() {
-                    subsystem.post_update(assets);
+                if !self.is_paused() {
+                    for subsystem in self.subsystems.iter_mut() {
+                        if !subsystem.is_paused() {
+                            subsystem.post_update(assets);
+                        }
+                    }
                 }
             }
 
@@ -141,12 +149,22 @@ fn pausable_enum_impl(ident: &Ident, data_enum: &DataEnum) -> TokenStream2 {
                     #(Self::#variant_idents(inner_system) => inner_system.is_paused_mut()),*
                 }
             }
+            fn pause_next_frame(&self) -> bool {
+                match self {
+                    #(Self::#variant_idents(inner_system) => inner_system.pause_next_frame()),*
+                }
+            }
+            fn set_pause_next_frame(&mut self, value: bool) {
+                match self {
+                    #(Self::#variant_idents(inner_system) => inner_system.set_pause_next_frame(value)),*
+                }
+            }
         }
     };
     pausable_impl
 }
 
-// TODO: Should return a custom error if struct doesn't have the `paused` field.
+// TODO: Should return a custom error if struct doesn't have the `paused` or `pause_next_frame` field.
 fn pausable_struct_impl(ident: &Ident, _data_struct: &DataStruct) -> TokenStream2 {
     let pausable_impl = quote! {
         impl Pausable for #ident {
@@ -161,6 +179,12 @@ fn pausable_struct_impl(ident: &Ident, _data_struct: &DataStruct) -> TokenStream
             }
             fn is_paused_mut(&mut self) -> &mut bool {
                 &mut self.paused
+            }
+            fn pause_next_frame(&self) -> bool {
+                self.pause_next_frame
+            }
+            fn set_pause_next_frame(&mut self, value: bool) {
+                self.pause_next_frame = value;
             }
         }
     };

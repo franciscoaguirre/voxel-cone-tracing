@@ -24,8 +24,14 @@ impl<SystemType: System + Pausable> SubMenu<SystemType> for SystemsMenu {
                         system.pause();
                     }
                     ui.collapsing(info.name, |ui| {
+                        if ui.button("Run once").clicked() {
+                            system.unpause();
+                            system.set_pause_next_frame(true);
+                        }
+
                         if let Some(system_uniforms) = inputs.assets.get_system_uniforms(info.name)
                         {
+                            ui.label("Uniforms:");
                             ui.horizontal(|ui| {
                                 for (key, value) in system_uniforms.iter_mut() {
                                     ui.label(format!("{key}:"));
@@ -47,6 +53,7 @@ impl<SystemType: System + Pausable> SubMenu<SystemType> for SystemsMenu {
                             });
                         }
 
+                        ui.label("Subsystems:");
                         for subsystem in system.subsystems().iter_mut() {
                             ui.horizontal(|ui| {
                                 let mut is_running = !subsystem.is_paused();

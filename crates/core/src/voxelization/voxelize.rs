@@ -16,6 +16,7 @@ pub struct Voxelizer {
     voxel_normals: (GLuint, GLuint),
     number_of_voxel_fragments: u32,
     paused: bool,
+    pause_next_frame: bool,
 }
 
 impl Voxelizer {
@@ -32,6 +33,7 @@ impl Voxelizer {
             voxel_normals: helpers::initialize_texture_buffer(gl::RGBA32F),
             number_of_voxel_fragments: 0,
             paused: false,
+            pause_next_frame: false,
         }
     }
 
@@ -122,12 +124,12 @@ impl System for Voxelizer {
     unsafe fn setup(&mut self, assets: &mut AssetRegistry) {
         assets.register_uniform(
             self.get_info().name,
-            "number_of_voxel_fragments",
+            "numberOfVoxelFragments",
             Uniform::Uint(0),
         );
-        assets.register_texture("voxel_positions", self.voxel_positions.0);
-        assets.register_texture("voxel_colors", self.voxel_colors.0);
-        assets.register_texture("voxel_normals", self.voxel_normals.0);
+        assets.register_texture("voxelPositions", self.voxel_positions.0);
+        assets.register_texture("voxelColors", self.voxel_colors.0);
+        assets.register_texture("voxelNormals", self.voxel_normals.0);
     }
 
     unsafe fn update(&mut self, inputs: SystemInputs) {

@@ -1,6 +1,7 @@
 //! The entrypoint to the VCT application
 
-use core::menu::submenus::{PickerMenu, SystemsMenu};
+use core::menu::submenus::{PickerMenu, SystemsMenu, TexturesMenu};
+use core::octree::OctreeBuilder;
 use core::simple_texture::{
     ConeTracer as SimpleConeTracer, DebugConeTracer as SimpleDebugConeTracer,
     Visualizer as VoxelVisualizer, Voxelizer,
@@ -208,6 +209,7 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     #[derive(SubMenu, Showable)]
     enum AggregatedSubMenus {
         Systems(SystemsMenu),
+        Textures(TexturesMenu),
         Picker(PickerMenu),
     }
 
@@ -222,6 +224,7 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
         MoveCamera(MoveCamera),
         SVOVoxelizer(SVOVoxelizer),
         SVOVoxelVisualizer(SVOVoxelVisualizer),
+        OctreeBuilder(OctreeBuilder),
     }
 
     let mut render_loop = RenderLoop::<AggregatedSystem, AggregatedSubMenus>::new(
@@ -258,9 +261,14 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
             AggregatedSystem::SVOVoxelVisualizer(SVOVoxelVisualizer::new()),
             false,
         );
+        render_loop.register_system(AggregatedSystem::OctreeBuilder(OctreeBuilder::new()), false);
 
         // Register submenus.
         render_loop.register_submenu("Systems", AggregatedSubMenus::Systems(SystemsMenu::new()));
+        render_loop.register_submenu(
+            "Textures",
+            AggregatedSubMenus::Textures(TexturesMenu::new()),
+        );
         render_loop.register_submenu("Picker", AggregatedSubMenus::Picker(PickerMenu::new()));
 
         // Run.

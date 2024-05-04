@@ -62,6 +62,10 @@ impl Pausable for () {
         static mut VALUE: bool = false;
         unsafe { &mut *addr_of_mut!(VALUE) }
     }
+    fn pause_next_frame(&self) -> bool {
+        false
+    }
+    fn set_pause_next_frame(&mut self, _: bool) {}
 }
 
 /// Represents a system that can be paused.
@@ -75,4 +79,10 @@ pub trait Pausable {
     /// Return a mutable reference to the paused value, useful for
     /// UI manipulating it.
     fn is_paused_mut(&mut self) -> &mut bool;
+    /// Only made to support one-shot systems easily.
+    /// These systems will be unpaused one frame and then
+    /// set to be paused in the next one, that way they run only once.
+    fn pause_next_frame(&self) -> bool;
+    /// Setter for pausing on the next frame.
+    fn set_pause_next_frame(&mut self, value: bool);
 }

@@ -6,6 +6,7 @@ pub struct ConeTracer {
     cone_tracing_shader: Shader,
     quad: Quad,
     paused: bool,
+    pause_next_frame: bool,
 }
 
 impl ConeTracer {
@@ -16,6 +17,7 @@ impl ConeTracer {
             ),
             quad: Quad::new(),
             paused: false,
+            pause_next_frame: false,
         }
     }
 }

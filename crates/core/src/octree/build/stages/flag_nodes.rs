@@ -1,42 +1,13 @@
 use c_str_macro::c_str;
 use engine::prelude::*;
-use log;
 
-use crate::{
-    config::Config,
-    octree::{OctreeTextures, VoxelData},
-};
+use crate::{config::Config, octree::OctreeTextures};
 
 #[derive(Pausable)]
 pub struct FlagNodesPass {
     shader: Shader,
     paused: bool,
-}
-
-impl System for FlagNodesPass {
-    unsafe fn setup(&mut self, assets: &mut AssetRegistry) {
-        assets.register_uniform(self.get_info().name, "octreeLevel", Uniform::Uint(0));
-        assets.register_uniform(
-            self.get_info().name,
-            "numberOfVoxelFragments",
-            Uniform::Uint(0),
-        );
-        assets.register_uniform(self.get_info().name, "voxelDimension", Uniform::Uint(0));
-    }
-
-    unsafe fn update(&mut self, inputs: SystemInputs) {
-        todo!();
-    }
-
-    unsafe fn post_update(&mut self, _assets: &mut AssetRegistry) {
-        todo!();
-    }
-
-    fn get_info(&self) -> SystemInfo {
-        SystemInfo {
-            name: "FlagNodesPass",
-        }
-    }
+    pause_next_frame: bool,
 }
 
 const SHADER_PATH: &'static str = "assets/shaders/octree/flagNodes.comp.glsl";
@@ -46,50 +17,70 @@ impl FlagNodesPass {
         Self {
             shader: compile_compute!(SHADER_PATH),
             paused: false,
+            pause_next_frame: false,
         }
     }
 }
 
-#[derive(Clone)]
-pub struct FlagNodesInput {
-    pub octree_level: u32,
-    pub voxel_data: VoxelData,
-    pub node_pool: BufferTextureV2<u32>,
-}
+impl System for FlagNodesPass {
+    unsafe fn setup(&mut self, assets: &mut AssetRegistry) {
+        // Textures.
+        assets.register_texture("nodePool", 0);
 
-impl ShaderPass for FlagNodesPass {
-    type Input<'a> = FlagNodesInput;
+        // Uniforms.
+        assets.register_uniform(self.get_info().name, "octreeLevel", Uniform::Uint(0));
+    }
 
-    unsafe fn run<'a>(&self, input: Self::Input<'a>) {
+    unsafe fn update(&mut self, inputs: SystemInputs) {
         self.shader.use_program();
-
         let config = Config::instance();
-
-        self.shader.set_uint(
-            c_str!("numberOfVoxelFragments"),
-            input.voxel_data.number_of_voxel_fragments,
-        );
+        let Uniform::Uint(number_of_voxel_fragments) = *inputs
+            .assets
+            .get_uniform("SVOVoxelizer", "numberOfVoxelFragments")
+            .unwrap()
+        else {
+            unreachable!()
+        };
         self.shader
-            .set_uint(c_str!("octreeLevel"), input.octree_level);
+            .set_uint(c_str!("numberOfVoxelFragments"), number_of_voxel_fragments);
+        let Uniform::Uint(octree_level) = *inputs
+            .assets
+            .get_uniform(self.get_info().name, "octreeLevel")
+            .unwrap()
+        else {
+            unreachable!()
+        };
+        self.shader.set_uint(c_str!("octreeLevel"), octree_level);
         self.shader
             .set_uint(c_str!("voxelDimension"), config.voxel_dimension());
-
         helpers::bind_image_texture(
             0,
-            input.voxel_data.voxel_positions.texture(),
+            *inputs.assets.get_texture("voxelPositions").unwrap(),
             gl::READ_ONLY,
             gl::RGB10_A2,
         );
-        helpers::bind_image_texture(1, input.node_pool.texture(), gl::READ_WRITE, gl::R32UI);
-
-        let groups_count = (input.voxel_data.number_of_voxel_fragments as f32
-            / config.working_group_size as f32)
-            .ceil() as u32;
-
+        helpers::bind_image_texture(
+            1,
+            *inputs.assets.get_texture("nodePool").unwrap(),
+            gl::READ_WRITE,
+            gl::R32UI,
+        );
+        let groups_count =
+            (number_of_voxel_fragments as f32 / config.working_group_size as f32).ceil() as u32;
         self.shader.dispatch(groups_count);
         self.shader.wait();
     }
+
+    unsafe fn post_update(&mut self, _assets: &mut AssetRegistry) {}
+
+    fn get_info(&self) -> SystemInfo {
+        SystemInfo {
+            name: "FlagNodesPass",
+        }
+    }
 }
+
+impl PausableSystem for FlagNodesPass {}
 
 #[cfg(test)]
 mod tests {
@@ -114,7 +105,7 @@ mod tests {
 
             // Initialize everything
             Config::initialize_test_sensitive(Config::new(voxel_dimension_exponent), true);
-            let flag_nodes_pass = FlagNodesPass::init();
+            let flag_nodes_pass = FlagNodesPass::new();
 
             for TestCase {
                 input,

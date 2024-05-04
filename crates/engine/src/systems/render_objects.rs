@@ -8,6 +8,7 @@ use c_str_macro::c_str;
 pub struct RenderObjects {
     shader: Shader,
     paused: bool,
+    pause_next_frame: bool,
 }
 
 impl RenderObjects {
@@ -19,6 +20,7 @@ impl RenderObjects {
                 "assets/shaders/model/modelLoading.geom.glsl",
             ),
             paused: false,
+            pause_next_frame: false,
         }
     }
 }

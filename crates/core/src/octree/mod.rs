@@ -12,7 +12,9 @@ mod lighting;
 mod visualize;
 mod voxel_data;
 
+pub use build::OctreeBuilder;
 use build::*;
+
 pub use visualize::{BrickAttribute, BricksToShow};
 
 use lighting::{ClearLight, LightTransfer, PhotonsToIrradiance, StorePhotons};

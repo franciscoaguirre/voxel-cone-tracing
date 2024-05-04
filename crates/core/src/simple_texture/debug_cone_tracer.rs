@@ -7,6 +7,7 @@ pub struct DebugConeTracer {
     shader: Shader,
     vao: GLuint,
     paused: bool,
+    pause_next_frame: bool,
 }
 
 impl DebugConeTracer {
@@ -17,6 +18,7 @@ impl DebugConeTracer {
         Self {
             shader: compile_shaders!("assets/shaders/simple_texture/debugConeTracing.glsl"),
             paused: false,
+            pause_next_frame: false,
             vao,
         }
     }

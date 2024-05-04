@@ -8,11 +8,15 @@ use crate::{
 #[derive(Pausable)]
 pub struct MoveCamera {
     paused: bool,
+    pause_next_frame: bool,
 }
 
 impl MoveCamera {
     pub fn new() -> Self {
-        Self { paused: false }
+        Self {
+            paused: false,
+            pause_next_frame: false,
+        }
     }
 }
 

@@ -11,47 +11,19 @@ mod stages;
 
 pub use stages::*;
 
-#[derive(Pausable)]
+#[derive(Pausable, System)]
 pub struct OctreeBuilder {
-    subsystems: Vec<OctreeBuilderStage>,
+    subsystems: Vec<Box<dyn PausableSystem>>,
     paused: bool,
+    pause_next_frame: bool,
 }
 
 impl OctreeBuilder {
     pub fn new() -> Self {
         Self {
-            subsystems: vec![OctreeBuilderStage::FlagNodesPass(FlagNodesPass::new())],
+            subsystems: vec![Box::new(FlagNodesPass::new())],
             paused: false,
-        }
-    }
-}
-
-#[derive(Pausable)]
-pub enum OctreeBuilderStage {
-    FlagNodesPass(FlagNodesPass),
-}
-
-impl System for OctreeBuilderStage {
-    fn get_info(&self) -> SystemInfo {
-        SystemInfo {
-            name: "OctreeBuilderStage",
-        }
-    }
-}
-
-impl System for OctreeBuilder {
-    unsafe fn setup(&mut self, assets: &mut AssetRegistry) {
-        // TODO: Register textures.
-        assets.register_texture("nodePool", 0);
-    }
-
-    unsafe fn update(&mut self, inputs: SystemInputs) {
-        todo!();
-    }
-
-    fn get_info(&self) -> SystemInfo {
-        SystemInfo {
-            name: "OctreeBuilder",
+            pause_next_frame: false,
         }
     }
 }
@@ -178,11 +150,11 @@ impl Octree {
                 self.geometry_data.node_data.nodes_per_level[octree_level as usize - 1];
             // Flag and allocate previous level of octree with nodes for current level
             // of octree
-            let flag_nodes_input = FlagNodesInput {
-                octree_level: octree_level - 1,
-                voxel_data: voxel_data.clone(),
-                node_pool: BufferTextureV2::from_texture_and_buffer(self.textures.node_pool),
-            };
+            // let flag_nodes_input = FlagNodesInput {
+            //     octree_level: octree_level - 1,
+            //     voxel_data: voxel_data.clone(),
+            //     node_pool: BufferTextureV2::from_texture_and_buffer(self.textures.node_pool),
+            // };
             let allocate_nodes_input = AllocateNodesInput {
                 voxel_data: voxel_data.clone(),
                 allocated_nodes_counter,
@@ -191,7 +163,7 @@ impl Octree {
                 node_pool: BufferTextureV2::from_texture_and_buffer(self.textures.node_pool),
                 previous_level_node_amount,
             };
-            self.builder.flag_nodes_pass.run(flag_nodes_input);
+            // self.builder.flag_nodes_pass.run(flag_nodes_input);
             self.builder.allocate_nodes_pass.run(allocate_nodes_input);
 
             let non_border_nodes_allocated =
@@ -224,12 +196,12 @@ impl Octree {
                 &self.textures,
             );
 
-            let flag_nodes_input = FlagNodesInput {
-                octree_level: octree_level - 1,
-                voxel_data: self.border_data.voxel_data.clone(),
-                node_pool: BufferTextureV2::from_texture_and_buffer(self.textures.node_pool),
-            };
-            self.builder.flag_nodes_pass.run(flag_nodes_input);
+            // let flag_nodes_input = FlagNodesInput {
+            //     octree_level: octree_level - 1,
+            //     voxel_data: self.border_data.voxel_data.clone(),
+            //     node_pool: BufferTextureV2::from_texture_and_buffer(self.textures.node_pool),
+            // };
+            // self.builder.flag_nodes_pass.run(flag_nodes_input);
             let allocate_nodes_input = AllocateNodesInput {
                 voxel_data: self.border_data.voxel_data.clone(),
                 allocated_nodes_counter,

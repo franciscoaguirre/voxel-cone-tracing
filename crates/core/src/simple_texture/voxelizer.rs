@@ -8,6 +8,7 @@ pub struct Voxelizer {
     voxelization_shader: Shader,
     pub voxels_texture: Texture3Dv2,
     paused: bool,
+    pause_next_frame: bool,
 }
 
 impl Voxelizer {
@@ -18,6 +19,7 @@ impl Voxelizer {
             ),
             voxels_texture: Texture3Dv2::new(256), // TODO: Not hardcode?
             paused: false,
+            pause_next_frame: false,
         }
     }
 }

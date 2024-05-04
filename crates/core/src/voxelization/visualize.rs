@@ -10,6 +10,7 @@ pub struct VoxelVisualizer {
     shader: Shader,
     vao: GLuint,
     paused: bool,
+    pause_next_frame: bool,
 }
 
 impl VoxelVisualizer {
@@ -27,6 +28,7 @@ impl VoxelVisualizer {
                 vao
             },
             paused: false,
+            pause_next_frame: false,
         }
     }
 }

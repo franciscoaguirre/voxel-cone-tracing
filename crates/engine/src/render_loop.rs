@@ -122,6 +122,11 @@ impl<SystemType: System + Pausable, SubMenuType: SubMenu<SystemType> + Showable>
 
                 system.update(system_inputs);
                 system.post_update(&mut self.asset_registry);
+
+                if system.pause_next_frame() {
+                    system.pause();
+                    system.set_pause_next_frame(false);
+                }
             }
 
             // Probably rendering a full-screen quad.
