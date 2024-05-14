@@ -1,0 +1,195 @@
+(
+    objects: [
+        (
+            model: "dragon",
+            material: "blue",
+            transform: (
+                position: (
+                    x: 0.0,
+                    y: -0.6,
+                    z: 0.6,
+                ),
+            ),
+        ),
+        (
+            model: "monkey",
+            material: "red",
+            transform: (
+                position: (
+                    x: -0.6,
+                    y: -0.6,
+                    z: -0.4,
+                ),
+            ),
+        ),
+        (
+            model: "bunny",
+            material: "green",
+            transform: (
+                position: (
+                    x: 0.7,
+                    y: -0.7,
+                    z: -0.4,
+                ),
+            ),
+        ),
+        (
+            // Floor
+            model: "plane",
+            material: "white",
+            transform: (
+                position: (
+                    x: 0.0,
+                    y: -1.0,
+                    z: 0.0,
+                ),
+            ),
+        ),
+        (
+            // Left wall
+            model: "plane",
+            material: "white",
+            transform: (
+                position: (
+                    x: 1.0,
+                    y: 0.0,
+                    z: 0.0,
+                ),
+                rotation: (
+                    x: 0.0,
+                    y: 0.0,
+                    z: 90.0,
+                ),
+            ),
+        ),
+        (
+            // Right wall
+            model: "plane",
+            material: "white",
+            transform: (
+                position: (
+                    x: -1.0,
+                    y: 0.0,
+                    z: 0.0,
+                ),
+                rotation: (
+                    x: 0.0,
+                    y: 0.0,
+                    z: -90.0,
+                ),
+            ),
+        ),
+        (
+            // Back wall
+            model: "plane",
+            material: "white",
+            transform: (
+                position: (
+                    x: 0.0,
+                    y: 0.0,
+                    z: 1.0,
+                ),
+                rotation: (
+                    x: 90.0,
+                    y: 90.0,
+                    z: 0.0,
+                ),
+            ),
+        ),
+    ],
+    models: [
+        (
+            name: "bunny",
+            path: "assets/models/bunny.obj",
+        ),
+        (
+            name: "plane",
+            path: "assets/models/plane.obj",
+        ),
+        (
+            name: "monkey",
+            path: "assets/models/monkey.obj",
+        ),
+        (
+            name: "dragon",
+            path: "assets/models/dragon.obj",
+        ),
+    ],
+    materials: [
+        (
+            name: "red",
+            properties: (
+                color: (
+                    x: 1.0,
+                    y: 0.0,
+                    z: 0.0,
+                ),
+                specular: 0.0,
+            ),
+        ),
+        (
+            name: "green",
+            properties: (
+                color: (
+                    x: 0.0,
+                    y: 1.0,
+                    z: 0.0,
+                ),
+                specular: 0.0,
+            ),
+        ),
+        (
+            name: "shiny",
+            properties: (
+                color: (
+                    x: 0.0,
+                    y: 0.0,
+                    z: 0.0,
+                ),
+                specular: 1.0,
+            ),
+        ),
+        (
+            name: "blue",
+            properties: (
+                color: (
+                    x: 0.0,
+                    y: 0.0,
+                    z: 1.0,
+                ),
+                specular: 0.0,
+            ),
+        ),
+        (
+            name: "white",
+            properties: (
+                color: (
+                    x: 1.0,
+                    y: 1.0,
+                    z: 1.0,
+                ),
+                specular: 0.0,
+            ),
+        ),
+    ],
+    light: Point((
+        transform: (
+            position: (
+                x: 0.010431082,
+                y: 0.4520506,
+                z: -0.44446555,
+            ),
+            rotation: (
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            ),
+        ),
+        intensity: 0.5,
+        color: (
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
+        ),
+    )),
+)
