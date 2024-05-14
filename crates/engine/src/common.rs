@@ -7,7 +7,7 @@ use super::{
     camera::Camera,
     transform::{Direction, Transform},
 };
-use crate::{helpers, toggle_boolean};
+use crate::{handle_increments, helpers, render_loop::MouseInfo, toggle_boolean};
 
 #[cfg(feature = "ui")]
 use crate::ui::Ui;
@@ -79,9 +79,6 @@ pub unsafe fn setup_glfw(
         println!("Debug Context not active");
     }
 
-    #[cfg(feature = "ui")]
-    Ui::setup(&mut window);
-
     set_window(window);
 
     (glfw, events)
@@ -95,9 +92,7 @@ pub fn swap_buffers() {
 
 pub fn process_events(
     event: &glfw::WindowEvent,
-    first_mouse: &mut bool,
-    last_x: &mut f32,
-    last_y: &mut f32,
+    mouse_info: &mut MouseInfo,
     camera: &mut Camera,
     // TODO: Bring back
     // debug_cone: &mut DebugCone,
@@ -110,17 +105,17 @@ pub fn process_events(
         }
         glfw::WindowEvent::CursorPos(x_position, y_position) => {
             let (x_position, y_position) = (x_position as f32, y_position as f32);
-            if *first_mouse {
-                *last_x = x_position;
-                *last_y = y_position;
-                *first_mouse = false;
+            if mouse_info.first_mouse {
+                mouse_info.last_x = x_position;
+                mouse_info.last_y = y_position;
+                mouse_info.first_mouse = false;
             }
 
-            let x_offset = x_position - *last_x;
-            let y_offset = *last_y - y_position; // reversed since y-coordinates go from bottom to top
+            let x_offset = x_position - mouse_info.last_x;
+            let y_offset = mouse_info.last_y - y_position; // reversed since y-coordinates go from bottom to top
 
-            *last_x = x_position;
-            *last_y = y_position;
+            mouse_info.last_x = x_position;
+            mouse_info.last_y = y_position;
 
             camera.process_mouse_movement(x_offset, y_offset, true);
 
@@ -135,29 +130,6 @@ pub fn process_events(
     }
 }
 
-pub unsafe fn process_movement_input(delta_time: f32, transform: &mut Transform) {
-    let binding = WINDOW.borrow();
-    let window = binding.as_ref().unwrap();
-    if window.get_key(Key::W) == Action::Press {
-        transform.process_keyboard(Direction::Forward, delta_time);
-    }
-    if window.get_key(Key::S) == Action::Press {
-        transform.process_keyboard(Direction::Backward, delta_time);
-    }
-    if window.get_key(Key::A) == Action::Press {
-        transform.process_keyboard(Direction::Left, delta_time);
-    }
-    if window.get_key(Key::D) == Action::Press {
-        transform.process_keyboard(Direction::Right, delta_time);
-    }
-    if window.get_key(Key::Space) == Action::Press {
-        transform.process_keyboard(Direction::Up, delta_time);
-    }
-    if window.get_key(Key::LeftShift) == Action::Press {
-        transform.process_keyboard(Direction::Down, delta_time);
-    }
-}
-
 pub fn should_close_window() -> bool {
     unsafe {
         let binding = WINDOW.borrow();
@@ -169,6 +141,16 @@ pub fn should_close_window() -> bool {
 toggle_boolean!(C, handle_light_movement);
 toggle_boolean!(Num1, handle_show_model);
 toggle_boolean!(Num2, handle_show_voxel_fragment_list);
+handle_increments!(
+    "Mipmap level",
+    Right,
+    Left,
+    handle_mipmap_level,
+    i32,
+    1,
+    0,
+    7
+);
 
 pub unsafe fn log_device_information() {
     let vendor = unsafe {

@@ -1,0 +1,78 @@
+(
+    objects: [
+        (
+            model: "bunny",
+            material: "white",
+            transform: (
+                position: (
+                    x: 0.0,
+                    y: -0.84,
+                    z: 0.0,
+                ),
+            ),
+        ),
+        (
+            // Floor
+            model: "plane",
+            material: "gray",
+            transform: (
+                position: (
+                    x: 0.0,
+                    y: -1.0,
+                    z: 0.0,
+                ),
+            ),
+        ),
+    ],
+    models: [
+        (
+            name: "bunny",
+            path: "assets/models/bunny.obj",
+        ),
+        (
+            name: "plane",
+            path: "assets/models/plane.obj",
+        ),
+    ],
+    materials: [
+        (
+            name: "white",
+            properties: (
+                color: (
+                    x: 1.0,
+                    y: 1.0,
+                    z: 1.0,
+                ),
+                diffuse: 1.0,
+                specular: 0.0,
+            ),
+        ),
+        (
+            name: "gray",
+            properties: (
+                color: (
+                    x: 0.7,
+                    y: 0.7,
+                    z: 0.7,
+                ),
+                diffuse: 1.0,
+                specular: 0.0,
+            ),
+        ),
+    ],
+    light: Point((
+        transform: (
+            position: (
+                x: 0.0,
+                y: 0.0,
+                z: -0.2,
+            ),
+        ),
+        intensity: 1.0,
+        color: (
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
+        ),
+    )),
+)

@@ -1,4 +1,5 @@
-pub mod visualize;
-pub mod voxelize;
+mod visualize;
+mod voxelize;
 
-pub use voxelize::build_voxel_fragment_list;
+pub use visualize::VoxelVisualizer;
+pub use voxelize::Voxelizer;

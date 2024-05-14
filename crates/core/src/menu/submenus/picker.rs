@@ -1,47 +1,53 @@
+use engine::prelude::*;
+use engine::ui::get_button_text;
 use engine::ui::prelude::*;
-use serde::{Serialize, Deserialize};
 
-use super::super::get_button_text;
-use super::SubMenu;
-
-#[derive(Debug, Default, Serialize, Deserialize, Clone)]
-#[serde(default)]
+#[derive(Showable)]
 pub struct PickerMenu {
-    is_showing: bool,
-    output: PickerMenuOutput,
+    is_picking: bool,
+    should_show: bool,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize, Clone)]
-#[serde(default)]
-pub struct PickerMenuOutput {
-    pub is_picking: bool,
-}
-
-impl<'a> SubMenu for PickerMenu {
-    type InputData<'b> = ();
-    type OutputData = PickerMenuOutput;
-
-    fn is_showing(&self) -> bool {
-        self.is_showing
-    }
-
-    fn toggle_showing(&mut self) {
-        self.is_showing = !self.is_showing;
-    }
-
-    fn get_data(&self) -> &Self::OutputData {
-        &self.output
-    }
-
-    fn render<'b>(&mut self, context: &egui::Context, _: &Self::InputData<'b>) {
-        if !self.is_showing() {
-            return;
+impl PickerMenu {
+    pub fn new() -> Self {
+        Self {
+            is_picking: false,
+            should_show: false,
         }
+    }
+}
 
+impl<SystemType: System + Pausable> SubMenu<SystemType> for PickerMenu {
+    fn show(&mut self, context: &egui::Context, _inputs: &mut SubMenuInputs<SystemType>) {
         egui::Window::new("Picker").show(context, |ui| {
-            if ui.button(get_button_text("Toggle", self.output.is_picking)).clicked() {
-                self.output.is_picking = !self.output.is_picking;
+            if ui
+                .button(get_button_text("Picker", self.is_picking))
+                .clicked()
+            {
+                self.is_picking = !self.is_picking;
             }
         });
+    }
+
+    fn handle_event(
+        &mut self,
+        event: &glfw::WindowEvent,
+        context: &egui::Context,
+        inputs: &mut SubMenuInputs<SystemType>,
+    ) {
+        if self.is_picking && !context.wants_pointer_input() {
+            if let glfw::WindowEvent::MouseButton(_, glfw::Action::Press, _) = event {
+                let cursor_position = Ui::get_cursor_pos();
+                let viewport_dimensions = Ui::get_window_size();
+                let quad_coordinates = (
+                    cursor_position.0 / viewport_dimensions.0 as f64,
+                    1.0 - (cursor_position.1 / viewport_dimensions.1 as f64),
+                );
+                *inputs
+                    .assets
+                    .get_uniform_mut("SimpleDebugConeTracer", "gBufferQueryCoordinates")
+                    .unwrap() = Uniform::Vec2(quad_coordinates.0 as f32, quad_coordinates.1 as f32);
+            }
+        }
     }
 }

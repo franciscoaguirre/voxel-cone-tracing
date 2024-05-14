@@ -153,7 +153,7 @@ void main() {
     }
     vec3 lightDirection = normalize(lightVector);
     float lightDistance = length(lightVector);
-    visibility = traceShadowCone(positionVoxelSpace + normal * 0.01, lightDirection, lightDistance, shadowConeParameters);
+    visibility = traceShadowCone(positionVoxelSpace + normal * 0.05, lightDirection, lightDistance, shadowConeParameters);
     float lightAngle = dot(normal, lightDirection);
     float diffuse = max(lightAngle, 0.0);
     // Parameters for the attenuation function

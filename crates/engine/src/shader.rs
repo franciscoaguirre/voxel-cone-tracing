@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::Read;
 use std::{env, ptr, str};
 
-use cgmath::{vec3, Matrix, Matrix4, Vector3, Matrix3};
+use cgmath::{vec3, Matrix, Matrix3, Matrix4, Vector3};
 use gl::types::*;
 use log::trace;
 

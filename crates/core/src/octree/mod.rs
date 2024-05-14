@@ -12,7 +12,9 @@ mod lighting;
 mod visualize;
 mod voxel_data;
 
+pub use build::OctreeBuilder;
 use build::*;
+
 pub use visualize::{BrickAttribute, BricksToShow};
 
 use lighting::{ClearLight, LightTransfer, PhotonsToIrradiance, StorePhotons};
@@ -28,7 +30,6 @@ pub struct Octree {
 
 pub struct OctreeTextures {
     pub node_pool: BufferTexture,
-    brick_pointers: BufferTexture,
     pub node_positions: BufferTexture,
     neighbors: [BufferTexture; 6],
     pub brick_pool_colors_raw: Texture3D, // Raw colors, they are then moved to `brick_pool_colors`
@@ -211,7 +212,7 @@ impl Octree {
         };
         let builder = Builder {
             neighbor_pointers_pass: NeighborPointersPass::init(),
-            flag_nodes_pass: FlagNodesPass::init(),
+            flag_nodes_pass: FlagNodesPass::new(),
             allocate_nodes_pass: AllocateNodesPass::init(),
             store_node_positions_pass: StoreNodePositions::init(),
             write_leaf_nodes_pass: WriteLeafNodesPass::init(),
@@ -275,7 +276,6 @@ impl Octree {
         let config = Config::instance();
         OctreeTextures {
             node_pool: helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32),
-            brick_pointers: helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32),
             node_positions: helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32),
             neighbors: [
                 helpers::generate_texture_buffer(max_node_pool_size, gl::R32UI, 0u32), // X

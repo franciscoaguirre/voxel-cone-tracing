@@ -1,14 +1,12 @@
 use cgmath::{vec3, InnerSpace, Vector3};
+use engine::prelude::*;
+use engine::ui::get_button_text;
 use engine::ui::prelude::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-use super::SubMenu;
-use crate::{
-    menu::get_button_text,
-    octree::{BrickAttribute, BricksToShow},
-};
+use crate::octree::{BrickAttribute, BricksToShow};
 
-#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone, Showable)]
 pub struct BricksMenu {
     is_showing: bool,
     output: BricksMenuOutput,
@@ -35,27 +33,8 @@ impl Default for BricksMenuOutput {
     }
 }
 
-impl<'a> SubMenu for BricksMenu {
-    type InputData<'b> = ();
-    type OutputData = BricksMenuOutput;
-
-    fn is_showing(&self) -> bool {
-        self.is_showing
-    }
-
-    fn toggle_showing(&mut self) {
-        self.is_showing = !self.is_showing;
-    }
-
-    fn get_data(&self) -> &Self::OutputData {
-        &self.output
-    }
-
-    fn render<'b>(&mut self, context: &egui::Context, _: &Self::InputData<'b>) {
-        if !self.is_showing() {
-            return;
-        }
-
+impl SubMenu for BricksMenu {
+    fn show(&mut self, context: &egui::Context, scene: &Scene, assets: &mut AssetRegistry) {
         egui::Window::new("Bricks").show(context, |ui| {
             ui.horizontal(|ui| {
                 ui.label("Bricks: ");

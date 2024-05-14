@@ -4,13 +4,24 @@
             model: "sphere",
             material: "red",
             transform: (
-                scale: (
-                    x: 0.5,
-                    y: 0.5,
-                    z: 0.5,
+                position: (
+                    x: 1.0,
+                    y: 0.0,
+                    z: 0.0,
                 ),
             ),
         ),
+        // (
+        //     model: "sphere",
+        //     material: "blue",
+        //     transform: (
+        //         position: (
+        //             x: -0.5,
+        //             y: 0.0,
+        //             z: 0.0,
+        //         ),
+        //     ),
+        // ),
     ],
     models: [
         (
@@ -31,20 +42,32 @@
                 specular: 0.0,
             ),
         ),
+        (
+            name: "blue",
+            properties: (
+                color: (
+                    x: 0.0,
+                    y: 0.0,
+                    z: 1.0,
+                ),
+                diffuse: 1.0,
+                specular: 0.0,
+            ),
+        ),
     ],
     light: Point((
         transform: (
             position: (
                 x: 1.0,
                 y: 1.0,
-                z: -1.0,
+                z: 1.0,
             ),
         ),
         intensity: 1.0,
         color: (
             x: 1.0,
-            y: 1.0,
-            z: 1.0,
+            y: 0.0,
+            z: 0.0,
         ),
     )),
 )

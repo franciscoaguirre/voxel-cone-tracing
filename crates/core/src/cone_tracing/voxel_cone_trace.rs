@@ -209,7 +209,7 @@ impl ConeTracer {
         // Set uniforms
         self.post_processing_shader.use_program();
         gl::ActiveTexture(gl::TEXTURE0);
-        gl::BindTexture(gl::TEXTURE_2D, self.framebuffer.textures()[0]);
+        gl::BindTexture(gl::TEXTURE_2D, self.framebuffer.textures()[0].1);
         self.post_processing_shader
             .set_int(c_str!("inputTexture"), 0);
 
@@ -236,7 +236,7 @@ impl ConeTracer {
     }
 
     unsafe fn render_to_screen(&self, quad: &Quad) {
-        quad.render(self.processed_framebuffer.textures()[0]);
+        quad.render(self.processed_framebuffer.textures()[0].1);
     }
 }
 

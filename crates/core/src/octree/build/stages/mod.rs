@@ -1,5 +1,5 @@
 mod allocate_nodes;
-pub use allocate_nodes::{AllocateNodesPass, AllocateNodesInput};
+pub use allocate_nodes::{AllocateNodesInput, AllocateNodesPass};
 
 mod leaf_border_transfer;
 pub use leaf_border_transfer::LeafBorderTransferPass;
@@ -8,7 +8,7 @@ mod anisotropic_border_transfer;
 pub use anisotropic_border_transfer::AnisotropicBorderTransferPass;
 
 mod flag_nodes;
-pub use flag_nodes::{FlagNodesPass, FlagNodesInput};
+pub use flag_nodes::FlagNodesPass;
 
 mod mipmap_anisotropic;
 pub use mipmap_anisotropic::MipmapAnisotropicPass;
