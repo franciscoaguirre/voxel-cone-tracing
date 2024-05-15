@@ -39,9 +39,5 @@ void main() {
     // Exposure tone mapping
     vec3 mapped = vec3(1.0) - exp(-hdrColor * exposure);
 
-    // Gamma correction
-    float gamma = 2.2;
-    mapped = pow(mapped, vec3(1.0 / gamma));
-
     outColor = vec4(mapped, 1.0);
 }
