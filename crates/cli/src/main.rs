@@ -9,7 +9,7 @@ extern crate c_str_macro;
 
 use c_str_macro::c_str;
 extern crate gl;
-use cgmath::{point3, vec2, vec3, Matrix4};
+use cgmath::{point3, vec2, vec3, Euler, Matrix4};
 use core::{
     cone_tracing::{ConeTracer, DebugCone},
     config::Config as CoreConfig,
@@ -137,6 +137,11 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
             object.transform.position.y,
             object.transform.position.z,
         );
+        let _rotation = Euler {
+            x: object.transform.rotation_x(),
+            y: object.transform.rotation_y(),
+            z: object.transform.rotation_z(),
+        };
         scene_aabb.join(&object.model().aabb.offsetted(offset));
     }
     let model_normalization_matrix = scene_aabb.normalization_matrix();

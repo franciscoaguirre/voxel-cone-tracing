@@ -70,7 +70,7 @@
                 show_debug_cone: false,
                 move_debug_cone: false,
                 shadow_cone_parameters: (
-                    cone_angle_in_degrees: 5.0,
+                    cone_angle_in_degrees: 20.0,
                     max_distance: 0.0,
                 ),
                 ambient_occlusion_cone_parameters: (
@@ -102,9 +102,9 @@
     camera: (
         transform: (
             position: (
-                x: 0.014040412,
-                y: 1.2117641,
-                z: -2.140147,
+                x: 0.01352518,
+                y: 1.1453395,
+                z: -1.9881074,
             ),
             scale: (
                 x: 1.0,
@@ -112,8 +112,8 @@
                 z: 1.0,
             ),
             rotation: (
-                x: -29.70003,
-                y: 90.600006,
+                x: -30.000011,
+                y: 89.90004,
                 z: 0.0,
             ),
             movement_speed: 1.0,
