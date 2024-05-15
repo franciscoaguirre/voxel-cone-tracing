@@ -5,7 +5,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-cgmath = { version = "0.18.0", features = ["serde"] }
+cgmath = { version = "0.18.0", features = ["serde", "swizzle"] }
 gl = "0.14.0"
 image = "0.24.2"
 memoffset = "0.6.5"

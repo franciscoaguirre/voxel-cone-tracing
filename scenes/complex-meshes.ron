@@ -48,7 +48,7 @@
         (
             // Left wall
             model: "plane",
-            material: "white",
+            material: "red",
             transform: (
                 position: (
                     x: 1.0,
@@ -65,7 +65,7 @@
         (
             // Right wall
             model: "plane",
-            material: "white",
+            material: "blue",
             transform: (
                 position: (
                     x: -1.0,
