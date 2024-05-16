@@ -23,17 +23,6 @@
             ),
         ),
         (
-            model: "bunny",
-            material: "green",
-            transform: (
-                position: (
-                    x: 0.4,
-                    y: -0.35,
-                    z: -0.4,
-                ),
-            ),
-        ),
-        (
             model: "cylinder",
             material: "blue",
             transform: (
@@ -112,10 +101,6 @@
         (
             name: "cube",
             path: "assets/models/cube.obj",
-        ),
-        (
-            name: "bunny",
-            path: "assets/models/bunny.obj",
         ),
         (
             name: "prism",
