@@ -100,15 +100,16 @@ vec3 toVoxelSpace(vec3 positionWorldSpace) {
 }
 
 void main() {
+    vec3 normal = texture(gBufferNormals, In.textureCoordinates).xyz;
+
     // We should use `positionWorldSpace` when relating to other objects in the scene
-    vec3 positionWorldSpace = texture(gBufferPositions, In.textureCoordinates).xyz;
+    vec3 positionWorldSpace = texture(gBufferPositions, In.textureCoordinates).xyz + 0.01 * normal;
     // We should use `positionVoxelSpace` when cone tracing
     vec3 positionVoxelSpace = toVoxelSpace(positionWorldSpace);
 
     // Using world positions is fine as well since we are subtracting
     vec3 eyeDirection = normalize(positionVoxelSpace - toVoxelSpace(eyePosition));
 
-    vec3 normal = texture(gBufferNormals, In.textureCoordinates).xyz;
     // TODO: Probably change this
     vec3 helper = normal - vec3(0.1, 0.1, 0); // Random vector
     vec3 tangent = normalize(helper - dot(normal, helper) * normal);
@@ -127,7 +128,7 @@ void main() {
     vec3 indirectLight = vec3(0);
     if (shouldShowIndirect) {
         // We should pre-multiply by alpha probably? Instead of just ignoring it
-        indirectLight = gatherIndirectLight(positionVoxelSpace + normal * 0.01, normal, tangent, diffuseConeParameters).rgb;
+        indirectLight = gatherIndirectLight(positionVoxelSpace, normal, tangent, diffuseConeParameters).rgb;
     }
 
     float specularFactor = texture(gBufferSpeculars, In.textureCoordinates).r;
@@ -153,7 +154,7 @@ void main() {
     }
     vec3 lightDirection = normalize(lightVector);
     float lightDistance = length(lightVector);
-    visibility = traceShadowCone(positionVoxelSpace + normal * 0.01, lightDirection, lightDistance, shadowConeParameters);
+    visibility = traceShadowCone(positionVoxelSpace, lightDirection, lightDistance, shadowConeParameters);
     float lightAngle = dot(normal, lightDirection);
     float diffuse = max(lightAngle, 0.0);
     // Parameters for the attenuation function
@@ -162,7 +163,7 @@ void main() {
     float c3 = 0.032;
     float attenuation = c1 + c2 * lightDistance + c3 * lightDistance * lightDistance;
     // TODO: This should be the diffuse factor, not 1 minus the specular
-    vec3 directLight = lightIntensity * (1 - specularFactor) / attenuation * vec3(diffuse);
+    vec3 directLight = (1 - specularFactor) / attenuation * vec3(diffuse);
 
     bool shouldShowOnlyColor = (
         !shouldShowDirect &&
@@ -180,7 +181,7 @@ void main() {
         finalImage += vec4(indirectLight * color.rgb, 1.0);
     }
     if (shouldShowIndirectSpecular) {
-        finalImage += vec4(visibility * specularIndirectLight, 1.0);
+        finalImage += vec4(specularIndirectLight, 1.0);
     }
 
     if (shouldShowAmbientOcclusion) {
@@ -221,26 +222,24 @@ vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, ConeParameter
     float sinAngle = sin(angleFromAxis);
     float cosAngle = cos(angleFromAxis);
 
-    float coneWeight = cosAngle;
+    float coneWeight = (PI / 2) - angleFromAxis;
 
     direction = sinAngle * normal + cosAngle * tangent;
-
-    float distanceAlongNormal = 0.01;
 
     // Considering Lambertian BRDF
     float rho = 1.0; // Reflectivity of the surface. TODO: Should be configurable per material
     float f = 1.0; // TODO: Should be `rho / PI` but that makes diffuse reflections barely noticeable
     
-    indirectLight += coneWeight * f * coneTrace(position + normal * distanceAlongNormal, direction, halfConeAngle, maxDistance);
+    indirectLight += coneWeight * coneTrace(position, direction, halfConeAngle, maxDistance);
 
     direction = sinAngle * normal - cosAngle * tangent;
-    indirectLight += coneWeight * f * coneTrace(position + normal * distanceAlongNormal, direction, halfConeAngle, maxDistance);
+    indirectLight += coneWeight * coneTrace(position, direction, halfConeAngle, maxDistance);
 
     direction = sinAngle * normal + cosAngle * bitangent;
-    indirectLight += coneWeight * f * coneTrace(position + normal * distanceAlongNormal, direction, halfConeAngle, maxDistance);
+    indirectLight += coneWeight * coneTrace(position, direction, halfConeAngle, maxDistance);
 
     direction = sinAngle * normal - cosAngle * bitangent;
-    indirectLight += coneWeight * f * coneTrace(position + normal * distanceAlongNormal, direction, halfConeAngle, maxDistance);
+    indirectLight += coneWeight * coneTrace(position, direction, halfConeAngle, maxDistance);
 
     indirectLight /= coneWeight * 4;
 

@@ -1,0 +1,60 @@
+(
+    objects: [
+        (
+            model: "sponza",
+            material: "red",
+            transform: (
+                position: (
+                    x: 0.0,
+                    y: 0.0,
+                    z: 0.0,
+                ),
+                scale: (
+                    x: 0.5,
+                    y: 0.5,
+                    z: 0.5,
+                ),
+            ),
+        ),
+    ],
+    models: [
+        (
+            name: "sponza",
+            path: "assets/models/sponza.obj",
+        ),
+    ],
+    materials: [
+        (
+            name: "red",
+            properties: (
+                color: (
+                    x: 0.0,
+                    y: 0.0,
+                    z: 0.0,
+                ),
+                diffuse: 1.0,
+                specular: 0.0,
+            ),
+        ),
+    ],
+    light: Point((
+        transform: (
+            position: (
+                x: 0.33,
+                y: -0.33,
+                z: 0.0,
+            ),
+            rotation: (
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            ),
+        ),
+        intensity: 1.0,
+        color: (
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
+        ),
+    )),
+)
