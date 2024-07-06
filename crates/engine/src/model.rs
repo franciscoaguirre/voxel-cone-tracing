@@ -87,11 +87,16 @@ impl Model {
             // process material
             let mut textures = Vec::new();
             let mut diffuse: Option<[f32; 3]> = None;
+            let mut specular: Option<[f32; 3]> = None;
             if let Some(material_id) = mesh.material_id {
                 let material = &materials[material_id];
 
                 if !material.diffuse.is_empty() {
                     diffuse = Some(material.diffuse);
+                }
+
+                if !material.specular.is_empty() {
+                    specular = Some(material.specular);
                 }
 
                 // 1. diffuse map
@@ -116,7 +121,7 @@ impl Model {
             }
 
             self.meshes
-                .push(Mesh::new(vertices, indices, textures, diffuse));
+                .push(Mesh::new(vertices, indices, textures, diffuse, specular));
         }
         self.aabb = aabb;
     }
