@@ -47,6 +47,7 @@ pub struct Mesh {
     pub textures: Vec<Texture>,
     pub vao: u32,
     pub diffuse: Option<[f32; 3]>,
+    pub specular: Option<[f32; 3]>,
 
     /*  Render data  */
     vbo: u32,
@@ -59,12 +60,14 @@ impl Mesh {
         indices: Vec<u32>,
         textures: Vec<Texture>,
         diffuse: Option<[f32; 3]>,
+        specular: Option<[f32; 3]>,
     ) -> Mesh {
         let mut mesh = Mesh {
             vertices,
             indices,
             textures,
             diffuse,
+            specular,
             vao: 0,
             vbo: 0,
             ebo: 0,
@@ -94,6 +97,15 @@ impl Mesh {
                 diffuse[0],
                 diffuse[1],
                 diffuse[2],
+            );
+        }
+        if let Some(specular) = self.specular {
+            shader.set_bool(c_str!("hasSpecular"), true);
+            shader.set_vec3(
+                c_str!("materialSpecular"),
+                specular[0],
+                specular[1],
+                specular[2],
             );
         }
         for (i, texture) in self.textures.iter().enumerate() {

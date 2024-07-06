@@ -163,7 +163,7 @@ void main() {
     float c3 = 0.032;
     float attenuation = c1 + c2 * lightDistance + c3 * lightDistance * lightDistance;
     // TODO: This should be the diffuse factor, not 1 minus the specular
-    vec3 directLight = (1 - specularFactor) / attenuation * vec3(diffuse);
+    vec3 directLight = lightIntensity * (1 - specularFactor) / attenuation * vec3(diffuse);
 
     bool shouldShowOnlyColor = (
         !shouldShowDirect &&
@@ -202,8 +202,8 @@ float traceShadowCone(vec3 origin, vec3 direction, float targetDistance, ConePar
 }
 
 vec4 gatherSpecularIndirectLight(vec3 position, vec3 eyeDirection, vec3 normal, ConeParameters parameters) {
-    vec3 reflectDirection = normalize(reflect(eyeDirection, normalize(normal)));
-    return coneTrace(position + normal * 0.01, reflectDirection, parameters.halfConeAngle, parameters.maxDistance);
+    vec3 reflectDirection = normalize(reflect(normalize(eyeDirection), normalize(normal)));
+    return coneTrace(position, reflectDirection, parameters.halfConeAngle, parameters.maxDistance);
 }
 
 vec4 gatherIndirectLight(vec3 position, vec3 normal, vec3 tangent, ConeParameters parameters) {
