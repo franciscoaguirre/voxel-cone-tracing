@@ -100,7 +100,7 @@ impl Mesh {
             );
         }
         if let Some(specular) = self.specular {
-            shader.set_bool(c_str!("hasSpecular"), true);
+            shader.set_bool(c_str!("hasMaterialSpecular"), true);
             shader.set_vec3(
                 c_str!("materialSpecular"),
                 specular[0],
@@ -118,6 +118,7 @@ impl Mesh {
                     num_diffuse
                 }
                 "texture_specular" => {
+                    shader.set_bool(c_str!("hasTextureSpecular"), true);
                     num_specular += 1;
                     num_specular
                 }

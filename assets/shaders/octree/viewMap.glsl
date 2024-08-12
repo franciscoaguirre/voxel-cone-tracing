@@ -52,7 +52,8 @@ uniform Material material;
 // TODO: Bring back?
 // uniform uint voxelDimension;
 uniform bool hasTexture;
-uniform bool hasSpecular;
+uniform bool hasTextureSpecular;
+uniform bool hasMaterialSpecular;
 uniform sampler2D texture_diffuse1;
 uniform sampler2D texture_specular1;
 uniform vec3 materialSpecular;
@@ -75,10 +76,14 @@ void main() {
     } else {
         viewMapColors = vec4(material.color, 1);
     }
-    if (hasSpecular) {
+    if (hasTextureSpecular && hasMaterialSpecular) {
         viewMapSpecular = texture(texture_specular1, In.textureCoordinates) * vec4(materialSpecular, 1.0);
+    } else if (hasTextureSpecular) {
+        viewMapSpecular = texture(texture_specular1, In.textureCoordinates);
+    } else if (hasMaterialSpecular) {
+        viewMapSpecular = vec4(vec3(material.specular), 1);
     } else {
-        viewMapSpecular = vec4(vec3(0.3), 1);
+        viewMapSpecular = vec4(vec3(0), 1);
     }
 
     viewMapViewOutput = normalizedGlobalPosition;
