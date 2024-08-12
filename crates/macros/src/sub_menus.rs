@@ -1,4 +1,4 @@
-use proc_macro2::TokenStream as TokenStream2;
+use proc_macro2::{TokenStream as TokenStream2, Span};
 use syn::{
     DeriveInput, Result, Error, Ident, Fields, FieldsNamed, Data, DataStruct,
 };
