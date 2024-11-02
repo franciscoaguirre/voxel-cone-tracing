@@ -1,22 +1,22 @@
 [
 	(
 		config: "config-dimension-8",
-		scene: "sponza-especular",
-		preset: "el-preset-de-la-victoria-especular",
+		scene: "cornell-box",
+		preset: "cornell-box-full",
 		seconds_for_fps: 60,
 		number_of_builds: 50,
 	),
 	(
 		config: "config-dimension-9",
-		scene: "sponza-especular",
-		preset: "el-preset-de-la-victoria-especular",
+		scene: "cornell-box",
+		preset: "cornell-box-full",
 		seconds_for_fps: 60,
 		number_of_builds: 50,
 	),
 	(
 		config: "config-dimension-10",
-		scene: "sponza-especular",
-		preset: "el-preset-de-la-victoria-especular",
+		scene: "cornell-box",
+		preset: "cornell-box-full",
 		seconds_for_fps: 60,
 		number_of_builds: 50,
 	),
