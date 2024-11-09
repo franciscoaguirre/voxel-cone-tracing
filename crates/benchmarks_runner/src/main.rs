@@ -113,6 +113,7 @@ fn main() {
         println!("Average: {octree_build_time_average}");
         OpenOptions::new()
             .write(true)
+            .create(true)
             .truncate(true)
             .open(&octree_build_times_file_name)
             .expect("Couldn't open octree build times file")
