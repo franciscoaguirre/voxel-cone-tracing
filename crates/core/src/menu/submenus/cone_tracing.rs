@@ -69,7 +69,6 @@ impl<'a> SubMenu for ConeTracingMenu {
                 self,
                 ui,
                 "Shadow Cones": shadow_cone_parameters,
-                "Ambient Occlusion": ambient_occlusion_cone_parameters,
                 "Diffuse Cones": diffuse_cone_parameters,
                 "Specular Cones": specular_cone_parameters,
                 "Debug Cones": debug_cone_parameters,
