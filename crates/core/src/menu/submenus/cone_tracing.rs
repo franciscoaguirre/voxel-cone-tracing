@@ -23,6 +23,7 @@ pub struct ConeTracingMenuOutput {
     pub specular_cone_parameters: ConeParameters,
     pub debug_cone_parameters: ConeParameters,
     pub point_to_light: bool,
+    pub exposure: f32,
 }
 
 macro_rules! cone_parameters_inputs {
@@ -73,6 +74,13 @@ impl<'a> SubMenu for ConeTracingMenu {
                 "Specular Cones": specular_cone_parameters,
                 "Debug Cones": debug_cone_parameters,
             );
+
+            ui.horizontal(|ui| {
+                ui.label("Exposure:");
+                ui.add(
+                    egui::Slider::new(&mut self.output.exposure, 0.0..=6.0),
+                );
+            });
 
             ui.horizontal(|ui| {
                 ui.label("Debug cone:");
