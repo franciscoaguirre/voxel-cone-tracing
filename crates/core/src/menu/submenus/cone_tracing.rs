@@ -12,7 +12,7 @@ pub struct ConeTracingMenu {
     output: ConeTracingMenuOutput,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(default)]
 pub struct ConeTracingMenuOutput {
     pub show_debug_cone: bool,
@@ -24,6 +24,22 @@ pub struct ConeTracingMenuOutput {
     pub debug_cone_parameters: ConeParameters,
     pub point_to_light: bool,
     pub exposure: f32,
+}
+
+impl Default for ConeTracingMenuOutput {
+    fn default() -> Self {
+        Self {
+            show_debug_cone: false,
+            move_debug_cone: false,
+            shadow_cone_parameters: ConeParameters::default(),
+            ambient_occlusion_cone_parameters: ConeParameters::default(),
+            diffuse_cone_parameters: ConeParameters::default(),
+            specular_cone_parameters: ConeParameters::default(),
+            debug_cone_parameters: ConeParameters::default(),
+            point_to_light: false,
+            exposure: 1.0,
+        }
+    }
 }
 
 macro_rules! cone_parameters_inputs {
