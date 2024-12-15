@@ -37,6 +37,7 @@ impl ConeTracer {
         camera: &Camera,
         parameters: &HashMap<&str, ConeParameters>,
         screenshot_folder: Option<String>,
+        exposure: f32,
     ) {
         self.shader.use_program();
 
@@ -177,7 +178,7 @@ impl ConeTracer {
 
         if self.toggles.should_show_final_image_quad() {
             self.create_image(quad); // Loads it in the framebuffer
-            self.run_post_processing(quad); // Runs post processing effects on the framebuffer, stores in final framebuffer
+            self.run_post_processing(quad, exposure); // Runs post processing effects on the framebuffer, stores in final framebuffer
             self.render_to_screen(quad); // Renders the framebuffer to the screen
         }
 
@@ -205,7 +206,7 @@ impl ConeTracer {
         gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
     }
 
-    unsafe fn run_post_processing(&self, quad: &Quad) {
+    unsafe fn run_post_processing(&self, quad: &Quad, exposure: f32) {
         // Set uniforms
         self.post_processing_shader.use_program();
         gl::ActiveTexture(gl::TEXTURE0);
@@ -214,7 +215,7 @@ impl ConeTracer {
             .set_int(c_str!("inputTexture"), 0);
 
         self.post_processing_shader
-            .set_float(c_str!("exposure"), 0.8);
+            .set_float(c_str!("exposure"), exposure);
 
         // Framebuffer
         gl::BindFramebuffer(gl::FRAMEBUFFER, self.processed_framebuffer.fbo());

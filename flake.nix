@@ -32,6 +32,7 @@
             xorg.libXi
             rustToolchain
             cmake
+            tokei
           ];
 
           shellHook = ''

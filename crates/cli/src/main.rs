@@ -126,6 +126,7 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
     let mut cone_tracer = ConeTracer::init();
     let mut cone_parameters = HashMap::new();
     let mut debug_cone = unsafe { DebugCone::new() };
+    let mut exposure: f32 = 0.0;
 
     // Process scene
     let (mut objects, mut light) = process_scene(scene);
@@ -379,6 +380,7 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
             // Cone tracing
             should_show_debug_cone = outputs.9.show_debug_cone;
             should_move_debug_cone = outputs.9.move_debug_cone;
+            exposure = outputs.9.exposure;
             // TODO: there is quite a bit of cloning here
             debug_cone.parameters = outputs.9.debug_cone_parameters.clone();
             debug_cone.point_to_light = outputs.9.point_to_light;
@@ -541,6 +543,7 @@ fn run_application(parameters: ApplicationParameters, mut glfw: Glfw) {
                 } else {
                     None
                 },
+                exposure,
             );
 
             if should_show_debug_cone {
