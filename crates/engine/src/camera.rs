@@ -6,7 +6,7 @@ use super::{
 };
 
 // Default camera values
-const SPEED: f32 = 1.0;
+const SPEED: f32 = 0.1;
 const SENSITIVITY: f32 = 0.1;
 const ZOOM: f32 = 45.0;
 

@@ -303,8 +303,6 @@ impl Octree {
 
         let all_bricks_to_show: u32 = self.renderer.bricks_to_show.into();
 
-        gl::Enable(gl::BLEND);
-        gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
         for z_layer in 0..3 {
             let mask = 2u32.pow(z_layer);
             let brick_layer_to_show: u32 = self.renderer.bricks_to_show.into();
@@ -322,7 +320,6 @@ impl Octree {
                 }
             }
         }
-        gl::Disable(gl::BLEND);
     }
 
     pub fn set_bricks_to_show(&mut self, bricks_to_show: BricksToShow) {

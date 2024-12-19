@@ -40,13 +40,13 @@
         ),
         diagnostics: (),
         images: (
-            is_showing: false,
+            is_showing: true,
             output: (
                 toggles: (
-                    should_show_color: true,
-                    should_show_direct: true,
-                    should_show_indirect: true,
-                    should_show_indirect_specular: true,
+                    should_show_color: false,
+                    should_show_direct: false,
+                    should_show_indirect: false,
+                    should_show_indirect_specular: false,
                     should_show_ambient_occlusion: false,
                 ),
             ),
@@ -55,7 +55,7 @@
             is_showing: false,
         ),
         save_preset: (
-            name: "el-preset-de-la-victoria-especular",
+            name: "vaca-preset",
             is_showing: true,
         ),
         camera: (
@@ -90,6 +90,7 @@
                     max_distance: 0.0,
                 ),
                 point_to_light: false,
+                exposure: 1.0,
             ),
         ),
         picker: (
@@ -102,9 +103,9 @@
     camera: (
         transform: (
             position: (
-                x: -0.32502332,
-                y: -0.27645785,
-                z: -0.017266449,
+                x: 0.809614,
+                y: 0.3997816,
+                z: -0.48989207,
             ),
             scale: (
                 x: 1.0,
@@ -112,8 +113,8 @@
                 z: 1.0,
             ),
             rotation: (
-                x: -10.000002,
-                y: 14.400219,
+                x: -20.799976,
+                y: 146.9997,
                 z: 0.0,
             ),
             movement_speed: 0.1,

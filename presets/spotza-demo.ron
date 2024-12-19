@@ -40,13 +40,13 @@
         ),
         diagnostics: (),
         images: (
-            is_showing: false,
+            is_showing: true,
             output: (
                 toggles: (
                     should_show_color: true,
                     should_show_direct: true,
-                    should_show_indirect: true,
-                    should_show_indirect_specular: true,
+                    should_show_indirect: false,
+                    should_show_indirect_specular: false,
                     should_show_ambient_occlusion: false,
                 ),
             ),
@@ -55,7 +55,7 @@
             is_showing: false,
         ),
         save_preset: (
-            name: "el-preset-de-la-victoria-especular",
+            name: "spotza-demo",
             is_showing: true,
         ),
         camera: (
@@ -65,13 +65,13 @@
             ),
         ),
         cone_tracing: (
-            is_showing: false,
+            is_showing: true,
             output: (
                 show_debug_cone: false,
                 move_debug_cone: false,
                 shadow_cone_parameters: (
                     cone_angle_in_degrees: 1.0,
-                    max_distance: 0.1,
+                    max_distance: 1.0,
                 ),
                 ambient_occlusion_cone_parameters: (
                     cone_angle_in_degrees: 0.0,
@@ -90,6 +90,7 @@
                     max_distance: 0.0,
                 ),
                 point_to_light: false,
+                exposure: 1.0,
             ),
         ),
         picker: (
@@ -102,9 +103,9 @@
     camera: (
         transform: (
             position: (
-                x: -0.32502332,
-                y: -0.27645785,
-                z: -0.017266449,
+                x: 0.030193865,
+                y: -0.094127096,
+                z: 0.014282005,
             ),
             scale: (
                 x: 1.0,
@@ -112,8 +113,8 @@
                 z: 1.0,
             ),
             rotation: (
-                x: -10.000002,
-                y: 14.400219,
+                x: 2.0999982,
+                y: 180.09993,
                 z: 0.0,
             ),
             movement_speed: 0.1,

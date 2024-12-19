@@ -27,4 +27,7 @@ void main()
     } else {
         FragColor = vec4(material.color, 1);
     }
+    //vec3 pointOfView = vec3(0.25,0.5,-1.0);
+    //float diffuse = abs(dot(normalize(fragNormal), pointOfView)); 
+    //FragColor = vec4(FragColor.xyz * diffuse, 1.0);
 }

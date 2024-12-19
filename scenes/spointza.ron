@@ -40,8 +40,8 @@
     light: Point((
         transform: (
             position: (
-                x: 0.33,
-                y: -0.33,
+                x: 0.23,
+                y: -0.23,
                 z: 0.0,
             ),
             rotation: (

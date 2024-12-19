@@ -40,13 +40,13 @@
         ),
         diagnostics: (),
         images: (
-            is_showing: false,
+            is_showing: true,
             output: (
                 toggles: (
-                    should_show_color: true,
-                    should_show_direct: true,
-                    should_show_indirect: true,
-                    should_show_indirect_specular: true,
+                    should_show_color: false,
+                    should_show_direct: false,
+                    should_show_indirect: false,
+                    should_show_indirect_specular: false,
                     should_show_ambient_occlusion: false,
                 ),
             ),
@@ -55,7 +55,7 @@
             is_showing: false,
         ),
         save_preset: (
-            name: "el-preset-de-la-victoria-especular",
+            name: "voxelizacion",
             is_showing: true,
         ),
         camera: (
@@ -90,6 +90,7 @@
                     max_distance: 0.0,
                 ),
                 point_to_light: false,
+                exposure: 1.0,
             ),
         ),
         picker: (
@@ -102,9 +103,9 @@
     camera: (
         transform: (
             position: (
-                x: -0.32502332,
-                y: -0.27645785,
-                z: -0.017266449,
+                x: 0.3598369,
+                y: -0.30835316,
+                z: -0.0028668556,
             ),
             scale: (
                 x: 1.0,
@@ -112,14 +113,14 @@
                 z: 1.0,
             ),
             rotation: (
-                x: -10.000002,
-                y: 14.400219,
+                x: 7.60003,
+                y: 534.7046,
                 z: 0.0,
             ),
-            movement_speed: 0.1,
+            movement_speed: 1.0,
         ),
         orthographic: false,
-        movement_speed: 0.1,
+        movement_speed: 1.0,
         mouse_sensitivity: 0.1,
         zoom: 45.0,
     ),

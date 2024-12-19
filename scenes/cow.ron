@@ -1,7 +1,7 @@
 (
     objects: [
         (
-            model: "sponza",
+            model: "colored_cow",
             material: "red",
             transform: (
                 position: (
@@ -19,8 +19,8 @@
     ],
     models: [
         (
-            name: "sponza",
-            path: "assets/models/sponza.obj",
+            name: "colored_cow",
+            path: "assets/models/colored_cow.obj",
         ),
     ],
     materials: [
@@ -41,8 +41,8 @@
         transform: (
             position: (
                 x: 0.0,
-                y: -0.3,
-                z: 0,
+                y: 1.0,
+                z: -0.2,
             ),
             rotation: (
                 x: -60.0,

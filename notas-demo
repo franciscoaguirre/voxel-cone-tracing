@@ -1,0 +1,2 @@
+
+prime-run cargo run --release -- --scene spointza --preset spotza-demo --config config-dimension-9
