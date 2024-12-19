@@ -1,7 +1,7 @@
 (
     submenus: (
         all_nodes: (
-            is_showing: false,
+            is_showing: true,
             output: (
                 should_render_octree: false,
                 current_octree_level: 0,
@@ -18,7 +18,7 @@
             ),
         ),
         bricks: (
-            is_showing: false,
+            is_showing: true,
             output: (
                 brick_attribute: None,
                 brick_padding: 0.0,
@@ -43,8 +43,8 @@
             is_showing: true,
             output: (
                 toggles: (
-                    should_show_color: true,
-                    should_show_direct: true,
+                    should_show_color: false,
+                    should_show_direct: false,
                     should_show_indirect: false,
                     should_show_indirect_specular: false,
                     should_show_ambient_occlusion: false,
