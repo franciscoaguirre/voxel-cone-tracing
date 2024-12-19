@@ -51,10 +51,6 @@ macro_rules! cone_parameters_inputs {
                 ui.add(
                     egui::Slider::new(&mut $self.output.$cone_parameters.cone_angle_in_degrees, 1.0..=90.0),
                 );
-                ui.label("Max distance:");
-                ui.add(
-                    egui::Slider::new(&mut $self.output.$cone_parameters.max_distance, 0.1..=1.0),
-                );
             });
         )*
     };

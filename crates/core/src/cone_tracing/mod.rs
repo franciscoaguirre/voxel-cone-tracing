@@ -9,10 +9,19 @@ pub use debug_cone::DebugCone;
 mod voxel_cone_trace;
 pub use voxel_cone_trace::{ConeTracer, Toggles};
 
-#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ConeParameters {
     pub cone_angle_in_degrees: f32,
     pub max_distance: f32,
+}
+
+impl Default for ConeParameters {
+    fn default() -> Self {
+        Self {
+            cone_angle_in_degrees: 45.0,
+            max_distance: 1.0,
+        }
+    }
 }
 
 impl ConeParameters {
