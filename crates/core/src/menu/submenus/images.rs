@@ -76,15 +76,6 @@ impl<'a> SubMenu for ImagesMenu {
             {
                 self.output.toggles.toggle_indirect_specular();
             }
-            if ui
-                .button(get_button_text(
-                    "Ambient occlusion",
-                    self.output.toggles.should_show_ambient_occlusion(),
-                ))
-                .clicked()
-            {
-                self.output.toggles.toggle_ambient_occlusion();
-            }
         });
     }
 }
