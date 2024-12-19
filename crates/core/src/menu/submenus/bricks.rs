@@ -89,35 +89,23 @@ impl<'a> SubMenu for BricksMenu {
                     self.output.brick_attribute = self.output.brick_attribute.next();
                 }
             });
-            if ui
-                .button(get_button_text(
-                    "Show normals",
-                    self.output.should_show_brick_normals,
-                ))
-                .clicked()
-            {
-                self.output.should_show_brick_normals = !self.output.should_show_brick_normals;
-            }
+            ui.label("X");
             ui.add(
                 egui::Slider::new(&mut self.output.color_direction.x, -1.0..=1.0)
-                    .text("Color direction X"),
             );
+            ui.label("Y");
             ui.add(
                 egui::Slider::new(&mut self.output.color_direction.y, -1.0..=1.0)
-                    .text("Color direction Y"),
             );
+            ui.label("Z");
             ui.add(
                 egui::Slider::new(&mut self.output.color_direction.z, -1.0..=1.0)
-                    .text("Color direction Z"),
             );
             if self.output.color_direction.magnitude2() == 0.0 {
                 self.output.color_direction = vec3(1.0, 0.0, 0.0);
             } else {
                 self.output.color_direction = self.output.color_direction.normalize();
             }
-            ui.add(
-                egui::Slider::new(&mut self.output.brick_padding, 0.0..=1.0).text("Brick padding"),
-            );
         });
     }
 }

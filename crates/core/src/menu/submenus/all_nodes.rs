@@ -65,12 +65,12 @@ impl<'a> SubMenu for AllNodesMenu {
                         self.output.octree_nodes_to_visualize.next();
                 }
             });
+            ui.label("Octree level");
             ui.add(
                 egui::Slider::new(
                     &mut self.output.current_octree_level,
                     0..=config.last_octree_level(),
                 )
-                .text("Octree level"),
             );
         });
     }

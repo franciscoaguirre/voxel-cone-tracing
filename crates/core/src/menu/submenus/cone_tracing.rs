@@ -46,12 +46,9 @@ macro_rules! cone_parameters_inputs {
     ( $self:expr, $ui:expr, $( $menu_name:literal: $cone_parameters:ident ),*$(,)? ) => {
         $(
             $ui.label($menu_name);
-            $ui.horizontal(|ui| {
-                ui.label("Aperture (degrees):");
-                ui.add(
-                    egui::Slider::new(&mut $self.output.$cone_parameters.cone_angle_in_degrees, 1.0..=90.0),
-                );
-            });
+            $ui.add(
+                egui::Slider::new(&mut $self.output.$cone_parameters.cone_angle_in_degrees, 1.0..=90.0),
+            );
         )*
     };
 }
@@ -87,25 +84,10 @@ impl<'a> SubMenu for ConeTracingMenu {
                 "Debug Cones": debug_cone_parameters,
             );
 
-            ui.horizontal(|ui| {
-                ui.label("Exposure:");
-                ui.add(
-                    egui::Slider::new(&mut self.output.exposure, 0.0..=6.0),
-                );
-            });
-
-            ui.horizontal(|ui| {
-                ui.label("Debug cone:");
-                if ui.button(get_button_text("Show", self.output.show_debug_cone)).clicked() {
-                    self.output.show_debug_cone = !self.output.show_debug_cone;
-                }
-                if ui.button(get_button_text("Move", self.output.move_debug_cone)).clicked() {
-                    self.output.move_debug_cone = !self.output.move_debug_cone;
-                }
-                if ui.button(get_button_text("Point to light", self.output.point_to_light)).clicked() {
-                    self.output.point_to_light = !self.output.point_to_light;
-                };
-            });
+            ui.label("Exposure:");
+            ui.add(
+                egui::Slider::new(&mut self.output.exposure, 0.0..=6.0),
+            );
         });
     }
 }

@@ -46,7 +46,10 @@ impl<'a> SubMenu for SavePresetMenu {
         }
 
         egui::Window::new("Save Preset").show(context, |ui| {
-            ui.text_edit_singleline(&mut self.name);
+            ui.add(
+                egui::TextEdit::singleline(&mut self.name)
+                    .desired_width(100.0),
+            );
             if ui.button("Save").clicked() {
                 let preset = Preset { camera: input.camera.clone(), submenus: input.submenus.clone() };
                 save_preset(&self.name, preset);
