@@ -58,7 +58,6 @@ impl Octree {
             BrickPoolValues::Colors,
         );
 
-        #[cfg(debug_assertions)]
         self.run_mipmap(BrickPoolValues::Colors);
     }
 
