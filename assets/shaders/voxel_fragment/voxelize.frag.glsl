@@ -87,10 +87,10 @@ void storeVoxelFragment(uvec4 voxelCoordinates, uint fragmentListIndex) {
 
     if (hasTexture) {
       voxelColor = texture(textureDiffuse1, In.textureCoordinates);
-    } else if (hasDiffuse) {
-      voxelColor = vec4(materialDiffuse, 1);
     } else if (hasMaterial) {
       voxelColor = vec4(material.color, 1);
+    } else if (hasDiffuse) {
+      voxelColor = vec4(materialDiffuse, 1);
     } else {
       voxelColor = vec4(fallbackColor, 1);
     }

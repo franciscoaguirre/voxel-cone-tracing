@@ -8,6 +8,8 @@ in vec3 fragNormal;
 uniform bool hasTexture;
 uniform sampler2D texture_diffuse1;
 
+uniform bool hasMaterial;
+
 uniform bool hasDiffuse;
 uniform vec3 materialDiffuse;
 
@@ -22,10 +24,10 @@ void main()
 {
     if (hasTexture) {
         FragColor = texture(texture_diffuse1, fragTexCoords);
+    } else if (hasMaterial) {
+        FragColor = vec4(material.color, 1);
     } else if (hasDiffuse) {
         FragColor = vec4(materialDiffuse, 1);
-    } else {
-        FragColor = vec4(material.color, 1);
     }
     //vec3 pointOfView = vec3(0.25,0.5,-1.0);
     //float diffuse = abs(dot(normalize(fragNormal), pointOfView)); 

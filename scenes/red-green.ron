@@ -2,7 +2,7 @@
     objects: [
         (
             model: "red-green",
-            material: "red",
+            material: "",
             transform: (
                 position: (
                     x: 0.0,
@@ -23,20 +23,7 @@
             path: "assets/models/red-green-wall-problem.obj",
         ),
     ],
-    materials: [
-        (
-            name: "red",
-            properties: (
-                color: (
-                    x: 1.0,
-                    y: 0.0,
-                    z: 0.0,
-                ),
-                diffuse: 1.0,
-                specular: 0.0,
-            ),
-        ),
-    ],
+    materials: [], // Model brings its own.
     light: Spot((
         transform: (
             position: (

@@ -36,7 +36,9 @@ impl Object {
             shader.set_mat4(c_str!("modelNormalizationMatrix"), model_normalization_matrix);
             shader.set_mat3(c_str!("normalMatrix"), &self.transform.get_normal_matrix());
             // Material properties
-            self.material().set_uniforms(shader);
+            if let Some(material) = self.material() {
+                material.set_uniforms(shader);
+            }
         };
         self.model().draw(&shader);
     }
@@ -56,13 +58,13 @@ impl Object {
         &self.model
     }
 
-    pub fn material(&mut self) -> &Material {
+    pub fn material(&mut self) -> Option<&Material> {
         if let Some(material) = self.actual_material {
-            material
+            Some(material)
         } else {
             let assets = AssetRegistry::instance();
-            let material = assets.get_material(&self.material).unwrap();
-            self.actual_material = Some(material);
+            let material = assets.get_material(&self.material);
+            self.actual_material = material;
             material
         }
     }
