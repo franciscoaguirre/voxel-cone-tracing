@@ -1,0 +1,62 @@
+(
+    objects: [
+        (
+            model: "red-green",
+            material: "red",
+            transform: (
+                position: (
+                    x: 0.0,
+                    y: 0.0,
+                    z: 0.0,
+                ),
+                scale: (
+                    x: 0.5,
+                    y: 0.5,
+                    z: 0.5,
+                ),
+            ),
+        ),
+    ],
+    models: [
+        (
+            name: "red-green",
+            path: "assets/models/red-green-wall-problem.obj",
+        ),
+    ],
+    materials: [
+        (
+            name: "red",
+            properties: (
+                color: (
+                    x: 1.0,
+                    y: 0.0,
+                    z: 0.0,
+                ),
+                diffuse: 1.0,
+                specular: 0.0,
+            ),
+        ),
+    ],
+    light: Spot((
+        transform: (
+            position: (
+                x: 0.0,
+                y: 1.0,
+                z: -0.2,
+            ),
+            rotation: (
+                x: -60.0,
+                y: 90.0,
+                z: 0.0,
+            ),
+        ),
+        intensity: 1.0,
+        width: 2.0,
+        height: 2.0,
+        color: (
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
+        ),
+    )),
+)

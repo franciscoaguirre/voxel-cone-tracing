@@ -1,0 +1,127 @@
+(
+    submenus: (
+        all_nodes: (
+            is_showing: true,
+            output: (
+                should_render_octree: false,
+                current_octree_level: 2,
+                octree_nodes_to_visualize: Geometry,
+            ),
+        ),
+        node_search: (
+            is_showing: false,
+            output: (
+                selected_items: [],
+                filter_text: "",
+                should_show_neighbors: false,
+                selected_items_updated: false,
+            ),
+        ),
+        bricks: (
+            is_showing: true,
+            output: (
+                brick_attribute: Color,
+                brick_padding: 0.0,
+                bricks_to_show: (
+                    show_z0: true,
+                    show_z1: true,
+                    show_z2: true,
+                ),
+                color_direction: (
+                    x: 0.9987492,
+                    y: 0.049999993,
+                    z: -0.000016489063,
+                ),
+                should_show_brick_normals: false,
+            ),
+        ),
+        children: (
+            is_showing: false,
+        ),
+        diagnostics: (),
+        images: (
+            is_showing: false,
+            output: (
+                toggles: (
+                    should_show_color: false,
+                    should_show_direct: false,
+                    should_show_indirect: false,
+                    should_show_indirect_specular: false,
+                    should_show_ambient_occlusion: false,
+                ),
+            ),
+        ),
+        photons: (
+            is_showing: false,
+        ),
+        save_preset: (
+            name: "demo5",
+            is_showing: true,
+        ),
+        camera: (
+            is_showing: false,
+            output: (
+                orthographic: false,
+            ),
+        ),
+        cone_tracing: (
+            is_showing: false,
+            output: (
+                show_debug_cone: false,
+                move_debug_cone: false,
+                shadow_cone_parameters: (
+                    cone_angle_in_degrees: 0.0,
+                    max_distance: 0.0,
+                ),
+                ambient_occlusion_cone_parameters: (
+                    cone_angle_in_degrees: 0.0,
+                    max_distance: 0.0,
+                ),
+                diffuse_cone_parameters: (
+                    cone_angle_in_degrees: 0.0,
+                    max_distance: 0.0,
+                ),
+                specular_cone_parameters: (
+                    cone_angle_in_degrees: 0.0,
+                    max_distance: 0.0,
+                ),
+                debug_cone_parameters: (
+                    cone_angle_in_degrees: 0.0,
+                    max_distance: 0.0,
+                ),
+                point_to_light: false,
+                exposure: 1.0,
+            ),
+        ),
+        picker: (
+            is_showing: false,
+            output: (
+                is_picking: false,
+            ),
+        ),
+    ),
+    camera: (
+        transform: (
+            position: (
+                x: -0.83471876,
+                y: 1.5291754,
+                z: -1.7745512,
+            ),
+            scale: (
+                x: 1.0,
+                y: 1.0,
+                z: 1.0,
+            ),
+            rotation: (
+                x: -39.299927,
+                y: 69.00036,
+                z: 0.0,
+            ),
+            movement_speed: 1.0,
+        ),
+        orthographic: false,
+        movement_speed: 1.0,
+        mouse_sensitivity: 0.1,
+        zoom: 45.0,
+    ),
+)
